@@ -13,6 +13,7 @@ import {
   getPousadaSlugs,
   getNearbyPousadas,
   isFavoritePousada,
+  getBookableRoom,
 } from '@/server/queries'
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { MapPin, Star } from 'lucide-react'
@@ -44,10 +45,11 @@ export default async function PousadaPage({
 }) {
   const { slug } = await params
   const initialBooking = await searchParams
-  const [pousada, currentUser, favorite] = await Promise.all([
+  const [pousada, currentUser, favorite, room] = await Promise.all([
     getPousada(slug),
     getCurrentUser(),
     isFavoritePousada(slug),
+    getBookableRoom(slug),
   ])
   if (!pousada) notFound()
 
@@ -60,6 +62,7 @@ export default async function PousadaPage({
       <main>
         <PousadaDetail
           pousada={pousada}
+          room={room}
           initialBooking={{
             checkin: initialBooking.checkin,
             checkout: initialBooking.checkout,

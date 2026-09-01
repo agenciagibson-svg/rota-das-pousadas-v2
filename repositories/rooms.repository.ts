@@ -263,6 +263,8 @@ export async function listAmenitiesCatalog(): Promise<{ id: string; name: string
 export type BookableRoom = {
   pousadaId: string
   roomId: string
+  name: string
+  description: string
   nightly: number
   capacity: number
 }
@@ -291,13 +293,22 @@ export async function getBookableRoomBySlug(slug: string): Promise<BookableRoom 
 
   const { data: rpcRows, error: roomError } = await supabase.rpc('list_public_rooms', { p_slug: slug })
   if (roomError) throw new Error(roomError.message)
-  const rooms = (rpcRows ?? []) as { id: string; base_price: number; capacity: number; capacity_max: number | null }[]
+  const rooms = (rpcRows ?? []) as {
+    id: string
+    name: string
+    description: string
+    base_price: number
+    capacity: number
+    capacity_max: number | null
+  }[]
   if (rooms.length === 0) return null
 
   const cheapest = [...rooms].sort((a, b) => a.base_price - b.base_price)[0]
   return {
     pousadaId: pousada.id,
     roomId: cheapest.id,
+    name: cheapest.name,
+    description: cheapest.description,
     nightly: Number(cheapest.base_price) || Number(pousada.price_per_night),
     capacity: cheapest.capacity_max ?? cheapest.capacity,
   }

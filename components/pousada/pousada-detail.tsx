@@ -29,7 +29,7 @@ import {
   AtSign,
 } from 'lucide-react'
 import type { Pousada } from '@/lib/data'
-import { amenities, rooms, reviews } from '@/lib/data'
+import { amenities, reviews } from '@/lib/data'
 import { Reveal } from '@/components/reveal'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -57,19 +57,27 @@ function toInitialGuests(value?: string): number {
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 2
 }
 
+export type BookableRoomInfo = {
+  name: string
+  description: string
+  nightly: number
+  capacity: number
+}
+
 export function PousadaDetail({
   pousada,
+  room,
   initialBooking,
   favorite,
   isLoggedIn,
 }: {
   pousada: Pousada
+  room: BookableRoomInfo | null
   initialBooking?: { checkin?: string; checkout?: string; guests?: string }
   favorite: boolean
   isLoggedIn: boolean
 }) {
   const [active, setActive] = useState(0)
-  const [selectedRoom, setSelectedRoom] = useState(0)
   const [selectedDay, setSelectedDay] = useState<number | null>(14)
   const [checkin, setCheckin] = useState(() => {
     const fallback = addDays(todayIso(), 1)
@@ -85,9 +93,10 @@ export function PousadaDetail({
   })
   const [guests, setGuests] = useState(() => toInitialGuests(initialBooking?.guests))
 
-  const room = rooms[selectedRoom]
-  const price = calculateBookingPrice(room.price, checkin, checkout)
-  const canReserve = price.nights > 0 && guests >= 1 && guests <= room.guests
+  const nightly = room?.nightly ?? 0
+  const capacity = room?.capacity ?? 1
+  const price = calculateBookingPrice(nightly, checkin, checkout)
+  const canReserve = Boolean(room) && price.nights > 0 && guests >= 1 && guests <= capacity
   const gallery = pousada.gallery.length ? pousada.gallery : [pousada.image || '/placeholder.svg']
   const activeImage = gallery[active] || gallery[0] || '/placeholder.svg'
 
@@ -254,28 +263,24 @@ export function PousadaDetail({
           <Reveal>
             <div className="border-b border-border py-10">
               <h2 className="font-serif text-2xl font-semibold text-foreground">Quartos & acomodações</h2>
-              <div className="mt-6 space-y-3">
-                {rooms.map((r, i) => (
-                  <button
-                    key={r.name}
-                    onClick={() => setSelectedRoom(i)}
-                    className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-all ${
-                      selectedRoom === i ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
-                    }`}
-                  >
+              <div className="mt-6">
+                {room ? (
+                  <div className="flex w-full items-center justify-between rounded-2xl border border-primary bg-primary/5 p-4 text-left">
                     <div>
-                      <h3 className="font-semibold text-foreground">{r.name}</h3>
-                      <p className="mt-0.5 text-sm text-muted-foreground">{r.desc}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {r.size} • até {r.guests} hóspedes
-                      </p>
+                      <h3 className="font-semibold text-foreground">{room.name}</h3>
+                      {room.description && (
+                        <p className="mt-0.5 text-sm text-muted-foreground">{room.description}</p>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">até {room.capacity} hóspedes</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="font-semibold text-foreground">R$ {r.price}</div>
+                      <div className="font-semibold text-foreground">R$ {room.nightly}</div>
                       <div className="text-xs text-muted-foreground">/ diária</div>
                     </div>
-                  </button>
-                ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhuma acomodação disponível no momento.</p>
+                )}
               </div>
             </div>
           </Reveal>
@@ -387,8 +392,10 @@ export function PousadaDetail({
           >
             <div className="flex items-end justify-between">
               <div>
-                <span className="text-2xl font-semibold text-foreground">R$ {room.price}</span>
-                <span className="text-sm text-muted-foreground"> / diária</span>
+                <span className="text-2xl font-semibold text-foreground">
+                  {room ? `R$ ${nightly}` : 'Indisponível'}
+                </span>
+                {room && <span className="text-sm text-muted-foreground"> / diária</span>}
               </div>
               <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground">
                 <Star className="size-4 fill-gold text-gold" />
@@ -430,7 +437,7 @@ export function PousadaDetail({
                     type="number"
                     value={guests}
                     min={1}
-                    max={room.guests}
+                    max={capacity}
                     onChange={(event) => setGuests(Number(event.target.value))}
                     className="mt-1 w-full bg-transparent text-sm font-medium text-foreground outline-none"
                   />
@@ -451,26 +458,28 @@ export function PousadaDetail({
                   : 'pointer-events-none bg-muted text-muted-foreground'
               }`}
             >
-              Reservar {room.name}
+              Reservar agora
             </Link>
             <p className="mt-2 text-center text-xs text-muted-foreground">Você ainda não será cobrado</p>
 
-            <div className="mt-5 space-y-2 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>
-                  R$ {room.price} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
-                </span>
-                <span>R$ {price.subtotal}</span>
+            {room && (
+              <div className="mt-5 space-y-2 text-sm">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>
+                    R$ {nightly} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
+                  </span>
+                  <span>R$ {price.subtotal}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Taxa de serviço</span>
+                  <span>R$ {price.fee}</span>
+                </div>
+                <div className="flex justify-between border-t border-border pt-3 text-base font-semibold text-foreground">
+                  <span>Total</span>
+                  <span>R$ {price.total}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Taxa de serviço</span>
-                <span>R$ {price.fee}</span>
-              </div>
-              <div className="flex justify-between border-t border-border pt-3 text-base font-semibold text-foreground">
-                <span>Total</span>
-                <span>R$ {price.total}</span>
-              </div>
-            </div>
+            )}
           </motion.div>
         </div>
       </section>

@@ -154,11 +154,16 @@ export async function cancelMyBooking(bookingId: string): Promise<void> {
   await setBookingStatusRpc(bookingId, 'cancelled', 'Cancelado pelo hóspede')
 }
 
-/** Dados de reserva de uma pousada (diária e capacidade) para exibição pública. */
+/** Dados da acomodação reservável de uma pousada (nome, diária, capacidade) para exibição pública. */
 export async function getBookableRoom(
   slug: string,
-): Promise<{ nightly: number; capacity: number } | null> {
+): Promise<{ name: string; description: string; nightly: number; capacity: number } | null> {
   const bookable = await getBookableRoomBySlug(slug)
   if (!bookable) return null
-  return { nightly: bookable.nightly, capacity: bookable.capacity }
+  return {
+    name: bookable.name,
+    description: bookable.description,
+    nightly: bookable.nightly,
+    capacity: bookable.capacity,
+  }
 }
