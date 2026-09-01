@@ -28,7 +28,7 @@ export function Editorial() {
       </section>
 
       {/* Editorial split — Home viva story */}
-      <section className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:px-8 lg:py-28">
+      <section id="editorial" className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:px-8 lg:py-28">
         <Reveal>
           <div>
             <span className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">

@@ -15,8 +15,10 @@ import {
   House,
   type LucideIcon,
 } from 'lucide-react'
-import { experiences } from '@/lib/data'
+import type { Experience } from '@/types'
 import { Reveal } from '@/components/reveal'
+import { Container } from '@/components/ui/container'
+import { SectionHeading } from '@/components/ui/section-heading'
 
 const iconMap: Record<string, LucideIcon> = {
   Heart,
@@ -33,23 +35,16 @@ const iconMap: Record<string, LucideIcon> = {
   House,
 }
 
-export function Experiences() {
+export function Experiences({ experiences }: { experiences: Experience[] }) {
   return (
     <section id="experiencias" className="bg-secondary/50 py-20 lg:py-28">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <Container>
         <Reveal>
-          <div className="max-w-2xl">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              Experiências
-            </span>
-            <h2 className="mt-3 text-balance font-serif text-3xl font-semibold leading-tight text-foreground sm:text-5xl">
-              Viaje pelo que você sente
-            </h2>
-            <p className="mt-4 max-w-lg text-pretty text-sm leading-relaxed text-muted-foreground">
-              Não escolha apenas um lugar. Escolha um estado de espírito e deixe a rota se desenhar a
-              partir dele.
-            </p>
-          </div>
+          <SectionHeading
+            eyebrow="Experiências"
+            title="Viaje pelo que você sente"
+            description="Não escolha apenas um lugar. Escolha um estado de espírito e deixe a rota se desenhar a partir dele."
+          />
         </Reveal>
 
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -70,7 +65,7 @@ export function Experiences() {
             )
           })}
         </div>
-      </div>
+      </Container>
     </section>
   )
 }

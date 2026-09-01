@@ -13,3 +13,9 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .DS_Store
+.vercel
+.env*
+
+# Supabase CLI local link state (project ref, pooler URL — não é segredo, mas
+# é metadado específico do ambiente; não deve ir para o histórico do git)
+supabase/.temp/

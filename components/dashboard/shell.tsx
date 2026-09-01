@@ -3,8 +3,9 @@
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Compass, Menu, X, Search, Bell, type LucideIcon } from 'lucide-react'
+import { LogoutButton } from '@/features/auth/components/logout-button'
 
-export type NavItem = { label: string; icon: LucideIcon; active?: boolean }
+export type NavItem = { label: string; icon: LucideIcon; active?: boolean; href?: string }
 
 export function DashboardShell({
   nav,
@@ -55,19 +56,24 @@ export function DashboardShell({
           </div>
 
           <nav className="flex-1 space-y-1 px-4 py-2">
-            {nav.map((item) => (
-              <button
-                key={item.label}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                  item.active
-                    ? `${accentSoft} ${accentText}`
-                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                }`}
-              >
-                <item.icon className="size-5" />
-                {item.label}
-              </button>
-            ))}
+            {nav.map((item) => {
+              const cls = `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                item.active
+                  ? `${accentSoft} ${accentText}`
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`
+              return item.href ? (
+                <Link key={item.label} href={item.href} className={cls}>
+                  <item.icon className="size-5" />
+                  {item.label}
+                </Link>
+              ) : (
+                <button key={item.label} className={cls}>
+                  <item.icon className="size-5" />
+                  {item.label}
+                </button>
+              )
+            })}
           </nav>
 
           <div className="border-t border-border p-4">
@@ -75,10 +81,11 @@ export function DashboardShell({
               <span className={`flex size-10 items-center justify-center rounded-full ${accentBg} text-sm font-semibold text-primary-foreground`}>
                 {user.name.charAt(0)}
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-foreground">{user.name}</div>
                 <div className="truncate text-xs text-muted-foreground">{user.role}</div>
               </div>
+              <LogoutButton className="shrink-0" />
             </div>
           </div>
         </div>

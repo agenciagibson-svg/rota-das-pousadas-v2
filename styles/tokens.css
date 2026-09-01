@@ -1,0 +1,121 @@
+/**
+ * Global design tokens — Rota das Pousadas.
+ *
+ * Single source of truth for MOTION, SPACING, RADIUS, SHADOWS, GRID and Z-INDEX.
+ * Brand color / font tokens live in `app/globals.css`; this file complements
+ * them. See `docs/DesignFoundations.md` for the human-readable spec.
+ *
+ * RULE: never use ad-hoc durations, radii or shadows. Use these tokens only.
+ */
+
+:root {
+  /* =====================================================================
+   * MOTION — the ONLY allowed durations. Nothing may animate differently.
+   * ===================================================================== */
+  --motion-hover: 150ms; /* hovers, small state changes */
+  --motion-fade: 220ms; /* fades, tooltips, toasts */
+  --motion-modal: 280ms; /* dialog/modal enter+exit */
+  --motion-drawer: 320ms; /* drawer/sheet slide */
+  --motion-reveal: 500ms; /* hero + scroll reveals */
+  --motion-page: 350ms; /* page/section transitions */
+
+  /* Easing — standard is the brand signature curve. */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* =====================================================================
+   * SPACING — the ONLY allowed step values (px). Maps to Tailwind steps.
+   * 4 8 12 16 24 32 48 64 96 128  ->  1 2 3 4 6 8 12 16 24 32
+   * ===================================================================== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* =====================================================================
+   * RADIUS — official scale (base --radius = 0.9rem, from globals.css).
+   * ===================================================================== */
+  --radius-xs: calc(var(--radius) - 6px);
+  /* sm/md/lg/xl/2xl/3xl are defined in globals.css @theme */
+  --radius-full: 9999px;
+
+  /* =====================================================================
+   * SHADOWS / ELEVATION — semantic, warm-tinted to match the sand palette.
+   * ===================================================================== */
+  --shadow-surface: 0 1px 2px 0 rgb(31 36 32 / 0.04);
+  --shadow-card: 0 1px 3px 0 rgb(31 36 32 / 0.06), 0 1px 2px -1px rgb(31 36 32 / 0.06);
+  --shadow-elevated: 0 4px 12px -2px rgb(31 36 32 / 0.08), 0 2px 6px -2px rgb(31 36 32 / 0.06);
+  --shadow-floating: 0 12px 28px -6px rgb(31 36 32 / 0.10), 0 6px 12px -6px rgb(31 36 32 / 0.08);
+  --shadow-modal: 0 24px 48px -12px rgb(31 36 32 / 0.14);
+  --shadow-premium: 0 40px 80px -20px rgb(31 36 32 / 0.20);
+
+  /* =====================================================================
+   * GRID — columns per breakpoint + gutters.
+   * ===================================================================== */
+  --grid-cols-desktop: 12;
+  --grid-cols-tablet: 8;
+  --grid-cols-mobile: 4;
+  --grid-gap: 24px;
+  --grid-gap-lg: 32px;
+
+  /* =====================================================================
+   * CONTAINER + Z-INDEX
+   * ===================================================================== */
+  --container-2xl: 90rem; /* matches max-w-7xl usage */
+  --container-gutter: 20px; /* px-5 */
+  --container-gutter-lg: 32px; /* lg:px-8 */
+
+  --z-base: 0;
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-drawer: 40;
+  --z-overlay: 45;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
+
+  /* =====================================================================
+   * ICONS — global defaults (Lucide only, stroke 2, 24px base).
+   * ===================================================================== */
+  --icon-stroke: 2;
+  --icon-size: 24px;
+}
+
+/* Expose semantic shadows + easing to Tailwind's utility engine
+ * (generates shadow-surface, shadow-card, …, ease-standard, …). */
+@theme inline {
+  --shadow-surface: var(--shadow-surface);
+  --shadow-card: var(--shadow-card);
+  --shadow-elevated: var(--shadow-elevated);
+  --shadow-floating: var(--shadow-floating);
+  --shadow-modal: var(--shadow-modal);
+  --shadow-premium: var(--shadow-premium);
+
+  --ease-standard: var(--ease-standard);
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+}
+
+/* Lucide icons: enforce 2px stroke globally (24px is applied via size utils). */
+svg.lucide {
+  stroke-width: var(--icon-stroke);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -2,58 +2,132 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, MapPin, Calendar, Users, Sparkles, ArrowRight } from 'lucide-react'
+import { Search, MapPin, Calendar, Users, Sparkles, ArrowRight, Shuffle } from 'lucide-react'
+import { SearchField } from '@/components/ui/search-field'
 
 type SeasonKey = 'verao' | 'outono' | 'inverno' | 'primavera'
 
 const seasons: Record<
   SeasonKey,
-  { label: string; headline: string; sub: string; tags: string[] }
+  {
+    label: string
+    headline: string
+    sub: string
+    tags: string[]
+    image: string
+    alt: string
+  }
 > = {
   verao: {
-    label: 'Verão',
-    headline: 'Águas cristalinas e dias infinitos',
-    sub: 'Praias, piscinas, cachoeiras e esportes aquáticos esperam por você.',
+    label: 'Verao',
+    headline: 'Aguas cristalinas e dias infinitos',
+    sub: 'Praias, piscinas, cachoeiras e esportes aquaticos esperam por voce.',
     tags: ['Praia', 'Piscina', 'Cachoeiras', 'Ilhas'],
+    image: '/images/noronha.png',
+    alt: 'Praia brasileira com mar azul para viagens de verao',
   },
   outono: {
     label: 'Outono',
     headline: 'Tons dourados e o ritmo bom do campo',
     sub: 'Fazendas, vinhedos e trilhas sob a luz mais bonita do ano.',
     tags: ['Fazenda', 'Vinhos', 'Trilhas', 'Natureza'],
+    image: '/images/canastra.png',
+    alt: 'Paisagem de serra e natureza para viagens de outono',
   },
   inverno: {
     label: 'Inverno',
-    headline: 'Lareiras acesas e refúgios de serra',
-    sub: 'Chalés, vinhos e destinos de montanha para aquecer a alma.',
-    tags: ['Chalés', 'Lareira', 'Serra', 'Vinhos'],
+    headline: 'Lareiras acesas e refugios de serra',
+    sub: 'Chales, vinhos e destinos de montanha para aquecer a alma.',
+    tags: ['Chales', 'Lareira', 'Serra', 'Vinhos'],
+    image: '/images/gramado.png',
+    alt: 'Destino de inverno com arquitetura aconchegante na serra',
   },
   primavera: {
     label: 'Primavera',
-    headline: 'A natureza floresce, e você também',
+    headline: 'A natureza floresce, e voce tambem',
     sub: 'Ecoturismo, jardins e pousadas em meio ao verde renascido.',
     tags: ['Ecoturismo', 'Flores', 'Natureza', 'Bem-estar'],
+    image: '/images/hero.png',
+    alt: 'Pousada em meio a natureza verde ao nascer do sol',
   },
 }
 
+const surpriseRoutes: Record<SeasonKey, string[]> = {
+  verao: ['Praia', 'Piscina', 'Cachoeiras', 'Noronha', 'Capitolio', 'Bonito'],
+  outono: ['Natureza', 'Fazenda', 'Trilhas', 'Canastra', 'Vista', 'Ecoturismo'],
+  inverno: ['Serra', 'Lareira', 'Chales', 'Gramado', 'Monte Verde', 'Romanticos'],
+  primavera: ['Ecoturismo', 'Flores', 'Natureza', 'Bem-estar', 'Bonito', 'Canastra'],
+}
+
+function getCurrentBrazilSeason(date = new Date()): SeasonKey {
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const numericDate = month * 100 + day
+
+  if (numericDate >= 1221 || numericDate < 320) return 'verao'
+  if (numericDate >= 320 && numericDate < 621) return 'outono'
+  if (numericDate >= 621 && numericDate < 923) return 'inverno'
+  return 'primavera'
+}
+
+function addDays(date: string, days: number): string {
+  const next = new Date(`${date}T00:00:00Z`)
+  next.setUTCDate(next.getUTCDate() + days)
+  return next.toISOString().slice(0, 10)
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function Hero() {
-  const [season, setSeason] = useState<SeasonKey>('inverno')
+  const router = useRouter()
+  const [season, setSeason] = useState<SeasonKey>(() => getCurrentBrazilSeason())
   const current = seasons[season]
+  const today = todayIso()
+  const tomorrow = addDays(today, 1)
+  const dayAfterTomorrow = addDays(today, 2)
+
+  function openSurpriseRoute() {
+    const options = surpriseRoutes[season]
+    const query = options[Math.floor(Math.random() * options.length)]
+    const params = new URLSearchParams({
+      busca: query,
+      checkin: tomorrow,
+      checkout: dayAfterTomorrow,
+      hospedes: '2',
+      temporada: season,
+      surpresa: '1',
+    })
+    router.push(`/pousadas?${params.toString()}`)
+  }
 
   return (
     <section className="relative min-h-[100svh] w-full overflow-hidden">
-      <Image
-        src="/images/hero.png"
-        alt="Pousada de luxo na serra brasileira ao pôr do sol com piscina de borda infinita"
-        fill
-        priority
-        className="object-cover"
-      />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current.image}
+          initial={{ opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.01 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={current.image}
+            alt={current.alt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        </motion.div>
+      </AnimatePresence>
       <div className="absolute inset-0 bg-gradient-to-b from-stone-deep/50 via-stone-deep/25 to-stone-deep/80" />
 
       <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-5 pb-10 pt-32 lg:px-8 lg:pb-16">
-        {/* Home viva season selector */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -67,6 +141,7 @@ export function Hero() {
           {(Object.keys(seasons) as SeasonKey[]).map((key) => (
             <button
               key={key}
+              type="button"
               onClick={() => setSeason(key)}
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                 season === key
@@ -97,66 +172,87 @@ export function Hero() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Search bar */}
-        <motion.div
+        <motion.form
+          action="/pousadas"
+          method="get"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           className="glass mt-8 rounded-3xl border border-primary-foreground/20 p-2.5 shadow-2xl shadow-stone-deep/30"
         >
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.3fr_1fr_1fr_auto]">
-            <SearchField icon={<MapPin className="size-4 text-primary" />} label="Destino" placeholder="Para onde vamos?" />
-            <SearchField icon={<Calendar className="size-4 text-primary" />} label="Datas" placeholder="Quando?" />
-            <SearchField icon={<Users className="size-4 text-primary" />} label="Hóspedes" placeholder="2 adultos" />
-            <button className="group flex items-center justify-center gap-2 rounded-2xl bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105 md:px-7">
+          <input type="hidden" name="temporada" value={season} />
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.25fr_0.95fr_0.95fr_0.8fr_auto]">
+            <SearchField
+              icon={<MapPin className="size-4 text-primary" />}
+              label="Destino"
+              name="busca"
+              placeholder="Cidade, pousada ou estilo"
+              autoComplete="off"
+            />
+            <SearchField
+              icon={<Calendar className="size-4 text-primary" />}
+              label="Check-in"
+              name="checkin"
+              type="date"
+              min={today}
+              defaultValue={tomorrow}
+            />
+            <SearchField
+              icon={<Calendar className="size-4 text-primary" />}
+              label="Check-out"
+              name="checkout"
+              type="date"
+              min={dayAfterTomorrow}
+              defaultValue={dayAfterTomorrow}
+            />
+            <SearchField
+              icon={<Users className="size-4 text-primary" />}
+              label="Hospedes"
+              name="hospedes"
+              type="number"
+              min={1}
+              max={12}
+              defaultValue={2}
+            />
+            <button type="submit" className="group flex items-center justify-center gap-2 rounded-2xl bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105 md:px-7">
               <Search className="size-4" />
-              Encontrar meu refúgio
+              Encontrar meu refugio
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-3">
-            <span className="text-xs font-medium text-foreground/60">Sugestões da estação:</span>
-            {current.tags.map((t) => (
-              <span
-                key={t}
+            <span className="text-xs font-medium text-foreground/60">Sugestoes da estacao:</span>
+            {current.tags.map((tag) => (
+              <button
+                key={tag}
+                type="submit"
+                name="busca"
+                value={tag}
                 className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
               >
-                {t}
-              </span>
+                {tag}
+              </button>
             ))}
           </div>
-        </motion.div>
+        </motion.form>
 
-        <a
-          href="#destinos"
-          className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground"
-        >
-          Explorar destinos em destaque
-          <ArrowRight className="size-4" />
-        </a>
+        <div className="mt-8 flex flex-wrap items-center gap-4">
+          <button
+            type="button"
+            onClick={openSurpriseRoute}
+            className="inline-flex items-center gap-2 rounded-full bg-primary-foreground px-5 py-3 text-sm font-semibold text-stone-deep transition-all hover:bg-accent hover:text-accent-foreground"
+          >
+            <Shuffle className="size-4" />
+            Rota surpresa
+          </button>
+          <a
+            href="#destinos"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground"
+          >
+            Explorar destinos em destaque
+            <ArrowRight className="size-4" />
+          </a>
+        </div>
       </div>
     </section>
-  )
-}
-
-function SearchField({
-  icon,
-  label,
-  placeholder,
-}: {
-  icon: React.ReactNode
-  label: string
-  placeholder: string
-}) {
-  return (
-    <label className="flex cursor-text items-center gap-3 rounded-2xl bg-card px-4 py-2.5 transition-colors hover:bg-card/90">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary">{icon}</span>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
-        <input
-          className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/70"
-          placeholder={placeholder}
-        />
-      </span>
-    </label>
   )
 }

@@ -1,28 +1,24 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Menu, X, Compass } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useScrolled } from '@/hooks/use-scrolled'
 
 const nav = [
   { label: 'Destinos', href: '/#destinos' },
   { label: 'Experiências', href: '/#experiencias' },
-  { label: 'Pousadas', href: '/#pousadas' },
+  { label: 'Pousadas', href: '/pousadas' },
+  { label: 'Concierge', href: '/concierge' },
+  { label: 'Favoritos', href: '/favoritos' },
+  { label: 'Minhas reservas', href: '/minhas-reservas' },
   { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Admin', href: '/admin' },
 ]
 
 export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
-  const [scrolled, setScrolled] = useState(false)
+  const scrolled = useScrolled(24)
   const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const solid = forceSolid || scrolled
 
@@ -53,7 +49,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -70,7 +66,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href="/dashboard"
+            href="/anunciar"
             className={cn(
               'rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105',
               solid
@@ -83,7 +79,8 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
         </div>
 
         <button
-          aria-label="Abrir menu"
+          aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           className={cn(
             'flex size-10 items-center justify-center rounded-full transition-colors lg:hidden',
@@ -108,7 +105,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
               </Link>
             ))}
             <Link
-              href="/dashboard"
+              href="/anunciar"
               onClick={() => setOpen(false)}
               className="mt-2 rounded-full bg-primary px-5 py-3 text-center text-sm font-semibold text-primary-foreground"
             >

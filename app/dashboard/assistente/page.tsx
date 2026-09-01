@@ -1,0 +1,32 @@
+import {
+  getCurrentUser,
+  getFinance,
+  getOwnerPousada,
+  getOwnerReservations,
+  getOwnerReviews,
+  getOwnerSettings,
+} from '@/server/queries'
+import { OwnerAssistantView } from '@/features/gestao/components/owner-assistant-view'
+
+export default async function DashboardAssistentePage() {
+  const [user, pousada, reservations, reviews, finance, settings] = await Promise.all([
+    getCurrentUser(),
+    getOwnerPousada(),
+    getOwnerReservations(),
+    getOwnerReviews(),
+    getFinance(),
+    getOwnerSettings(),
+  ])
+  const displayName = user?.name || user?.email || 'Proprietário'
+
+  return (
+    <OwnerAssistantView
+      displayName={displayName}
+      pousadaName={pousada?.name ?? 'Sua pousada'}
+      reservations={reservations}
+      reviews={reviews}
+      finance={finance.summary}
+      settings={settings}
+    />
+  )
+}

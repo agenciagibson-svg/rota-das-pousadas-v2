@@ -1,0 +1,72 @@
+# Design System
+
+Toda a interface é composta a partir de `components/ui`. Não crie botões, cards,
+badges ou seções “na mão” com classes soltas — use (ou estenda) os primitivos.
+Isso garante consistência visual e permite mudar a identidade em um só lugar.
+
+```ts
+import { Button, Card, Badge, Container, Section, SectionHeading } from '@/components/ui'
+```
+
+## Tokens
+
+A fonte da verdade das cores, raios e tipografia está em `app/globals.css`
+(variáveis CSS + `@theme`). Tokens complementares (sombras, elevação, motion,
+container, z-index, grid) estão em `styles/tokens.css` e espelhados para
+TypeScript em `lib/design-tokens.ts` (use estes em animações Motion).
+
+| Grupo | Onde | Exemplos |
+|---|---|---|
+| Cores de marca | `globals.css` | `--forest`, `--sunset`, `--gold`, `--sand`, `--linen` |
+| Cores semânticas | `globals.css` | `--primary`, `--muted`, `--border`, `--destructive` |
+| Raio | `globals.css` | `--radius` (0.9rem) + escala `--radius-sm…3xl` |
+| Tipografia | `globals.css` | `--font-sans` (Manrope), `--font-serif` (Fraunces) |
+| Sombras / elevação | `tokens.css` | `--shadow-xs…2xl`, `--elevation-0…5` |
+| Motion | `tokens.css` + `design-tokens.ts` | `--ease-standard`, `duration.*`, `easing.*` |
+| Container / grid / z-index | `tokens.css` | `--container-2xl`, `--z-modal`, `--grid-gap` |
+
+## Componentes
+
+### Fundações
+- **Button** — variantes `default · outline · secondary · ghost · destructive · link`; tamanhos `xs · sm · default · lg · icon*`. Para links estilizados como botão use `buttonVariants()`.
+- **Badge** — chip/tag/status. Variantes de cor (`secondary`, `primarySoft`, `accentSoft`, `goldSoft`, `destructiveSoft`, `glass`, `outline`) e tamanho (`sm · md · lg`).
+- **Card** — superfície (`radius` 2xl/3xl, `border` on/off).
+- **Container / Section** — gutter e largura máxima padrão (`max-w-7xl px-5 lg:px-8`).
+- **SectionHeading** — eyebrow + título serifado + descrição.
+- **IconBadge** — ícone em quadro suave (`tone` primary/ocean/accent).
+- **StatCard** — card de KPI (ícone + delta + valor + rótulo).
+
+### Formulários
+- **Input** — campo com label/hint/erro/ícones.
+- **SearchField** — campo de busca com ícone circular (usado no hero).
+
+### Feedback e status
+- **Skeleton · Loading · EmptyState** — estados de carregamento/vazio/erro.
+- **Toast** (`ToastProvider` + `useToast`) — notificações.
+- **Tooltip** — dica em hover/foco (acessível).
+
+### Overlays
+- **Modal** — overlay base (portal, Escape, scroll lock).
+- **Dialog** — modal com título/descrição/rodapé.
+- **Drawer** — painel lateral (`side` left/right/top/bottom).
+
+### Exibição de dados
+- **Avatar** — imagem com fallback de iniciais.
+- **Table** (+ `TableHeader/Body/Row/Head/Cell`) — tabela padronizada.
+- **Pagination** — navegação de páginas com reticências.
+- **Breadcrumb** — trilha de navegação.
+- **Gallery** — grade de imagens + lightbox.
+
+### Divulgação e navegação
+- **Tabs** · **Accordion** · **Carousel** (scroll-snap acessível).
+
+## Regras de uso
+
+1. **Componha, não copie.** Precisa de um card com sombra? `Card` + className.
+2. **Estenda por `className`.** Todos aceitam `className`; a mesclagem usa
+   `cn()` (clsx + tailwind-merge), então overrides ganham do padrão.
+3. **Novos componentes vão em `components/ui`** e são exportados no `index.ts`.
+4. **Acessibilidade não é opcional.** Botões de ícone levam `aria-label`;
+   overlays tratam Escape e foco; imagens têm `alt`.
+5. **Preserve a identidade.** Cores/raios/tipografia vêm dos tokens — não
+   hardcode hex fora de `globals.css`/`tokens.css`.

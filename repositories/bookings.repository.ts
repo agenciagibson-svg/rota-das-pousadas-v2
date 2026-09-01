@@ -1,0 +1,328 @@
+import 'server-only'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { nightsBetween } from '@/features/reservas/pricing'
+import type { Booking, BookingCompanion, BookingDetail, BookingOrigin, BookingStatus } from '@/features/reservas/types'
+
+export type CreateBookingParams = {
+  pousadaId: string
+  roomId: string
+  responsibleGuestId: string
+  code: string
+  checkin: string
+  checkout: string
+  adults: number
+  children: number
+  infants: number
+  pets: boolean
+  subtotal: number
+  fee: number
+  discount: number
+  surcharge: number
+  servicesAmount: number
+  total: number
+  status: BookingStatus
+  origin: BookingOrigin
+  travelerUserId?: string | null
+  externalChannelName?: string | null
+  externalCode?: string | null
+  expectedCommission?: number | null
+  expectedArrivalTime?: string | null
+  specialRequests?: string
+  internalNotes?: string
+  paymentDueAt?: string | null
+}
+
+/** Única porta de criação de reserva — pública e administrativa (create_booking, 0034). */
+export async function createBookingRpc(p: CreateBookingParams): Promise<{ id: string; code: string }> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('create_booking', {
+    p_pousada_id: p.pousadaId,
+    p_room_id: p.roomId,
+    p_responsible_guest_id: p.responsibleGuestId,
+    p_code: p.code,
+    p_checkin: p.checkin,
+    p_checkout: p.checkout,
+    p_adults: p.adults,
+    p_children: p.children,
+    p_infants: p.infants,
+    p_pets: p.pets,
+    p_subtotal: p.subtotal,
+    p_fee: p.fee,
+    p_discount: p.discount,
+    p_surcharge: p.surcharge,
+    p_services_amount: p.servicesAmount,
+    p_total: p.total,
+    p_status: p.status,
+    p_origin: p.origin,
+    p_traveler_user_id: p.travelerUserId ?? null,
+    p_external_channel_name: p.externalChannelName ?? null,
+    p_external_code: p.externalCode ?? null,
+    p_expected_commission: p.expectedCommission ?? null,
+    p_expected_arrival_time: p.expectedArrivalTime ?? null,
+    p_special_requests: p.specialRequests ?? '',
+    p_internal_notes: p.internalNotes ?? '',
+    p_payment_due_at: p.paymentDueAt ?? null,
+  })
+  if (error) throw new Error(error.message)
+  const result = data as { id: string; code: string }
+  return result
+}
+
+export type UpdateBookingParams = {
+  bookingId: string
+  version: number
+  roomId: string
+  responsibleGuestId: string
+  checkin: string
+  checkout: string
+  adults: number
+  children: number
+  infants: number
+  pets: boolean
+  subtotal: number
+  fee: number
+  discount: number
+  surcharge: number
+  servicesAmount: number
+  total: number
+  origin: BookingOrigin
+  expectedArrivalTime?: string | null
+  specialRequests?: string
+  internalNotes?: string
+}
+
+export async function updateBookingRpc(p: UpdateBookingParams): Promise<{ version: number }> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('update_booking', {
+    p_booking_id: p.bookingId,
+    p_version: p.version,
+    p_room_id: p.roomId,
+    p_responsible_guest_id: p.responsibleGuestId,
+    p_checkin: p.checkin,
+    p_checkout: p.checkout,
+    p_adults: p.adults,
+    p_children: p.children,
+    p_infants: p.infants,
+    p_pets: p.pets,
+    p_subtotal: p.subtotal,
+    p_fee: p.fee,
+    p_discount: p.discount,
+    p_surcharge: p.surcharge,
+    p_services_amount: p.servicesAmount,
+    p_total: p.total,
+    p_origin: p.origin,
+    p_expected_arrival_time: p.expectedArrivalTime ?? null,
+    p_special_requests: p.specialRequests ?? '',
+    p_internal_notes: p.internalNotes ?? '',
+  })
+  if (error) throw new Error(error.message)
+  return data as { version: number }
+}
+
+export async function setBookingStatusRpc(bookingId: string, status: BookingStatus, reason?: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('set_booking_status', {
+    p_booking_id: bookingId,
+    p_new_status: status,
+    p_reason: reason ?? null,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function expirePendingBookingRpc(bookingId: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('expire_pending_booking', { p_booking_id: bookingId })
+  if (error) throw new Error(error.message)
+}
+
+export async function setBookingCompanionsRpc(
+  bookingId: string,
+  version: number,
+  companions: {
+    guestId?: string | null
+    fullName: string
+    guestType: string
+    hasSpecialNeeds?: boolean
+    birthDate?: string | null
+    documentType?: string | null
+    documentNumber?: string | null
+    operationalNotes?: string
+  }[],
+): Promise<{ version: number }> {
+  const supabase = await createSupabaseServerClient()
+  const payload = companions.map((c) => ({
+    guestId: c.guestId ?? null,
+    fullName: c.fullName,
+    guestType: c.guestType,
+    hasSpecialNeeds: c.hasSpecialNeeds ?? false,
+    birthDate: c.birthDate ?? null,
+    documentType: c.documentType ?? null,
+    documentNumber: c.documentNumber ?? null,
+    operationalNotes: c.operationalNotes ?? '',
+  }))
+  const { data, error } = await supabase.rpc('set_booking_companions', {
+    p_booking_id: bookingId,
+    p_version: version,
+    p_companions: payload,
+  })
+  if (error) throw new Error(error.message)
+  return data as { version: number }
+}
+
+// ----------------------------------------------------------------------------
+// Leitura do lado do hóspede (/minhas-reservas) — nunca seleciona colunas
+// internas (internal_notes, cancellation_reason, no_show_reason): a RLS de
+// SELECT já é a mesma para hóspede/equipe operacional (não filtra coluna),
+// então a garantia real de que o hóspede nunca veja essas colunas vem de
+// nunca incluí-las no `select()` usado aqui (decisão registrada na Entrega
+// do Ciclo 4, item 5/9).
+// ----------------------------------------------------------------------------
+const GUEST_BOOKING_COLUMNS =
+  'id, code, pousada_id, room_id, checkin, checkout, guests, subtotal, fee, discount, surcharge, total, balance_due, status, origin, payment_due_at, cancellation_reason, created_at'
+
+export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
+  const supabase = await createSupabaseServerClient()
+
+  const { data: rows, error } = await supabase
+    .from('bookings')
+    .select(GUEST_BOOKING_COLUMNS)
+    .eq('guest_id', guestId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  if (!rows || rows.length === 0) return []
+
+  const pousadaIds = [...new Set(rows.map((r) => r.pousada_id))]
+  const { data: pousadas } = await supabase
+    .from('pousadas')
+    .select('id, slug, name, image, city, state')
+    .in('id', pousadaIds)
+  const byId = new Map((pousadas ?? []).map((p) => [p.id, p]))
+  const roomIds = [...new Set(rows.map((r) => r.room_id))]
+  const { data: rooms } = await supabase.from('rooms').select('id, name').in('id', roomIds)
+  const roomById = new Map((rooms ?? []).map((room) => [room.id, room]))
+
+  return rows.map((r) => {
+    const p = byId.get(r.pousada_id)
+    return {
+      id: r.id,
+      code: r.code,
+      pousadaSlug: p?.slug ?? '',
+      pousadaName: p?.name ?? 'Pousada',
+      pousadaImage: p?.image ?? '/placeholder.svg',
+      roomName: roomById.get(r.room_id)?.name ?? 'Acomodação',
+      city: p?.city ?? '',
+      state: p?.state ?? '',
+      checkin: r.checkin,
+      checkout: r.checkout,
+      guests: r.guests,
+      nights: nightsBetween(r.checkin, r.checkout),
+      subtotal: Number(r.subtotal),
+      fee: Number(r.fee),
+      discount: Number(r.discount),
+      surcharge: Number(r.surcharge),
+      total: Number(r.total),
+      balanceDue: Number(r.balance_due),
+      status: r.status as BookingStatus,
+      paymentDueAt: r.payment_due_at,
+      cancellationReason: r.cancellation_reason,
+      createdAt: r.created_at,
+    }
+  })
+}
+
+export async function getBookingByGuest(
+  bookingId: string,
+  guestId: string,
+): Promise<{ id: string; status: BookingStatus; paymentDueAt: string | null } | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('id, status, payment_due_at')
+    .eq('id', bookingId)
+    .eq('guest_id', guestId)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return { id: data.id, status: data.status as BookingStatus, paymentDueAt: data.payment_due_at }
+}
+
+// ----------------------------------------------------------------------------
+// Leitura administrativa completa (/dashboard/reservas/[id]) — só alcançável
+// por quem tem acesso operacional à pousada (garantido pela RLS de bookings_read).
+// ----------------------------------------------------------------------------
+export async function getBookingDetailById(bookingId: string, pousadaId: string): Promise<BookingDetail | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, version, created_at, updated_at',
+    )
+    .eq('id', bookingId)
+    .eq('pousada_id', pousadaId)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+
+  const { data: room } = await supabase.from('rooms').select('name').eq('id', data.room_id).maybeSingle()
+  const { data: companionRows } = await supabase
+    .from('booking_guests')
+    .select('id, guest_id, full_name, guest_type, has_special_needs, birth_date, document_type, document_number, operational_notes')
+    .eq('booking_id', bookingId)
+
+  const companions: BookingCompanion[] = (companionRows ?? []).map((c) => ({
+    id: c.id,
+    guestId: c.guest_id,
+    fullName: c.full_name,
+    guestType: c.guest_type,
+    hasSpecialNeeds: c.has_special_needs,
+    birthDate: c.birth_date,
+    documentType: c.document_type,
+    documentNumber: c.document_number,
+    operationalNotes: c.operational_notes,
+  }))
+
+  return {
+    id: data.id,
+    code: data.code,
+    pousadaId: data.pousada_id,
+    roomId: data.room_id,
+    roomName: room?.name ?? 'Acomodação',
+    responsibleGuestId: data.responsible_guest_id,
+    guestName: data.guest_name ?? 'Hóspede',
+    guestEmail: data.guest_email,
+    guestPhone: data.guest_phone,
+    travelerUserId: data.guest_id,
+    checkin: data.checkin,
+    checkout: data.checkout,
+    nights: nightsBetween(data.checkin, data.checkout),
+    adults: data.adults,
+    children: data.children,
+    infants: data.infants,
+    pets: data.pets,
+    status: data.status as BookingStatus,
+    origin: data.origin as BookingOrigin,
+    externalChannelName: data.external_channel_name,
+    externalCode: data.external_code,
+    subtotal: Number(data.subtotal),
+    fee: Number(data.fee),
+    discount: Number(data.discount),
+    surcharge: Number(data.surcharge),
+    servicesAmount: Number(data.services_amount),
+    total: Number(data.total),
+    amountReceived: Number(data.amount_received),
+    balanceDue: Number(data.balance_due),
+    currency: data.currency,
+    expectedArrivalTime: data.expected_arrival_time,
+    specialRequests: data.special_requests,
+    internalNotes: data.internal_notes,
+    cancellationReason: data.cancellation_reason,
+    cancelledAt: data.cancelled_at,
+    noShowReason: data.no_show_reason,
+    noShowAt: data.no_show_at,
+    paymentDueAt: data.payment_due_at,
+    version: data.version,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    companions,
+  }
+}

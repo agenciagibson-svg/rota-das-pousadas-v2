@@ -1,36 +1,15 @@
-export type Destination = {
-  slug: string
-  name: string
-  state: string
-  image: string
-  pousadas: number
-  rating: number
-  priceFrom: number
-  season: Season[]
-}
+import type {
+  Destination,
+  Experience,
+  Pousada,
+  Room,
+  Review,
+  Season,
+} from '@/lib/types'
 
-export type Experience = {
-  slug: string
-  name: string
-  icon: string
-  description: string
-}
-
-export type Pousada = {
-  slug: string
-  name: string
-  city: string
-  state: string
-  image: string
-  gallery: string[]
-  rating: number
-  reviews: number
-  pricePerNight: number
-  tags: string[]
-  description: string
-}
-
-export type Season = 'verao' | 'outono' | 'inverno' | 'primavera'
+// Re-export domain types so existing imports (e.g. `import type { Pousada }
+// from '@/lib/data'`) keep working. New code should import from '@/lib/types'.
+export type { Destination, Experience, Pousada, Room, Review, Season }
 
 export const destinations: Destination[] = [
   {
@@ -144,6 +123,7 @@ export const pousadas: Pousada[] = [
     tags: ['Chalés Românticos', 'Lareira', 'Serra', 'Pet Friendly'],
     description:
       'Encravado entre araucárias e neblina, o Refúgio das Nuvens é um convite ao descanso absoluto. Cada chalé foi desenhado para emoldurar a paisagem da serra, com lareira a lenha, banheira de imersão e varanda privativa suspensa sobre o vale.',
+    instagram: '',
   },
   {
     slug: 'vale-esmeralda',
@@ -158,6 +138,7 @@ export const pousadas: Pousada[] = [
     tags: ['Piscina Aquecida', 'Luxo', 'Cachoeiras', 'Vista'],
     description:
       'Design minimalista e uma piscina de borda infinita sobre o cânion. O Vale Esmeralda combina arquitetura contemporânea com o verde exuberante de Minas, para quem busca contemplação e sofisticação em igual medida.',
+    instagram: '',
   },
   {
     slug: 'cabana-do-cerrado',
@@ -172,6 +153,7 @@ export const pousadas: Pousada[] = [
     tags: ['Glamping', 'Ecoturismo', 'Natureza', 'Aventura'],
     description:
       'Uma experiência de glamping de alto padrão em pleno Jalapão. Suítes de lona com estrutura premium, céu estrelado sem poluição luminosa e roteiros guiados pelas dunas douradas e fervedouros de água azul.',
+    instagram: '',
   },
   {
     slug: 'casa-do-mar-noronha',
@@ -186,6 +168,7 @@ export const pousadas: Pousada[] = [
     tags: ['Praia', 'Luxo', 'Vista Mar', 'Café Premium'],
     description:
       'Debruçada sobre uma das baías mais bonitas do mundo, a Casa do Mar oferece suítes com varanda voltada para o oceano, café da manhã autoral e o silêncio raro de um paraíso preservado.',
+    instagram: '',
   },
 ]
 
@@ -204,13 +187,13 @@ export const amenities = [
   'Trilhas guiadas',
 ]
 
-export const rooms = [
+export const rooms: Room[] = [
   { name: 'Chalé Vale', price: 720, guests: 2, size: '42 m²', desc: 'Lareira, banheira e varanda com vista.' },
   { name: 'Suíte Bosque', price: 890, guests: 3, size: '58 m²', desc: 'Living privativo e deck com ofurô.' },
   { name: 'Master Panorâmica', price: 1240, guests: 4, size: '76 m²', desc: 'Dois ambientes e vista 180° do vale.' },
 ]
 
-export const reviews = [
+export const reviews: Review[] = [
   { name: 'Marina Alves', location: 'São Paulo, SP', rating: 5, text: 'A vista da varanda ao amanhecer é de tirar o fôlego. Voltaremos com certeza — cada detalhe é impecável.' },
   { name: 'Rafael e Bianca', location: 'Belo Horizonte, MG', rating: 5, text: 'Lua de mel perfeita. A lareira, o café da manhã e o atendimento fizeram tudo virar memória para a vida toda.' },
   { name: 'Carla Menezes', location: 'Rio de Janeiro, RJ', rating: 4, text: 'Lugar lindíssimo e tranquilo. O spa foi o ponto alto da viagem. Recomendo demais para casais.' },

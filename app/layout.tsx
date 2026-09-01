@@ -1,7 +1,9 @@
 import { Analytics } from '@vercel/analytics/next'
-import type { Metadata, Viewport } from 'next'
+import type { Viewport } from 'next'
 import { Manrope, Fraunces } from 'next/font/google'
 import './globals.css'
+import { baseMetadata, organizationJsonLd } from '@/lib/seo'
+import { JsonLd } from '@/components/seo/json-ld'
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -16,12 +18,7 @@ const fraunces = Fraunces({
   style: ['normal', 'italic'],
 })
 
-export const metadata: Metadata = {
-  title: 'Rota das Pousadas — Cada destino tem uma história',
-  description:
-    'O maior ecossistema digital de pousadas do Brasil. Encontre refúgios exclusivos na serra, praia, cachoeiras e natureza. Toda grande viagem começa por uma rota.',
-  generator: 'v0.app',
-}
+export const metadata = baseMetadata
 
 export const viewport: Viewport = {
   themeColor: '#0F766E',
@@ -36,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${manrope.variable} ${fraunces.variable} bg-background`}>
       <body className="font-sans antialiased">
+        <JsonLd data={organizationJsonLd()} />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

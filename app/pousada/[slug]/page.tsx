@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -5,29 +6,68 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { PousadaDetail } from '@/components/pousada/pousada-detail'
 import { Reveal } from '@/components/reveal'
-import { pousadas } from '@/lib/data'
+import { JsonLd } from '@/components/seo/json-ld'
+import {
+  getCurrentUser,
+  getPousada,
+  getPousadaSlugs,
+  getNearbyPousadas,
+  isFavoritePousada,
+} from '@/server/queries'
+import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { MapPin, Star } from 'lucide-react'
 
-export function generateStaticParams() {
-  return pousadas.map((p) => ({ slug: p.slug }))
+export const dynamic = 'force-dynamic'
+
+export async function generateStaticParams() {
+  const slugs = await getPousadaSlugs()
+  return slugs.map((slug) => ({ slug }))
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const pousada = await getPousada(slug)
+  if (!pousada) return { title: 'Pousada não encontrada' }
+  return pousadaMetadata(pousada)
 }
 
 export default async function PousadaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string }>
 }) {
   const { slug } = await params
-  const pousada = pousadas.find((p) => p.slug === slug)
+  const initialBooking = await searchParams
+  const [pousada, currentUser, favorite] = await Promise.all([
+    getPousada(slug),
+    getCurrentUser(),
+    isFavoritePousada(slug),
+  ])
   if (!pousada) notFound()
 
-  const nearby = pousadas.filter((p) => p.slug !== slug).slice(0, 3)
+  const nearby = await getNearbyPousadas(slug, 3)
 
   return (
     <div className="min-h-screen bg-background">
+      <JsonLd data={pousadaJsonLd(pousada)} />
       <SiteHeader forceSolid />
       <main>
-        <PousadaDetail pousada={pousada} />
+        <PousadaDetail
+          pousada={pousada}
+          initialBooking={{
+            checkin: initialBooking.checkin,
+            checkout: initialBooking.checkout,
+            guests: initialBooking.guests,
+          }}
+          favorite={favorite}
+          isLoggedIn={Boolean(currentUser)}
+        />
 
         {/* Nearby experiences */}
         <section className="bg-secondary/50 py-20 lg:py-24">

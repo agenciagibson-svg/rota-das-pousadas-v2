@@ -1,0 +1,118 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { motion } from 'motion/react'
+import { ArrowUpRight, Bot, CalendarCheck, Gauge, Hotel, LifeBuoy, Megaphone, Plus } from 'lucide-react'
+
+const ownerActions = [
+  {
+    label: 'Anunciar',
+    href: '/anunciar',
+    icon: Plus,
+    title: 'Coloque sua pousada na rota',
+    detail: 'Cadastro rapido, analise de curadoria e publicacao para receber reservas diretas.',
+    metric: '0% comissao',
+  },
+  {
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: Gauge,
+    title: 'Controle a operacao em um painel',
+    detail: 'Reservas, acomodacoes, financeiro e configuracoes no mesmo lugar.',
+    metric: '24h online',
+  },
+  {
+    label: 'Reservas',
+    href: '/dashboard/reservas',
+    icon: CalendarCheck,
+    title: 'Acompanhe cada reserva',
+    detail: 'Veja hospede, periodo, prazo de pagamento, status e acoes do proprietario.',
+    metric: 'tempo real',
+  },
+  {
+    label: 'Marketing',
+    href: '/dashboard/marketing',
+    icon: Megaphone,
+    title: 'Transforme baixa ocupacao em campanha',
+    detail: 'Sugestoes por temporada, feriados e oportunidades comerciais.',
+    metric: 'IA aplicada',
+  },
+  {
+    label: 'Suporte',
+    href: '/dashboard/mensagens',
+    icon: LifeBuoy,
+    title: 'Converse com hospedes e parceiros',
+    detail: 'Central para duvidas, historico por reserva e respostas rapidas.',
+    metric: 'humano + IA',
+  },
+]
+
+export function FooterOwnerCard() {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const active = ownerActions[activeIndex]
+  const ActiveIcon = active.icon
+
+  return (
+    <div className="rounded-2xl border border-linen/10 bg-linen/[0.06] p-4 shadow-floating">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-linen">Para pousadas</h4>
+          <p className="mt-1 text-xs leading-relaxed text-linen/55">Central do parceiro</p>
+        </div>
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <Hotel className="size-5" />
+        </span>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-linen/10 bg-stone-deep/55 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-gold">
+            <ActiveIcon className="size-4" />
+            {active.metric}
+          </span>
+          <Bot className="size-4 text-linen/40" />
+        </div>
+
+        <motion.div
+          key={active.label}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+        >
+          <p className="mt-3 text-pretty font-serif text-xl font-semibold leading-tight text-linen">
+            {active.title}
+          </p>
+          <p className="mt-3 min-h-14 text-sm leading-relaxed text-linen/62">{active.detail}</p>
+        </motion.div>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {ownerActions.map((action, index) => {
+          const Icon = action.icon
+          const selected = activeIndex === index
+          return (
+            <Link
+              key={action.label}
+              href={action.href}
+              onMouseEnter={() => setActiveIndex(index)}
+              onFocus={() => setActiveIndex(index)}
+              onClick={() => setActiveIndex(index)}
+              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                selected
+                  ? 'border-linen/35 bg-linen text-stone-deep'
+                  : 'border-linen/10 text-linen/65 hover:border-linen/25 hover:text-linen'
+              }`}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Icon className="size-4" />
+                {action.label}
+              </span>
+              <ArrowUpRight className="size-3.5 opacity-60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

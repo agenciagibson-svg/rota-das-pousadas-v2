@@ -1,12 +1,14 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, MapPin } from 'lucide-react'
-import { pousadas } from '@/lib/data'
+import type { Pousada } from '@/types'
 import { Reveal } from '@/components/reveal'
+import { Section } from '@/components/ui/container'
+import { Badge } from '@/components/ui/badge'
 
-export function FeaturedPousadas() {
+export function FeaturedPousadas({ pousadas }: { pousadas: Pousada[] }) {
   return (
-    <section id="pousadas" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+    <Section id="pousadas" className="py-20 lg:py-28">
       <Reveal>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
@@ -18,7 +20,7 @@ export function FeaturedPousadas() {
             </h2>
           </div>
           <Link
-            href="/pousada/refugio-das-nuvens"
+            href="/pousadas"
             className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
           >
             Ver todas as pousadas
@@ -56,12 +58,9 @@ export function FeaturedPousadas() {
                 </h3>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {p.tags.slice(0, 2).map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground"
-                    >
+                    <Badge key={t} variant="secondary" size="sm">
                       {t}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
                 <div className="mt-auto flex items-end justify-between pt-5">
@@ -78,6 +77,6 @@ export function FeaturedPousadas() {
           </Reveal>
         ))}
       </div>
-    </section>
+    </Section>
   )
 }

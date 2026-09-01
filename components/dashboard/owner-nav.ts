@@ -1,0 +1,93 @@
+import {
+  BedDouble,
+  Bot,
+  CalendarCheck,
+  LayoutDashboard,
+  Megaphone,
+  MessageSquare,
+  Settings,
+  Star,
+  UserRound,
+  Users2,
+  Wallet,
+} from 'lucide-react'
+import type { NavItem } from './shell'
+
+export type OwnerDashboardSection =
+  | 'overview'
+  | 'reservas'
+  | 'hospedes'
+  | 'financeiro'
+  | 'acomodacoes'
+  | 'membros'
+  | 'mensagens'
+  | 'avaliacoes'
+  | 'marketing'
+  | 'assistente'
+  | 'configuracoes'
+
+export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
+  return [
+    { label: 'Visão geral', icon: LayoutDashboard, href: '/dashboard', active: active === 'overview' },
+    {
+      label: 'Reservas',
+      icon: CalendarCheck,
+      href: '/dashboard/reservas',
+      active: active === 'reservas',
+    },
+    {
+      label: 'Hóspedes',
+      icon: UserRound,
+      href: '/dashboard/hospedes',
+      active: active === 'hospedes',
+    },
+    {
+      label: 'Financeiro',
+      icon: Wallet,
+      href: '/dashboard/financeiro',
+      active: active === 'financeiro',
+    },
+    {
+      label: 'Acomodações',
+      icon: BedDouble,
+      href: '/dashboard/acomodacoes',
+      active: active === 'acomodacoes',
+    },
+    {
+      label: 'Membros',
+      icon: Users2,
+      href: '/dashboard/membros',
+      active: active === 'membros',
+    },
+    {
+      label: 'Mensagens',
+      icon: MessageSquare,
+      href: '/dashboard/mensagens',
+      active: active === 'mensagens',
+    },
+    {
+      label: 'Avaliações',
+      icon: Star,
+      href: '/dashboard/avaliacoes',
+      active: active === 'avaliacoes',
+    },
+    {
+      label: 'Marketing',
+      icon: Megaphone,
+      href: '/dashboard/marketing',
+      active: active === 'marketing',
+    },
+    {
+      label: 'Assistente IA',
+      icon: Bot,
+      href: '/dashboard/assistente',
+      active: active === 'assistente',
+    },
+    {
+      label: 'Configurações',
+      icon: Settings,
+      href: '/dashboard/configuracoes',
+      active: active === 'configuracoes',
+    },
+  ]
+}

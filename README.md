@@ -1,33 +1,89 @@
-# rota-das-pousadas
+# Rota das Pousadas
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+> Cada destino tem uma história. Toda grande viagem começa por uma rota.
 
-## Built with v0
+Plataforma (SaaS) do maior ecossistema digital de pousadas do Brasil. Este
+repositório contém a base de produto: landing pública, página de detalhe de
+pousada, painel do proprietário e painel administrativo master.
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+Construído com **Next.js 16 (App Router)**, **React 19**, **TypeScript**,
+**Tailwind CSS v4** e um **Design System próprio**.
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_VGZOwSshitlloiEWllf4chAJ4pSW)
+## Stack
 
-## Getting Started
+| Camada | Tecnologia |
+|---|---|
+| Framework | Next.js 16 (App Router, Server Components) |
+| UI | React 19 + Tailwind CSS v4 + base-ui |
+| Animação | Motion (Framer Motion) |
+| Ícones | lucide-react |
+| Qualidade | ESLint 9 (flat) · Prettier · Husky · lint-staged · Commitlint |
 
-First, run the development server:
+## Começando
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+pnpm install       # instala dependências e configura o Husky (script prepare)
+pnpm dev           # ambiente de desenvolvimento em http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Scripts principais:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm build         # build de produção
+pnpm start         # servidor de produção
+pnpm lint          # ESLint
+pnpm typecheck     # TypeScript sem emitir
+pnpm format        # Prettier (escreve)
+pnpm format:check  # Prettier (verifica)
+```
 
-## Learn More
+Variáveis de ambiente (opcional em dev):
 
-To learn more, take a look at the following resources:
+```bash
+# .env.local
+NEXT_PUBLIC_SITE_URL=https://rotadaspousadas.com.br
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+## Estrutura
+
+Visão de alto nível — detalhes em [`docs/FolderStructure.md`](docs/FolderStructure.md):
+
+```
+app/         Rotas (App Router) + loading/error/not-found + SEO (robots, sitemap, manifest)
+components/  ui/ (Design System) · seo · seções por área
+features/    Domínios (pousadas, marketing, dashboard) — superfície de import
+services/    Camada de dados (mock hoje, DB/API amanhã) — server-only
+server/      Helpers de acesso a dados com cache por request
+actions/     Server Actions (padrão + envelope tipado)
+emails/      Templates de e-mail transacional
+hooks/       Hooks reutilizáveis
+lib/         Utilitários, tokens (TS), SEO, dados mock
+types/       Modelo de domínio (fonte da verdade)
+styles/      Design tokens (CSS)
+docs/        Documentação de engenharia
+```
+
+## Documentação
+
+- [Arquitetura](docs/Architecture.md)
+- [Estrutura de pastas](docs/FolderStructure.md)
+- [Design System](docs/DesignSystem.md)
+- [Como contribuir](docs/Contributing.md)
+- [Padrões de código](docs/CodingStandards.md)
+- [Auditoria técnica](AUDITORIA.md)
+
+## Convenções
+
+Commits seguem [Conventional Commits](https://www.conventionalcommits.org)
+(validados pelo Commitlint no hook `commit-msg`). Antes de cada commit, o
+`lint-staged` roda ESLint + Prettier nos arquivos alterados.
+
+## Status
+
+Base profissional pronta para receber funcionalidades de negócio (busca, reservas,
+autenticação, pagamentos). Nenhuma dessas funcionalidades está implementada ainda —
+o foco desta fase foi qualidade técnica, Design System e arquitetura escalável.
+
+---
+
+Projeto originado no [v0](https://v0.app) e elevado a base de produção.

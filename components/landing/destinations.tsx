@@ -1,12 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, MapPin, ArrowUpRight } from 'lucide-react'
-import { destinations } from '@/lib/data'
+import type { Destination } from '@/types'
 import { Reveal } from '@/components/reveal'
+import { Section } from '@/components/ui/container'
 
-export function Destinations() {
+export function Destinations({ destinations }: { destinations: Destination[] }) {
   return (
-    <section id="destinos" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+    <Section id="destinos" className="py-20 lg:py-28">
       <Reveal>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
@@ -77,6 +78,6 @@ export function Destinations() {
           )
         })}
       </div>
-    </section>
+    </Section>
   )
 }

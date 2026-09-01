@@ -1,0 +1,128 @@
+/**
+ * Server-side data-access helpers.
+ *
+ * Thin wrappers around the service layer that add request-level memoization
+ * (React `cache`) so the same data isn't fetched twice while rendering a single
+ * request. This is the layer Server Components and `generateMetadata` call.
+ *
+ * When a real backend arrives, add `unstable_cache`/`revalidate` here to get
+ * cross-request caching + ISR without touching components.
+ */
+import 'server-only'
+import { cache } from 'react'
+import * as pousadas from '@/services/pousadas.service'
+import * as destinations from '@/services/destinations.service'
+import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
+import { listMyBookings, getBookableRoom as bookableRoom } from '@/features/reservas/services/bookings.service'
+import {
+  getOwnerPousada as ownerPousada,
+  getOwnerSettings as ownerSettings,
+  listOwnerReservations,
+  getOwnerCalendar as ownerCalendar,
+  listOwnerReviews,
+} from '@/features/gestao/services/pms.service'
+import { listPending, isPlatformAdmin as platformAdmin } from '@/features/admin/services/admin.service'
+import { getFinance as ownerFinance } from '@/features/financeiro/services/finance.service'
+import { getOwnerRooms as ownerRooms, getHousekeepingRooms as housekeepingRooms } from '@/features/acomodacoes/services/rooms.service'
+import { listCategories } from '@/features/acomodacoes/services/categories.service'
+import { listBlocks } from '@/features/acomodacoes/services/blocks.service'
+import { listAmenitiesCatalog } from '@/repositories/rooms.repository'
+import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services/favorites.service'
+import { listMyFavoriteAlertStates } from '@/features/alertas/services/favorite-alerts.service'
+import { listTeam } from '@/features/membros/services/team.service'
+import { listGuests, getGuestProfile as guestProfile } from '@/features/hospedes/services/guests.service'
+import { getBookingDetailById } from '@/repositories/bookings.repository'
+import { requireCapability } from '@/features/acomodacoes/services/access'
+import { resolveTenantAccess } from '@/lib/auth/tenant-context'
+import { can } from '@/lib/auth/rbac'
+import type { ListQuery } from '@/types'
+import type { GuestFilters } from '@/features/hospedes/schemas'
+import type { GestaoReservationFilters } from '@/features/gestao/schemas'
+
+export const getPousadas = cache((query: ListQuery = {}) => pousadas.listPousadas(query))
+export const getPousada = cache((slug: string) => pousadas.getPousadaBySlug(slug))
+export const getPousadaSlugs = cache(() => pousadas.listPousadaSlugs())
+export const getNearbyPousadas = cache((slug: string, limit?: number) =>
+  pousadas.listNearbyPousadas(slug, limit),
+)
+
+export const getDestinations = cache(() => destinations.listDestinations())
+export const getDestination = cache((slug: string) => destinations.getDestinationBySlug(slug))
+export const getExperiences = cache(() => destinations.listExperiences())
+
+/** Usuário autenticado atual (sessão + profile + papéis), memoizado por request. */
+export const getCurrentUser = cache(() => currentUser())
+
+/** Reservas do usuário autenticado, memoizadas por request. */
+export const getMyBookings = cache(() => listMyBookings())
+
+/** Diária + capacidade de uma pousada para o fluxo de reserva. */
+export const getBookableRoom = cache((slug: string) => bookableRoom(slug))
+
+/** Gestão (PMS): pousada gerida, reservas e calendário do proprietário. */
+export const getOwnerPousada = cache(() => ownerPousada())
+export const getOwnerSettings = cache(() => ownerSettings())
+export const getOwnerReservations = cache((filters: GestaoReservationFilters = {}) => listOwnerReservations(filters))
+export const getOwnerCalendar = cache(() => ownerCalendar())
+export const getOwnerReviews = cache(() => listOwnerReviews())
+
+/** Admin: pousadas pendentes de aprovação + verificação de papel de plataforma. */
+export const getPendingPousadas = cache(() => listPending())
+export const isPlatformAdmin = cache(() => platformAdmin())
+
+/** Financeiro: resumo + extrato da pousada do proprietário. */
+export const getFinance = cache(() => ownerFinance())
+
+/** Acomodações: quartos, categorias e bloqueios da pousada ativa. */
+export const getOwnerRooms = cache(() => ownerRooms())
+export const getHousekeepingRooms = cache(() => housekeepingRooms())
+export const getActiveRole = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' ? state.membership.role : null
+})
+export const getOwnerCategories = cache(() => listCategories())
+export const getOwnerBlocks = cache(() => listBlocks())
+export const getAmenitiesCatalog = cache(() => listAmenitiesCatalog())
+export const canManageAccommodations = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'room:manage')
+})
+export const canChangeOperationalStatus = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'room:status:manage')
+})
+export const canManageBlocks = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'room:block:manage')
+})
+
+/** Equipe: membros da pousada ativa + se o usuário pode convidar. */
+export const getTeamMembers = cache(() => listTeam())
+export const getTenantAccess = cache(() => resolveTenantAccess())
+export const canInviteMembers = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'member:invite')
+})
+
+/** Hóspedes da pousada ativa. */
+export const getOwnerGuests = cache((filters: GuestFilters = {}) => listGuests(filters))
+export const getGuestProfile = cache((guestId: string) => guestProfile(guestId))
+export const canManageGuests = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'guest:manage')
+})
+
+/** Detalhe administrativo de uma reserva — precisa da pousada ativa para escopar (nunca confia só no id). */
+export const getOwnerReservationDetail = cache(async (bookingId: string) => {
+  const { pousadaId } = await requireCapability('booking:manage')
+  return getBookingDetailById(bookingId, pousadaId)
+})
+export const canManageBookings = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'booking:manage')
+})
+
+/** Favoritos do visitante autenticado. */
+export const isFavoritePousada = cache((slug: string) => getFavoriteState(slug))
+export const getMyFavorites = cache(() => listMyFavorites())
+export const getMyFavoriteAlertStates = cache(() => listMyFavoriteAlertStates())
