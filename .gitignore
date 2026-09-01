@@ -19,3 +19,6 @@ node_modules
 # Supabase CLI local link state (project ref, pooler URL — não é segredo, mas
 # é metadado específico do ambiente; não deve ir para o histórico do git)
 supabase/.temp/
+
+# Cache incremental do TypeScript
+*.tsbuildinfo
