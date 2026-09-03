@@ -95,7 +95,7 @@ export default async function PousadasPage({
               </div>
               <Link
                 href="/"
-                className="inline-flex w-fit rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                className="inline-flex w-fit rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:translate-y-0"
               >
                 Sortear outra
               </Link>
@@ -116,7 +116,7 @@ export default async function PousadasPage({
               </div>
               <Link
                 href="/#ofertas"
-                className="inline-flex w-fit rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground"
+                className="inline-flex w-fit rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-all hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-lg hover:shadow-accent/20 active:translate-y-0"
               >
                 Trocar oferta
               </Link>
@@ -226,7 +226,7 @@ export default async function PousadasPage({
             </p>
             <Link
               href="/pousadas"
-              className="mt-5 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+              className="mt-5 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:translate-y-0"
             >
               Ver todas
             </Link>

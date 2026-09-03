@@ -26,7 +26,7 @@ export function FavoriteButton({
       <Link
         href={`/login?next=${encodeURIComponent(`/favoritos/salvar/${slug}`)}`}
         className={cn(
-          'inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary',
+          'inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-all hover:-translate-y-0.5 hover:bg-secondary hover:shadow-md active:translate-y-0',
           className,
         )}
       >
@@ -56,7 +56,7 @@ export function FavoriteButton({
           })
         }}
         className={cn(
-          'inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold transition-colors',
+          'inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.97]',
           favorite
             ? 'bg-accent text-accent-foreground hover:brightness-105'
             : 'text-foreground hover:bg-secondary',
@@ -68,7 +68,12 @@ export function FavoriteButton({
         {isPending ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
-          <Heart className={cn('size-4', favorite && 'fill-current')} />
+          <Heart
+            className={cn(
+              'size-4 transition-transform duration-300',
+              favorite && 'scale-110 fill-current',
+            )}
+          />
         )}
         {favorite ? 'Salva' : 'Salvar'}
       </button>
