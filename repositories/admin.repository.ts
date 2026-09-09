@@ -1,7 +1,7 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { Enums } from '@/lib/supabase/database.types'
-import type { PendingPousada } from '@/features/admin/types'
+import type { AdminPousadaRow, PendingPousada, PlatformHost } from '@/features/admin/types'
 
 export type PousadaStatus = Enums<'pousada_status'>
 
@@ -37,4 +37,73 @@ export async function setPousadaStatus(id: string, status: PousadaStatus): Promi
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.from('pousadas').update({ status }).eq('id', id)
   if (error) throw error
+}
+
+/**
+ * Todas as pousadas da plataforma, qualquer status (RLS já libera leitura
+ * plataforma-wide via `auth_is_platform_admin()`). Nome do proprietário vem
+ * de uma segunda consulta + join em memória — mesmo padrão de
+ * `listBookingsByGuest` (repositories/bookings.repository.ts), já que o
+ * client do Supabase não faz join arbitrário entre memberships/profiles e
+ * pousadas numa única chamada.
+ */
+export async function listAllPousadasForAdmin(filter?: PousadaStatus): Promise<AdminPousadaRow[]> {
+  const supabase = await createSupabaseServerClient()
+
+  let query = supabase
+    .from('pousadas')
+    .select('id, slug, name, city, state, status, image, created_at')
+    .order('created_at', { ascending: false })
+  if (filter) query = query.eq('status', filter)
+
+  const { data: rows, error } = await query
+  if (error) throw error
+  if (!rows || rows.length === 0) return []
+
+  const pousadaIds = rows.map((r) => r.id)
+  const { data: owners } = await supabase
+    .from('memberships')
+    .select('pousada_id, user_id, profiles(full_name)')
+    .eq('role', 'proprietario')
+    .in('pousada_id', pousadaIds)
+  const ownerByPousada = new Map((owners ?? []).map((o) => [o.pousada_id, o.profiles[0]?.full_name ?? null]))
+
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name: r.name,
+    city: r.city,
+    state: r.state,
+    status: r.status,
+    image: r.image,
+    ownerName: ownerByPousada.get(r.id) ?? null,
+    createdAt: r.created_at,
+  }))
+}
+
+type PlatformHostRow = {
+  user_id: string
+  full_name: string
+  email: string
+  pousada_id: string
+  pousada_name: string
+  pousada_slug: string
+  created_at: string
+}
+
+/** Anfitriões (proprietários) ativos em toda a plataforma — RPC 0040 (e-mail vem de auth.users). */
+export async function listPlatformHosts(): Promise<PlatformHost[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('list_platform_hosts')
+  if (error) throw error
+  const rows = (data ?? []) as PlatformHostRow[]
+  return rows.map((r) => ({
+    userId: r.user_id,
+    fullName: r.full_name,
+    email: r.email,
+    pousadaId: r.pousada_id,
+    pousadaName: r.pousada_name,
+    pousadaSlug: r.pousada_slug,
+    createdAt: r.created_at,
+  }))
 }

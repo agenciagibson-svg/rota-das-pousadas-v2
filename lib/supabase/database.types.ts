@@ -1694,6 +1694,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_platform_hosts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          pousada_id: string
+          pousada_name: string
+          pousada_slug: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }[]
+      }
       list_public_rooms: {
         Args: { p_slug: string }
         Returns: {

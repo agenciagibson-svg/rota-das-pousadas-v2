@@ -2,13 +2,20 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAction } from '@/actions/create-action'
-import { grantAccessSchema, grantIdSchema, pousadaIdSchema, createPousadaAdminSchema } from './schemas'
+import {
+  grantAccessSchema,
+  grantIdSchema,
+  pousadaIdSchema,
+  createPousadaAdminSchema,
+  changePousadaStatusSchema,
+} from './schemas'
 import {
   approvePousada,
   rejectPousada,
   grantSensitiveAccess,
   revokeSensitiveAccess,
   createPousadaAsAdmin,
+  changePousadaStatus,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -47,4 +54,13 @@ export const rejectPousadaAction = createAction(pousadaIdSchema, async ({ id }) 
   revalidatePath('/sitemap.xml')
   if (slug) revalidatePath(`/pousada/${slug}`)
   return { id }
+})
+
+/** Suspender/reativar/arquivar uma pousada pela tela "Pousadas" do admin. */
+export const changePousadaStatusAction = createAction(changePousadaStatusSchema, async ({ id, status }) => {
+  await changePousadaStatus(id, status)
+  revalidatePath('/admin/pousadas')
+  revalidatePath('/')
+  revalidatePath('/sitemap.xml')
+  return { id, status }
 })

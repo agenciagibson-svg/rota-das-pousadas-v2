@@ -1,64 +1,57 @@
 'use client'
 
 import Link from 'next/link'
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  Globe,
-  BarChart3,
-  Settings,
-  TrendingUp,
-  DollarSign,
-  CheckCircle2,
-  Bot,
-  MapPin,
-  Star,
-  Plus,
-} from 'lucide-react'
-import { DashboardShell, type NavItem } from '@/components/dashboard/shell'
+import { Building2, CheckCircle2, DollarSign, MapPin, Plus, Star, TrendingDown, TrendingUp, Users } from 'lucide-react'
+import { DashboardShell } from '@/components/dashboard/shell'
+import { adminNav } from '../admin-nav'
 import { AreaChart, BarChart, Donut } from '@/components/dashboard/charts'
-import { destinations, pousadas } from '@/lib/data'
 import { Card } from '@/components/ui/card'
 import { IconBadge } from '@/components/ui/icon-badge'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { PendingPousadas } from './pending-pousadas'
-import type { PendingPousada } from '../types'
+import type { PendingPousada, PlatformOverview } from '../types'
 
-const nav: NavItem[] = [
-  { label: 'Visão Geral', icon: LayoutDashboard, active: true },
-  { label: 'Pousadas', icon: Building2 },
-  { label: 'Anfitriões', icon: Users },
-  { label: 'Destinos', icon: Globe },
-  { label: 'Relatórios', icon: BarChart3 },
-  { label: 'Configurações', icon: Settings },
-]
+/** `bookings.fee`/`total` são guardados em reais inteiros, não centavos — ver features/reservas/pricing.ts. */
+function formatCurrency(value: number): string {
+  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(1)}mil`
+  return `R$ ${value.toFixed(0)}`
+}
 
-const kpis = [
-  { label: 'Receita da plataforma', value: 'R$ 2,4M', delta: '+18,2%', icon: DollarSign },
-  { label: 'Pousadas ativas', value: '719', delta: '+42', icon: Building2 },
-  { label: 'Reservas no mês', value: '9.318', delta: '+11,4%', icon: CheckCircle2 },
-  { label: 'Novos anfitriões', value: '86', delta: '+9', icon: Users },
-]
-
-const revenue = [120, 138, 132, 160, 175, 168, 190, 205, 198, 224, 240, 262]
-const bookingsByRegion = [4200, 3100, 2600, 1800, 1200]
-const regionLabels = ['SE', 'S', 'CO', 'NE', 'N']
+function formatDelta(pct: number | null): { label: string; positive: boolean } {
+  if (pct === null) return { label: '—', positive: true }
+  return { label: `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`, positive: pct >= 0 }
+}
 
 export function AdminView({
   displayName,
   pending,
   canCreatePousada,
+  overview,
 }: {
   displayName: string
   pending: PendingPousada[]
   canCreatePousada: boolean
+  overview: PlatformOverview
 }) {
+  const revenueDelta = formatDelta(overview.kpis.revenueDeltaPct)
+  const kpis = [
+    {
+      label: 'Receita da plataforma (mês)',
+      value: formatCurrency(overview.kpis.revenueThisMonth),
+      delta: revenueDelta,
+      icon: DollarSign,
+    },
+    { label: 'Pousadas ativas', value: String(overview.kpis.activePousadas), delta: null, icon: Building2 },
+    { label: 'Reservas no mês', value: String(overview.kpis.bookingsThisMonth), delta: null, icon: CheckCircle2 },
+    { label: 'Novos anfitriões (mês)', value: String(overview.kpis.newHostsThisMonth), delta: null, icon: Users },
+  ]
+
   return (
     <DashboardShell
-      nav={nav}
+      nav={adminNav('overview')}
       brandLabel="Rota Admin"
       brandSub="Painel Master"
       title="Visão geral da plataforma"
@@ -74,10 +67,12 @@ export function AdminView({
                 <IconBadge tone="ocean" size="md">
                   <k.icon className="size-5" />
                 </IconBadge>
-                <Badge variant="primarySoft" size="md" className="gap-1 px-2 py-0.5 font-semibold">
-                  <TrendingUp className="size-3" />
-                  {k.delta}
-                </Badge>
+                {k.delta && (
+                  <Badge variant="primarySoft" size="md" className="gap-1 px-2 py-0.5 font-semibold">
+                    {k.delta.positive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                    {k.delta.label}
+                  </Badge>
+                )}
               </div>
               <div className="mt-4 text-2xl font-semibold text-foreground">{k.value}</div>
               <div className="text-sm text-muted-foreground">{k.label}</div>
@@ -90,20 +85,19 @@ export function AdminView({
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="font-serif text-lg font-semibold text-foreground">Receita mensal</h3>
-                <p className="text-sm text-muted-foreground">Últimos 12 meses (R$ mil)</p>
+                <p className="text-sm text-muted-foreground">Últimos 12 meses</p>
               </div>
-              <span className="text-sm font-semibold text-ocean">+18,2%</span>
             </div>
             <div className="h-40">
-              <AreaChart data={revenue} color="var(--ocean)" />
+              <AreaChart data={overview.revenueByMonth.map((m) => m.amount)} color="var(--ocean)" />
             </div>
           </Card>
 
           <Card className="p-6">
             <h3 className="font-serif text-lg font-semibold text-foreground">Taxa de ocupação</h3>
-            <p className="text-sm text-muted-foreground">Média da rede</p>
+            <p className="text-sm text-muted-foreground">Aproximação da rede (mês atual)</p>
             <div className="mt-2 flex justify-center">
-              <Donut value={82} color="var(--ocean)" />
+              <Donut value={overview.occupancyRate} color="var(--ocean)" />
             </div>
           </Card>
         </div>
@@ -111,13 +105,16 @@ export function AdminView({
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="p-6">
             <h3 className="font-serif text-lg font-semibold text-foreground">Reservas por região</h3>
-            <p className="mb-4 text-sm text-muted-foreground">Distribuição nacional</p>
+            <p className="mb-4 text-sm text-muted-foreground">Top 5 estados</p>
             <div className="h-36">
-              <BarChart data={bookingsByRegion} labels={regionLabels} color="var(--ocean)" />
+              <BarChart
+                data={overview.bookingsByRegion.map((r) => r.count)}
+                labels={overview.bookingsByRegion.map((r) => r.state)}
+                color="var(--ocean)"
+              />
             </div>
           </Card>
 
-          {/* Aprovações pendentes — dados reais */}
           <Card className="p-6 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-serif text-lg font-semibold text-foreground">Aprovações pendentes</h3>
@@ -147,67 +144,58 @@ export function AdminView({
           </Card>
         )}
 
-        <div className="rounded-2xl border border-ocean/20 bg-ocean/5 p-6">
-          <div className="flex items-start gap-4">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ocean text-primary-foreground">
-              <Bot className="size-5" />
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-serif text-lg font-semibold text-foreground">Insight da IA Rota</h3>
-                <span className="rounded-full bg-ocean/15 px-2 py-0.5 text-[11px] font-semibold text-ocean">Beta</span>
-              </div>
-              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                A demanda por <strong className="text-foreground">destinos de serra no inverno</strong> cresceu 24% na
-                última semana. Recomendamos destacar Monte Verde e Campos do Jordão na home.
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="p-6">
             <h3 className="mb-4 font-serif text-lg font-semibold text-foreground">Destinos por volume</h3>
-            <div className="space-y-3">
-              {destinations.slice(0, 5).map((d) => {
-                const pct = Math.min(100, Math.round((d.pousadas / 212) * 100))
-                return (
-                  <div key={d.slug}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="font-medium text-foreground">
-                        {d.name} <span className="text-muted-foreground">· {d.state}</span>
-                      </span>
-                      <span className="text-muted-foreground">{d.pousadas}</span>
+            {overview.featuredDestinations.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum destino cadastrado ainda.</p>
+            ) : (
+              <div className="space-y-3">
+                {overview.featuredDestinations.map((d) => {
+                  const max = overview.featuredDestinations[0]?.pousadas || 1
+                  const pct = Math.min(100, Math.round((d.pousadas / max) * 100))
+                  return (
+                    <div key={d.slug}>
+                      <div className="mb-1 flex items-center justify-between text-sm">
+                        <span className="font-medium text-foreground">
+                          {d.name} <span className="text-muted-foreground">· {d.state}</span>
+                        </span>
+                        <span className="text-muted-foreground">{d.pousadas}</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                        <div className="h-full rounded-full bg-ocean" style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full rounded-full bg-ocean" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </Card>
 
           <Card className="p-6">
             <h3 className="mb-4 font-serif text-lg font-semibold text-foreground">Pousadas em destaque</h3>
-            <div className="space-y-3">
-              {pousadas.map((p) => (
-                <div key={p.slug} className="flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.image || '/placeholder.svg'} alt={p.name} className="size-12 rounded-lg object-cover" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium text-foreground">{p.name}</div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="size-3" /> {p.city}, {p.state}
+            {overview.featuredPousadas.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma pousada publicada ainda.</p>
+            ) : (
+              <div className="space-y-3">
+                {overview.featuredPousadas.map((p) => (
+                  <div key={p.slug} className="flex items-center gap-3 rounded-xl bg-secondary/50 p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.image || '/placeholder.svg'} alt={p.name} className="size-12 rounded-lg object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-foreground">{p.name}</div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="size-3" /> {p.city}, {p.state}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                      <Star className="size-4 fill-gold text-gold" />
+                      {p.rating.toFixed(1)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm font-semibold text-foreground">
-                    <Star className="size-4 fill-gold text-gold" />
-                    {p.rating.toFixed(1)}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       </div>

@@ -5,6 +5,13 @@ export const pousadaIdSchema = z.object({
 })
 export type PousadaIdInput = z.infer<typeof pousadaIdSchema>
 
+/** Status que a equipe da plataforma pode atribuir manualmente (tela "Pousadas"). */
+export const changePousadaStatusSchema = z.object({
+  id: z.string().uuid('Identificador inválido.'),
+  status: z.enum(['rascunho', 'em_analise', 'aprovada', 'publicada', 'suspensa', 'arquivada', 'reprovada']),
+})
+export type ChangePousadaStatusInput = z.infer<typeof changePousadaStatusSchema>
+
 export const grantAccessSchema = z.object({
   pousadaId: z.string().uuid('Identificador inválido.'),
   reason: z.string().trim().min(10, 'Descreva o motivo do acesso (mínimo 10 caracteres).'),
