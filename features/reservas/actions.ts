@@ -19,9 +19,9 @@ import { calculateBookingPrice } from './pricing'
  * retorna `ActionResult`. A navegação pós-sucesso é feita no cliente.
  */
 export const createBookingAction = createAction(createBookingSchema, async (input) => {
-  const { code } = await createBooking(input)
+  const { id, code } = await createBooking(input)
   revalidatePath('/minhas-reservas')
-  return { code, redirectTo: '/minhas-reservas' as const }
+  return { code, redirectTo: `/pousada/${input.pousadaSlug}/reservar/${id}/pagamento` }
 })
 
 /** Cancela uma reserva pendente do hóspede autenticado. */

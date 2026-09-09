@@ -1033,6 +1033,69 @@ export type Database = {
           },
         ]
       }
+      pousada_payment_accounts: {
+        Row: {
+          access_token: string | null
+          connected_at: string | null
+          connected_by: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          live_mode: boolean
+          mp_user_id: string | null
+          pousada_id: string
+          provider: string
+          public_key: string | null
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          live_mode?: boolean
+          mp_user_id?: string | null
+          pousada_id: string
+          provider?: string
+          public_key?: string | null
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          live_mode?: boolean
+          mp_user_id?: string | null
+          pousada_id?: string
+          provider?: string
+          public_key?: string | null
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pousada_payment_accounts_connected_by_fkey"
+            columns: ["connected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pousada_payment_accounts_pousada_id_fkey"
+            columns: ["pousada_id"]
+            isOneToOne: true
+            referencedRelation: "pousadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pousadas: {
         Row: {
           address: string
@@ -1612,6 +1675,10 @@ export type Database = {
         Returns: Json
       }
       expire_pending_booking: { Args: { p_booking_id: string }; Returns: Json }
+      get_pousada_payment_context: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
       invite_membership: {
         Args: {
           p_email: string
@@ -1661,8 +1728,31 @@ export type Database = {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
       }
+      record_payment_and_confirm_booking: {
+        Args: {
+          p_amount: number
+          p_booking_id: string
+          p_method: string
+          p_provider_ref: string
+          p_raw?: Json
+          p_status: Database["public"]["Enums"]["payment_status"]
+        }
+        Returns: Json
+      }
       revoke_member: {
         Args: { p_membership_id: string; p_pousada_id: string }
+        Returns: Json
+      }
+      save_payment_account: {
+        Args: {
+          p_access_token: string
+          p_expires_at: string
+          p_live_mode: boolean
+          p_mp_user_id: string
+          p_pousada_id: string
+          p_public_key: string
+          p_refresh_token: string
+        }
         Returns: Json
       }
       set_booking_companions: {
@@ -1839,12 +1929,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1868,11 +1958,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1893,11 +1983,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1918,11 +2008,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1935,11 +2025,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

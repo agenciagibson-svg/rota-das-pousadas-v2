@@ -36,7 +36,7 @@ function paymentDueAt(): string {
  * TUDO de novo no banco (disponibilidade real, capacidade, conflito),
  * nunca confia apenas neste cálculo do servidor de aplicação.
  */
-export async function createBooking(input: CreateBookingInput): Promise<{ code: string }> {
+export async function createBooking(input: CreateBookingInput): Promise<{ id: string; code: string }> {
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login para concluir a reserva.')
 
@@ -58,7 +58,7 @@ export async function createBooking(input: CreateBookingInput): Promise<{ code: 
     source: 'public_booking',
   })
 
-  const { code } = await createBookingRpc({
+  const { id, code } = await createBookingRpc({
     pousadaId: bookable.pousadaId,
     roomId: bookable.roomId,
     responsibleGuestId: guestId,
@@ -81,7 +81,7 @@ export async function createBooking(input: CreateBookingInput): Promise<{ code: 
     paymentDueAt: paymentDueAt(),
   })
 
-  return { code }
+  return { id, code }
 }
 
 /**

@@ -246,6 +246,40 @@ export async function getBookingByGuest(
   return { id: data.id, status: data.status as BookingStatus, paymentDueAt: data.payment_due_at }
 }
 
+/** Dados mínimos pro checkout de pagamento — mesma regra de coluna do hóspede: nunca campos internos. */
+export type BookingForCheckout = {
+  id: string
+  code: string
+  pousadaId: string
+  status: BookingStatus
+  total: number
+  fee: number
+  guestName: string | null
+  guestEmail: string | null
+}
+
+export async function getBookingForCheckout(bookingId: string, guestId: string): Promise<BookingForCheckout | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('id, code, pousada_id, status, total, fee, guest_name, guest_email')
+    .eq('id', bookingId)
+    .eq('guest_id', guestId)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return {
+    id: data.id,
+    code: data.code,
+    pousadaId: data.pousada_id,
+    status: data.status as BookingStatus,
+    total: Number(data.total),
+    fee: Number(data.fee),
+    guestName: data.guest_name,
+    guestEmail: data.guest_email,
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Leitura administrativa completa (/dashboard/reservas/[id]) — só alcançável
 // por quem tem acesso operacional à pousada (garantido pela RLS de bookings_read).

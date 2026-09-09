@@ -1,10 +1,11 @@
 'use client'
 
-import { Clock3, Mail, Phone, Settings } from 'lucide-react'
+import { Clock3, Mail, Phone, Settings, Wallet } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ConnectMpButton } from '@/features/pagamentos/components/connect-mp-button'
 import type { OwnerPousadaSettings } from '../types'
 import { OwnerSettingsForm } from './owner-settings-form'
 
@@ -12,10 +13,12 @@ export function OwnerSettingsView({
   displayName,
   pousadaName,
   settings,
+  paymentAccount,
 }: {
   displayName: string
   pousadaName: string
   settings: OwnerPousadaSettings | null
+  paymentAccount: { connected: boolean; liveMode: boolean; canConnect: boolean } | null
 }) {
   return (
     <DashboardShell
@@ -71,6 +74,33 @@ export function OwnerSettingsView({
               <p className="mt-2 text-sm text-muted-foreground">
                 {settings.notificationEmail || 'E-mail de notificação não informado.'}
               </p>
+            </Card>
+            <Card className="p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Wallet className="size-4 text-primary" />
+                Pagamentos
+              </div>
+              {paymentAccount?.connected ? (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Conta Mercado Pago conectada{paymentAccount.liveMode ? '' : ' (modo de teste)'}. Os pagamentos das
+                  reservas caem direto nela.
+                </p>
+              ) : (
+                <>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Conecte sua conta Mercado Pago para receber o pagamento das reservas diretamente.
+                  </p>
+                  {paymentAccount?.canConnect ? (
+                    <div className="mt-3">
+                      <ConnectMpButton />
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Só o proprietário pode conectar a conta de pagamento.
+                    </p>
+                  )}
+                </>
+              )}
             </Card>
           </div>
         </div>

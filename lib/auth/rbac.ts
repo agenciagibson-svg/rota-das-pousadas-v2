@@ -66,6 +66,7 @@ export type Action =
   | 'availability:check'
   | 'booking:manage'
   | 'booking:no_show'
+  | 'payment:connect_account'
 
 /** Papéis que operam no escopo de uma pousada (tenant). */
 export const TENANT_ROLES: readonly Role[] = [
@@ -97,6 +98,7 @@ const MATRIX: Record<Role, Action[]> = {
     'catalog:view',
     'search:run',
     'payout:receive',
+    'payment:connect_account',
     'pousada:create',
     'pousada:edit',
     'pousada:delete',
@@ -201,6 +203,7 @@ const MATRIX: Record<Role, Action[]> = {
     'booking:create',
     'booking:cancel',
     'payout:receive',
+    'payment:connect_account',
     'pousada:create',
     'pousada:edit',
     'pousada:delete',

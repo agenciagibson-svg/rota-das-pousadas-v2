@@ -13,6 +13,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./', import.meta.url)),
+      // `server-only` é um alias interno do Next.js, não um pacote npm real —
+      // o Vite puro não resolve sozinho. Ver lib/testing/server-only-stub.ts.
+      'server-only': fileURLToPath(new URL('./lib/testing/server-only-stub.ts', import.meta.url)),
     },
   },
 })

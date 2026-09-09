@@ -93,6 +93,14 @@ describe('rbac.can', () => {
     expect(can('recepcionista', 'booking:no_show')).toBe(true)
     expect(can('viajante', 'booking:no_show')).toBe(false)
   })
+
+  it('somente proprietario/master conectam conta de pagamento — muda quem recebe o dinheiro', () => {
+    expect(can('proprietario', 'payment:connect_account')).toBe(true)
+    expect(can('master', 'payment:connect_account')).toBe(true)
+    for (const role of ['admin_pousada', 'financeiro_pousada', 'recepcionista', 'governanca'] as Role[]) {
+      expect(can(role, 'payment:connect_account')).toBe(false)
+    }
+  })
 })
 
 describe('rbac.canAny', () => {
