@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { DashboardShell } from '@/components/dashboard/shell'
-import { adminNav } from '@/features/admin/admin-nav'
+import { Users } from 'lucide-react'
+import { AdminShell } from '@/features/admin/components/admin-shell'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Users } from 'lucide-react'
 import { listHostsAdmin } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
@@ -17,14 +16,11 @@ export default async function AdminAnfitrioesPage() {
   const [user, hosts] = await Promise.all([getCurrentUser(), listHostsAdmin()])
 
   return (
-    <DashboardShell
-      nav={adminNav('anfitrioes')}
-      brandLabel="Rota Admin"
-      brandSub="Painel Master"
+    <AdminShell
+      active="anfitrioes"
       title="Anfitriões"
       subtitle="Proprietários ativos em toda a plataforma"
-      accent="ocean"
-      user={{ name: user?.name || user?.email || 'Equipe', role: 'Administrador' }}
+      displayName={user?.name || user?.email || 'Equipe'}
     >
       <Card className="p-6">
         {hosts.length === 0 ? (
@@ -60,6 +56,6 @@ export default async function AdminAnfitrioesPage() {
           </div>
         )}
       </Card>
-    </DashboardShell>
+    </AdminShell>
   )
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { DashboardShell } from '@/components/dashboard/shell'
-import { adminNav } from '@/features/admin/admin-nav'
+import { AdminShell } from '@/features/admin/components/admin-shell'
 import { Card } from '@/components/ui/card'
 import { PousadasTable } from '@/features/admin/components/pousadas-table'
 import { listPousadasAdmin } from '@/features/admin/services/admin.service'
@@ -32,18 +31,15 @@ export default async function AdminPousadasPage({
   const [user, pousadas] = await Promise.all([getCurrentUser(), listPousadasAdmin(filter)])
 
   return (
-    <DashboardShell
-      nav={adminNav('pousadas')}
-      brandLabel="Rota Admin"
-      brandSub="Painel Master"
+    <AdminShell
+      active="pousadas"
       title="Pousadas"
       subtitle="Todas as pousadas da plataforma, qualquer status"
-      accent="ocean"
-      user={{ name: user?.name || user?.email || 'Equipe', role: 'Administrador' }}
+      displayName={user?.name || user?.email || 'Equipe'}
     >
       <Card className="p-6">
         <PousadasTable items={pousadas} />
       </Card>
-    </DashboardShell>
+    </AdminShell>
   )
 }

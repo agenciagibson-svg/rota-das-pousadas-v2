@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { BarChart3 } from 'lucide-react'
-import { DashboardShell } from '@/components/dashboard/shell'
-import { adminNav } from '@/features/admin/admin-nav'
+import { AdminShell } from '@/features/admin/components/admin-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getCurrentUser } from '@/server/queries'
 
@@ -14,20 +13,17 @@ export default async function AdminRelatoriosPage() {
   const user = await getCurrentUser()
 
   return (
-    <DashboardShell
-      nav={adminNav('relatorios')}
-      brandLabel="Rota Admin"
-      brandSub="Painel Master"
+    <AdminShell
+      active="relatorios"
       title="Relatórios"
       subtitle="Exportações e análises detalhadas"
-      accent="ocean"
-      user={{ name: user?.name || user?.email || 'Equipe', role: 'Administrador' }}
+      displayName={user?.name || user?.email || 'Equipe'}
     >
       <EmptyState
         icon={BarChart3}
         title="Em breve"
         description="Relatórios exportáveis (financeiro, ocupação, aquisição) ainda não foram construídos."
       />
-    </DashboardShell>
+    </AdminShell>
   )
 }
