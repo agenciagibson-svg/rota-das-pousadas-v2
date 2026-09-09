@@ -89,18 +89,12 @@ export function Editorial() {
                 Junte-se ao maior ecossistema digital de pousadas do país. Gestão de reservas,
                 marketing com IA e um público apaixonado por viajar.
               </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <div className="mt-8 flex items-center justify-center">
                 <Link
-                  href="/dashboard"
+                  href="/parceiros/login"
                   className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105"
                 >
                   Anunciar gratuitamente
-                </Link>
-                <Link
-                  href="/admin"
-                  className="rounded-full border border-linen/20 px-7 py-3.5 text-sm font-semibold text-linen transition-colors hover:bg-linen/10"
-                >
-                  Ver painel executivo
                 </Link>
               </div>
             </div>

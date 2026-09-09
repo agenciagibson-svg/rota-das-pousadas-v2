@@ -1,20 +1,17 @@
-import { redirect } from 'next/navigation'
 import { getCurrentUser, getPendingPousadas } from '@/server/queries'
 import { AdminView } from '@/features/admin/components/admin-view'
 import { can } from '@/lib/auth/rbac'
 
 export default async function AdminPage() {
+  // O layout do grupo protegido já garante `platformRole` — aqui só buscamos os dados.
   const user = await getCurrentUser()
-  // Acesso fechado: apenas equipe da plataforma (platform_role) entra no admin.
-  if (!user?.platformRole) redirect('/dashboard')
-
   const pending = await getPendingPousadas()
 
   return (
     <AdminView
-      displayName={user.name || user.email}
+      displayName={user?.name || user?.email || 'Equipe'}
       pending={pending}
-      canCreatePousada={can(user.platformRole, 'pousada:create')}
+      canCreatePousada={Boolean(user?.platformRole && can(user.platformRole, 'pousada:create'))}
     />
   )
 }

@@ -50,8 +50,20 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   return response
 }
 
-/** Rotas que exigem autenticação. Autorização fina (papéis) fica no RBAC + RLS. */
-const PROTECTED = ['/dashboard', '/admin', '/minhas-reservas', '/anunciar']
+/**
+ * Rotas que exigem autenticação, e pra qual login dedicado mandar quem não
+ * está logado — três portas de entrada (hóspede/parceiro/admin), cada
+ * prefixo cai na sua. Autorização fina (papéis) fica no RBAC + RLS.
+ */
+const PROTECTED: { prefix: string; loginPath: string }[] = [
+  { prefix: '/admin', loginPath: '/admin/login' },
+  { prefix: '/dashboard', loginPath: '/parceiros/login' },
+  { prefix: '/minhas-reservas', loginPath: '/login' },
+  { prefix: '/anunciar', loginPath: '/login' },
+]
+
+/** Páginas de login dedicadas — sempre públicas, mesmo vivendo sob um prefixo protegido. */
+const PUBLIC_AUTH_PAGES = ['/admin/login']
 
 export default async function proxy(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -60,11 +72,13 @@ export default async function proxy(request: NextRequest) {
 
   const { response, user } = await updateSession(request)
   const path = request.nextUrl.pathname
-  const needsAuth = PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))
+  const matched = PUBLIC_AUTH_PAGES.includes(path)
+    ? undefined
+    : PROTECTED.find((p) => path === p.prefix || path.startsWith(`${p.prefix}/`))
 
-  if (needsAuth && !user) {
+  if (matched && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = matched.loginPath
     url.searchParams.set('next', path)
     return applySecurityHeaders(NextResponse.redirect(url))
   }

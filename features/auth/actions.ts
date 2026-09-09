@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createAction } from '@/actions/create-action'
+import { getCurrentUser } from './services/auth.service'
 import { loginSchema, signupSchema } from './schemas'
 
 /**
@@ -21,6 +22,31 @@ export const signInAction = createAction(loginSchema, async (input) => {
   if (error) throw new Error('E-mail ou senha inválidos.')
   revalidatePath('/', 'layout')
   return { redirectTo: '/minhas-reservas' as const }
+})
+
+/**
+ * Login do painel administrativo. Diferente do hóspede/parceiro: a conta
+ * pode ter senha certa e mesmo assim não ter acesso — contas de admin são
+ * provisionadas só por SQL (docs/features/onboarding-admin.md), então aqui
+ * confirmamos `platformRole` DEPOIS da senha bater, e deslogamos de novo se
+ * não for staff, em vez de deixar uma sessão autenticada sem propósito.
+ */
+export const signInAdminAction = createAction(loginSchema, async (input) => {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.auth.signInWithPassword({
+    email: input.email,
+    password: input.password,
+  })
+  if (error) throw new Error('E-mail ou senha inválidos.')
+
+  const user = await getCurrentUser()
+  if (!user?.platformRole) {
+    await supabase.auth.signOut()
+    throw new Error('Esta conta não tem acesso ao painel administrativo.')
+  }
+
+  revalidatePath('/', 'layout')
+  return { redirectTo: '/admin' as const }
 })
 
 export const signUpAction = createAction(signupSchema, async (input) => {

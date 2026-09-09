@@ -6,19 +6,29 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { loginSchema, type LoginInput } from '../schemas'
-import { signInAction } from '../actions'
+import { signInAction, signInAdminAction } from '../actions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
+type LoginVariant = 'guest' | 'partner' | 'admin'
+
 type LoginFormProps = {
   next?: string
+  variant?: LoginVariant
 }
 
 function getSafeNext(next?: string | null) {
   return next?.startsWith('/') ? next : null
 }
 
-export function LoginForm({ next }: LoginFormProps) {
+/** Destino padrão pós-login por variante — só entra em jogo quando não há `?next=`. */
+const DEFAULT_REDIRECT: Record<LoginVariant, string> = {
+  guest: '/minhas-reservas',
+  partner: '/dashboard',
+  admin: '/admin',
+}
+
+export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
   const router = useRouter()
   const safeNext = getSafeNext(next)
   const signupHref = safeNext ? `/cadastro?next=${encodeURIComponent(safeNext)}` : '/cadastro'
@@ -34,12 +44,15 @@ export function LoginForm({ next }: LoginFormProps) {
 
   async function onSubmit(values: LoginInput) {
     setFormError(null)
-    const result = await signInAction(values)
+    // Admin precisa confirmar platformRole no servidor DEPOIS da senha bater
+    // (e desloga se não for staff) — hóspede/parceiro reaproveitam a mesma
+    // action, só muda o destino do redirect no cliente.
+    const result = variant === 'admin' ? await signInAdminAction(values) : await signInAction(values)
     if (!result.ok) {
       setFormError(result.error)
       return
     }
-    router.push(safeNext ?? result.data.redirectTo)
+    router.push(safeNext ?? DEFAULT_REDIRECT[variant])
     router.refresh()
   }
 
@@ -65,12 +78,17 @@ export function LoginForm({ next }: LoginFormProps) {
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Entrando…' : 'Entrar'}
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Não tem conta?{' '}
-        <Link href={signupHref} className="font-semibold text-primary hover:underline">
-          Criar conta
-        </Link>
-      </p>
+      {variant !== 'admin' && (
+        <p className="text-center text-sm text-muted-foreground">
+          Não tem conta?{' '}
+          <Link
+            href={variant === 'partner' ? '/cadastro?next=/anunciar' : signupHref}
+            className="font-semibold text-primary hover:underline"
+          >
+            {variant === 'partner' ? 'Cadastrar minha pousada' : 'Criar conta'}
+          </Link>
+        </p>
+      )}
     </form>
   )
 }

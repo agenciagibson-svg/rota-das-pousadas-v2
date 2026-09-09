@@ -14,9 +14,10 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminNovaPousadaPage() {
+  // `platformRole` já é garantido pelo layout do grupo protegido — aqui só a
+  // autorização específica desta página (nem todo admin pode criar pousada).
   const user = await getCurrentUser()
-  if (!user?.platformRole) redirect('/dashboard')
-  if (!can(user.platformRole, 'pousada:create')) redirect('/admin')
+  if (!user?.platformRole || !can(user.platformRole, 'pousada:create')) redirect('/admin')
 
   return (
     <div className="min-h-screen bg-background">
