@@ -53,7 +53,7 @@ export async function completeConnection(input: { code: string; state: string })
     accessTokenEncrypted: encryptToken(token.access_token),
     refreshTokenEncrypted: encryptToken(token.refresh_token),
     publicKey: token.public_key ?? null,
-    liveMode: token.live_mode,
+    liveMode: token.live_mode ?? false,
     expiresAt: new Date(Date.now() + token.expires_in * 1000).toISOString(),
   })
 }
