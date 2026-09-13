@@ -18,10 +18,11 @@ export default function PousadaError({
   }, [error])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
       <main className="flex min-h-[70vh] items-center justify-center px-5">
         <EmptyState
+          size="lg"
           icon={AlertTriangle}
           title="Não foi possível carregar a pousada"
           description="Ocorreu um erro ao buscar os detalhes deste refúgio. Tente novamente."

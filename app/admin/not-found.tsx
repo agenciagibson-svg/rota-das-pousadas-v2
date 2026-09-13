@@ -5,8 +5,9 @@ import { buttonVariants } from '@/components/ui/button'
 
 export default function AdminNotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-5">
+    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5">
       <EmptyState
+        size="lg"
         icon={BarChart3}
         title="Relatório não encontrado"
         description="Esta seção administrativa não existe ou ainda não está disponível."

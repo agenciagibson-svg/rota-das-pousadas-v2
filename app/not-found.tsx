@@ -5,8 +5,9 @@ import { buttonVariants } from '@/components/ui/button'
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-5">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
+        size="lg"
         icon={Compass}
         title="Página não encontrada"
         description="A rota que você procura não existe ou foi movida. Vamos recomeçar do início."

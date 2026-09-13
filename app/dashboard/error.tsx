@@ -17,8 +17,9 @@ export default function DashboardError({
   }, [error])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-5">
+    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5">
       <EmptyState
+        size="lg"
         icon={AlertTriangle}
         title="Não foi possível carregar o painel"
         description="Ocorreu um erro ao buscar os dados da sua pousada. Tente novamente."

@@ -18,8 +18,9 @@ export default function RootError({
   }, [error])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-5">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
+        size="lg"
         icon={AlertTriangle}
         title="Algo saiu da rota"
         description="Encontramos um erro inesperado. Tente novamente em instantes."

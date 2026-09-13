@@ -15,9 +15,9 @@ export default async function LoginPage({
   const { next } = await searchParams
 
   return (
-    <Card radius="3xl" className="p-8 shadow-card">
-      <h1 className="font-serif text-2xl font-semibold text-foreground">Bem-vindo de volta</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <Card radius="3xl" className="shadow-card p-8">
+      <h1 className="text-foreground font-serif text-3xl font-semibold">Bem-vindo de volta</h1>
+      <p className="text-muted-foreground mt-2 text-base">
         Entre para gerenciar suas viagens, favoritos e reservas.
       </p>
       <div className="mt-6">
