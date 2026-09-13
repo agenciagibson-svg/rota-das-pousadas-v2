@@ -885,27 +885,36 @@ export type Database = {
           amount: number
           booking_id: string
           created_at: string
+          credited_amount: number
           id: string
           method: string
           provider_ref: string | null
+          provider_updated_at: string | null
+          refunded_amount: number
           status: Database["public"]["Enums"]["payment_status"]
         }
         Insert: {
           amount: number
           booking_id: string
           created_at?: string
+          credited_amount?: number
           id?: string
           method: string
           provider_ref?: string | null
+          provider_updated_at?: string | null
+          refunded_amount?: number
           status?: Database["public"]["Enums"]["payment_status"]
         }
         Update: {
           amount?: number
           booking_id?: string
           created_at?: string
+          credited_amount?: number
           id?: string
           method?: string
           provider_ref?: string | null
+          provider_updated_at?: string | null
+          refunded_amount?: number
           status?: Database["public"]["Enums"]["payment_status"]
         }
         Relationships: [
@@ -1556,18 +1565,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      search_public_pousadas: {
-        Args: { p_search?: string; p_page?: number; p_page_size?: number; p_checkin?: string; p_checkout?: string; p_guests?: number }
-        Returns: Json
-      }
-      list_bookable_rooms: {
-        Args: { p_slug: string; p_checkin?: string; p_checkout?: string; p_guests?: number }
-        Returns: { id: string; name: string; description: string; base_price: number; capacity: number }[]
-      }
-      reconcile_marketplace_payment: {
-        Args: { p_booking_id: string; p_provider_ref: string; p_amount: number; p_status: Database['public']['Enums']['payment_status']; p_method: string; p_currency: string; p_updated_at: string; p_refunded_amount?: number }
-        Returns: Json
-      }
       accept_membership_invite: {
         Args: { p_membership_id: string }
         Returns: undefined
@@ -1631,6 +1628,7 @@ export type Database = {
         }
         Returns: Json
       }
+      catalog_search_text: { Args: { p_text: string }; Returns: string }
       create_booking: {
         Args: {
           p_adults: number
@@ -1699,6 +1697,21 @@ export type Database = {
         }
         Returns: Json
       }
+      list_bookable_rooms: {
+        Args: {
+          p_checkin?: string
+          p_checkout?: string
+          p_guests?: number
+          p_slug: string
+        }
+        Returns: {
+          base_price: number
+          capacity: number
+          description: string
+          id: string
+          name: string
+        }[]
+      }
       list_membership_emails: {
         Args: { p_pousada_id: string }
         Returns: {
@@ -1707,7 +1720,7 @@ export type Database = {
         }[]
       }
       list_platform_hosts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -1753,6 +1766,19 @@ export type Database = {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
       }
+      reconcile_marketplace_payment: {
+        Args: {
+          p_amount: number
+          p_booking_id: string
+          p_currency: string
+          p_method: string
+          p_provider_ref: string
+          p_refunded_amount?: number
+          p_status: Database["public"]["Enums"]["payment_status"]
+          p_updated_at: string
+        }
+        Returns: Json
+      }
       record_payment_and_confirm_booking: {
         Args: {
           p_amount: number
@@ -1777,6 +1803,17 @@ export type Database = {
           p_pousada_id: string
           p_public_key: string
           p_refresh_token: string
+        }
+        Returns: Json
+      }
+      search_public_pousadas: {
+        Args: {
+          p_checkin?: string
+          p_checkout?: string
+          p_guests?: number
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
         }
         Returns: Json
       }
