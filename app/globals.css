@@ -156,3 +156,21 @@
 html {
   scroll-behavior: smooth;
 }
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* iOS Safari auto-zooms the page when a focused form field renders below
+   16px. Every input/select/textarea in this app uses text-sm (14px), so
+   without this override any tap into a field on iPhone triggers an
+   unwanted zoom. Scoped to mobile widths so desktop typography is untouched. */
+@media screen and (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
