@@ -40,8 +40,11 @@ export async function createBooking(input: CreateBookingInput): Promise<{ id: st
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login para concluir a reserva.')
 
-  const bookable = await getBookableRoomBySlug(input.pousadaSlug)
+  const bookable = await getBookableRoomBySlug(input.pousadaSlug, input.checkin, input.checkout, input.guests)
   if (!bookable) throw new Error('Esta pousada não está disponível para reserva.')
+  if (input.expectedNightly !== undefined && input.expectedNightly !== bookable.nightly) {
+    throw new Error('A diária disponível mudou. Volte à busca com estas datas e hóspedes para revisar o valor antes de reservar.')
+  }
 
   if (input.guests > bookable.capacity) {
     throw new Error(`Capacidade máxima de ${bookable.capacity} hóspedes para esta acomodação.`)
@@ -157,8 +160,11 @@ export async function cancelMyBooking(bookingId: string): Promise<void> {
 /** Dados da acomodação reservável de uma pousada (nome, diária, capacidade) para exibição pública. */
 export async function getBookableRoom(
   slug: string,
+  checkin?: string,
+  checkout?: string,
+  guests = 1,
 ): Promise<{ name: string; description: string; nightly: number; capacity: number } | null> {
-  const bookable = await getBookableRoomBySlug(slug)
+  const bookable = await getBookableRoomBySlug(slug, checkin, checkout, guests)
   if (!bookable) return null
   return {
     name: bookable.name,

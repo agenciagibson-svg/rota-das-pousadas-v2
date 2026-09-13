@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url'
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    // Testes de UI podem optar por jsdom com @vitest-environment jsdom.
+    environment: 'node',
     globals: true,
     include: ['**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', '.next'],

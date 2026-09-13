@@ -1,6 +1,5 @@
 import 'server-only'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
-import type { Json } from '@/lib/supabase/database.types'
 
 export type PaymentStatus = 'pendente' | 'aprovado' | 'recusado' | 'estornado'
 
@@ -10,7 +9,9 @@ export type RecordPaymentParams = {
   amount: number
   status: PaymentStatus
   method: string
-  raw?: unknown
+  currency: string
+  updatedAt: string
+  refundedAmount: number
 }
 
 export type PousadaPaymentContext = {
@@ -45,13 +46,15 @@ export async function recordPaymentAndConfirmBookingRpc(
   p: RecordPaymentParams,
 ): Promise<{ status: string; paymentId?: string }> {
   const supabase = createSupabaseServiceRoleClient()
-  const { data, error } = await supabase.rpc('record_payment_and_confirm_booking', {
+  const { data, error } = await supabase.rpc('reconcile_marketplace_payment', {
     p_booking_id: p.bookingId,
     p_provider_ref: p.providerRef,
     p_amount: p.amount,
     p_status: p.status,
     p_method: p.method,
-    p_raw: (p.raw ?? null) as Json,
+    p_currency: p.currency,
+    p_updated_at: p.updatedAt,
+    p_refunded_amount: p.refundedAmount,
   })
   if (error) throw new Error(error.message)
   return data as { status: string; paymentId?: string }

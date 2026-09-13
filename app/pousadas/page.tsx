@@ -5,6 +5,8 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { Badge } from '@/components/ui/badge'
 import { getPousadas } from '@/server/queries'
+import { PaginationLinks } from '@/components/ui/pagination'
+import { catalogQuerySchema } from '@/features/pousadas/search'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,10 +26,20 @@ export default async function PousadasPage({
     temporada?: string
     surpresa?: string
     oferta?: string
+    pagina?: string
   }>
 }) {
-  const { busca, checkin, checkout, hospedes, temporada, surpresa, oferta } = await searchParams
-  const result = await getPousadas({ search: busca, pageSize: 100 })
+  const { busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina } = await searchParams
+  const parsed = catalogQuerySchema.safeParse({ search: busca, checkin, checkout, guests: hospedes, page: pagina })
+  const result = parsed.success ? await getPousadas(parsed.data)
+    : { items: [], total: 0, page: 1, pageSize: 24, totalPages: 1 }
+  function pageHref(page: number) {
+    const params = new URLSearchParams({ pagina: String(page) })
+    for (const [key, value] of Object.entries({ busca, checkin, checkout, hospedes, temporada, surpresa, oferta })) {
+      if (value) params.set(key, value)
+    }
+    return `/pousadas?${params}`
+  }
   const activeFilters = [
     surpresa === '1' ? 'Rota surpresa' : null,
     oferta === 'estacao' ? 'Oferta da estacao' : null,
@@ -150,6 +162,7 @@ export default async function PousadasPage({
           ) : null}
         </div>
 
+        {!parsed.success && <p role="alert" className="mt-6 text-destructive">Informe datas válidas de entrada e saída, quantidade de hóspedes e página.</p>}
         {result.items.length ? (
           <div className="mt-8 grid grid-cols-1 gap-5">
             {result.items.map((pousada) => (
@@ -232,6 +245,7 @@ export default async function PousadasPage({
             </Link>
           </div>
         )}
+        <PaginationLinks page={result.page} totalPages={result.totalPages} href={pageHref} />
       </main>
       <SiteFooter />
     </div>

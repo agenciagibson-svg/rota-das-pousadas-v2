@@ -1,7 +1,7 @@
 import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { getBookingForCheckout } from '@/repositories/bookings.repository'
-import { getPaymentAccountByPousada } from '@/repositories/payment-accounts.repository'
+import { getPousadaPaymentContextForWebhook } from '@/repositories/payments.repository'
 import { decryptToken } from '@/lib/crypto/token-cipher'
 import { publicEnv } from '@/lib/env'
 import { createCheckoutPreference as createMpPreference } from './mp-client'
@@ -24,11 +24,14 @@ export async function createCheckoutPreference(bookingId: string): Promise<{ ini
     throw new Error('Esta reserva não está aguardando pagamento.')
   }
 
-  const account = await getPaymentAccountByPousada(booking.pousadaId)
-  if (!account?.accessToken) {
+  if (booking.balanceDue <= 0) throw new Error('Esta reserva não possui saldo a pagar.')
+  // A propriedade da reserva foi conferida acima via sessão/RLS. Tokens não são
+  // legíveis pelo viajante; apenas esta RPC server-only obtém o contexto mínimo.
+  const account = await getPousadaPaymentContextForWebhook(booking.id)
+  if (!account?.accessTokenEncrypted || account.pousadaId !== booking.pousadaId) {
     throw new Error('Esta pousada ainda não está apta a receber pagamentos.')
   }
-  const sellerAccessToken = decryptToken(account.accessToken)
+  const sellerAccessToken = decryptToken(account.accessTokenEncrypted)
 
   const notificationUrl = `${publicEnv.siteUrl}/api/pagamentos/mercadopago/webhook?bookingId=${booking.id}`
   const returnUrl = `${publicEnv.siteUrl}/minhas-reservas`
@@ -37,8 +40,8 @@ export async function createCheckoutPreference(bookingId: string): Promise<{ ini
     sellerAccessToken,
     title: `Reserva ${booking.code}`,
     quantity: 1,
-    unitPrice: booking.total,
-    marketplaceFee: booking.fee,
+    unitPrice: booking.balanceDue,
+    marketplaceFee: Math.round(booking.fee * booking.balanceDue / booking.total * 100) / 100,
     externalReference: booking.id,
     notificationUrl,
     backUrls: { success: returnUrl, pending: returnUrl, failure: returnUrl },

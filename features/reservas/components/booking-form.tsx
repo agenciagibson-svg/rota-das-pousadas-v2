@@ -36,6 +36,7 @@ export function BookingForm({
     resolver: zodResolver(createBookingSchema),
     defaultValues: {
       pousadaSlug,
+      expectedNightly: nightly,
       checkin: initialCheckin,
       checkout: initialCheckout,
       guests: Number(initialGuests) || 2,

@@ -19,6 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { Pousada } from '@/types'
+import { prepareCatalog, recommendPousadas } from '@/features/concierge'
 
 type Mood = 'romance' | 'familia' | 'aventura' | 'descanso'
 type Budget = 'economico' | 'conforto' | 'premium'
@@ -61,9 +62,24 @@ const moods: Array<{
 ]
 
 const budgets: Array<{ key: Budget; label: string; max: number; description: string }> = [
-  { key: 'economico', label: 'Ate R$ 350', max: 350, description: 'Boa estadia com diaria enxuta.' },
-  { key: 'conforto', label: 'Ate R$ 600', max: 600, description: 'Equilibrio entre preco e experiencia.' },
-  { key: 'premium', label: 'Premium', max: Number.POSITIVE_INFINITY, description: 'Escolhas mais completas.' },
+  {
+    key: 'economico',
+    label: 'Ate R$ 350',
+    max: 350,
+    description: 'Boa estadia com diaria enxuta.',
+  },
+  {
+    key: 'conforto',
+    label: 'Ate R$ 600',
+    max: 600,
+    description: 'Equilibrio entre preco e experiencia.',
+  },
+  {
+    key: 'premium',
+    label: 'Premium',
+    max: Number.POSITIVE_INFINITY,
+    description: 'Escolhas mais completas.',
+  },
 ]
 
 const companionLabels = {
@@ -71,26 +87,6 @@ const companionLabels = {
   familia: 'familia',
   amigos: 'amigos',
 } as const
-
-function scorePousada(pousada: Pousada, mood: Mood, budget: Budget, destination: string) {
-  const moodConfig = moods.find((item) => item.key === mood) ?? moods[0]
-  const budgetConfig = budgets.find((item) => item.key === budget) ?? budgets[1]
-  const text = `${pousada.name} ${pousada.city} ${pousada.state} ${pousada.description} ${pousada.tags.join(' ')}`.toLowerCase()
-  let score = pousada.rating * 12 + Math.min(pousada.reviews, 200) / 10
-
-  for (const term of moodConfig.terms) {
-    if (text.includes(term)) score += 18
-  }
-
-  if (destination && text.includes(destination.toLowerCase())) score += 40
-  if (pousada.pricePerNight <= budgetConfig.max) score += 28
-  if (budget === 'premium' && pousada.pricePerNight >= 500) score += 16
-  if (budget !== 'premium' && pousada.pricePerNight > budgetConfig.max) {
-    score -= Math.min(34, (pousada.pricePerNight - budgetConfig.max) / 10)
-  }
-
-  return score
-}
 
 function buildSearchHref({
   destination,
@@ -127,50 +123,55 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
   const [nights, setNights] = useState(2)
   const [companion, setCompanion] = useState<keyof typeof companionLabels>('casal')
 
-  const recommendations = useMemo(() => {
-    return [...pousadas]
-      .map((pousada) => ({
-        pousada,
-        score: scorePousada(pousada, mood, budget, destination),
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3)
-  }, [budget, destination, mood, pousadas])
-
-  const hero = recommendations[0]?.pousada
   const moodConfig = moods.find((item) => item.key === mood) ?? moods[0]
   const budgetConfig = budgets.find((item) => item.key === budget) ?? budgets[1]
+  const catalog = useMemo(() => prepareCatalog(pousadas), [pousadas])
+  const recommendations = useMemo(
+    () =>
+      recommendPousadas(catalog, {
+        terms: moodConfig.terms,
+        maxPrice: budgetConfig.max,
+        premium: budget === 'premium',
+        destination,
+      }),
+    [catalog, moodConfig, budgetConfig, budget, destination],
+  )
+  const hero = recommendations[0]?.pousada
   const searchHref = buildSearchHref({ destination, guests, nights, mood })
 
   return (
     <div className="grid gap-8 lg:grid-cols-12">
-      <aside className="rounded-3xl border border-border bg-card p-5 shadow-card lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
+      <aside className="border-border bg-card shadow-card rounded-3xl border p-5 lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-full">
             <Sparkles className="size-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Concierge</p>
-            <h2 className="font-serif text-2xl font-semibold text-foreground">Monte sua rota</h2>
+            <p className="text-primary text-sm font-semibold tracking-[0.18em] uppercase">
+              Concierge
+            </p>
+            <h2 className="text-foreground font-serif text-2xl font-semibold">Monte sua rota</h2>
           </div>
         </div>
 
         <div className="mt-6 space-y-6">
           <div>
-            <label className="text-xs font-semibold uppercase text-muted-foreground">Destino desejado</label>
+            <label className="text-muted-foreground text-xs font-semibold uppercase">
+              Destino desejado
+            </label>
             <div className="relative mt-2">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
               <input
                 value={destination}
                 onChange={(event) => setDestination(event.target.value)}
                 placeholder="Ex.: Canastra, serra, praia"
-                className="h-12 w-full rounded-full border border-border bg-background pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary"
+                className="border-border bg-background focus:border-primary h-12 w-full rounded-full border pr-4 pl-11 text-sm transition-colors outline-none"
               />
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Clima da viagem</p>
+            <p className="text-muted-foreground text-xs font-semibold uppercase">Clima da viagem</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               {moods.map((item) => {
                 const Icon = item.icon
@@ -203,7 +204,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Orcamento</p>
+            <p className="text-muted-foreground text-xs font-semibold uppercase">Orcamento</p>
             <div className="mt-3 grid gap-2">
               {budgets.map((item) => (
                 <button
@@ -212,11 +213,13 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   onClick={() => setBudget(item.key)}
                   className={cn(
                     'flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition-colors',
-                    budget === item.key ? 'border-primary bg-primary/10 text-primary' : 'border-border',
+                    budget === item.key
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border',
                   )}
                 >
                   <span className="font-semibold">{item.label}</span>
-                  <span className="text-xs text-muted-foreground">{item.description}</span>
+                  <span className="text-muted-foreground text-xs">{item.description}</span>
                 </button>
               ))}
             </div>
@@ -224,31 +227,33 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-xs font-semibold uppercase text-muted-foreground">Hospedes</span>
+              <span className="text-muted-foreground text-xs font-semibold uppercase">
+                Hospedes
+              </span>
               <input
                 type="number"
                 min={1}
                 max={12}
                 value={guests}
                 onChange={(event) => setGuests(Number(event.target.value) || 1)}
-                className="mt-2 h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none focus:border-primary"
+                className="border-border bg-background focus:border-primary mt-2 h-12 w-full rounded-2xl border px-4 text-sm outline-none"
               />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold uppercase text-muted-foreground">Noites</span>
+              <span className="text-muted-foreground text-xs font-semibold uppercase">Noites</span>
               <input
                 type="number"
                 min={1}
                 max={15}
                 value={nights}
                 onChange={(event) => setNights(Number(event.target.value) || 1)}
-                className="mt-2 h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none focus:border-primary"
+                className="border-border bg-background focus:border-primary mt-2 h-12 w-full rounded-2xl border px-4 text-sm outline-none"
               />
             </label>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Viajando com</p>
+            <p className="text-muted-foreground text-xs font-semibold uppercase">Viajando com</p>
             <div className="mt-3 flex gap-2">
               {Object.entries(companionLabels).map(([key, label]) => (
                 <button
@@ -257,7 +262,9 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   onClick={() => setCompanion(key as keyof typeof companionLabels)}
                   className={cn(
                     'rounded-full px-4 py-2 text-xs font-semibold transition-colors',
-                    companion === key ? 'bg-accent text-accent-foreground' : 'bg-secondary text-foreground',
+                    companion === key
+                      ? 'bg-accent text-accent-foreground'
+                      : 'bg-secondary text-foreground',
                   )}
                 >
                   {label}
@@ -269,26 +276,28 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
       </aside>
 
       <section className="min-w-0 lg:col-span-8">
-        <div className="overflow-hidden rounded-3xl border border-border bg-stone-deep text-linen">
+        <div className="border-border bg-stone-deep text-linen overflow-hidden rounded-3xl border">
           <div className="grid lg:grid-cols-[1fr_0.82fr]">
             <div className="p-6 sm:p-8">
               <Badge variant="glass" size="lg" className="bg-linen/10 text-linen">
                 Roteiro recomendado
               </Badge>
-              <h2 className="mt-5 text-balance font-serif text-4xl font-semibold leading-tight sm:text-5xl">
-                {destination ? `Uma rota por ${destination}` : `Uma rota de ${moodConfig.label.toLowerCase()}`}
+              <h2 className="mt-5 font-serif text-4xl leading-tight font-semibold text-balance sm:text-5xl">
+                {destination
+                  ? `Uma rota por ${destination}`
+                  : `Uma rota de ${moodConfig.label.toLowerCase()}`}
               </h2>
-              <p className="mt-4 max-w-xl leading-relaxed text-linen/70">
+              <p className="text-linen/70 mt-4 max-w-xl leading-relaxed">
                 Para uma viagem de {nights} noite{nights === 1 ? '' : 's'} com {guests} hospede
                 {guests === 1 ? '' : 's'}, eu priorizaria {moodConfig.text.toLowerCase()} dentro do
                 perfil {budgetConfig.label.toLowerCase()}.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3 text-sm text-linen/70">
-                <span className="inline-flex items-center gap-2 rounded-full bg-linen/10 px-4 py-2">
+              <div className="text-linen/70 mt-6 flex flex-wrap gap-3 text-sm">
+                <span className="bg-linen/10 inline-flex items-center gap-2 rounded-full px-4 py-2">
                   <Compass className="size-4" />
                   {companionLabels[companion]}
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-linen/10 px-4 py-2">
+                <span className="bg-linen/10 inline-flex items-center gap-2 rounded-full px-4 py-2">
                   <CalendarDays className="size-4" />
                   datas sugeridas em 14 dias
                 </span>
@@ -296,7 +305,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href={searchHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5"
+                  className="bg-accent text-accent-foreground inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
                 >
                   Ver rota filtrada
                   <ArrowRight className="size-4" />
@@ -304,7 +313,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                 {hero ? (
                   <Link
                     href={`/pousada/${hero.slug}`}
-                    className="inline-flex items-center justify-center rounded-full border border-linen/20 px-5 py-3 text-sm font-semibold text-linen transition-colors hover:bg-linen hover:text-stone-deep"
+                    className="border-linen/20 text-linen hover:bg-linen hover:text-stone-deep inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition-colors"
                   >
                     Abrir melhor sugestao
                   </Link>
@@ -321,10 +330,10 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   className="object-cover opacity-85"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-deep/70 to-transparent lg:bg-gradient-to-r" />
+              <div className="from-stone-deep/70 absolute inset-0 bg-gradient-to-t to-transparent lg:bg-gradient-to-r" />
               {hero ? (
-                <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-linen/15 bg-stone-deep/55 p-4 backdrop-blur-md">
-                  <p className="flex items-center gap-2 text-sm text-linen/70">
+                <div className="border-linen/15 bg-stone-deep/55 absolute right-5 bottom-5 left-5 rounded-2xl border p-4 backdrop-blur-md">
+                  <p className="text-linen/70 flex items-center gap-2 text-sm">
                     <MapPin className="size-4" />
                     {hero.city}, {hero.state}
                   </p>
@@ -340,7 +349,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
             <Link
               key={pousada.slug}
               href={`/pousada/${pousada.slug}`}
-              className="group grid overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-stone-deep/10 sm:grid-cols-[180px_1fr]"
+              className="group border-border bg-card hover:shadow-stone-deep/10 grid overflow-hidden rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-xl sm:grid-cols-[180px_1fr]"
             >
               <div className="relative aspect-[4/3] sm:aspect-auto">
                 <Image
@@ -350,25 +359,27 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   sizes="(max-width: 640px) 100vw, 180px"
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <span className="absolute left-3 top-3 rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground">
+                <span className="bg-card text-foreground absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold">
                   #{index + 1}
                 </span>
               </div>
               <div className="p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <p className="text-muted-foreground flex items-center gap-2 text-sm">
                       <MapPin className="size-4" />
                       {pousada.city}, {pousada.state}
                     </p>
-                    <h3 className="mt-1 font-serif text-2xl font-semibold text-foreground">{pousada.name}</h3>
+                    <h3 className="text-foreground mt-1 font-serif text-2xl font-semibold">
+                      {pousada.name}
+                    </h3>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                    <Star className="size-4 fill-gold text-gold" />
+                  <span className="text-foreground inline-flex items-center gap-1.5 text-sm font-semibold">
+                    <Star className="fill-gold text-gold size-4" />
                     {pousada.rating.toFixed(1)}
                   </span>
                 </div>
-                <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="text-muted-foreground mt-3 line-clamp-2 text-sm leading-relaxed">
                   {pousada.description}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -379,11 +390,11 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   ))}
                 </div>
                 <div className="mt-5 flex items-center justify-between gap-4">
-                  <p className="text-lg font-semibold text-foreground">
+                  <p className="text-foreground text-lg font-semibold">
                     R$ {pousada.pricePerNight}
-                    <span className="text-xs font-normal text-muted-foreground"> / diaria</span>
+                    <span className="text-muted-foreground text-xs font-normal"> / diaria</span>
                   </p>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground group-hover:bg-accent">
+                  <span className="bg-primary text-primary-foreground group-hover:bg-accent inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold">
                     Ver pousada
                     <ArrowRight className="size-3.5" />
                   </span>

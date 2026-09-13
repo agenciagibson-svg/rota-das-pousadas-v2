@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { catalogQuerySchema } from '@/features/pousadas/search'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -45,11 +46,12 @@ export default async function PousadaPage({
 }) {
   const { slug } = await params
   const initialBooking = await searchParams
+  const filters = catalogQuerySchema.safeParse({ checkin: initialBooking.checkin, checkout: initialBooking.checkout, guests: initialBooking.guests })
   const [pousada, currentUser, favorite, room] = await Promise.all([
     getPousada(slug),
     getCurrentUser(),
     isFavoritePousada(slug),
-    getBookableRoom(slug),
+    filters.success ? getBookableRoom(slug, filters.data.checkin, filters.data.checkout, filters.data.guests) : Promise.resolve(null),
   ])
   if (!pousada) notFound()
 

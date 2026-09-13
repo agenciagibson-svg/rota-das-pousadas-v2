@@ -78,13 +78,16 @@ export async function processPaymentNotification(params: { bookingId: string; mp
       `Pagamento ${params.mpPaymentId} tem external_reference divergente do bookingId da notificação — possível adulteração.`,
     )
   }
+  if (String(payment.id) !== params.mpPaymentId) throw new Error('ID de pagamento divergente.')
 
   await recordPaymentAndConfirmBookingRpc({
     bookingId: params.bookingId,
     providerRef: String(payment.id),
-    amount: Math.round(payment.transaction_amount),
+    amount: payment.transaction_amount,
     status: mapMpStatus(payment.status),
     method: payment.payment_method_id,
-    raw: payment,
+    currency: payment.currency_id,
+    updatedAt: payment.date_last_updated,
+    refundedAmount: payment.transaction_amount_refunded,
   })
 }

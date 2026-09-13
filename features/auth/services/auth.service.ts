@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getProfileWithRoles } from '@/repositories/profiles.repository'
@@ -9,7 +10,7 @@ import type { SessionUser } from '@/features/auth/types'
  * Retorna null se não houver sessão ou se o Supabase não estiver configurado.
  * Regra de aplicação do domínio de auth vive aqui.
  */
-export async function getCurrentUser(): Promise<SessionUser | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
   if (!isSupabaseConfigured()) return null
 
   const supabase = await createSupabaseServerClient()
@@ -29,4 +30,4 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     platformRole: profile?.platformRole ?? null,
     memberships: profile?.memberships ?? [],
   }
-}
+})

@@ -57,7 +57,7 @@ export const getCurrentUser = cache(() => currentUser())
 export const getMyBookings = cache(() => listMyBookings())
 
 /** Diária + capacidade de uma pousada para o fluxo de reserva. */
-export const getBookableRoom = cache((slug: string) => bookableRoom(slug))
+export const getBookableRoom = cache((slug: string, checkin?: string, checkout?: string, guests = 1) => bookableRoom(slug, checkin, checkout, guests))
 
 /** Gestão (PMS): pousada gerida, reservas e calendário do proprietário. */
 export const getOwnerPousada = cache(() => ownerPousada())

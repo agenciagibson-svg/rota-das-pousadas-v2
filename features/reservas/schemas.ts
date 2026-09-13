@@ -6,6 +6,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
 export const createBookingSchema = z
   .object({
     pousadaSlug: z.string().min(1, 'Pousada inválida.'),
+    expectedNightly: z.number().nonnegative().optional(),
     checkin: isoDate,
     checkout: isoDate,
     guests: z.coerce

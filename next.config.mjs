@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
+const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
-    unoptimized: true,
+    remotePatterns: storageUrl ? [{
+      protocol: new URL(storageUrl).protocol === 'https:' ? 'https' : 'http',
+      hostname: new URL(storageUrl).hostname,
+      port: new URL(storageUrl).port,
+      pathname: '/storage/v1/object/public/pousadas/**',
+    }] : [],
   },
 }
 

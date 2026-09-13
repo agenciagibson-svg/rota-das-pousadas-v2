@@ -1,10 +1,19 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { listActiveBlocksOverlapping } from '@/repositories/room-blocks.repository'
-import { evaluateRoomAvailability, validateDateRange } from '@/features/acomodacoes/availability-engine'
+import {
+  evaluateRoomAvailability,
+  validateDateRange,
+} from '@/features/acomodacoes/availability-engine'
 import type { AvailabilityResult } from '@/features/acomodacoes/types'
+import type { Database } from '@/lib/supabase/database.types'
 
-const OCCUPYING_BOOKING_STATUSES = ['iniciada', 'aguardando_pagamento', 'confirmada', 'em_estadia']
+// Alinhado à constraint bookings_no_overlap (migration 0033).
+const OCCUPYING_BOOKING_STATUSES = [
+  'pending',
+  'confirmed',
+  'checked_in',
+] satisfies Database['public']['Enums']['booking_status'][]
 
 export type AvailabilityQuery = {
   pousadaId: string
@@ -32,7 +41,9 @@ export async function queryAvailability(query: AvailabilityQuery): Promise<Avail
 
   let roomsQuery = supabase
     .from('rooms')
-    .select('id, name, capacity_max, capacity, pets_allowed, status, operational_status, category_id, accommodation_categories(name, status)')
+    .select(
+      'id, name, capacity_max, capacity, pets_allowed, status, operational_status, category_id, accommodation_categories(name, status)',
+    )
     .eq('pousada_id', query.pousadaId)
   if (query.categoryId) roomsQuery = roomsQuery.eq('category_id', query.categoryId)
   if (query.roomId) roomsQuery = roomsQuery.eq('id', query.roomId)
@@ -52,13 +63,16 @@ export async function queryAvailability(query: AvailabilityQuery): Promise<Avail
           .in('status', OCCUPYING_BOOKING_STATUSES)
           .lt('checkin', query.checkout)
           .gt('checkout', query.checkin)
-      : Promise.resolve({ data: [] as { room_id: string }[] }),
+      : Promise.resolve({ data: [] as { room_id: string }[], error: null }),
   ])
+  if (bookingsResult.error) throw bookingsResult.error
   const blockedRoomIds = new Set(blocks.map((b) => b.roomId))
   const bookedRoomIds = new Set((bookingsResult.data ?? []).map((b) => b.room_id))
 
   return roomList.map((r) => {
-    const category = Array.isArray(r.accommodation_categories) ? r.accommodation_categories[0] : r.accommodation_categories
+    const category = Array.isArray(r.accommodation_categories)
+      ? r.accommodation_categories[0]
+      : r.accommodation_categories
     const capacityMax = r.capacity_max ?? r.capacity
     const reasons = evaluateRoomAvailability({
       roomStatus: r.status,

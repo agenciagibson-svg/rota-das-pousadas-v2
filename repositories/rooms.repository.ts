@@ -279,7 +279,7 @@ export type BookableRoom = {
  * barata via a projeção pública `list_public_rooms` — nunca expõe
  * internal_notes, status operacional ou colunas administrativas.
  */
-export async function getBookableRoomBySlug(slug: string): Promise<BookableRoom | null> {
+export async function getBookableRoomBySlug(slug: string, checkin?: string, checkout?: string, guests = 1): Promise<BookableRoom | null> {
   const supabase = await createSupabaseServerClient()
 
   const { data: pousada, error } = await supabase
@@ -291,7 +291,7 @@ export async function getBookableRoomBySlug(slug: string): Promise<BookableRoom 
   if (error) throw error
   if (!pousada) return null
 
-  const { data: rpcRows, error: roomError } = await supabase.rpc('list_public_rooms', { p_slug: slug })
+  const { data: rpcRows, error: roomError } = await supabase.rpc('list_bookable_rooms', { p_slug: slug, p_checkin: checkin, p_checkout: checkout, p_guests: guests })
   if (roomError) throw new Error(roomError.message)
   const rooms = (rpcRows ?? []) as {
     id: string

@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { classifyTenantAccess } from './tenant-access'
@@ -27,7 +28,7 @@ export type TenantAccessState =
   | { status: 'ok'; user: SessionUser; membership: TenantMembership }
 
 /** Resolve o estado de acesso à área de gestão para o usuário autenticado. */
-export async function resolveTenantAccess(): Promise<TenantAccessState> {
+export const resolveTenantAccess = cache(async function resolveTenantAccess(): Promise<TenantAccessState> {
   const user = await getCurrentUser()
   if (!user) return { status: 'unauthenticated' }
 
@@ -39,7 +40,7 @@ export async function resolveTenantAccess(): Promise<TenantAccessState> {
     return { status: 'ok', user, membership: decision.membership }
   }
   return decision
-}
+})
 
 /** Id da pousada ativa, ou null se ainda não resolvida — usado pelos serviços de gestão. */
 export async function getActivePousadaId(): Promise<string | null> {

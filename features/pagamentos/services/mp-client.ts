@@ -1,4 +1,5 @@
 import 'server-only'
+import { z } from 'zod'
 
 /**
  * Cliente HTTP fino para a API do Mercado Pago. Segredos da PLATAFORMA (app
@@ -59,6 +60,8 @@ export async function exchangeCodeForToken(params: { code: string; redirectUri: 
   const { clientId, clientSecret } = getAppCredentials()
   const testMode = process.env.MERCADO_PAGO_TEST_MODE === 'true'
   const response = await fetch(`${MP_API_BASE}/oauth/token`, {
+    signal: AbortSignal.timeout(10000),
+    cache: 'no-store',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -97,6 +100,8 @@ export type CreatePreferenceParams = {
 
 export async function createCheckoutPreference(params: CreatePreferenceParams): Promise<MpPreference> {
   const response = await fetch(`${MP_API_BASE}/checkout/preferences`, {
+    signal: AbortSignal.timeout(10000),
+    cache: 'no-store',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -124,21 +129,28 @@ export async function createCheckoutPreference(params: CreatePreferenceParams): 
   return response.json()
 }
 
-export type MpPayment = {
-  id: number
-  status: 'approved' | 'pending' | 'rejected' | 'refunded' | 'cancelled' | 'in_process' | 'charged_back'
-  transaction_amount: number
-  payment_method_id: string
-  external_reference: string | null
-}
+export const mpPaymentSchema = z.object({
+  id: z.number().int().positive().safe(),
+  status: z.enum(['approved', 'pending', 'rejected', 'refunded', 'cancelled', 'in_process', 'charged_back', 'authorized', 'in_mediation']),
+  transaction_amount: z.number().positive().finite(),
+  transaction_amount_refunded: z.number().nonnegative().finite(),
+  currency_id: z.literal('BRL'),
+  date_last_updated: z.string().datetime({ offset: true }),
+  payment_method_id: z.string().min(1),
+  external_reference: z.string().uuid(),
+})
+export type MpPayment = z.infer<typeof mpPaymentSchema>
 
 /** Sempre re-busca o pagamento pelo ID — nunca confiar no corpo do webhook. */
 export async function getPaymentById(paymentId: string, sellerAccessToken: string): Promise<MpPayment> {
+  if (!/^\d{1,40}$/.test(paymentId)) throw new Error('ID de pagamento inválido.')
   const response = await fetch(`${MP_API_BASE}/v1/payments/${paymentId}`, {
     headers: { Authorization: `Bearer ${sellerAccessToken}` },
+    signal: AbortSignal.timeout(10000),
+    cache: 'no-store',
   })
   if (!response.ok) {
     throw new Error(`Falha ao buscar pagamento ${paymentId} no Mercado Pago (${response.status}).`)
   }
-  return response.json()
+  return mpPaymentSchema.parse(await response.json())
 }

@@ -21,6 +21,9 @@ export type SortDirection = 'asc' | 'desc'
 
 /** Generic query for list endpoints — the seam a real backend will implement. */
 export type ListQuery = {
+  checkin?: string
+  checkout?: string
+  guests?: number
   search?: string
   page?: number
   pageSize?: number

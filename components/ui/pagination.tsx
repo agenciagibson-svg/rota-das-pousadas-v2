@@ -1,5 +1,22 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import { buttonVariants } from './button'
+
+/** Paginação navegável no servidor, preservando filtros pela URL. */
+export function PaginationLinks({ page, totalPages, href }: {
+  page: number; totalPages: number; href: (page: number) => string
+}) {
+  if (totalPages <= 1) return null
+  return <nav aria-label="Paginação" className="mt-8 flex items-center justify-center gap-2">
+    {page > 1 && <Link href={href(page - 1)} className={buttonVariants({ variant: 'outline' })}>Anterior</Link>}
+    {pageRange(page, totalPages).map((value, index) => value === 'ellipsis'
+      ? <span key={`ellipsis-${index}`}>…</span>
+      : <Link key={value} href={href(value)} aria-current={value === page ? 'page' : undefined}
+          className={buttonVariants({ variant: value === page ? 'default' : 'outline' })}>{value}</Link>)}
+    {page < totalPages && <Link href={href(page + 1)} className={buttonVariants({ variant: 'outline' })}>Próxima</Link>}
+  </nav>
+}
 
 /** Compact page numbers with ellipsis around the current page. */
 function pageRange(current: number, total: number): (number | 'ellipsis')[] {

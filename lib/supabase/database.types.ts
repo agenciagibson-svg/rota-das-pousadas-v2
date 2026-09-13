@@ -1556,6 +1556,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      search_public_pousadas: {
+        Args: { p_search?: string; p_page?: number; p_page_size?: number; p_checkin?: string; p_checkout?: string; p_guests?: number }
+        Returns: Json
+      }
+      list_bookable_rooms: {
+        Args: { p_slug: string; p_checkin?: string; p_checkout?: string; p_guests?: number }
+        Returns: { id: string; name: string; description: string; base_price: number; capacity: number }[]
+      }
+      reconcile_marketplace_payment: {
+        Args: { p_booking_id: string; p_provider_ref: string; p_amount: number; p_status: Database['public']['Enums']['payment_status']; p_method: string; p_currency: string; p_updated_at: string; p_refunded_amount?: number }
+        Returns: Json
+      }
       accept_membership_invite: {
         Args: { p_membership_id: string }
         Returns: undefined

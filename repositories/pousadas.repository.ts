@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseStaticClient } from '@/lib/supabase/static'
 import type { Database } from '@/lib/supabase/database.types'
+import { normalizeCatalogText, parseCatalogQuery } from '@/features/pousadas/search'
 
 /**
  * Contrato de acesso a dados de Pousadas. Única camada que fala com o banco.
@@ -31,14 +32,8 @@ function paginate<T>(items: T[], page = 1, pageSize = DEFAULT_PAGE_SIZE): Pagina
 }
 
 function matches(p: Pousada, search: string): boolean {
-  const q = search.toLowerCase()
-  return (
-    p.name.toLowerCase().includes(q) ||
-    p.city.toLowerCase().includes(q) ||
-    p.state.toLowerCase().includes(q) ||
-    p.description.toLowerCase().includes(q) ||
-    p.tags.some((t) => t.toLowerCase().includes(q))
-  )
+  return normalizeCatalogText([p.name, p.city, p.state, p.description, ...p.tags].join(' '))
+    .includes(normalizeCatalogText(search))
 }
 
 // ---------------------------------------------------------------------------
@@ -47,7 +42,9 @@ function matches(p: Pousada, search: string): boolean {
 const mockRepository: PousadaRepository = {
   async list(query) {
     const { search, page = 1, pageSize = DEFAULT_PAGE_SIZE } = query
-    const items = search ? mockData.filter((p) => matches(p, search)) : mockData
+    // Sem invent?rio real, o modo demonstra??o n?o pode confirmar disponibilidade.
+    const items = query.checkin || query.guests ? [] : mockData.filter((p) => !search || matches(p, search))
+    items.sort((a, b) => a.slug.localeCompare(b.slug))
     return paginate(items, page, pageSize)
   },
   async findBySlug(slug) {
@@ -85,24 +82,15 @@ function rowToPousada(r: PousadaRow): Pousada {
 
 const supabaseRepository: PousadaRepository = {
   async list(query) {
-    const { search, page = 1, pageSize = DEFAULT_PAGE_SIZE } = query
-    const supabase = await createSupabaseServerClient()
-    let q = supabase.from('pousadas').select('*', { count: 'exact' }).eq('status', 'publicada')
-    if (search) {
-      const term = `%${search}%`
-      q = q.or(`name.ilike.${term},city.ilike.${term},state.ilike.${term},description.ilike.${term}`)
-    }
-    const from = (page - 1) * pageSize
-    const { data, count, error } = await q.range(from, from + pageSize - 1)
+    const filters = parseCatalogQuery(query)
+    const supabase = createSupabaseStaticClient()
+    const { data, error } = await supabase.rpc('search_public_pousadas', {
+      p_search: filters.search ?? '', p_page: filters.page, p_page_size: filters.pageSize,
+      p_checkin: filters.checkin, p_checkout: filters.checkout, p_guests: filters.guests,
+    })
     if (error) throw error
-    const total = count ?? 0
-    return {
-      items: (data ?? []).map(rowToPousada),
-      total,
-      page,
-      pageSize,
-      totalPages: Math.max(1, Math.ceil(total / pageSize)),
-    }
+    const result = data as { items: PousadaRow[]; total: number; page: number; pageSize: number; totalPages: number }
+    return { ...result, items: result.items.map((row) => rowToPousada({ ...row, gallery: [] })) }
   },
   async findBySlug(slug) {
     const supabase = await createSupabaseServerClient()

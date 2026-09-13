@@ -248,6 +248,7 @@ export async function getBookingByGuest(
 
 /** Dados mínimos pro checkout de pagamento — mesma regra de coluna do hóspede: nunca campos internos. */
 export type BookingForCheckout = {
+  balanceDue: number
   id: string
   code: string
   pousadaId: string
@@ -262,7 +263,7 @@ export async function getBookingForCheckout(bookingId: string, guestId: string):
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, code, pousada_id, status, total, fee, guest_name, guest_email')
+    .select('id, code, pousada_id, status, total, fee, guest_name, guest_email, balance_due')
     .eq('id', bookingId)
     .eq('guest_id', guestId)
     .maybeSingle()
@@ -277,6 +278,7 @@ export async function getBookingForCheckout(bookingId: string, guestId: string):
     fee: Number(data.fee),
     guestName: data.guest_name,
     guestEmail: data.guest_email,
+    balanceDue: Number(data.balance_due),
   }
 }
 
