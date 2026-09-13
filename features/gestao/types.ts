@@ -42,6 +42,7 @@ export type OwnerPousadaSettings = {
   state: string
   country: string
   address: string
+  cep: string
   image: string
   description: string
   tags: string[]

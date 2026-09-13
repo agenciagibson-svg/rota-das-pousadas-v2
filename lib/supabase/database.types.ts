@@ -651,6 +651,7 @@ export type Database = {
           accessibility_needs: string
           address: string | null
           birth_date: string | null
+          cep: string | null
           city: string | null
           country: string | null
           created_at: string
@@ -681,6 +682,7 @@ export type Database = {
           accessibility_needs?: string
           address?: string | null
           birth_date?: string | null
+          cep?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -711,6 +713,7 @@ export type Database = {
           accessibility_needs?: string
           address?: string | null
           birth_date?: string | null
+          cep?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -1109,6 +1112,7 @@ export type Database = {
         Row: {
           address: string
           cancellation_policy: string
+          cep: string | null
           checkin_time: string
           checkout_time: string
           city: string
@@ -1144,6 +1148,7 @@ export type Database = {
         Insert: {
           address?: string
           cancellation_policy?: string
+          cep?: string | null
           checkin_time?: string
           checkout_time?: string
           city: string
@@ -1179,6 +1184,7 @@ export type Database = {
         Update: {
           address?: string
           cancellation_policy?: string
+          cep?: string | null
           checkin_time?: string
           checkout_time?: string
           city?: string
@@ -1883,6 +1889,7 @@ export type Database = {
           p_accessibility_needs?: string
           p_address?: string
           p_birth_date?: string
+          p_cep?: string
           p_city?: string
           p_country?: string
           p_dietary_restrictions?: string

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ufSchema, phoneSchema } from '@/lib/validation/br'
 
 export const pousadaIdSchema = z.object({
   id: z.string().uuid('Identificador inválido.'),
@@ -34,7 +35,7 @@ export type GrantIdInput = z.infer<typeof grantIdSchema>
 export const createPousadaAdminSchema = z.object({
   name: z.string().trim().min(3, 'Nome muito curto.').max(80, 'Nome muito longo.'),
   city: z.string().trim().min(2, 'Informe a cidade.').max(80),
-  state: z.string().trim().length(2, 'UF com 2 letras (ex.: MG).'),
+  state: ufSchema,
   description: z
     .string()
     .trim()
@@ -51,7 +52,7 @@ export const createPousadaAdminSchema = z.object({
     .trim()
     .optional()
     .refine((v) => !v || z.string().email().safeParse(v).success, 'E-mail inválido.'),
-  whatsapp: z.string().trim().max(20).optional(),
+  whatsapp: phoneSchema.optional().or(z.literal('')),
   images: z.array(z.string().url('URL de imagem inválida.')).min(1, 'Envie ao menos uma foto.'),
   publishNow: z.boolean(),
 })

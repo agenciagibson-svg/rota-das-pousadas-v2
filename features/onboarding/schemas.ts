@@ -1,10 +1,11 @@
 import { z } from 'zod'
+import { ufSchema } from '@/lib/validation/br'
 
 /** Cadastro de pousada pelo proprietário. */
 export const createPousadaSchema = z.object({
   name: z.string().trim().min(3, 'Nome muito curto.').max(80, 'Nome muito longo.'),
   city: z.string().trim().min(2, 'Informe a cidade.').max(80),
-  state: z.string().trim().length(2, 'UF com 2 letras (ex.: MG).'),
+  state: ufSchema,
   description: z
     .string()
     .trim()

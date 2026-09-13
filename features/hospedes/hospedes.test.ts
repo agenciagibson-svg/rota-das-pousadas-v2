@@ -15,6 +15,7 @@ const base = {
   city: '',
   state: '',
   address: '',
+  cep: '',
   emergencyContactName: '',
   emergencyContactPhone: '',
   preferences: [],

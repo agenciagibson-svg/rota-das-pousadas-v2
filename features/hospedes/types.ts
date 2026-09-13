@@ -48,6 +48,7 @@ export type GuestDetail = {
   city: string | null
   state: string | null
   address: string | null
+  cep: string | null
   emergencyContact: EmergencyContact
   preferences: string[]
   dietaryRestrictions: string

@@ -81,7 +81,7 @@ export async function getGuestById(pousadaId: string, guestId: string): Promise<
   const { data, error } = await supabase
     .from('guests')
     .select(
-      'id, pousada_id, user_id, full_name, preferred_name, email, phone, whatsapp, document_type, document_number, birth_date, nationality, country, city, state, address, emergency_contact, preferences, dietary_restrictions, accessibility_needs, internal_notes, marketing_consent, source, created_at, updated_at',
+      'id, pousada_id, user_id, full_name, preferred_name, email, phone, whatsapp, document_type, document_number, birth_date, nationality, country, city, state, address, cep, emergency_contact, preferences, dietary_restrictions, accessibility_needs, internal_notes, marketing_consent, source, created_at, updated_at',
     )
     .eq('id', guestId)
     .eq('pousada_id', pousadaId)
@@ -128,6 +128,7 @@ export async function getGuestById(pousadaId: string, guestId: string): Promise<
     city: data.city,
     state: data.state,
     address: data.address,
+    cep: data.cep,
     emergencyContact: (data.emergency_contact ?? {}) as EmergencyContact,
     preferences: (data.preferences ?? []) as string[],
     dietaryRestrictions: data.dietary_restrictions,
@@ -158,6 +159,7 @@ export type UpsertGuestInput = {
   city?: string | null
   state?: string | null
   address?: string | null
+  cep?: string | null
   emergencyContact?: EmergencyContact
   preferences?: string[]
   dietaryRestrictions?: string
@@ -187,6 +189,7 @@ export async function upsertGuestRpc(input: UpsertGuestInput): Promise<{ id: str
     p_city: input.city ?? null,
     p_state: input.state ?? null,
     p_address: input.address ?? null,
+    p_cep: input.cep ?? null,
     p_emergency_contact: input.emergencyContact ?? {},
     p_preferences: input.preferences ?? [],
     p_dietary_restrictions: input.dietaryRestrictions ?? '',

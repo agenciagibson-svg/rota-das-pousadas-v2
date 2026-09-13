@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { phoneSchema } from '@/lib/validation/br'
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
 
@@ -56,7 +57,7 @@ export const createBookingAdminSchema = z
     guestId: z.string().uuid().optional(),
     guestFullName: z.string().trim().min(2, 'Informe o nome do hóspede responsável.'),
     guestEmail: z.string().trim().email('E-mail inválido.').optional().or(z.literal('')),
-    guestPhone: z.string().trim().optional().or(z.literal('')),
+    guestPhone: phoneSchema.optional().or(z.literal('')),
     origin: z.enum(bookingOrigins),
     externalChannelName: z.string().trim().optional().or(z.literal('')),
     externalCode: z.string().trim().optional().or(z.literal('')),

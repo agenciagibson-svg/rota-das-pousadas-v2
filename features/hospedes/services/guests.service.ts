@@ -41,6 +41,7 @@ export type SaveGuestInput = {
   city?: string
   state?: string
   address?: string
+  cep?: string
   emergencyContactName?: string
   emergencyContactPhone?: string
   preferences: string[]
@@ -68,6 +69,7 @@ export async function saveGuest(input: SaveGuestInput): Promise<{ id: string }> 
     city: input.city ?? null,
     state: input.state ?? null,
     address: input.address ?? null,
+    cep: input.cep ?? null,
     emergencyContact: {
       name: input.emergencyContactName || undefined,
       phone: input.emergencyContactPhone || undefined,

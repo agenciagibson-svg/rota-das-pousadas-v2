@@ -48,6 +48,7 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
         city: String(formData.get('city') || ''),
         state: String(formData.get('state') || ''),
         address: String(formData.get('address') || ''),
+        cep: String(formData.get('cep') || ''),
         emergencyContactName: String(formData.get('emergencyContactName') || ''),
         emergencyContactPhone: String(formData.get('emergencyContactPhone') || ''),
         preferences,
@@ -115,6 +116,9 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
         </Field>
         <Field label="Endereço">
           <input name="address" defaultValue={guest.address ?? ''} className={inputClass} />
+        </Field>
+        <Field label="CEP">
+          <input name="cep" defaultValue={guest.cep ?? ''} placeholder="00000-000" className={inputClass} />
         </Field>
       </section>
 

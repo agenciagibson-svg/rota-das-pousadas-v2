@@ -40,7 +40,7 @@ export async function getPousadaSettings(
   const { data, error } = await supabase
     .from('pousadas')
     .select(
-      'id, slug, name, legal_name, tax_id, city, state, country, address, image, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, notification_email, house_rules, cancellation_policy',
+      'id, slug, name, legal_name, tax_id, city, state, country, address, cep, image, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, notification_email, house_rules, cancellation_policy',
     )
     .eq('id', pousadaId)
     .maybeSingle()
@@ -57,6 +57,7 @@ export async function getPousadaSettings(
     state: data.state,
     country: data.country,
     address: data.address,
+    cep: data.cep,
     image: data.image,
     description: data.description,
     tags: data.tags,
@@ -81,6 +82,7 @@ export type UpdatePousadaSettingsRow = {
   state: string
   country: string
   address: string
+  cep: string
   image: string
   description: string
   tags: string[]
@@ -111,6 +113,7 @@ export async function updatePousadaSettings(
       state: input.state,
       country: input.country,
       address: input.address,
+      cep: input.cep,
       image: input.image,
       description: input.description,
       tags: input.tags,

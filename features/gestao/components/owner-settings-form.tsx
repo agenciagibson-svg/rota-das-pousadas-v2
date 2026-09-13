@@ -25,6 +25,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
       state: String(formData.get('state') ?? ''),
       country: String(formData.get('country') ?? ''),
       address: String(formData.get('address') ?? ''),
+      cep: String(formData.get('cep') ?? ''),
       image: String(formData.get('image') ?? ''),
       description: String(formData.get('description') ?? ''),
       tags: String(formData.get('tags') ?? ''),
@@ -62,6 +63,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
         <Input label="Estado" name="state" defaultValue={settings.state} maxLength={2} />
         <Input label="País" name="country" defaultValue={settings.country} />
         <Input label="Endereço" name="address" defaultValue={settings.address} />
+        <Input label="CEP" name="cep" defaultValue={settings.cep} placeholder="00000-000" />
         <Input
           label="Telefone de contato"
           name="contactPhone"

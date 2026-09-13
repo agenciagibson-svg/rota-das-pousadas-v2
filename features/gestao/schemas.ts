@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ufSchema, phoneSchema, cepSchema } from '@/lib/validation/br'
 import type { BookingStatus } from '@/features/reservas/types'
 
 /** Ação sobre uma data do calendário, como bloquear ou desbloquear. */
@@ -50,13 +51,10 @@ export const pousadaSettingsSchema = z.object({
   legalName: z.string().trim().max(160, 'Razão social muito longa.'),
   taxId: z.string().trim().max(30, 'Documento fiscal muito longo.'),
   city: z.string().trim().min(2, 'Informe a cidade.').max(80, 'Cidade muito longa.'),
-  state: z
-    .string()
-    .trim()
-    .length(2, 'Use a sigla do estado.')
-    .transform((value) => value.toUpperCase()),
+  state: ufSchema.transform((value) => value.toUpperCase()),
   country: z.string().trim().min(2, 'Informe o país.').max(60, 'País muito longo.'),
   address: z.string().trim().max(200, 'Endereço muito longo.'),
+  cep: cepSchema.or(z.literal('')),
   image: z.string().trim().url('Informe uma URL de imagem válida.').or(z.literal('')),
   description: z.string().trim().min(20, 'Descreva melhor a pousada.').max(1500),
   tags: z.string().trim().max(160, 'Use no máximo 160 caracteres.'),
@@ -65,8 +63,8 @@ export const pousadaSettingsSchema = z.object({
   language: z.string().trim().min(2, 'Informe o idioma.').max(10),
   checkinTime: z.string().regex(timeRegex, 'Horário inválido.'),
   checkoutTime: z.string().regex(timeRegex, 'Horário inválido.'),
-  contactPhone: z.string().trim().max(30, 'Telefone muito longo.'),
-  whatsapp: z.string().trim().max(30, 'WhatsApp muito longo.'),
+  contactPhone: phoneSchema.or(z.literal('')),
+  whatsapp: phoneSchema.or(z.literal('')),
   notificationEmail: z
     .string()
     .trim()

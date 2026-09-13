@@ -68,6 +68,7 @@ export async function updateOwnerSettings(input: PousadaSettingsInput): Promise<
     state: input.state,
     country: input.country,
     address: input.address,
+    cep: input.cep ?? '',
     image: input.image,
     description: input.description,
     tags: input.tags
