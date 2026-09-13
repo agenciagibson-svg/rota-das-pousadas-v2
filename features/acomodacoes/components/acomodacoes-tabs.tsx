@@ -6,6 +6,7 @@ const TABS = [
   { key: 'categorias', label: 'Categorias', href: '/dashboard/acomodacoes/categorias' },
   { key: 'bloqueios', label: 'Bloqueios', href: '/dashboard/acomodacoes/bloqueios' },
   { key: 'disponibilidade', label: 'Disponibilidade', href: '/dashboard/acomodacoes/disponibilidade' },
+  { key: 'canais', label: 'Canais', href: '/dashboard/acomodacoes/canais' },
 ] as const
 
 export function AcomodacoesTabs({ active }: { active: (typeof TABS)[number]['key'] }) {
