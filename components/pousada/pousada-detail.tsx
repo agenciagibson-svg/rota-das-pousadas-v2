@@ -470,10 +470,6 @@ export function PousadaDetail({
                   </span>
                   <span>R$ {price.subtotal}</span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Taxa de serviço</span>
-                  <span>R$ {price.fee}</span>
-                </div>
                 <div className="flex justify-between border-t border-border pt-3 text-base font-semibold text-foreground">
                   <span>Total</span>
                   <span>R$ {price.total}</span>

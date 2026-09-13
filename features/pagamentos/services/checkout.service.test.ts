@@ -15,10 +15,11 @@ describe('checkout autorizado', () => {
     mocks.context.mockResolvedValue({ pousadaId: 'tenant', accessTokenEncrypted: 'ciphertext' })
     mocks.checkout.mockResolvedValue({ init_point: 'https://example.test/pay' })
   })
-  it('cobra o saldo restante com comissão proporcional', async () => {
+  it('cobra o saldo restante, sem comissão da plataforma', async () => {
     await createCheckoutPreference('booking')
     expect(mocks.booking).toHaveBeenCalledWith('booking', 'traveler')
-    expect(mocks.checkout).toHaveBeenCalledWith(expect.objectContaining({ unitPrice: 399.50, marketplaceFee: 31.96 }))
+    expect(mocks.checkout).toHaveBeenCalledWith(expect.objectContaining({ unitPrice: 399.50 }))
+    expect(mocks.checkout.mock.calls[0][0]).not.toHaveProperty('marketplaceFee')
   })
   it('não acessa token quando a reserva não pertence ao usuário', async () => {
     mocks.booking.mockResolvedValue(null)

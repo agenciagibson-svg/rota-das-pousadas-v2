@@ -91,13 +91,19 @@ export type CreatePreferenceParams = {
   title: string
   quantity: number
   unitPrice: number
-  /** Comissão da plataforma — vai para `marketplace_fee` (Checkout Pro). */
-  marketplaceFee: number
   externalReference: string
   notificationUrl: string
   backUrls: { success: string; pending: string; failure: string }
 }
 
+/**
+ * ⚠️ `marketplace_fee` foi removido de propósito (13/09/2026). A Rota é SaaS por
+ * assinatura: não cobra comissão sobre reserva, não faz split e não custodia
+ * fundos — o pagamento vai integralmente para a conta da pousada. Reintroduzir
+ * esse campo muda o modelo de negócio e a exposição regulatória (KYC de
+ * marketplace, chargeback); exige revisar `docs/04_BUSINESS_ARCHITECTURE.md §9`
+ * antes, não apenas alterar este arquivo.
+ */
 export async function createCheckoutPreference(params: CreatePreferenceParams): Promise<MpPreference> {
   const response = await fetch(`${MP_API_BASE}/checkout/preferences`, {
     signal: AbortSignal.timeout(10000),
@@ -116,7 +122,6 @@ export async function createCheckoutPreference(params: CreatePreferenceParams): 
           currency_id: 'BRL',
         },
       ],
-      marketplace_fee: params.marketplaceFee,
       external_reference: params.externalReference,
       notification_url: params.notificationUrl,
       back_urls: params.backUrls,

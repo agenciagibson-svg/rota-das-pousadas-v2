@@ -230,7 +230,6 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
                   <span>R$ {nightlyRate} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}</span>
                   <span>R$ {price.subtotal}</span>
                 </div>
-                <div className="flex justify-between text-muted-foreground"><span>Taxa de serviço</span><span>R$ {price.fee}</span></div>
                 {discount > 0 && <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span>−R$ {discount}</span></div>}
                 {surcharge > 0 && <div className="flex justify-between text-muted-foreground"><span>Acréscimo</span><span>R$ {surcharge}</span></div>}
                 {servicesAmount > 0 && <div className="flex justify-between text-muted-foreground"><span>Serviços</span><span>R$ {servicesAmount}</span></div>}

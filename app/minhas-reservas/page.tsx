@@ -171,7 +171,9 @@ export default async function MyBookingsPage() {
                                 R$ {booking.total}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                R$ {booking.subtotal} estadia + R$ {booking.fee} taxa
+                                {booking.fee > 0
+                                  ? `R$ ${booking.subtotal} estadia + R$ ${booking.fee} taxa`
+                                  : `R$ ${booking.subtotal} estadia`}
                               </div>
                             </div>
                           </div>

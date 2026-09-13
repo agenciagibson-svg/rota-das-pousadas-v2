@@ -38,9 +38,15 @@ export async function getPousadaPaymentContextForWebhook(bookingId: string): Pro
 
 /**
  * Única porta de escrita do webhook do Mercado Pago — chama a RPC
- * `record_payment_and_confirm_booking` (0039) via cliente service-role,
- * a única exceção documentada em `lib/supabase/service.ts` ao uso restrito
- * desse cliente. Nunca ler/escrever tabela diretamente aqui.
+ * `reconcile_marketplace_payment` (0042) via cliente service-role, a única
+ * exceção documentada em `lib/supabase/service.ts` ao uso restrito desse
+ * cliente. Nunca ler/escrever tabela diretamente aqui.
+ *
+ * O nome da função é herdado de `record_payment_and_confirm_booking` (0039),
+ * que a 0042 **revogou de todos os papéis, service_role inclusive**, por não
+ * conferir moeda nem versão do evento. Não voltar a chamá-la: além de estar
+ * sem permissão, ela confunde repetição de webhook com mudança legítima de
+ * status. A RPC atual distingue `stale`, `already_recorded` e `ok`.
  */
 export async function recordPaymentAndConfirmBookingRpc(
   p: RecordPaymentParams,

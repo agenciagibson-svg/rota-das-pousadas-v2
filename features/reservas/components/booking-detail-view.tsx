@@ -86,7 +86,8 @@ export function BookingDetailView({
             <h2 className="font-semibold text-foreground">Valores previstos</h2>
             <div className="mt-3 space-y-1.5 text-sm">
               <div className="flex justify-between text-muted-foreground"><span>Estadia</span><span>R$ {booking.subtotal}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span>Taxa</span><span>R$ {booking.fee}</span></div>
+              {/* Reservas anteriores a 13/09/2026 guardam a taxa de serviço que foi cobrada; novas nascem com fee = 0. */}
+              {booking.fee > 0 && <div className="flex justify-between text-muted-foreground"><span>Taxa</span><span>R$ {booking.fee}</span></div>}
               {booking.discount > 0 && <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span>−R$ {booking.discount}</span></div>}
               {booking.surcharge > 0 && <div className="flex justify-between text-muted-foreground"><span>Acréscimo</span><span>R$ {booking.surcharge}</span></div>}
               {booking.servicesAmount > 0 && <div className="flex justify-between text-muted-foreground"><span>Serviços</span><span>R$ {booking.servicesAmount}</span></div>}

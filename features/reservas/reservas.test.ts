@@ -14,12 +14,17 @@ describe('nightsBetween', () => {
 })
 
 describe('calculateBookingPrice', () => {
-  it('aplica diária × noites + taxa de 8%', () => {
+  it('cobra diária × noites, sem taxa de plataforma (RB-23 revisada)', () => {
     const p = calculateBookingPrice(720, '2026-03-14', '2026-03-16')
     expect(p.nights).toBe(2)
     expect(p.subtotal).toBe(1440)
-    expect(p.fee).toBe(Math.round(1440 * SERVICE_FEE_RATE))
-    expect(p.total).toBe(p.subtotal + p.fee)
+    expect(p.fee).toBe(0)
+    expect(p.total).toBe(1440)
+  })
+  it('não adiciona comissão da plataforma ao preço do hóspede', () => {
+    expect(SERVICE_FEE_RATE).toBe(0)
+    const p = calculateBookingPrice(333, '2026-03-14', '2026-03-17')
+    expect(p.total).toBe(p.subtotal)
   })
   it('zera com período inválido', () => {
     const p = calculateBookingPrice(720, '2026-03-16', '2026-03-14')
@@ -32,7 +37,7 @@ describe('calculateBookingPrice', () => {
     expect(p.discount).toBe(100)
     expect(p.surcharge).toBe(50)
     expect(p.servicesAmount).toBe(30)
-    expect(p.total).toBe(p.subtotal + p.fee - 100 + 50 + 30)
+    expect(p.total).toBe(p.subtotal - 100 + 50 + 30)
   })
   it('[Ciclo 4] nunca aceita ajuste negativo (RB seção 5)', () => {
     const p = calculateBookingPrice(720, '2026-03-14', '2026-03-16', { discount: -50, surcharge: -10 })

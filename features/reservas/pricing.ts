@@ -1,7 +1,18 @@
 import type { PriceBreakdown } from './types'
 
-/** Taxa de serviço da plataforma (RB-23). */
-export const SERVICE_FEE_RATE = 0.08
+/**
+ * Taxa de serviço da plataforma — **desativada** (RB-23 revisada em 13/09/2026).
+ *
+ * A Rota é SaaS por assinatura: a receita vem do plano pago pela pousada, não de
+ * comissão sobre reserva. O hóspede paga exatamente o preço definido pela
+ * pousada, e o dinheiro vai direto para ela — a plataforma não entra na
+ * transação (ver `docs/04_BUSINESS_ARCHITECTURE.md §9`).
+ *
+ * Mantido como constante zerada, e não removido, porque `bookings.fee` continua
+ * existindo no banco: reservas anteriores a esta data guardam a taxa que foi
+ * efetivamente cobrada e esse histórico não é reescrito.
+ */
+export const SERVICE_FEE_RATE = 0
 
 /** Número de noites entre duas datas ISO (YYYY-MM-DD). Nunca negativo. */
 export function nightsBetween(checkin: string, checkout: string): number {
@@ -12,8 +23,8 @@ export function nightsBetween(checkin: string, checkout: string): number {
 }
 
 /**
- * Cálculo puro de preço da reserva: (diária × noites) + taxa de serviço,
- * ajustado por desconto/acréscimo/serviços previstos (Ciclo 4). Determinístico
+ * Cálculo puro de preço da reserva: (diária × noites), ajustado por
+ * desconto/acréscimo/serviços previstos (Ciclo 4). Determinístico
  * e testável — a fonte da verdade do preço exibido e persistido como
  * snapshot na reserva (nunca recalculado a partir do cadastro atual depois).
  */
