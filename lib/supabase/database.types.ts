@@ -432,6 +432,146 @@ export type Database = {
           },
         ]
       }
+      channel_calendars: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          export_enabled: boolean
+          export_token: string
+          id: string
+          import_enabled: boolean
+          import_url: string | null
+          label: string
+          last_event_count: number
+          last_sync_at: string | null
+          last_sync_error: string
+          last_sync_status: Database["public"]["Enums"]["channel_sync_status"]
+          pousada_id: string
+          provider: Database["public"]["Enums"]["channel_provider"]
+          room_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          export_enabled?: boolean
+          export_token: string
+          id?: string
+          import_enabled?: boolean
+          import_url?: string | null
+          label?: string
+          last_event_count?: number
+          last_sync_at?: string | null
+          last_sync_error?: string
+          last_sync_status?: Database["public"]["Enums"]["channel_sync_status"]
+          pousada_id: string
+          provider: Database["public"]["Enums"]["channel_provider"]
+          room_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          export_enabled?: boolean
+          export_token?: string
+          id?: string
+          import_enabled?: boolean
+          import_url?: string | null
+          label?: string
+          last_event_count?: number
+          last_sync_at?: string | null
+          last_sync_error?: string
+          last_sync_status?: Database["public"]["Enums"]["channel_sync_status"]
+          pousada_id?: string
+          provider?: Database["public"]["Enums"]["channel_provider"]
+          room_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_calendars_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_calendars_pousada_id_fkey"
+            columns: ["pousada_id"]
+            isOneToOne: false
+            referencedRelation: "pousadas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_calendars_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_events: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          ends_on: string
+          id: string
+          pousada_id: string
+          room_id: string
+          starts_on: string
+          summary: string
+          uid: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          ends_on: string
+          id?: string
+          pousada_id: string
+          room_id: string
+          starts_on: string
+          summary?: string
+          uid: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          ends_on?: string
+          id?: string
+          pousada_id?: string
+          room_id?: string
+          starts_on?: string
+          summary?: string
+          uid?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_events_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "channel_calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_events_pousada_id_fkey"
+            columns: ["pousada_id"]
+            isOneToOne: false
+            referencedRelation: "pousadas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_events_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           id: string
@@ -760,6 +900,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      link_events: {
+        Row: {
+          available_count: number | null
+          checkin: string | null
+          checkout: string | null
+          created_at: string
+          event: Database["public"]["Enums"]["link_event_type"]
+          guests: number | null
+          id: string
+          pousada_id: string
+        }
+        Insert: {
+          available_count?: number | null
+          checkin?: string | null
+          checkout?: string | null
+          created_at?: string
+          event: Database["public"]["Enums"]["link_event_type"]
+          guests?: number | null
+          id?: string
+          pousada_id: string
+        }
+        Update: {
+          available_count?: number | null
+          checkin?: string | null
+          checkout?: string | null
+          created_at?: string
+          event?: Database["public"]["Enums"]["link_event_type"]
+          guests?: number | null
+          id?: string
+          pousada_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_events_pousada_id_fkey"
+            columns: ["pousada_id"]
+            isOneToOne: false
+            referencedRelation: "pousadas"
             referencedColumns: ["id"]
           },
         ]
@@ -1261,6 +1442,84 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_requests: {
+        Row: {
+          adults: number
+          checkin: string | null
+          checkout: string | null
+          children: number
+          created_at: string
+          email: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          internal_notes: string
+          message: string
+          name: string
+          occasion: string
+          pets: boolean
+          phone: string
+          pousada_id: string
+          status: Database["public"]["Enums"]["quote_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          adults?: number
+          checkin?: string | null
+          checkout?: string | null
+          children?: number
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          internal_notes?: string
+          message?: string
+          name: string
+          occasion?: string
+          pets?: boolean
+          phone: string
+          pousada_id: string
+          status?: Database["public"]["Enums"]["quote_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          adults?: number
+          checkin?: string | null
+          checkout?: string | null
+          children?: number
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          internal_notes?: string
+          message?: string
+          name?: string
+          occasion?: string
+          pets?: boolean
+          phone?: string
+          pousada_id?: string
+          status?: Database["public"]["Enums"]["quote_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_pousada_id_fkey"
+            columns: ["pousada_id"]
+            isOneToOne: false
+            referencedRelation: "pousadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           author_id: string
@@ -1596,7 +1855,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      auth_can_manage_channels: {
+        Args: { target_pousada: string }
+        Returns: boolean
+      }
       auth_can_manage_pousada: {
+        Args: { target_pousada: string }
+        Returns: boolean
+      }
+      auth_can_read_channels: {
         Args: { target_pousada: string }
         Returns: boolean
       }
@@ -1677,6 +1944,22 @@ export type Database = {
         }
         Returns: string
       }
+      create_quote_request: {
+        Args: {
+          p_adults?: number
+          p_checkin?: string
+          p_checkout?: string
+          p_children?: number
+          p_email?: string
+          p_message?: string
+          p_name: string
+          p_occasion?: string
+          p_pets?: boolean
+          p_phone: string
+          p_pousada_id: string
+        }
+        Returns: Json
+      }
       create_room_block: {
         Args: {
           p_block_type: Database["public"]["Enums"]["room_block_type"]
@@ -1690,7 +1973,16 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_channel_calendar: {
+        Args: { p_calendar_id: string }
+        Returns: undefined
+      }
       expire_pending_booking: { Args: { p_booking_id: string }; Returns: Json }
+      get_channel_export_feed: { Args: { p_token: string }; Returns: Json }
+      get_link_report: {
+        Args: { p_days?: number; p_pousada_id: string }
+        Returns: Json
+      }
       get_pousada_payment_context: {
         Args: { p_booking_id: string }
         Returns: Json
@@ -1716,6 +2008,13 @@ export type Database = {
           description: string
           id: string
           name: string
+        }[]
+      }
+      list_channel_feeds_to_import: {
+        Args: never
+        Returns: {
+          calendar_id: string
+          import_url: string
         }[]
       }
       list_membership_emails: {
@@ -1785,6 +2084,17 @@ export type Database = {
         }
         Returns: Json
       }
+      record_link_event: {
+        Args: {
+          p_available_count?: number
+          p_checkin?: string
+          p_checkout?: string
+          p_event: Database["public"]["Enums"]["link_event_type"]
+          p_guests?: number
+          p_pousada_id: string
+        }
+        Returns: undefined
+      }
       record_payment_and_confirm_booking: {
         Args: {
           p_amount: number
@@ -1799,6 +2109,16 @@ export type Database = {
       revoke_member: {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
+      }
+      save_channel_calendar: {
+        Args: {
+          p_export_token: string
+          p_import_url: string
+          p_label: string
+          p_provider: Database["public"]["Enums"]["channel_provider"]
+          p_room_id: string
+        }
+        Returns: string
       }
       save_payment_account: {
         Args: {
@@ -1835,11 +2155,28 @@ export type Database = {
         }
         Returns: Json
       }
+      set_quote_request_status: {
+        Args: {
+          p_notes?: string
+          p_request_id: string
+          p_status: Database["public"]["Enums"]["quote_request_status"]
+        }
+        Returns: undefined
+      }
       suspend_member: {
         Args: {
           p_membership_id: string
           p_pousada_id: string
           p_reason: string
+        }
+        Returns: Json
+      }
+      sync_channel_events: {
+        Args: {
+          p_calendar_id: string
+          p_error?: string
+          p_events: Json
+          p_status: Database["public"]["Enums"]["channel_sync_status"]
         }
         Returns: Json
       }
@@ -1928,6 +2265,7 @@ export type Database = {
         | "expedia"
         | "agencia"
         | "outro"
+        | "link_bio"
       booking_status:
         | "quote"
         | "pending"
@@ -1936,6 +2274,8 @@ export type Database = {
         | "checked_out"
         | "cancelled"
         | "no_show"
+      channel_provider: "airbnb" | "booking" | "outro"
+      channel_sync_status: "never" | "ok" | "error"
       guest_source:
         | "platform_account"
         | "front_desk"
@@ -1943,6 +2283,7 @@ export type Database = {
         | "public_booking"
         | "import"
         | "other"
+      link_event_type: "view" | "search" | "quote_request" | "booking_started"
       membership_status: "invited" | "active" | "suspended" | "revoked"
       payment_status: "pendente" | "aprovado" | "recusado" | "estornado"
       platform_role:
@@ -1959,6 +2300,7 @@ export type Database = {
         | "suspensa"
         | "arquivada"
         | "reprovada"
+      quote_request_status: "novo" | "respondido" | "convertido" | "descartado"
       room_block_status: "active" | "cancelled" | "expired"
       room_block_type:
         | "maintenance"
@@ -2123,6 +2465,7 @@ export const Constants = {
         "expedia",
         "agencia",
         "outro",
+        "link_bio",
       ],
       booking_status: [
         "quote",
@@ -2133,6 +2476,8 @@ export const Constants = {
         "cancelled",
         "no_show",
       ],
+      channel_provider: ["airbnb", "booking", "outro"],
+      channel_sync_status: ["never", "ok", "error"],
       guest_source: [
         "platform_account",
         "front_desk",
@@ -2141,6 +2486,7 @@ export const Constants = {
         "import",
         "other",
       ],
+      link_event_type: ["view", "search", "quote_request", "booking_started"],
       membership_status: ["invited", "active", "suspended", "revoked"],
       payment_status: ["pendente", "aprovado", "recusado", "estornado"],
       platform_role: [
@@ -2159,6 +2505,7 @@ export const Constants = {
         "arquivada",
         "reprovada",
       ],
+      quote_request_status: ["novo", "respondido", "convertido", "descartado"],
       room_block_status: ["active", "cancelled", "expired"],
       room_block_type: [
         "maintenance",

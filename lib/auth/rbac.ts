@@ -67,6 +67,16 @@ export type Action =
   | 'booking:manage'
   | 'booking:no_show'
   | 'payment:connect_account'
+  // Canais (iCal com Airbnb/Booking). `manage` espelha exatamente
+  // `auth_can_manage_channels` e `view` espelha `auth_can_read_channels`, ambos
+  // na migration 0044 — as duas barreiras precisam concordar, senão a tela
+  // oferece um botão que o banco recusa.
+  | 'channel:view'
+  | 'channel:manage'
+  // Link da bio. Ambas espelham `auth_has_guest_access` (0030), que é o que
+  // a RLS da 0046 usa para o relatório e para os pedidos de orçamento.
+  | 'link:report:view'
+  | 'quote:manage'
 
 /** Papéis que operam no escopo de uma pousada (tenant). */
 export const TENANT_ROLES: readonly Role[] = [
@@ -129,6 +139,10 @@ const MATRIX: Record<Role, Action[]> = {
     'booking:manage',
     'booking:cancel',
     'booking:no_show',
+    'channel:view',
+    'channel:manage',
+    'link:report:view',
+    'quote:manage',
   ],
   // Property manager: opera o dia a dia da pousada, mas administração de
   // equipe é sensível e fica restrita ao proprietário (decisão do Ciclo 1).
@@ -157,6 +171,10 @@ const MATRIX: Record<Role, Action[]> = {
     'booking:manage',
     'booking:cancel',
     'booking:no_show',
+    'channel:view',
+    'channel:manage',
+    'link:report:view',
+    'quote:manage',
   ],
   recepcionista: [
     'catalog:view',
@@ -172,6 +190,9 @@ const MATRIX: Record<Role, Action[]> = {
     'booking:manage',
     'booking:cancel',
     'booking:no_show',
+    'channel:view',
+    'link:report:view',
+    'quote:manage',
   ],
   financeiro_pousada: [
     'catalog:view',
@@ -239,6 +260,10 @@ const MATRIX: Record<Role, Action[]> = {
     'availability:check',
     'booking:manage',
     'booking:no_show',
+    'channel:view',
+    'channel:manage',
+    'link:report:view',
+    'quote:manage',
   ],
   // A IA só triagem/sugestão; ações efetivas passam por humano (ver AIService).
   ia: ['catalog:view', 'search:run', 'content:moderate'],

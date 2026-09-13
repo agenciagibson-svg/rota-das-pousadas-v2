@@ -31,6 +31,8 @@ import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services
 import { listMyFavoriteAlertStates } from '@/features/alertas/services/favorite-alerts.service'
 import { listTeam } from '@/features/membros/services/team.service'
 import { listGuests, getGuestProfile as guestProfile } from '@/features/hospedes/services/guests.service'
+import { listChannels as ownerChannels } from '@/features/canais/services/channels.service'
+import { getLinkReport as linkReport, listQuoteRequests as quoteRequests } from '@/features/bio/services/bio.service'
 import { getBookingDetailById } from '@/repositories/bookings.repository'
 import { requireCapability } from '@/features/acomodacoes/services/access'
 import { resolveTenantAccess } from '@/lib/auth/tenant-context'
@@ -120,6 +122,21 @@ export const getOwnerReservationDetail = cache(async (bookingId: string) => {
 export const canManageBookings = cache(async () => {
   const state = await resolveTenantAccess()
   return state.status === 'ok' && can(state.membership.role, 'booking:manage')
+})
+
+/** Canais (iCal) da pousada ativa — quem vê é definido por `channel:view`. */
+export const getOwnerChannels = cache(() => ownerChannels())
+export const canManageChannels = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'channel:manage')
+})
+
+/** Link da bio: relatório e pedidos de orçamento da pousada ativa. */
+export const getLinkReport = cache((days: 7 | 30 | 90 = 30) => linkReport({ days }))
+export const getQuoteRequests = cache(() => quoteRequests())
+export const canManageQuotes = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'quote:manage')
 })
 
 /** Favoritos do visitante autenticado. */
