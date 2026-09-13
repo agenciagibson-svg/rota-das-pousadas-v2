@@ -20,3 +20,25 @@ export function uniqueSlug(input: string): string {
   const base = slugify(input) || 'pousada'
   return `${base}-${suffix}`
 }
+
+/**
+ * Caminhos que a aplicação já usa na raiz.
+ *
+ * A página da bio mora em `/<slug>`, então um slug igual a um destes seria
+ * engolido pela rota estática e o link da bio da pousada simplesmente nunca
+ * abriria — sem erro, sem aviso, só a tela errada. Toda criação de slug precisa
+ * passar por `isReservedSlug`, e novos caminhos de primeiro nível precisam ser
+ * acrescentados aqui no mesmo commit em que forem criados.
+ */
+export const RESERVED_SLUGS: readonly string[] = [
+  'admin', 'anunciar', 'api', 'auth', 'cadastro', 'concierge', 'dashboard',
+  'destinos', 'experiencias', 'favoritos', 'login', 'logout', 'minhas-reservas',
+  'parceiros', 'pousada', 'pousadas', 'privacidade', 'sobre', 'suporte',
+  'termos', 'sitemap', 'robots', 'manifest', '_next', 'static', 'public',
+] as const
+
+const RESERVED = new Set<string>(RESERVED_SLUGS)
+
+export function isReservedSlug(slug: string): boolean {
+  return RESERVED.has(slug.trim().toLowerCase())
+}

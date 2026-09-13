@@ -3,6 +3,7 @@ import {
   Bot,
   CalendarCheck,
   LayoutDashboard,
+  Link2,
   Megaphone,
   MessageSquare,
   Settings,
@@ -19,6 +20,7 @@ export type OwnerDashboardSection =
   | 'hospedes'
   | 'financeiro'
   | 'acomodacoes'
+  | 'link'
   | 'membros'
   | 'mensagens'
   | 'avaliacoes'
@@ -52,6 +54,12 @@ export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
       icon: BedDouble,
       href: '/dashboard/acomodacoes',
       active: active === 'acomodacoes',
+    },
+    {
+      label: 'Link da bio',
+      icon: Link2,
+      href: '/dashboard/link',
+      active: active === 'link',
     },
     {
       label: 'Membros',
