@@ -7,7 +7,7 @@ import { ArrowUpRight, BriefcaseBusiness, Leaf, Mail, Newspaper, ScrollText } fr
 
 const companyLinks = [
   {
-    label: 'Historia',
+    label: 'História',
     href: '#',
     icon: ScrollText,
     title: 'A rota nasce das pousadas com alma',
@@ -19,7 +19,7 @@ const companyLinks = [
     href: '#',
     icon: Leaf,
     title: 'Turismo que respeita o lugar',
-    detail: 'Curadoria para destacar pousadas conectadas com natureza, comunidade local e operacao responsavel.',
+    detail: 'Curadoria para destacar pousadas conectadas com natureza, comunidade local e operação responsável.',
     step: 'impacto',
   },
   {
@@ -27,7 +27,7 @@ const companyLinks = [
     href: '#',
     icon: Newspaper,
     title: 'Uma nova vitrine para o turismo nacional',
-    detail: 'Materiais, releases e dados da plataforma para contar a expansao da Rota das Pousadas.',
+    detail: 'Materiais, releases e dados da plataforma para contar a expansão da Rota das Pousadas.',
     step: 'voz',
   },
   {
@@ -35,7 +35,7 @@ const companyLinks = [
     href: '#',
     icon: BriefcaseBusiness,
     title: 'Gente construindo tecnologia com hospitalidade',
-    detail: 'Produto, operacao, marketing e IA trabalhando para aproximar pousadas e viajantes.',
+    detail: 'Produto, operação, marketing e IA trabalhando para aproximar pousadas e viajantes.',
     step: 'time',
   },
   {
@@ -43,7 +43,7 @@ const companyLinks = [
     href: '#',
     icon: Mail,
     title: 'Fale com a Rota das Pousadas',
-    detail: 'Parcerias, suporte, imprensa e oportunidades podem comecar por uma mensagem simples.',
+    detail: 'Parcerias, suporte, imprensa e oportunidades podem começar por uma mensagem simples.',
     step: 'conversa',
   },
 ]

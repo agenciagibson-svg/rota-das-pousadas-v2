@@ -34,28 +34,28 @@ const moods: Array<{
   {
     key: 'romance',
     label: 'A dois',
-    text: 'Chales, serra e clima reservado.',
+    text: 'Chalés, serra e clima reservado.',
     icon: Heart,
     terms: ['romantico', 'chale', 'serra', 'lareira', 'spa'],
   },
   {
     key: 'familia',
-    label: 'Familia',
-    text: 'Conforto, espaco e dias tranquilos.',
+    label: 'Família',
+    text: 'Conforto, espaço e dias tranquilos.',
     icon: Users,
     terms: ['familia', 'piscina', 'conforto', 'fazenda', 'pet'],
   },
   {
     key: 'aventura',
     label: 'Aventura',
-    text: 'Natureza, trilhas e agua por perto.',
+    text: 'Natureza, trilhas e água por perto.',
     icon: Mountain,
     terms: ['trilha', 'cachoeira', 'natureza', 'ecoturismo', 'aventura'],
   },
   {
     key: 'descanso',
     label: 'Descanso',
-    text: 'Silencio, cafe lento e pausa real.',
+    text: 'Silêncio, café lento e pausa real.',
     icon: Waves,
     terms: ['descanso', 'bem-estar', 'vista', 'campo', 'cafe'],
   },
@@ -64,15 +64,15 @@ const moods: Array<{
 const budgets: Array<{ key: Budget; label: string; max: number; description: string }> = [
   {
     key: 'economico',
-    label: 'Ate R$ 350',
+    label: 'Até R$ 350',
     max: 350,
-    description: 'Boa estadia com diaria enxuta.',
+    description: 'Boa estadia com diária enxuta.',
   },
   {
     key: 'conforto',
-    label: 'Ate R$ 600',
+    label: 'Até R$ 600',
     max: 600,
-    description: 'Equilibrio entre preco e experiencia.',
+    description: 'Equilíbrio entre preço e experiência.',
   },
   {
     key: 'premium',
@@ -84,7 +84,7 @@ const budgets: Array<{ key: Budget; label: string; max: number; description: str
 
 const companionLabels = {
   casal: 'casal',
-  familia: 'familia',
+  familia: 'família',
   amigos: 'amigos',
 } as const
 
@@ -204,7 +204,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
           </div>
 
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase">Orcamento</p>
+            <p className="text-muted-foreground text-xs font-semibold uppercase">Orçamento</p>
             <div className="mt-3 grid gap-2">
               {budgets.map((item) => (
                 <button
@@ -228,7 +228,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="text-muted-foreground text-xs font-semibold uppercase">
-                Hospedes
+                Hóspedes
               </span>
               <input
                 type="number"
@@ -288,7 +288,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   : `Uma rota de ${moodConfig.label.toLowerCase()}`}
               </h2>
               <p className="text-linen/70 mt-4 max-w-xl leading-relaxed">
-                Para uma viagem de {nights} noite{nights === 1 ? '' : 's'} com {guests} hospede
+                Para uma viagem de {nights} noite{nights === 1 ? '' : 's'} com {guests} hóspede
                 {guests === 1 ? '' : 's'}, eu priorizaria {moodConfig.text.toLowerCase()} dentro do
                 perfil {budgetConfig.label.toLowerCase()}.
               </p>
@@ -315,7 +315,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                     href={`/pousada/${hero.slug}`}
                     className="border-linen/20 text-linen hover:bg-linen hover:text-stone-deep inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition-colors"
                   >
-                    Abrir melhor sugestao
+                    Abrir melhor sugestão
                   </Link>
                 ) : null}
               </div>
@@ -392,7 +392,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                 <div className="mt-5 flex items-center justify-between gap-4">
                   <p className="text-foreground text-lg font-semibold">
                     R$ {pousada.pricePerNight}
-                    <span className="text-muted-foreground text-xs font-normal"> / diaria</span>
+                    <span className="text-muted-foreground text-xs font-normal"> / diária</span>
                   </p>
                   <span className="bg-primary text-primary-foreground group-hover:bg-accent inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold">
                     Ver pousada

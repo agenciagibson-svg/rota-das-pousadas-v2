@@ -20,7 +20,7 @@ type Offer = {
 }
 
 const seasonLabels: Record<SeasonKey, string> = {
-  verao: 'Verao',
+  verao: 'Verão',
   outono: 'Outono',
   inverno: 'Inverno',
   primavera: 'Primavera',
@@ -31,8 +31,8 @@ const offers: Record<
   { eyebrow: string; title: string; description: string; accent: string; items: Offer[] }
 > = {
   verao: {
-    eyebrow: 'Ofertas de verao',
-    title: 'Escapadas com agua por perto',
+    eyebrow: 'Ofertas de verão',
+    title: 'Escapadas com água por perto',
     description: 'Praias, piscinas e cachoeiras para quem quer reservar antes das melhores datas sumirem.',
     accent: 'text-ocean',
     items: [
@@ -43,25 +43,25 @@ const offers: Record<
         search: 'Praia',
         badge: 'alta procura',
         price: 'a partir de R$ 890',
-        perk: 'vista mar + cafe premium',
+        perk: 'vista mar + café premium',
       },
       {
         title: 'Cachoeiras e canyon',
-        location: 'Capitolio, MG',
+        location: 'Capitólio, MG',
         image: '/images/capitolio.png',
         search: 'Cachoeiras',
         badge: 'fim de semana',
         price: 'a partir de R$ 380',
-        perk: 'piscina + roteiro de aguas',
+        perk: 'piscina + roteiro de águas',
       },
       {
         title: 'Natureza cristalina',
         location: 'Bonito, MS',
         image: '/images/bonito.png',
         search: 'Bonito',
-        badge: 'familia',
+        badge: 'família',
         price: 'a partir de R$ 460',
-        perk: 'flutuacao + descanso',
+        perk: 'flutuação + descanso',
       },
     ],
   },
@@ -78,7 +78,7 @@ const offers: Record<
         search: 'Canastra',
         badge: 'curadoria',
         price: 'a partir de R$ 340',
-        perk: 'trilhas + queijo da regiao',
+        perk: 'trilhas + queijo da região',
       },
       {
         title: 'Campo com vista',
@@ -87,11 +87,11 @@ const offers: Record<
         search: 'Natureza',
         badge: 'casais',
         price: 'a partir de R$ 410',
-        perk: 'varanda + cafe lento',
+        perk: 'varanda + café lento',
       },
       {
-        title: 'Refugio de silencio',
-        location: 'Campos do Jordao, SP',
+        title: 'Refúgio de silêncio',
+        location: 'Campos do Jordão, SP',
         image: '/images/campos.png',
         search: 'Trilhas',
         badge: 'meio de semana',
@@ -103,7 +103,7 @@ const offers: Record<
   inverno: {
     eyebrow: 'Ofertas de inverno',
     title: 'Chales, lareiras e serra com clima de reserva agora',
-    description: 'A estacao atual pede pousadas aconchegantes, noites frias e datas bem escolhidas.',
+    description: 'A estação atual pede pousadas aconchegantes, noites frias e datas bem escolhidas.',
     accent: 'text-accent',
     items: [
       {
@@ -113,23 +113,23 @@ const offers: Record<
         search: 'Lareira',
         badge: 'inverno agora',
         price: 'a partir de R$ 520',
-        perk: 'vinho + cafe colonial',
+        perk: 'vinho + café colonial',
       },
       {
         title: 'Serra para dois',
         location: 'Monte Verde, MG',
         image: '/images/pousada-1.png',
         search: 'Chales',
-        badge: 'romantico',
+        badge: 'romântico',
         price: 'a partir de R$ 720',
         perk: 'banheira + varanda',
       },
       {
         title: 'Fim de semana premium',
-        location: 'Campos do Jordao, SP',
+        location: 'Campos do Jordão, SP',
         image: '/images/campos.png',
         search: 'Serra',
-        badge: 'ultimas datas',
+        badge: 'últimas datas',
         price: 'a partir de R$ 490',
         perk: 'montanha + gastronomia',
       },
@@ -151,13 +151,13 @@ const offers: Record<
         perk: 'trilhas + banho de rio',
       },
       {
-        title: 'Aguas e flores',
+        title: 'Águas e flores',
         location: 'Bonito, MS',
         image: '/images/bonito.png',
         search: 'Natureza',
         badge: 'bem-estar',
         price: 'a partir de R$ 460',
-        perk: 'flutuacao + jardim',
+        perk: 'flutuação + jardim',
       },
       {
         title: 'Pousada no bosque',
@@ -313,14 +313,14 @@ export function SeasonalOffers() {
             </span>
             <div>
               <p className="font-semibold text-linen">Ofertas vivas por temporada</p>
-              <p className="text-sm text-linen/55">Depois podemos conectar isso a precos reais, ocupacao e feriados.</p>
+              <p className="text-sm text-linen/55">Depois podemos conectar isso a preços reais, ocupação e feriados.</p>
             </div>
           </div>
           <Link
             href={offerHref(season, current.items[0].search)}
             className="inline-flex w-fit rounded-full bg-linen px-5 py-2.5 text-sm font-semibold text-stone-deep transition-colors hover:bg-accent hover:text-accent-foreground"
           >
-            Ver ofertas da estacao
+            Ver ofertas da estação
           </Link>
         </div>
       </div>

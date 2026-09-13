@@ -26,7 +26,7 @@ export default async function ConciergePage() {
             Conte como quer viajar. A rota aparece na hora.
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Uma camada inteligente para transformar intencao em pousadas recomendadas, datas
+            Uma camada inteligente para transformar intenção em pousadas recomendadas, datas
             sugeridas e uma busca pronta para reservar.
           </p>
         </div>

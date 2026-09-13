@@ -6,7 +6,7 @@ import { createAction } from '@/actions/create-action'
 import { toggleFavorite } from './services/favorites.service'
 
 const favoriteSchema = z.object({
-  slug: z.string().min(1, 'Pousada invalida.'),
+  slug: z.string().min(1, 'Pousada inválida.'),
 })
 
 export const toggleFavoriteAction = createAction(favoriteSchema, async (input) => {

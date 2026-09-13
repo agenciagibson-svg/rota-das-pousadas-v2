@@ -17,14 +17,14 @@ const channels = [
     label: 'YouTube',
     href: '#',
     icon: Play,
-    pulse: 'Roteiros em video, reviews de hospedagens e guias por temporada.',
-    stat: 'Rotas em video',
+    pulse: 'Roteiros em vídeo, reviews de hospedagens e guias por temporada.',
+    stat: 'Rotas em vídeo',
   },
   {
     label: 'TikTok',
     href: '#',
     icon: Sparkles,
-    pulse: 'Descobertas rapidas, lugares escondidos e ideias para viajar agora.',
+    pulse: 'Descobertas rápidas, lugares escondidos e ideias para viajar agora.',
     stat: 'Achados virais',
   },
 ]
@@ -62,14 +62,14 @@ export function FooterBrandCard() {
         <div className="mt-6 rounded-xl border border-linen/10 bg-stone-deep/55 p-4">
           <span className="inline-flex items-center gap-2 text-xs font-semibold text-gold">
             <HeartHandshake className="size-4" />
-            Toda grande viagem comeca por uma rota
+            Toda grande viagem começa por uma rota
           </span>
           <p className="mt-3 text-pretty font-serif text-2xl font-semibold leading-tight text-linen">
-            Um ecossistema para descobrir, reservar e contar historias de pousadas brasileiras.
+            Um ecossistema para descobrir, reservar e contar histórias de pousadas brasileiras.
           </p>
 
           <div className="mt-5 grid grid-cols-3 gap-2">
-            {['curadoria', 'reserva', 'gestao'].map((item, index) => (
+            {['curadoria', 'reserva', 'gestão'].map((item, index) => (
               <div key={item} className="rounded-lg border border-linen/10 bg-linen/[0.04] p-3">
                 <div className="text-lg font-semibold text-linen">{index + 1}</div>
                 <div className="mt-1 text-[11px] uppercase tracking-wide text-linen/45">{item}</div>

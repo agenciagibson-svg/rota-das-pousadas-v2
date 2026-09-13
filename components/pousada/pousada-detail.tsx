@@ -141,7 +141,7 @@ export function PousadaDetail({
                 <button
                   type="button"
                   onClick={showNextImage}
-                  aria-label="Proxima foto"
+                  aria-label="Próxima foto"
                   className="flex size-11 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm transition-colors hover:bg-white"
                 >
                   <ChevronRight className="size-5" />

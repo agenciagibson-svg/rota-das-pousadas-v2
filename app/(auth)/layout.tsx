@@ -40,11 +40,11 @@ function SponsoredStayCard() {
           Monte Verde, MG
         </p>
         <h2 className="mt-3 max-w-xl text-balance font-serif text-4xl font-semibold leading-tight sm:text-5xl">
-          O refugio que aparece antes da viagem comecar.
+          O refúgio que aparece antes da viagem começar.
         </h2>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-linen/12 bg-linen/10 p-4 backdrop-blur-md">
-            <p className="text-xs uppercase tracking-[0.14em] text-linen/55">Diaria</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-linen/55">Diária</p>
             <p className="mt-1 text-lg font-semibold">R$ 720</p>
           </div>
           <div className="rounded-2xl border border-linen/12 bg-linen/10 p-4 backdrop-blur-md">
@@ -52,13 +52,13 @@ function SponsoredStayCard() {
             <p className="mt-1 text-lg font-semibold">Romance</p>
           </div>
           <div className="rounded-2xl border border-linen/12 bg-linen/10 p-4 backdrop-blur-md">
-            <p className="text-xs uppercase tracking-[0.14em] text-linen/55">Midia</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-linen/55">Mídia</p>
             <p className="mt-1 text-lg font-semibold">Patrocinado</p>
           </div>
         </div>
         <div className="mt-5 flex items-center gap-2 text-sm text-linen/70">
           <ShieldCheck className="size-4 text-primary" />
-          Espaco reservado para uma pousada parceira da plataforma.
+          Espaço reservado para uma pousada parceira da plataforma.
         </div>
       </div>
     </Link>

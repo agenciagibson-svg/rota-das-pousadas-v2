@@ -6,19 +6,19 @@ const testimonials = [
   {
     name: 'Marina Alves',
     route: 'Monte Verde, MG',
-    text: 'Eu entrei sem saber para onde ir e sai com uma pousada que parecia escolhida por alguem que me conhecia.',
-    trip: 'fim de semana romantico',
+    text: 'Eu entrei sem saber para onde ir e saí com uma pousada que parecia escolhida por alguém que me conhecia.',
+    trip: 'fim de semana romântico',
   },
   {
     name: 'Rafael e Bianca',
-    route: 'Capitolio, MG',
+    route: 'Capitólio, MG',
     text: 'A busca por estilo de viagem ajudou mais que qualquer lista comum. Encontramos cachoeiras, vista e descanso no mesmo lugar.',
     trip: 'natureza e piscina',
   },
   {
     name: 'Carla Menezes',
     route: 'Serra da Canastra, MG',
-    text: 'Gostei porque a experiencia nao comeca na reserva. Comeca na inspiracao, nas rotas e nas pousadas com historia.',
+    text: 'Gostei porque a experiência não começa na reserva. Começa na inspiração, nas rotas e nas pousadas com história.',
     trip: 'rota de outono',
   },
 ]
@@ -26,8 +26,8 @@ const testimonials = [
 const trustMarks = [
   { label: 'Pousadas com curadoria', value: '3.400+', icon: BadgeCheck },
   { label: 'Destinos brasileiros', value: '180', icon: ShieldCheck },
-  { label: 'Media de avaliacao', value: '4.9', icon: Star },
-  { label: 'Hospedes voltam', value: '96%', icon: Heart },
+  { label: 'Média de avaliação', value: '4.9', icon: Star },
+  { label: 'Hóspedes voltam', value: '96%', icon: Heart },
 ]
 
 function Stars() {
@@ -56,9 +56,9 @@ export function SocialProof() {
               </h2>
             </div>
             <p className="text-pretty leading-relaxed text-muted-foreground">
-              Antes de reservar, o visitante precisa sentir confianca. Aqui mostramos sinais claros de
-              curadoria, avaliacao e experiencia, reforcando que a Rota das Pousadas nao e apenas uma
-              lista: e uma forma mais humana de escolher onde ficar.
+              Antes de reservar, o visitante precisa sentir confiança. Aqui mostramos sinais claros de
+              curadoria, avaliação e experiência, reforçando que a Rota das Pousadas não é apenas uma
+              lista: é uma forma mais humana de escolher onde ficar.
             </p>
           </div>
         </Reveal>
@@ -72,7 +72,7 @@ export function SocialProof() {
                   <div className="flex items-center justify-between">
                     <Icon className="size-5 text-primary" />
                     <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-                      confianca
+                      confiança
                     </span>
                   </div>
                   <div className="mt-5 font-serif text-4xl font-semibold text-foreground">{mark.value}</div>

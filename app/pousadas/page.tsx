@@ -42,12 +42,12 @@ export default async function PousadasPage({
   }
   const activeFilters = [
     surpresa === '1' ? 'Rota surpresa' : null,
-    oferta === 'estacao' ? 'Oferta da estacao' : null,
+    oferta === 'estacao' ? 'Oferta da estação' : null,
     busca ? `Destino: ${busca}` : null,
     checkin ? `Check-in: ${checkin}` : null,
     checkout ? `Check-out: ${checkout}` : null,
-    hospedes ? `${hospedes} hospede${hospedes === '1' ? '' : 's'}` : null,
-    temporada ? `Estacao: ${temporada}` : null,
+    hospedes ? `${hospedes} hóspede${hospedes === '1' ? '' : 's'}` : null,
+    temporada ? `Estação: ${temporada}` : null,
   ].filter(Boolean)
 
   function pousadaHref(slug: string) {
@@ -72,8 +72,8 @@ export default async function PousadasPage({
               Escolha a pousada e veja os detalhes
             </h1>
             <p className="mt-3 text-muted-foreground">
-              A lista mostra as pousadas publicadas em sequencia. Ao selecionar uma, voce abre a
-              pagina dela com fotos, informacoes e reserva.
+              A lista mostra as pousadas publicadas em sequência. Ao selecionar uma, você abre a
+              página dela com fotos, informações e reserva.
             </p>
           </div>
 
@@ -99,10 +99,10 @@ export default async function PousadasPage({
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="font-serif text-2xl font-semibold text-foreground">
-                  Sua rota surpresa esta pronta
+                  Sua rota surpresa está pronta
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Escolhemos uma direcao para voce explorar agora. Abra uma pousada e continue a reserva com as datas preenchidas.
+                  Escolhemos uma direção para você explorar agora. Abra uma pousada e continue a reserva com as datas preenchidas.
                 </p>
               </div>
               <Link
@@ -120,7 +120,7 @@ export default async function PousadasPage({
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="font-serif text-2xl font-semibold text-foreground">
-                  Oferta da estacao selecionada
+                  Oferta da estação selecionada
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Mantivemos suas datas sugeridas e filtramos pousadas alinhadas com o clima da temporada.
@@ -193,7 +193,7 @@ export default async function PousadasPage({
                           <Star className="size-4 fill-gold text-gold" />
                           {pousada.rating.toFixed(1)}
                           <span className="font-normal text-muted-foreground">
-                            ({pousada.reviews} avaliacoes)
+                            ({pousada.reviews} avaliações)
                           </span>
                         </span>
                       </div>
@@ -205,7 +205,7 @@ export default async function PousadasPage({
                       <div className="text-xl font-semibold text-foreground">
                         R$ {pousada.pricePerNight}
                       </div>
-                      <div className="text-xs text-muted-foreground">/ diaria</div>
+                      <div className="text-xs text-muted-foreground">/ diária</div>
                     </div>
                   </div>
 

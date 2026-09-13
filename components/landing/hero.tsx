@@ -21,9 +21,9 @@ const seasons: Record<
   }
 > = {
   verao: {
-    label: 'Verao',
-    headline: 'Aguas cristalinas e dias infinitos',
-    sub: 'Praias, piscinas, cachoeiras e esportes aquaticos esperam por voce.',
+    label: 'Verão',
+    headline: 'Águas cristalinas e dias infinitos',
+    sub: 'Praias, piscinas, cachoeiras e esportes aquáticos esperam por você.',
     tags: ['Praia', 'Piscina', 'Cachoeiras', 'Ilhas'],
     image: '/images/noronha.png',
     alt: 'Praia brasileira com mar azul para viagens de verao',
@@ -38,15 +38,15 @@ const seasons: Record<
   },
   inverno: {
     label: 'Inverno',
-    headline: 'Lareiras acesas e refugios de serra',
-    sub: 'Chales, vinhos e destinos de montanha para aquecer a alma.',
-    tags: ['Chales', 'Lareira', 'Serra', 'Vinhos'],
+    headline: 'Lareiras acesas e refúgios de serra',
+    sub: 'Chalés, vinhos e destinos de montanha para aquecer a alma.',
+    tags: ['Chalés', 'Lareira', 'Serra', 'Vinhos'],
     image: '/images/gramado.png',
     alt: 'Destino de inverno com arquitetura aconchegante na serra',
   },
   primavera: {
     label: 'Primavera',
-    headline: 'A natureza floresce, e voce tambem',
+    headline: 'A natureza floresce, e você também',
     sub: 'Ecoturismo, jardins e pousadas em meio ao verde renascido.',
     tags: ['Ecoturismo', 'Flores', 'Natureza', 'Bem-estar'],
     image: '/images/hero.png',
@@ -55,9 +55,9 @@ const seasons: Record<
 }
 
 const surpriseRoutes: Record<SeasonKey, string[]> = {
-  verao: ['Praia', 'Piscina', 'Cachoeiras', 'Noronha', 'Capitolio', 'Bonito'],
+  verao: ['Praia', 'Piscina', 'Cachoeiras', 'Noronha', 'Capitólio', 'Bonito'],
   outono: ['Natureza', 'Fazenda', 'Trilhas', 'Canastra', 'Vista', 'Ecoturismo'],
-  inverno: ['Serra', 'Lareira', 'Chales', 'Gramado', 'Monte Verde', 'Romanticos'],
+  inverno: ['Serra', 'Lareira', 'Chalés', 'Gramado', 'Monte Verde', 'Românticos'],
   primavera: ['Ecoturismo', 'Flores', 'Natureza', 'Bem-estar', 'Bonito', 'Canastra'],
 }
 
@@ -207,7 +207,7 @@ export function Hero() {
             />
             <SearchField
               icon={<Users className="size-4 text-primary" />}
-              label="Hospedes"
+              label="Hóspedes"
               name="hospedes"
               type="number"
               min={1}
@@ -216,11 +216,11 @@ export function Hero() {
             />
             <button type="submit" className="group flex items-center justify-center gap-2 rounded-2xl bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105 md:px-7">
               <Search className="size-4" />
-              Encontrar meu refugio
+              Encontrar meu refúgio
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-3">
-            <span className="text-xs font-medium text-foreground/60">Sugestoes da estacao:</span>
+            <span className="text-xs font-medium text-foreground/60">Sugestões da estação:</span>
             {current.tags.map((tag) => (
               <button
                 key={tag}

@@ -54,7 +54,7 @@ export async function togglePousadaFavorite(
   slug: string,
 ): Promise<{ favorite: boolean }> {
   const pousadaId = await getPublishedPousadaIdBySlug(slug)
-  if (!pousadaId) throw new Error('Pousada nao encontrada.')
+  if (!pousadaId) throw new Error('Pousada não encontrada.')
 
   const supabase = await createSupabaseServerClient()
   const { data: existing, error: existingError } = await supabase

@@ -34,10 +34,10 @@ export default async function FavoritosPage() {
               Favoritos
             </span>
             <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
-              Pousadas salvas para sua proxima rota
+              Pousadas salvas para sua próxima rota
             </h1>
             <p className="mt-3 text-muted-foreground">
-              Compare opcoes com calma e ative alertas para saber quando surgir uma boa oportunidade.
+              Compare opções com calma e ative alertas para saber quando surgir uma boa oportunidade.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col md:items-end">
@@ -111,13 +111,13 @@ export default async function FavoritosPage() {
                     </div>
                     <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                       <TrendingDown className="size-3.5 text-accent" />
-                      Base pronta para e-mail, WhatsApp e notificacoes.
+                      Base pronta para e-mail, WhatsApp e notificações.
                     </div>
                   </div>
                   <div className="mt-auto flex items-end justify-between pt-5">
                     <div>
                       <span className="text-lg font-semibold text-foreground">R$ {pousada.pricePerNight}</span>
-                      <span className="text-xs text-muted-foreground"> / diaria</span>
+                      <span className="text-xs text-muted-foreground"> / diária</span>
                     </div>
                     <Link
                       href={`/pousada/${pousada.slug}`}
@@ -142,10 +142,10 @@ export default async function FavoritosPage() {
               <Heart className="size-6" />
             </span>
             <h2 className="mt-5 font-serif text-2xl font-semibold text-foreground">
-              Voce ainda nao salvou pousadas
+              Você ainda não salvou pousadas
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Abra uma pousada e toque em Salvar. Ela aparece aqui para voce comparar depois.
+              Abra uma pousada e toque em Salvar. Ela aparece aqui para você comparar depois.
             </p>
             <Link
               href="/pousadas"
