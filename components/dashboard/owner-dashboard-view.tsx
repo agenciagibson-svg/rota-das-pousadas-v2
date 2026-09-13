@@ -15,6 +15,8 @@ import {
   ArrowUpRight,
   Sparkles,
   Wallet,
+  LogIn,
+  LogOut,
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardShell, type NavItem } from '@/components/dashboard/shell'
@@ -25,6 +27,12 @@ import { buttonVariants } from '@/components/ui/button'
 import { Building2 } from 'lucide-react'
 import { OwnerReservationsTable } from '@/features/gestao/components/owner-reservations-table'
 import type { OwnerReservation } from '@/features/gestao/types'
+import type {
+  MonthlyRevenuePoint,
+  OccupancySnapshot,
+  ReviewSummary,
+  WeeklyDailies,
+} from '@/features/dashboard/metrics'
 
 const nav: NavItem[] = [
   { label: 'Visão geral', icon: LayoutDashboard, href: '/dashboard', active: true },
@@ -38,31 +46,39 @@ const nav: NavItem[] = [
   { label: 'Configurações', icon: Settings, href: '/dashboard/configuracoes' },
 ]
 
-const revenue = [32, 40, 38, 52, 48, 61, 58, 70, 66, 78, 74, 84]
-const bookings = [12, 18, 15, 22, 28, 34, 30]
-const bookingLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
-
-const messages = [
-  { name: 'Beatriz Lima', text: 'Vocês aceitam pets de grande porte?', time: '2 min' },
-  { name: 'Eduardo M.', text: 'Tem disponibilidade para o feriado?', time: '1 h' },
-  { name: 'Fernanda R.', text: 'O café da manhã vai até que horas?', time: '3 h' },
-]
-
 /**
- * View (client) do painel do proprietário. Recebe apenas dados serializáveis
- * (nome do usuário) do Server Component pai — ícones e interatividade vivem aqui,
- * respeitando a fronteira server/client do App Router.
+ * View (client) do painel do proprietário. Recebe apenas dados serializáveis do
+ * Server Component pai — ícones e interatividade vivem aqui, respeitando a
+ * fronteira server/client do App Router.
+ *
+ * ⚠️ Nenhum número desta tela pode ser escrito à mão. Toda métrica vem
+ * calculada de `features/dashboard/metrics.ts` a partir das reservas, quartos e
+ * avaliações reais da pousada. Quando um dado não existe, a tela mostra estado
+ * vazio — nunca um valor de exemplo, que o cliente lê como se fosse a casa dele.
  */
 export function OwnerDashboardView({
   displayName,
   pousadaName,
   pousadaStatus,
   reservations,
+  occupancy,
+  revenueSeries,
+  week,
+  reviews,
+  arrivalsToday,
+  departuresToday,
 }: {
   displayName: string
   pousadaName: string | null
   pousadaStatus: string | null
   reservations: OwnerReservation[]
+  /** `null` quando o papel do usuário não pode ler acomodações — sem quartos não há taxa de ocupação. */
+  occupancy: OccupancySnapshot | null
+  revenueSeries: MonthlyRevenuePoint[]
+  week: WeeklyDailies
+  reviews: ReviewSummary
+  arrivalsToday: OwnerReservation[]
+  departuresToday: OwnerReservation[]
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -79,6 +95,10 @@ export function OwnerDashboardView({
   )
   const activeRevenue = activeReservations.reduce((sum, reservation) => sum + reservation.total, 0)
   const activeGuests = activeReservations.reduce((sum, reservation) => sum + reservation.guests, 0)
+  /** Diárias que ainda dá para vender nos próximos 7 dias — capacidade menos o que já está ocupado. */
+  const freeNightsAhead = occupancy
+    ? Math.max(0, occupancy.availableNights - occupancy.occupiedNights)
+    : 0
   const stats = [
     {
       label: 'Receita ativa',
@@ -170,25 +190,54 @@ export function OwnerDashboardView({
         <div className="rounded-2xl border border-border bg-card p-6 xl:col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-foreground">Receita anual</h2>
-              <p className="text-sm text-muted-foreground">Últimos 12 meses</p>
+              <h2 className="font-semibold text-foreground">Receita por mês</h2>
+              <p className="text-sm text-muted-foreground">
+                Últimos 12 meses, pelo mês do check-in
+              </p>
             </div>
             <span className="text-sm font-semibold text-primary">R$ {activeRevenue} ativo</span>
           </div>
           <div className="mt-6 h-48">
-            <AreaChart data={revenue} />
+            {revenueSeries.some((point) => point.value > 0) ? (
+              <AreaChart data={revenueSeries.map((point) => point.value)} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
+                Ainda sem reservas nos últimos 12 meses. O gráfico aparece assim que a
+                primeira estadia for lançada.
+              </div>
+            )}
           </div>
         </div>
 
         {/* Occupancy */}
         <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-6">
           <h2 className="self-start font-semibold text-foreground">Ocupação</h2>
-          <div className="mt-4">
-            <Donut value={82} />
-          </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            8 de 12 acomodações ocupadas esta semana
-          </p>
+          {occupancy === null ? (
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              A ocupação não está disponível para o seu perfil de acesso.
+            </p>
+          ) : occupancy.totalRooms === 0 ? (
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              <p>Nenhuma acomodação disponível para venda.</p>
+              <Link href="/dashboard/acomodacoes" className="mt-2 inline-block font-semibold text-primary hover:underline">
+                Cadastrar acomodações
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="mt-4">
+                <Donut value={occupancy.rate} />
+              </div>
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                {occupancy.roomsOccupiedToday} de {occupancy.totalRooms}{' '}
+                {occupancy.totalRooms === 1 ? 'acomodação ocupada' : 'acomodações ocupadas'} hoje
+                <br />
+                <span className="text-xs">
+                  {occupancy.occupiedNights} de {occupancy.availableNights} diárias nos próximos 7 dias
+                </span>
+              </p>
+            </>
+          )}
         </div>
       </div>
 
@@ -212,86 +261,161 @@ export function OwnerDashboardView({
         {/* Weekly bookings */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="font-semibold text-foreground">Reservas na semana</h2>
-          <p className="text-sm text-muted-foreground">Total de 159 diárias</p>
+          <p className="text-sm text-muted-foreground">
+            {week.total === 1 ? '1 diária' : `${week.total} diárias`} de segunda a domingo
+          </p>
           <div className="mt-6 h-40">
-            <BarChart data={bookings} labels={bookingLabels} color="var(--ocean)" />
+            <BarChart data={week.data} labels={week.labels} color="var(--ocean)" />
           </div>
         </div>
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-        {/* Messages */}
+        {/* Movimento de hoje — substitui a antiga lista de mensagens de exemplo. */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-foreground">Mensagens</h2>
-            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">3 novas</span>
+            <h2 className="font-semibold text-foreground">Movimento de hoje</h2>
+            <Link
+              href="/dashboard/reservas"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+            >
+              Ver todas <ArrowUpRight className="size-4" />
+            </Link>
           </div>
-          <div className="mt-4 space-y-3">
-            {messages.map((m) => (
-              <div key={m.name} className="flex items-start gap-3 rounded-xl bg-secondary/50 p-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {m.name.charAt(0)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{m.name}</span>
-                    <span className="text-xs text-muted-foreground">{m.time}</span>
+          {arrivalsToday.length === 0 && departuresToday.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Nenhuma chegada ou saída prevista para hoje.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {arrivalsToday.map((reservation) => (
+                <div key={`in-${reservation.id}`} className="flex items-start gap-3 rounded-xl bg-secondary/50 p-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <LogIn className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-semibold text-foreground">{reservation.guestName}</span>
+                      <span className="shrink-0 text-xs font-semibold text-primary">Chegada</span>
+                    </div>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {reservation.roomName} · {reservation.nights}{' '}
+                      {reservation.nights === 1 ? 'noite' : 'noites'}
+                    </p>
                   </div>
-                  <p className="truncate text-sm text-muted-foreground">{m.text}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+              {departuresToday.map((reservation) => (
+                <div key={`out-${reservation.id}`} className="flex items-start gap-3 rounded-xl bg-secondary/50 p-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+                    <LogOut className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-semibold text-foreground">{reservation.guestName}</span>
+                      <span className="shrink-0 text-xs font-semibold text-accent">Saída</span>
+                    </div>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {reservation.roomName}
+                      {reservation.balanceDue > 0 ? ` · saldo de R$ ${reservation.balanceDue}` : ''}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Reviews summary */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="font-semibold text-foreground">Avaliações</h2>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="text-4xl font-semibold text-foreground">4.9</div>
-            <div>
-              <div className="flex text-gold">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="size-4 fill-gold" />
+          {reviews.total === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Sua pousada ainda não recebeu avaliações. Elas aparecem aqui depois da primeira
+              estadia concluída.
+            </p>
+          ) : (
+            <>
+              <div className="mt-4 flex items-center gap-4">
+                <div className="text-4xl font-semibold text-foreground">
+                  {reviews.average.toFixed(1)}
+                </div>
+                <div>
+                  <div className="flex text-gold">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`size-4 ${i < Math.round(reviews.average) ? 'fill-gold' : 'opacity-30'}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {reviews.total === 1 ? '1 avaliação' : `${reviews.total} avaliações`}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-2">
+                {reviews.distribution.map(({ rating, count, percent }) => (
+                  <div key={rating} className="flex items-center gap-2 text-xs">
+                    <span className="w-3 text-muted-foreground">{rating}</span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full rounded-full bg-gold" style={{ width: `${percent}%` }} />
+                    </div>
+                    <span className="w-8 text-right text-muted-foreground" title={`${count} avaliação(ões)`}>
+                      {percent}%
+                    </span>
+                  </div>
                 ))}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">328 avaliações</p>
-            </div>
-          </div>
-          <div className="mt-5 space-y-2">
-            {[
-              ['5', 86],
-              ['4', 10],
-              ['3', 3],
-              ['2', 1],
-            ].map(([label, pct]) => (
-              <div key={label as string} className="flex items-center gap-2 text-xs">
-                <span className="w-3 text-muted-foreground">{label}</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
-                  <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
-                </div>
-                <span className="w-8 text-right text-muted-foreground">{pct}%</span>
-              </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
 
-        {/* AI assistant */}
+        {/*
+          Card de oportunidade. Antes exibia uma recomendação inventada ("a IA
+          detectou alta procura") com um botão sem ação. O texto agora sai da
+          ocupação calculada; enquanto não houver um provedor de LLM ligado, a
+          tela não afirma que alguma IA analisou coisa alguma.
+        */}
         <div className="relative overflow-hidden rounded-2xl border border-border bg-stone-deep p-6 text-linen">
           <div className="relative z-10">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-linen/10 px-3 py-1 text-xs font-semibold text-linen">
               <Sparkles className="size-3.5 text-gold" />
-              Assistente IA
+              Próximos 7 dias
             </span>
-            <h2 className="mt-4 font-serif text-xl font-semibold">Impulsione sua ocupação</h2>
-            <p className="mt-2 text-sm leading-relaxed text-linen/70">
-              A IA detectou alta procura para o próximo feriado. Sugerimos um ajuste de +8% na diária
-              do Chalé Vale e uma campanha para casais.
-            </p>
-            <button className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105">
-              Gerar campanha
+            {occupancy === null || occupancy.availableNights === 0 ? (
+              <>
+                <h2 className="mt-4 font-serif text-xl font-semibold">Divulgue sua pousada</h2>
+                <p className="mt-2 text-sm leading-relaxed text-linen/70">
+                  Materiais prontos para publicar nas suas redes e responder a quem pede orçamento.
+                </p>
+              </>
+            ) : freeNightsAhead > 0 ? (
+              <>
+                <h2 className="mt-4 font-serif text-xl font-semibold">
+                  {freeNightsAhead === 1 ? '1 diária livre' : `${freeNightsAhead} diárias livres`}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-linen/70">
+                  É o que ainda dá para vender nos próximos 7 dias, considerando as reservas já
+                  lançadas. Uma divulgação agora pega quem decide em cima da hora.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="mt-4 font-serif text-xl font-semibold">Semana cheia</h2>
+                <p className="mt-2 text-sm leading-relaxed text-linen/70">
+                  Todas as diárias dos próximos 7 dias estão ocupadas. Bom momento para trabalhar as
+                  datas mais adiante.
+                </p>
+              </>
+            )}
+            <Link
+              href="/dashboard/marketing"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105"
+            >
+              Abrir marketing
               <ArrowUpRight className="size-4" />
-            </button>
+            </Link>
           </div>
           <div className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-primary/40 blur-2xl" />
         </div>
