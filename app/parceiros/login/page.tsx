@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ToolLoginCard } from '@/components/auth/tool-login-card'
+import { PartnerLoginShowcase } from '@/components/auth/partner-login-showcase'
 import { LoginForm } from '@/features/auth'
 
 export const metadata: Metadata = {
@@ -15,12 +15,11 @@ export default async function ParceirosLoginPage({
   const { next } = await searchParams
 
   return (
-    <ToolLoginCard
+    <PartnerLoginShowcase
       title="Painel do Parceiro"
       subtitle="Entre para gerenciar reservas, acomodações e sua equipe."
-      accent="primary"
     >
       <LoginForm variant="partner" next={next} />
-    </ToolLoginCard>
+    </PartnerLoginShowcase>
   )
 }

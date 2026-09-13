@@ -18,7 +18,6 @@ export default async function AdminLoginPage({
     <ToolLoginCard
       title="Painel Administrativo"
       subtitle="Acesso restrito à equipe da Rota das Pousadas."
-      accent="ocean"
     >
       <LoginForm variant="admin" next={next} />
     </ToolLoginCard>
