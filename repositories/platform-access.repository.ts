@@ -5,37 +5,40 @@ import type { PlatformAccessGrant } from '@/features/admin/types'
 export type NewGrant = {
   pousadaId: string
   grantedTo: string
-  grantedBy: string
   reason: string
   expiresAt: string
 }
 
-/** Concede acesso institucional temporário e justificado a uma pousada. */
+/**
+ * Concede acesso institucional temporário e justificado a uma pousada.
+ *
+ * Passa pela RPC `grant_platform_access` (0047), não por `insert` direto: a
+ * policy de escrita desta tabela foi removida porque aceitava QUALQUER
+ * `platform_role` — pela API REST, um usuário de marketing se autoconcedia
+ * acesso a reservas, pagamentos e despesas de todas as pousadas, contornando
+ * o modelo inteiro da 0013. A RPC exige `master`, justificativa, teto de 7
+ * dias e grava a auditoria dentro da mesma transação.
+ *
+ * `grantedBy` não é mais parâmetro: quem concede é sempre `auth.uid()`, lido
+ * no banco. Um chamador não tem como dizer que outra pessoa concedeu.
+ */
 export async function insertGrant(input: NewGrant): Promise<{ id: string }> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('platform_access_grants')
-    .insert({
-      pousada_id: input.pousadaId,
-      granted_to: input.grantedTo,
-      granted_by: input.grantedBy,
-      reason: input.reason,
-      expires_at: input.expiresAt,
-    })
-    .select('id')
-    .single()
-  if (error) throw error
-  return { id: data.id }
+  const { data, error } = await supabase.rpc('grant_platform_access', {
+    p_pousada_id: input.pousadaId,
+    p_granted_to: input.grantedTo,
+    p_reason: input.reason,
+    p_expires_at: input.expiresAt,
+  })
+  if (error) throw new Error(error.message)
+  return { id: data as string }
 }
 
-/** Revoga uma concessão ativa antes do vencimento natural. */
+/** Revoga uma concessão ativa antes do vencimento natural (RPC da 0047). */
 export async function revokeGrant(id: string): Promise<void> {
   const supabase = await createSupabaseServerClient()
-  const { error } = await supabase
-    .from('platform_access_grants')
-    .update({ revoked_at: new Date().toISOString() })
-    .eq('id', id)
-  if (error) throw error
+  const { error } = await supabase.rpc('revoke_platform_access', { p_grant_id: id })
+  if (error) throw new Error(error.message)
 }
 
 /** Concessões ativas (não expiradas, não revogadas) de uma pousada. */

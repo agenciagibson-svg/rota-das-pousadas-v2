@@ -8,7 +8,7 @@ import {
   listBookingsByGuest,
   setBookingStatusRpc,
 } from '@/repositories/bookings.repository'
-import { upsertGuestRpc } from '@/repositories/guests.repository'
+import { ensureTravelerGuestRpc, upsertGuestRpc } from '@/repositories/guests.repository'
 import { calculateBookingPrice } from '@/features/reservas/pricing'
 import type { CreateBookingInput, CreateBookingAdminInput } from '@/features/reservas/schemas'
 import type { Booking } from '@/features/reservas/types'
@@ -53,12 +53,16 @@ export async function createBooking(input: CreateBookingInput): Promise<{ id: st
   const price = calculateBookingPrice(bookable.nightly, input.checkin, input.checkout)
   if (price.nights < 1) throw new Error('Selecione um período válido (mínimo de 1 noite).')
 
-  const { id: guestId } = await upsertGuestRpc({
+  // Porta pública, não a do balcão: `upsert_guest` exige acesso de staff e
+  // recusava a sessão do viajante — era o que travava a reserva pública.
+  // O nome vem do cadastro; sem ele a pousada recebe uma reserva anônima.
+  if (user.name.trim().length < 2) {
+    throw new Error('Complete seu nome no cadastro antes de reservar.')
+  }
+  const { id: guestId } = await ensureTravelerGuestRpc({
     pousadaId: bookable.pousadaId,
-    userId: user.id,
     fullName: user.name,
     email: user.email,
-    source: 'public_booking',
   })
 
   const { id, code } = await createBookingRpc({

@@ -169,6 +169,34 @@ export type UpsertGuestInput = {
   source?: GuestSource
 }
 
+/**
+ * Ficha de hóspede do próprio viajante autenticado, para o fluxo PÚBLICO de
+ * reserva.
+ *
+ * `upsertGuestRpc` não serve aqui: `upsert_guest` é a porta do balcão (CPF,
+ * nascimento, endereço, notas internas) e exige acesso de staff — chamada com
+ * a sessão de um viajante, ela recusa, e era isso que impedia a reserva
+ * pública de concluir. `ensure_traveler_guest` (0047) é a porta estreita:
+ * grava sempre `user_id = auth.uid()`, aceita só nome e e-mail, e reaproveita
+ * a ficha que o próprio usuário já tem naquela pousada — nunca casa por
+ * e-mail, o que permitiria assumir a ficha de outro hóspede.
+ */
+export async function ensureTravelerGuestRpc(input: {
+  pousadaId: string
+  fullName: string
+  email?: string | null
+}): Promise<{ id: string }> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('ensure_traveler_guest', {
+    p_pousada_id: input.pousadaId,
+    p_full_name: input.fullName,
+    p_email: input.email ?? null,
+  })
+  if (error) throw new Error(error.message)
+  const result = data as { id: string }
+  return { id: result.id }
+}
+
 /** Cria ou atualiza um hóspede via RPC (regras de acesso e deduplicação vivem no banco). */
 export async function upsertGuestRpc(input: UpsertGuestInput): Promise<{ id: string }> {
   const supabase = await createSupabaseServerClient()

@@ -226,33 +226,23 @@ export async function grantSensitiveAccess(input: {
   expiresAt: string
 }): Promise<{ id: string }> {
   const user = await assertCanManageGrants()
+  // `grantedBy` saiu: a RPC `grant_platform_access` (0047) grava `auth.uid()`
+  // e registra a auditoria dentro da mesma transação da concessão — evento de
+  // auditoria e concessão não podem divergir se um dos dois falhar.
   const grant = await insertGrant({
     pousadaId: input.pousadaId,
     grantedTo: user.id,
-    grantedBy: user.id,
     reason: input.reason,
     expiresAt: input.expiresAt,
-  })
-  await logAudit({
-    actorId: user.id,
-    action: 'platform_access_grant.create',
-    targetTable: 'platform_access_grants',
-    targetId: grant.id,
-    metadata: { pousadaId: input.pousadaId, reason: input.reason, expiresAt: input.expiresAt },
   })
   return grant
 }
 
 /** Revoga uma concessão de acesso institucional antes do vencimento. */
 export async function revokeSensitiveAccess(grantId: string): Promise<void> {
-  const user = await assertCanManageGrants()
+  await assertCanManageGrants()
+  // Auditoria gravada pela própria RPC (0047), junto com a revogação.
   await revokeGrant(grantId)
-  await logAudit({
-    actorId: user.id,
-    action: 'platform_access_grant.revoke',
-    targetTable: 'platform_access_grants',
-    targetId: grantId,
-  })
 }
 
 /** Concessões ativas de uma pousada — visão de auditoria do admin de plataforma. */

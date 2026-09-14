@@ -16,11 +16,29 @@ type CookieToSet = {
  * Deve ser chamado pelo proxy raiz. Retorna a resposta com cookies sincronizados
  * e o usuário autenticado (ou null). Não coloque autorização de negócio aqui —
  * isso é RBAC (aplicação) + RLS (banco); aqui só há gate de autenticação.
+ *
+ * `extraRequestHeaders` permite ao proxy injetar cabeçalhos NA REQUISIÇÃO antes
+ * de ela chegar no Next — é assim que o nonce da CSP chega até o renderizador
+ * (ver `proxy.ts`). Sem esse repasse, o Next não carimba o nonce nos próprios
+ * scripts e a página logada fica em branco com a política aplicada.
+ *
+ * Os cabeçalhos são remontados a partir de `request.headers` a cada chamada
+ * (inclusive dentro de `setAll`), porque o `@supabase/ssr` escreve os cookies
+ * renovados em `request.cookies` e conta com que a resposta seguinte os
+ * enxergue — congelar um objeto `Headers` aqui perderia a renovação da sessão.
  */
 export async function updateSession(
   request: NextRequest,
+  extraRequestHeaders?: Record<string, string>,
 ): Promise<{ response: NextResponse; user: User | null }> {
-  let response = NextResponse.next({ request })
+  const nextInit = () => {
+    if (!extraRequestHeaders) return { request }
+    const headers = new Headers(request.headers)
+    for (const [name, value] of Object.entries(extraRequestHeaders)) headers.set(name, value)
+    return { request: { headers } }
+  }
+
+  let response = NextResponse.next(nextInit())
 
   const supabase = createServerClient<Database, 'public', any>(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
     cookies: {
@@ -29,7 +47,7 @@ export async function updateSession(
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        response = NextResponse.next({ request })
+        response = NextResponse.next(nextInit())
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
       },
     },
