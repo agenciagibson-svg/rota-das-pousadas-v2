@@ -1,11 +1,20 @@
 -- =============================================================================
--- Integração de pagamento — Mercado Pago Marketplace (split payment + Pix).
+-- Integração de pagamento — Mercado Pago via conta própria da pousada (Pix e
+-- cartão pelo Checkout Pro).
 --
 -- Cada pousada conecta a PRÓPRIA conta Mercado Pago via OAuth; o hóspede paga
--- e o dinheiro cai direto nela; a plataforma recebe comissão automaticamente
--- via `marketplace_fee` (= `bookings.fee`, já calculado em
--- features/reservas/pricing.ts). A plataforma nunca segura dinheiro de
--- terceiro — ver decisão registrada na sessão de planejamento desta feature.
+-- e o dinheiro cai direto nela. A plataforma nunca segura dinheiro de terceiro.
+--
+-- ⚠️ CORREÇÃO DE ROTA (13/09/2026): o texto original desta migration dizia que
+-- a plataforma recebia comissão automática via `marketplace_fee`
+-- (= `bookings.fee`). Isso contradizia o modelo de negócio e foi REVOGADO:
+-- a Rota é SaaS por assinatura, não cobra comissão sobre reserva, não faz
+-- split e não custodia fundos (docs/04_BUSINESS_ARCHITECTURE.md §9). Hoje
+-- `marketplace_fee` não é mais enviado em `features/pagamentos/services/
+-- mp-client.ts` e `SERVICE_FEE_RATE` está zerado em features/reservas/
+-- pricing.ts. Nada no esquema abaixo mudou — a contradição era só de intenção.
+-- `bookings.fee` continua existindo para preservar o histórico das reservas
+-- criadas antes dessa data.
 --
 -- `payments` (0001_init.sql) existe desde o início mas nunca foi usada por
 -- nenhum código — esta migration é o primeiro consumidor real dela.
