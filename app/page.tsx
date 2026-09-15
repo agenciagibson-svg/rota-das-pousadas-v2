@@ -5,7 +5,9 @@ import { Destinations } from '@/components/landing/destinations'
 import { Experiences } from '@/components/landing/experiences'
 import { FeaturedPousadas } from '@/components/landing/featured-pousadas'
 import { SeasonalOffers } from '@/components/landing/seasonal-offers'
+import { HowItWorks } from '@/components/landing/how-it-works'
 import { SocialProof } from '@/components/landing/social-proof'
+import { Faq } from '@/components/landing/faq'
 import { Editorial } from '@/components/landing/editorial'
 import { getDestinations, getExperiences, getPousadas } from '@/server/queries'
 
@@ -18,7 +20,7 @@ export default async function Page() {
   ])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <SiteHeader />
       <main>
         <Hero />
@@ -26,7 +28,9 @@ export default async function Page() {
         <Experiences experiences={experiences} />
         <SeasonalOffers />
         <FeaturedPousadas pousadas={pousadas.items} />
+        <HowItWorks />
         <SocialProof />
+        <Faq />
         <Editorial />
       </main>
       <SiteFooter />

@@ -22,3 +22,15 @@ supabase/.temp/
 
 # Cache incremental do TypeScript
 *.tsbuildinfo
+
+# O .env.example documenta cada variavel necessaria e nao contem segredo algum.
+# Precisa estar versionado, apesar da regra `.env*` acima — sem ele, quem clona
+# o projeto nao tem como saber o que configurar na Vercel.
+!.env.example
+
+# Saidas de depuracao geradas durante o desenvolvimento (build, testes, migrations).
+erro-*.txt
+estado-*.txt
+push-*.txt
+resultado-*.txt
+tabelas-*.txt

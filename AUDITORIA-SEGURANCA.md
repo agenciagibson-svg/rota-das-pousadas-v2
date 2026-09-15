@@ -24,7 +24,7 @@ Dito isso, existe um padrão recorrente que gera os achados mais graves: **regra
 
 ### Status das correções (14/09/2026)
 
-Os bloqueadores foram corrigidos e estão no branch `fix/seguranca-bloqueadores`, aguardando `supabase db push` e validação em preview:
+Os bloqueadores foram corrigidos no branch `fix/seguranca-bloqueadores`. A migration **0047 está aplicada no banco remoto** e verificada por consulta ao `pg_policies` e ao `information_schema`: nenhuma policy de `guests`, `quote_requests` ou `channel_calendars` referencia mais `auth_is_platform_admin()`; `platform_access_grants` tem só a policy de leitura e perdeu `INSERT`/`UPDATE`/`DELETE` para `anon` e `authenticated`; as quatro funções novas existem. **Falta o deploy da aplicação** e a validação funcional (reserva pública, adulteração de preço, concessão de acesso, console da CSP).
 
 | Achado | Status | Onde |
 |---|---|---|
