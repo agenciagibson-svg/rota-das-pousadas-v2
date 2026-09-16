@@ -15,3 +15,9 @@ export const createExpenseSchema = z.object({
     .or(z.literal('')),
 })
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>
+
+export const setExpensePaidSchema = z.object({
+  expenseId: z.string().uuid('Despesa inválida.'),
+  paid: z.boolean(),
+})
+export type SetExpensePaidInput = z.infer<typeof setExpensePaidSchema>

@@ -23,7 +23,12 @@ export type Transaction = {
   description: string
   amount: number
   date: string
+  /** Receita: `BookingStatus`; despesa: `'pago' | 'a_pagar'`. */
   status: string
+  /** Só em despesa — alvo de "marcar como paga". */
+  expenseId?: string
+  /** Só em receita — link para a reserva. */
+  bookingId?: string
 }
 
 /** Resumo financeiro da pousada (valores em reais inteiros). */

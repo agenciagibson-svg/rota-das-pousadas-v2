@@ -3,23 +3,18 @@
 import {
   LayoutDashboard,
   CalendarCheck,
-  BedDouble,
-  MessageSquare,
   Star,
-  Megaphone,
-  Bot,
-  Settings,
   TrendingUp,
   DollarSign,
   Users,
   ArrowUpRight,
   Sparkles,
-  Wallet,
   LogIn,
   LogOut,
 } from 'lucide-react'
 import Link from 'next/link'
-import { DashboardShell, type NavItem } from '@/components/dashboard/shell'
+import { DashboardShell } from '@/components/dashboard/shell'
+import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { AreaChart, BarChart, Donut } from '@/components/dashboard/charts'
 import { StatCard } from '@/components/ui/stat-card'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -33,18 +28,6 @@ import type {
   ReviewSummary,
   WeeklyDailies,
 } from '@/features/dashboard/metrics'
-
-const nav: NavItem[] = [
-  { label: 'Visão geral', icon: LayoutDashboard, href: '/dashboard', active: true },
-  { label: 'Reservas', icon: CalendarCheck, href: '/dashboard/reservas' },
-  { label: 'Financeiro', icon: Wallet, href: '/dashboard/financeiro' },
-  { label: 'Acomodações', icon: BedDouble, href: '/dashboard/acomodacoes' },
-  { label: 'Mensagens', icon: MessageSquare, href: '/dashboard/mensagens' },
-  { label: 'Avaliações', icon: Star, href: '/dashboard/avaliacoes' },
-  { label: 'Marketing', icon: Megaphone, href: '/dashboard/marketing' },
-  { label: 'Assistente IA', icon: Bot, href: '/dashboard/assistente' },
-  { label: 'Configurações', icon: Settings, href: '/dashboard/configuracoes' },
-]
 
 /**
  * View (client) do painel do proprietário. Recebe apenas dados serializáveis do
@@ -158,7 +141,7 @@ export function OwnerDashboardView({
 
   return (
     <DashboardShell
-      nav={nav}
+      nav={ownerDashboardNav('overview')}
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
       title={`Bom dia, ${firstName}`}

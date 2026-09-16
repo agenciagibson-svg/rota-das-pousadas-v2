@@ -1,23 +1,17 @@
 'use client'
 
-import {
-  LayoutDashboard,
-  CalendarCheck,
-  BedDouble,
-  Wallet,
-  MessageSquare,
-  Star,
-  Megaphone,
-  Bot,
-  Settings,
-  TrendingUp,
-  Clock,
-  ArrowDownCircle,
-  Scale,
-} from 'lucide-react'
-import { DashboardShell, type NavItem } from '@/components/dashboard/shell'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Wallet, TrendingUp, Clock, ArrowDownCircle, Scale, Check, RotateCcw } from 'lucide-react'
+import { DashboardShell } from '@/components/dashboard/shell'
+import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { BOOKING_STATUS } from '@/features/reservas/status'
+import type { BookingStatus } from '@/features/reservas/types'
+import { setExpensePaidAction } from '../actions'
 import {
   Table,
   TableHeader,
@@ -30,18 +24,6 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { ExpenseForm } from './expense-form'
 import type { FinanceSummary, Transaction } from '../types'
 
-const nav: NavItem[] = [
-  { label: 'Visão geral', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Reservas', icon: CalendarCheck, href: '/dashboard/reservas' },
-  { label: 'Financeiro', icon: Wallet, href: '/dashboard/financeiro', active: true },
-  { label: 'Acomodações', icon: BedDouble, href: '/dashboard/acomodacoes' },
-  { label: 'Mensagens', icon: MessageSquare, href: '/dashboard/mensagens' },
-  { label: 'Avaliações', icon: Star, href: '/dashboard/avaliacoes' },
-  { label: 'Marketing', icon: Megaphone, href: '/dashboard/marketing' },
-  { label: 'Assistente IA', icon: Bot, href: '/dashboard/assistente' },
-  { label: 'Configurações', icon: Settings, href: '/dashboard/configuracoes' },
-]
-
 function brl(n: number): string {
   return 'R$ ' + n.toLocaleString('pt-BR')
 }
@@ -51,17 +33,48 @@ function fmtDate(iso: string): string {
   return `${d}/${m}/${y.slice(2)}`
 }
 
+function statusBadge(t: Transaction) {
+  if (t.kind === 'despesa') {
+    return t.status === 'pago'
+      ? { label: 'Paga', variant: 'primarySoft' as const }
+      : { label: 'A pagar', variant: 'goldSoft' as const }
+  }
+  const s = BOOKING_STATUS[t.status as BookingStatus]
+  return s ?? { label: t.status, variant: 'secondary' as const }
+}
+
 export function FinanceView({
   displayName,
   pousadaName,
   summary,
   transactions,
+  canManageExpenses,
 }: {
   displayName: string
   pousadaName: string
   summary: FinanceSummary
   transactions: Transaction[]
+  canManageExpenses: boolean
 }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  function togglePaid(expenseId: string, paid: boolean) {
+    setError(null)
+    setBusyId(expenseId)
+    startTransition(async () => {
+      const result = await setExpensePaidAction({ expenseId, paid })
+      setBusyId(null)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
   const cards = [
     { label: 'Receita realizada', value: brl(summary.revenueConfirmed), icon: TrendingUp, tone: 'primary' as const },
     { label: 'A receber', value: brl(summary.revenuePending), icon: Clock, tone: 'ocean' as const },
@@ -71,7 +84,7 @@ export function FinanceView({
 
   return (
     <DashboardShell
-      nav={nav}
+      nav={ownerDashboardNav('financeiro')}
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
       title="Financeiro"
@@ -97,7 +110,9 @@ export function FinanceView({
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.6fr_1fr]">
         <Card className="p-6">
           <h2 className="font-semibold text-foreground">Extrato</h2>
-          <p className="text-sm text-muted-foreground">Receitas de reservas e despesas lançadas.</p>
+          <p className="text-sm text-muted-foreground">
+            Receitas de reservas (confirmadas, em estadia, concluídas e aguardando pagamento) e despesas lançadas.
+          </p>
           <div className="mt-4 overflow-x-auto">
             {transactions.length === 0 ? (
               <EmptyState
@@ -112,39 +127,85 @@ export function FinanceView({
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Tipo</TableHead>
+                    <TableHead>Situação</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    {canManageExpenses && <TableHead className="w-0" />}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="text-muted-foreground">{fmtDate(t.date)}</TableCell>
-                      <TableCell className="font-medium text-foreground">{t.description}</TableCell>
-                      <TableCell>
-                        <Badge variant={t.kind === 'receita' ? 'primarySoft' : 'accentSoft'} size="sm">
-                          {t.kind === 'receita' ? 'Receita' : 'Despesa'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-semibold ${t.kind === 'receita' ? 'text-primary' : 'text-accent'}`}
-                      >
-                        {t.kind === 'receita' ? '+' : '−'} {brl(t.amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {transactions.map((t) => {
+                    const situation = statusBadge(t)
+                    const busy = isPending && busyId === t.expenseId
+                    return (
+                      <TableRow key={t.id}>
+                        <TableCell className="text-muted-foreground">{fmtDate(t.date)}</TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {t.bookingId ? (
+                            <Link href={`/dashboard/reservas/${t.bookingId}`} className="hover:underline">
+                              {t.description}
+                            </Link>
+                          ) : (
+                            t.description
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={t.kind === 'receita' ? 'primarySoft' : 'accentSoft'} size="sm">
+                            {t.kind === 'receita' ? 'Receita' : 'Despesa'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={situation.variant} size="sm">
+                            {situation.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell
+                          className={`text-right font-semibold ${t.kind === 'receita' ? 'text-primary' : 'text-accent'}`}
+                        >
+                          {t.kind === 'receita' ? '+' : '−'} {brl(t.amount)}
+                        </TableCell>
+                        {canManageExpenses && (
+                          <TableCell className="text-right">
+                            {t.expenseId && (
+                              <Button
+                                type="button"
+                                size="xs"
+                                variant={t.status === 'pago' ? 'ghost' : 'secondary'}
+                                disabled={isPending}
+                                onClick={() => t.expenseId && togglePaid(t.expenseId, t.status !== 'pago')}
+                                title={t.status === 'pago' ? 'Reabrir despesa' : 'Marcar como paga'}
+                              >
+                                {t.status === 'pago' ? <RotateCcw className="size-3" /> : <Check className="size-3" />}
+                                {busy ? '…' : t.status === 'pago' ? 'Reabrir' : 'Paga'}
+                              </Button>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             )}
+            {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="font-semibold text-foreground">Lançar despesa</h2>
-          <p className="text-sm text-muted-foreground">Registre uma conta a pagar.</p>
-          <div className="mt-4">
-            <ExpenseForm />
-          </div>
-        </Card>
+        {canManageExpenses ? (
+          <Card className="p-6">
+            <h2 className="font-semibold text-foreground">Lançar despesa</h2>
+            <p className="text-sm text-muted-foreground">Registre uma conta a pagar.</p>
+            <div className="mt-4">
+              <ExpenseForm />
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-6">
+            <h2 className="font-semibold text-foreground">Lançar despesa</h2>
+            <p className="text-sm text-muted-foreground">
+              Só o proprietário e o gestor da pousada lançam e quitam despesas.
+            </p>
+          </Card>
+        )}
       </div>
     </DashboardShell>
   )

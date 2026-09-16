@@ -45,3 +45,16 @@ export async function insertExpense(row: NewExpense): Promise<{ id: string }> {
   if (error) throw error
   return { id: data.id }
 }
+
+/** Marca/desmarca uma despesa como paga. Escopada pela pousada — nunca só pelo id (RLS `expenses_write` é a segunda barreira). */
+export async function setExpensePaid(pousadaId: string, id: string, paid: boolean): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('expenses')
+    .update({ paid })
+    .eq('id', id)
+    .eq('pousada_id', pousadaId)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length === 0) throw new Error('Despesa não encontrada.')
+}
