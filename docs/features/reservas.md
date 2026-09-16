@@ -58,3 +58,18 @@ Rodar no Supabase (SQL Editor), em ordem:
 - **Cancelamento/reembolso** conforme política (RB-30..34).
 - **Seleção de acomodação**: hoje usa a acomodação padrão; múltiplos quartos por
   pousada virão com o dashboard do proprietário.
+
+## Check-in e check-out (0048)
+
+- Transições `confirmed → checked_in → checked_out` em `set_booking_status`
+  (migration `0048_booking_checkin_checkout.sql`), espelhadas em
+  `features/reservas/status.ts` e `features/gestao/schemas.ts`.
+- Só equipe da pousada (`checkin:perform` / `checkout:perform` na matriz RBAC;
+  no banco, `auth_has_guest_access`). Plataforma só com concessão ativa (0047).
+- Check-in só a partir da data de entrada, no fuso da pousada
+  (`pousadas.timezone`, padrão `America/Sao_Paulo`). O botão no painel já
+  fica desabilitado antes disso; a regra de verdade é a RPC.
+- Check-out não tem restrição de data (saída antecipada é operação normal).
+- Rastreabilidade em `bookings.checked_in_at/by` e `checked_out_at/by`;
+  auditoria `booking.checked_in` / `booking.checked_out`.
+- Rollback: `supabase/rollback/0048_rollback.sql`.

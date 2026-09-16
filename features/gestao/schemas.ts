@@ -8,8 +8,8 @@ export const dateActionSchema = z.object({
 })
 export type DateActionInput = z.infer<typeof dateActionSchema>
 
-/** [Ciclo 4] Só transições pré-check-in — check-in/checkout ficam para o Ciclo 6. */
-const ownerAllowedStatuses = ['confirmed', 'cancelled', 'no_show'] as const satisfies BookingStatus[]
+/** Status que a equipe pode aplicar pelo painel (0034 + check-in/check-out da 0048). */
+const ownerAllowedStatuses = ['confirmed', 'cancelled', 'no_show', 'checked_in', 'checked_out'] as const satisfies BookingStatus[]
 
 /** Ação de status feita pela equipe da pousada numa reserva. Motivo obrigatório para cancelar/no-show — validado no service e de novo na RPC. */
 export const reservationStatusActionSchema = z.object({

@@ -49,7 +49,7 @@ export function BookingDetailView({
               <span className="text-sm text-muted-foreground">{ORIGIN_LABEL[booking.origin]}</span>
               {booking.externalCode && <span className="text-xs text-muted-foreground">Código externo: {booking.externalCode}</span>}
             </div>
-            <OwnerReservationActions bookingId={booking.id} currentStatus={booking.status} paymentDueAt={booking.paymentDueAt} />
+            <OwnerReservationActions bookingId={booking.id} currentStatus={booking.status} paymentDueAt={booking.paymentDueAt} checkin={booking.checkin} />
           </div>
           {booking.status === 'cancelled' && booking.cancellationReason && (
             <p className="mt-3 text-sm text-muted-foreground">Motivo do cancelamento: {booking.cancellationReason}</p>

@@ -60,6 +60,17 @@ describe('[Ciclo 4] canTransition — espelha a tabela reimplementada em set_boo
     expect(canTransition('confirmed', 'cancelled')).toBe(true)
     expect(canTransition('confirmed', 'no_show')).toBe(true)
   })
+  it('[0048] fecha o ciclo da estadia: confirmed → checked_in → checked_out', () => {
+    expect(canTransition('confirmed', 'checked_in')).toBe(true)
+    expect(canTransition('checked_in', 'checked_out')).toBe(true)
+  })
+  it('[0048] check-in só a partir de reserva confirmada; check-out só de quem entrou', () => {
+    expect(canTransition('pending', 'checked_in')).toBe(false)
+    expect(canTransition('confirmed', 'checked_out')).toBe(false)
+    expect(canTransition('checked_in', 'cancelled')).toBe(false)
+    expect(canTransition('checked_in', 'no_show')).toBe(false)
+    expect(canTransition('checked_out', 'checked_in')).toBe(false)
+  })
   it('rejeita transições fora da lista aprovada', () => {
     expect(canTransition('confirmed', 'pending')).toBe(false)
     expect(canTransition('cancelled', 'confirmed')).toBe(false)

@@ -1,7 +1,7 @@
 import 'server-only'
 import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
-import { can } from '@/lib/auth/rbac'
+import { can, type Action } from '@/lib/auth/rbac'
 import { logAudit } from '@/lib/audit/log'
 import {
   getManagedPousada,
@@ -140,7 +140,16 @@ export async function updateOwnerReservationStatus(
   reason?: string,
 ): Promise<void> {
   const role = await getActiveTenantRole()
-  const action = status === 'cancelled' ? 'booking:cancel' : status === 'no_show' ? 'booking:no_show' : 'booking:manage'
+  const action: Action =
+    status === 'cancelled'
+      ? 'booking:cancel'
+      : status === 'no_show'
+        ? 'booking:no_show'
+        : status === 'checked_in'
+          ? 'checkin:perform'
+          : status === 'checked_out'
+            ? 'checkout:perform'
+            : 'booking:manage'
   if (!role || !can(role, action)) throw new Error('Você não tem permissão para esta ação.')
   const pousada = await resolveOwnerPousada()
   if (!pousada) throw new Error('Nenhuma pousada sob sua gestão.')

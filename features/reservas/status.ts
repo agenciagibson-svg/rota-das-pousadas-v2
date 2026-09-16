@@ -14,10 +14,11 @@ export const BOOKING_STATUS: Record<BookingStatus, { label: string; variant: Bad
 }
 
 /**
- * Transições pré-check-in permitidas neste ciclo (RB seção 6). Pura e
- * testável — espelha exatamente a tabela reimplementada no banco
- * (set_booking_status, 0034_bookings_rpcs_and_rls.sql). Check-in/checkout
- * (Ciclo 6) não têm transição de origem alguma ainda.
+ * Transições permitidas (RB seção 6). Pura e testável — espelha exatamente a
+ * tabela reimplementada no banco (set_booking_status: 0034 para as
+ * pré-check-in, 0048 para o ciclo da estadia). A regra de DATA do check-in
+ * (só a partir da entrada, no fuso da pousada) vive só na RPC — aqui é
+ * apenas a máquina de estados.
  */
 const ALLOWED_TRANSITIONS: ReadonlyArray<readonly [BookingStatus, BookingStatus]> = [
   ['quote', 'pending'],
@@ -27,6 +28,9 @@ const ALLOWED_TRANSITIONS: ReadonlyArray<readonly [BookingStatus, BookingStatus]
   ['pending', 'cancelled'],
   ['confirmed', 'cancelled'],
   ['confirmed', 'no_show'],
+  // 0048 — ciclo da estadia
+  ['confirmed', 'checked_in'],
+  ['checked_in', 'checked_out'],
 ]
 
 export function canTransition(from: BookingStatus, to: BookingStatus): boolean {

@@ -234,6 +234,10 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          checked_in_at: string | null
+          checked_in_by: string | null
+          checked_out_at: string | null
+          checked_out_by: string | null
           checkin: string
           checkout: string
           children: number
@@ -283,6 +287,10 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          checked_out_at?: string | null
+          checked_out_by?: string | null
           checkin: string
           checkout: string
           children?: number
@@ -332,6 +340,10 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          checked_out_at?: string | null
+          checked_out_by?: string | null
           checkin?: string
           checkout?: string
           children?: number
