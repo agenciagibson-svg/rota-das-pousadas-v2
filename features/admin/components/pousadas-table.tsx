@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin } from 'lucide-react'
+import Link from 'next/link'
+import { MapPin, ShieldCheck } from 'lucide-react'
 import { changePousadaStatusAction } from '../actions'
 import { Badge } from '@/components/ui/badge'
 import type { AdminPousadaRow } from '../types'
@@ -24,7 +25,14 @@ function nextAction(status: string): { label: string; target: string } | null {
   return null
 }
 
-export function PousadasTable({ items }: { items: AdminPousadaRow[] }) {
+export function PousadasTable({
+  items,
+  canManageGrants,
+}: {
+  items: AdminPousadaRow[]
+  /** `platform:grant:manage` (só master) — mostra o link de acesso institucional. */
+  canManageGrants: boolean
+}) {
   const router = useRouter()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -67,15 +75,26 @@ export function PousadasTable({ items }: { items: AdminPousadaRow[] }) {
                 <span>{p.ownerName ? `Proprietário: ${p.ownerName}` : 'Sem proprietário vinculado'}</span>
               </div>
             </div>
-            {action && (
-              <button
-                disabled={isPending && pendingId === p.id}
-                onClick={() => run(p.id, action.target)}
-                className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
-              >
-                {action.label}
-              </button>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {canManageGrants && (
+                <Link
+                  href={`/admin/pousadas/${p.id}/acessos`}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
+                >
+                  <ShieldCheck className="size-3.5" />
+                  Acessos
+                </Link>
+              )}
+              {action && (
+                <button
+                  disabled={isPending && pendingId === p.id}
+                  onClick={() => run(p.id, action.target)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
+                >
+                  {action.label}
+                </button>
+              )}
+            </div>
           </div>
         )
       })}

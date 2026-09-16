@@ -32,6 +32,14 @@ export async function getPousadaSlugById(id: string): Promise<string | null> {
   return data?.slug ?? null
 }
 
+/** Nome + slug — cabeçalho da tela de acessos institucionais de uma pousada. */
+export async function getPousadaHeaderById(id: string): Promise<{ name: string; slug: string } | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from('pousadas').select('name, slug').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data ? { name: data.name, slug: data.slug } : null
+}
+
 /** Atualiza o status de uma pousada (RLS: apenas platform admin pode). */
 export async function setPousadaStatus(id: string, status: PousadaStatus): Promise<void> {
   const supabase = await createSupabaseServerClient()

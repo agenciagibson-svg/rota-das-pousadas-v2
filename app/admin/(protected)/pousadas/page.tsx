@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { AdminShell } from '@/features/admin/components/admin-shell'
 import { Card } from '@/components/ui/card'
 import { PousadasTable } from '@/features/admin/components/pousadas-table'
-import { listPousadasAdmin } from '@/features/admin/services/admin.service'
+import { listPousadasAdmin, canManageGrants } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 import type { Enums } from '@/lib/supabase/database.types'
 
@@ -28,7 +28,11 @@ export default async function AdminPousadasPage({
 }) {
   const { status } = await searchParams
   const filter = VALID_STATUSES.find((s) => s === status)
-  const [user, pousadas] = await Promise.all([getCurrentUser(), listPousadasAdmin(filter)])
+  const [user, pousadas, grantsAllowed] = await Promise.all([
+    getCurrentUser(),
+    listPousadasAdmin(filter),
+    canManageGrants(),
+  ])
 
   return (
     <AdminShell
@@ -38,7 +42,7 @@ export default async function AdminPousadasPage({
       displayName={user?.name || user?.email || 'Equipe'}
     >
       <Card className="p-6">
-        <PousadasTable items={pousadas} />
+        <PousadasTable items={pousadas} canManageGrants={grantsAllowed} />
       </Card>
     </AdminShell>
   )

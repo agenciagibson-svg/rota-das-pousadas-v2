@@ -72,6 +72,10 @@ export const getOwnerSettings = cache(() => ownerSettings())
 export const getOwnerReservations = cache((filters: GestaoReservationFilters = {}) => listOwnerReservations(filters))
 export const getOwnerCalendar = cache(() => ownerCalendar())
 export const getOwnerReviews = cache(() => listOwnerReviews())
+export const canRespondReviews = cache(async () => {
+  const state = await resolveTenantAccess()
+  return state.status === 'ok' && can(state.membership.role, 'review:respond')
+})
 
 /** Admin: pousadas pendentes de aprovação + verificação de papel de plataforma. */
 export const getPendingPousadas = cache(() => listPending())

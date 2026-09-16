@@ -40,10 +40,13 @@ export function OwnerReviewsView({
   displayName,
   pousadaName,
   reviews,
+  canRespond,
 }: {
   displayName: string
   pousadaName: string
   reviews: OwnerReview[]
+  /** `review:respond` do papel ativo — recepção/financeiro/governança não respondem (RLS já recusava a escrita; isso só evita o erro cru do Postgres). */
+  canRespond: boolean
 }) {
   const average =
     reviews.length > 0
@@ -128,9 +131,17 @@ export function OwnerReviewsView({
                   </div>
                 )}
 
-                <div className="mt-4">
-                  <ReviewResponseForm reviewId={review.id} initialResponse={review.response} />
-                </div>
+                {canRespond ? (
+                  <div className="mt-4">
+                    <ReviewResponseForm reviewId={review.id} initialResponse={review.response} />
+                  </div>
+                ) : (
+                  !review.response && (
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      Seu papel não pode responder avaliações.
+                    </p>
+                  )
+                )}
               </div>
             ))}
           </div>

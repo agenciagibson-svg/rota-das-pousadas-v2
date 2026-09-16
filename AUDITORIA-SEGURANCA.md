@@ -37,6 +37,14 @@ Os bloqueadores foram corrigidos no branch `fix/seguranca-bloqueadores`. A migra
 
 A migration **0047** também levou junto dois itens que não dava para separar: `upsert_guest` (escrita de ficha de hóspede por qualquer papel de plataforma — fechar só a leitura seria meia correção) e um teto de 3 reservas `pending` abertas por viajante, que fecha o bloqueio de inventário descrito em A-1.
 
+### Adendo — auditoria de código de 16/09/2026 (achados novos, fora da lista acima)
+
+Revisão de código de `/dashboard` + `/admin` (não é o mesmo escopo da auditoria de 14/09 — ver [[rota-avaliacao-paineis]] na memória do projeto para o relatório completo). Três achados da MESMA classe do C-1 acima (regra só na aplicação, tabela/RPC alcançável direto pela API REST), todos corrigidos no mesmo dia:
+
+- **`pousadas_insert`/`pousadas_update`/`pousadas_delete`** (0002) usavam `auth_is_platform_admin()` — qualquer papel de plataforma (inclusive `marketing`/`suporte`/`financeiro_plataforma`, que a RBAC nunca autoriza) podia criar/editar/excluir pousada via API REST direta. Corrigido pela migration `0051_pousadas_rls_granular.sql`: novo helper `auth_can_manage_pousadas_platform()` (comercial + master — os únicos papéis de plataforma que de fato mutam `pousadas` hoje).
+- **`respondOwnerReview`** (`pms.service.ts`) não checava `can(role, 'review:respond')` — a RLS de `reviews` já recusava a escrita (sem vazamento), mas papéis sem permissão viam um erro cru do Postgres em vez de mensagem amigável. Corrigido com a mesma checagem explícita que as funções irmãs do arquivo já tinham.
+- **`grantAccessAction`/`revokeAccessAction`** (concessão de acesso institucional, RPC da 0047) existiam desde 14/09 sem nenhuma tela — corrigido com a tela `/admin/pousadas/[id]/acessos` (link "Acessos" na lista de pousadas, só para `master`).
+
 ---
 
 ## Crítico

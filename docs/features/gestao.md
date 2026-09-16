@@ -45,25 +45,20 @@ where u.email='EMAIL' and p.slug='refugio-das-nuvens'
 on conflict (user_id, pousada_id) do nothing;
 ```
 
+## Avaliações — checagem de permissão (16/09/2026)
+
+- `respondOwnerReview` (`pms.service.ts`) ganhou a mesma checagem explícita
+  das funções irmãs do arquivo: `can(role, 'review:respond')` (proprietário,
+  admin_pousada, suporte, master). Antes não havia nenhuma — a RLS de
+  `reviews` já recusava a escrita de quem não podia, então não era vazamento
+  de dado, só um erro cru do Postgres em vez de mensagem amigável.
+- `server/queries.ts#canRespondReviews` + prop `canRespond` em
+  `OwnerReviewsView`: sem a permissão, o formulário de resposta some (fica
+  só um aviso, e só quando a avaliação ainda não tem resposta).
+
 ## Próximos passos
 
 - Onboarding + aprovação da pousada pelo admin (substitui o vínculo manual).
 - Acomodações (múltiplos quartos) e disponibilidade por quarto.
 - Módulos financeiro e RH/funcionários.
 - Bloquear reserva em datas indisponíveis (integrar `availability` ao fluxo do hóspede).
-
-## Convite de equipe — aceitar / recusar (0049)
-
-- `invite_membership` (0017) cria o vínculo como `invited`; a resposta é do
-  PRÓPRIO convidado via `accept_membership_invite` / `decline_membership_invite`.
-  `accept_membership_invite` existia desde a 0016 mas nada a chamava; a 0049
-  a substitui (lock de linha, auditoria `member.invite_accepted`, retorno
-  jsonb) e cria a recusa (`member.invite_declined`).
-- Recusar vira `revoked` — o proprietário pode reconvidar depois (índice parcial da 0014).
-- Onde aparece: tela "Convite pendente" (único vínculo é convite), tela de
-  escolha de pousada (vários ativos) e faixa no topo do painel (já tem pousada
-  ativa e recebeu convite de outra). Componente
-  `features/membros/components/pending-invites.tsx`; dados via
-  `getMyPendingInvites()` em `server/queries.ts`.
-- Convite continua exigindo conta já existente com aquele e-mail e não envia
-  e-mail (provedor ainda ausente) — quem convida precisa avisar a pessoa.

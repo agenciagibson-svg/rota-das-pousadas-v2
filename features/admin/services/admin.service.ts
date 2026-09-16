@@ -4,6 +4,7 @@ import { can } from '@/lib/auth/rbac'
 import { logAudit } from '@/lib/audit/log'
 import {
   getPousadaSlugById,
+  getPousadaHeaderById,
   listAllPousadasForAdmin,
   listPendingPousadas,
   listPlatformHosts,
@@ -212,6 +213,29 @@ async function assertCanManageGrants() {
     throw new Error('Você não tem permissão para conceder acesso institucional.')
   }
   return user
+}
+
+/** Papel ativo pode conceder/revogar acesso institucional? (`platform:grant:manage` — só master.) Usa pra decidir se mostra o link/tela, sem lançar erro. */
+export async function canManageGrants(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'platform:grant:manage'))
+}
+
+/**
+ * Dados da tela "Acessos" de uma pousada: nome (cabeçalho) + concessões
+ * ativas. UI antes não existia (achado da auditoria de 16/09/2026) — a
+ * RPC/service já existiam desde a 0047, só faltava tela pra usar.
+ */
+export async function getAccessGrantsPageData(
+  pousadaId: string,
+): Promise<{ pousadaName: string; grants: PlatformAccessGrant[] }> {
+  await assertCanManageGrants()
+  const [header, grants] = await Promise.all([
+    getPousadaHeaderById(pousadaId),
+    listActiveGrantsByPousada(pousadaId),
+  ])
+  if (!header) throw new Error('Pousada não encontrada.')
+  return { pousadaName: header.name, grants }
 }
 
 /**

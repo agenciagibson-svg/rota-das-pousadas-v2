@@ -170,7 +170,16 @@ export async function listOwnerReviews(): Promise<OwnerReview[]> {
   return listReviewsByPousada(pousada.id)
 }
 
+/**
+ * Checagem de RBAC explícita (achado da auditoria de 16/09/2026: faltava, ao
+ * contrário das funções irmãs desta file). A RLS de `reviews` continua sendo
+ * a segunda barreira — sem ela, papéis sem `review:respond` (recepção,
+ * financeiro, governança) só viam um erro cru do Postgres em vez de mensagem
+ * amigável, mas a escrita já era recusada de qualquer forma.
+ */
 export async function respondOwnerReview(reviewId: string, response: string): Promise<void> {
+  const role = await getActiveTenantRole()
+  if (!role || !can(role, 'review:respond')) throw new Error('Você não tem permissão para responder avaliações.')
   const pousada = await resolveOwnerPousada()
   if (!pousada) throw new Error('Nenhuma pousada sob sua gestão.')
   await updateReviewResponseByPousada(pousada.id, reviewId, response)
