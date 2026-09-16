@@ -1,5 +1,6 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import { nightsBetween } from '@/features/reservas/pricing'
 import type { Booking, BookingCompanion, BookingDetail, BookingOrigin, BookingStatus, FnrhData } from '@/features/reservas/types'
 
@@ -133,6 +134,20 @@ export async function expirePendingBookingRpc(bookingId: string): Promise<void> 
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('expire_pending_booking', { p_booking_id: bookingId })
   if (error) throw new Error(error.message)
+}
+
+/**
+ * Expiração automática em lote (0050, cron) — service_role, sem sessão de
+ * usuário e sem tenant: varre TODAS as pousadas de uma vez. Nunca confundir
+ * com `expirePendingBookingRpc` acima (botão manual "Expirar", uma reserva
+ * por vez, exige sessão) — são duas RPCs diferentes no banco, cada uma só
+ * concedida ao papel certo.
+ */
+export async function expireOverduePendingBookingsRpc(): Promise<{ expired: number }> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { data, error } = await supabase.rpc('expire_overdue_pending_bookings')
+  if (error) throw new Error(error.message)
+  return data as { expired: number }
 }
 
 export async function setBookingCompanionsRpc(

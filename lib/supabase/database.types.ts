@@ -1993,6 +1993,7 @@ export type Database = {
         Args: { p_calendar_id: string }
         Returns: undefined
       }
+      expire_overdue_pending_bookings: { Args: never; Returns: Json }
       expire_pending_booking: { Args: { p_booking_id: string }; Returns: Json }
       get_channel_export_feed: { Args: { p_token: string }; Returns: Json }
       get_link_report: {

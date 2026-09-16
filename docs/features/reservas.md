@@ -94,3 +94,28 @@ Rodar no Supabase (SQL Editor), em ordem:
 - Repositório: `getBookingFnrhData` (`repositories/bookings.repository.ts`).
   Componentes: `features/reservas/components/fnrh-print-view.tsx`,
   `print-button.tsx`, `guest-type-labels.ts`.
+
+## Expiração automática de pré-reserva (0050)
+
+- Até aqui só existia o botão manual "Expirar" (`expire_pending_booking`,
+  migration 0034) — uma reserva `pending` com `payment_due_at` vencido ficava
+  travada até alguém abrir aquela reserva específica e clicar; na prática
+  ninguém faz isso, e o quarto continua "ocupado" por uma reserva que nunca
+  vai pagar.
+- Nova RPC `expire_overdue_pending_bookings()` (sem parâmetros) cancela em
+  lote toda `pending` vencida, de todas as pousadas — precisa ser assim
+  porque quem chama é o cron, sem sessão de usuário e sem tenant. Por isso é
+  uma RPC **diferente** da manual, não uma variação dela: só `service_role`
+  pode executar (mesmo padrão de `sync_channel_events`/
+  `list_channel_feeds_to_import`, 0044), nunca `authenticated`.
+- Continua sendo ação explícita e auditada (RB seção 9: nunca expira
+  silenciosamente) — a "ação" é o cron rodando, não um clique; a auditoria
+  grava `actor_id = null` e `metadata.source = 'cron'`, para nunca ser
+  confundida com uma expiração manual (que não tem esse campo).
+- Disparada por `/api/cron/expiracao` (`vercel.json`, diário — mesmo limite
+  de plano Hobby do cron de canais), protegida pelo mesmo `CRON_SECRET` de
+  `/api/cron/canais`. Repositório: `expireOverduePendingBookingsRpc`
+  (`repositories/bookings.repository.ts`, via `createSupabaseServiceRoleClient`).
+  Serviço: `features/reservas/services/expire-overdue.service.ts`.
+- Rollback: `supabase/rollback/0050_rollback.sql` (só remove a RPC — nenhuma
+  coluna nova).

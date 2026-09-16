@@ -6,24 +6,27 @@ import { publicEnv } from '@/lib/env'
 /**
  * Cliente com a chave `service_role` — ignora RLS por completo.
  *
- * Uso restrito a `lib/audit/log.ts` e ao webhook de pagamento
- * (`features/pagamentos/services/webhook.service.ts`). Não usar para ler ou
- * escrever dados de negócio livremente: isso reabriria exatamente os
- * problemas de isolamento entre pousadas que a RLS existe para resolver.
+ * Não usar para ler ou escrever dados de negócio livremente: isso reabriria
+ * exatamente os problemas de isolamento entre pousadas que a RLS existe para
+ * resolver. Uso restrito a rotinas sem sessão de usuário (cron, webhook,
+ * auditoria) — e sempre só chamando RPCs estreitas, `security definer`,
+ * concedidas exclusivamente a `service_role`; NUNCA lendo/escrevendo tabela
+ * de negócio direto.
  *
  * A auditoria é o caso original: `audit_log` de propósito não tem nenhuma
  * policy de insert para clientes (ver 0013_platform_access_grants.sql) — o
  * único jeito de gravar um evento é o servidor, depois que a autorização
- * real já foi checada em código.
+ * real já foi checada em código (`lib/audit/log.ts`).
  *
- * O webhook do Mercado Pago é a única outra exceção, deliberada: ele não tem
- * sessão de usuário (não há `auth.uid()`), então não pode chamar as RPCs
- * normais como `set_booking_status`. Mesmo assim, ele NUNCA lê/escreve tabela
- * diretamente — só chama a RPC estreita e auditada
- * `record_payment_and_confirm_booking` (migration 0039), que é `security
- * definer` e concedida apenas a `service_role`. Qualquer novo uso deste
- * cliente fora desses dois casos deve ser tratado como um problema de design,
- * não como um atalho.
+ * Os demais casos não têm `auth.uid()`, então não podem chamar as RPCs
+ * normais (que exigem sessão): webhook do Mercado Pago →
+ * `record_payment_and_confirm_booking` (0039); cron de canais (iCal) →
+ * `list_channel_feeds_to_import` / `sync_channel_events` (0044,
+ * `repositories/channels.repository.ts`); cron de expiração automática de
+ * pré-reserva → `expire_overdue_pending_bookings` (0050,
+ * `repositories/bookings.repository.ts`). Qualquer novo uso deste cliente
+ * fora do padrão "RPC estreita + service_role" deve ser tratado como um
+ * problema de design, não como um atalho.
  */
 export function createSupabaseServiceRoleClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
