@@ -51,3 +51,19 @@ on conflict (user_id, pousada_id) do nothing;
 - Acomodações (múltiplos quartos) e disponibilidade por quarto.
 - Módulos financeiro e RH/funcionários.
 - Bloquear reserva em datas indisponíveis (integrar `availability` ao fluxo do hóspede).
+
+## Convite de equipe — aceitar / recusar (0049)
+
+- `invite_membership` (0017) cria o vínculo como `invited`; a resposta é do
+  PRÓPRIO convidado via `accept_membership_invite` / `decline_membership_invite`.
+  `accept_membership_invite` existia desde a 0016 mas nada a chamava; a 0049
+  a substitui (lock de linha, auditoria `member.invite_accepted`, retorno
+  jsonb) e cria a recusa (`member.invite_declined`).
+- Recusar vira `revoked` — o proprietário pode reconvidar depois (índice parcial da 0014).
+- Onde aparece: tela "Convite pendente" (único vínculo é convite), tela de
+  escolha de pousada (vários ativos) e faixa no topo do painel (já tem pousada
+  ativa e recebeu convite de outra). Componente
+  `features/membros/components/pending-invites.tsx`; dados via
+  `getMyPendingInvites()` em `server/queries.ts`.
+- Convite continua exigindo conta já existente com aquele e-mail e não envia
+  e-mail (provedor ainda ausente) — quem convida precisa avisar a pessoa.

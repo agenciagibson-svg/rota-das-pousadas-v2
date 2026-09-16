@@ -3,6 +3,8 @@ import { Ban, Clock3, MapPinned } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { LogoutButton } from '@/features/auth/components/logout-button'
+import { PendingInvites } from '@/features/membros/components/pending-invites'
+import type { PendingInvite } from '@/features/membros/types'
 import { SelectPousadaForm } from './select-pousada-form'
 
 /** Usuário autenticado, mas sem nenhum vínculo (ativo, suspenso ou convite) com pousada alguma. */
@@ -27,21 +29,27 @@ export function NoMembershipScreen() {
   )
 }
 
-/** Único vínculo do usuário está com status "invited" — ainda não aceito. */
-export function InvitedOnlyScreen({ pousadaName }: { pousadaName: string }) {
+/** Único(s) vínculo(s) do usuário são convites — responde aqui (0049). */
+export function InvitedOnlyScreen({ invites }: { invites: PendingInvite[] }) {
+  const single = invites.length === 1 ? invites[0] : null
   return (
-    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5">
-      <EmptyState
-        size="lg"
-        icon={Clock3}
-        title="Convite pendente"
-        description={`Você foi convidado para a equipe de ${pousadaName}. Aceite o convite para acessar a gestão.`}
-        action={
-          <span className="text-muted-foreground text-xs">
-            Fale com quem te convidou para confirmar.
-          </span>
-        }
-      />
+    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5 py-16">
+      <div className="w-full max-w-lg">
+        <EmptyState
+          size="lg"
+          icon={Clock3}
+          title={single ? 'Convite pendente' : 'Convites pendentes'}
+          description={
+            single
+              ? `Você foi convidado para a equipe de ${single.pousadaName}. Aceite para acessar a gestão.`
+              : 'Você foi convidado para a equipe de mais de uma pousada. Responda a cada convite.'
+          }
+          action={<LogoutButton />}
+        />
+        <div className="mt-6">
+          <PendingInvites invites={invites} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -70,8 +78,10 @@ export function SuspendedScreen({
 /** Usuário tem mais de uma pousada ativa e ainda não escolheu qual gerenciar agora. */
 export function SelectPousadaScreen({
   options,
+  invites = [],
 }: {
   options: { pousadaId: string; name: string }[]
+  invites?: PendingInvite[]
 }) {
   return (
     <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5 py-16">
@@ -85,6 +95,29 @@ export function SelectPousadaScreen({
         <div className="mt-8">
           <SelectPousadaForm options={options} />
         </div>
+        {invites.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-foreground font-semibold">Convites pendentes</h2>
+            <div className="mt-3">
+              <PendingInvites invites={invites} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Faixa discreta no topo do painel para quem já tem vínculo ativo e recebeu convite de outra pousada. */
+export function PendingInvitesBanner({ invites }: { invites: PendingInvite[] }) {
+  if (invites.length === 0) return null
+  return (
+    <div className="border-border bg-secondary/40 border-b px-4 py-3 sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+          Convite de equipe
+        </p>
+        <PendingInvites invites={invites} compact />
       </div>
     </div>
   )

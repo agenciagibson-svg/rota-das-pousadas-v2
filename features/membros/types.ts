@@ -14,3 +14,11 @@ export type TeamMember = {
   createdAt: string
   suspendedReason: string | null
 }
+
+/** Convite pendente visto pelo PRÓPRIO convidado (tela de entrada do painel). */
+export type PendingInvite = {
+  membershipId: string
+  pousadaId: string
+  pousadaName: string
+  role: Role
+}

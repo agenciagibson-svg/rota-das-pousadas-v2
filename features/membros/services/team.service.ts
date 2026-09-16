@@ -12,9 +12,12 @@ import {
   suspendMembership,
   reactivateMembership,
   revokeMembership,
+  acceptInviteRpc,
+  declineInviteRpc,
+  listPousadaNamesByIds,
 } from '@/repositories/memberships.repository'
 import { wouldLeaveNoActiveOwner, isSelfAction } from '@/features/membros/rules'
-import type { TeamMember } from '@/features/membros/types'
+import type { PendingInvite, TeamMember } from '@/features/membros/types'
 
 async function requireCapability(action: Action) {
   const user = await getCurrentUser()
@@ -130,4 +133,43 @@ export async function revokeMember(membershipId: string): Promise<void> {
   }
 
   await revokeMembership(pousadaId, membershipId)
+}
+
+/**
+ * [0049] Resposta ao convite — fluxo do CONVIDADO, não da equipe. Não passa
+ * por `requireCapability`: quem responde ainda não tem vínculo ativo (e pode
+ * não ter nenhum). A primeira barreira confere que o convite está na sessão do
+ * usuário como `invited`; a RPC repete isso com lock de linha.
+ */
+async function requireOwnInvite(membershipId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Não autenticado.')
+  const invite = user.memberships.find((m) => m.id === membershipId && m.status === 'invited')
+  if (!invite) throw new Error('Convite não encontrado.')
+  return { user, invite }
+}
+
+export async function acceptInvite(membershipId: string): Promise<{ pousadaId: string }> {
+  await requireOwnInvite(membershipId)
+  return acceptInviteRpc(membershipId)
+}
+
+export async function declineInvite(membershipId: string): Promise<void> {
+  await requireOwnInvite(membershipId)
+  await declineInviteRpc(membershipId)
+}
+
+/** Convites pendentes do usuário atual, com o nome da pousada — para a tela de entrada do painel. */
+export async function listMyPendingInvites(): Promise<PendingInvite[]> {
+  const user = await getCurrentUser()
+  if (!user) return []
+  const invited = user.memberships.filter((m) => m.status === 'invited')
+  if (invited.length === 0) return []
+  const pousadas = await listPousadaNamesByIds(invited.map((m) => m.pousadaId))
+  return invited.map((m) => ({
+    membershipId: m.id,
+    pousadaId: m.pousadaId,
+    pousadaName: pousadas.find((p) => p.id === m.pousadaId)?.name ?? 'uma pousada',
+    role: m.role,
+  }))
 }

@@ -22,14 +22,18 @@ import {
   listOwnerReviews,
 } from '@/features/gestao/services/pms.service'
 import { listPending, isPlatformAdmin as platformAdmin } from '@/features/admin/services/admin.service'
-import { getFinance as ownerFinance } from '@/features/financeiro/services/finance.service'
+import {
+  getFinance as ownerFinance,
+  canViewFinance as viewFinance,
+  canManageExpenses as manageExpenses,
+} from '@/features/financeiro/services/finance.service'
 import { getOwnerRooms as ownerRooms, getHousekeepingRooms as housekeepingRooms } from '@/features/acomodacoes/services/rooms.service'
 import { listCategories } from '@/features/acomodacoes/services/categories.service'
 import { listBlocks } from '@/features/acomodacoes/services/blocks.service'
 import { listAmenitiesCatalog } from '@/repositories/rooms.repository'
 import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services/favorites.service'
 import { listMyFavoriteAlertStates } from '@/features/alertas/services/favorite-alerts.service'
-import { listTeam } from '@/features/membros/services/team.service'
+import { listTeam, listMyPendingInvites } from '@/features/membros/services/team.service'
 import { listGuests, getGuestProfile as guestProfile } from '@/features/hospedes/services/guests.service'
 import { listChannels as ownerChannels } from '@/features/canais/services/channels.service'
 import { getLinkReport as linkReport, listQuoteRequests as quoteRequests } from '@/features/bio/services/bio.service'
@@ -72,8 +76,10 @@ export const getOwnerReviews = cache(() => listOwnerReviews())
 export const getPendingPousadas = cache(() => listPending())
 export const isPlatformAdmin = cache(() => platformAdmin())
 
-/** Financeiro: resumo + extrato da pousada do proprietário. */
+/** Financeiro: resumo + extrato da pousada ativa (vazio para quem não tem `finance:pousada:view`). */
 export const getFinance = cache(() => ownerFinance())
+export const canViewFinance = cache(() => viewFinance())
+export const canManageExpenses = cache(() => manageExpenses())
 
 /** Acomodações: quartos, categorias e bloqueios da pousada ativa. */
 export const getOwnerRooms = cache(() => ownerRooms())
@@ -97,6 +103,9 @@ export const canManageBlocks = cache(async () => {
   const state = await resolveTenantAccess()
   return state.status === 'ok' && can(state.membership.role, 'room:block:manage')
 })
+
+/** Convites pendentes do usuário atual (qualquer pousada) — tela de entrada do painel. */
+export const getMyPendingInvites = cache(() => listMyPendingInvites())
 
 /** Equipe: membros da pousada ativa + se o usuário pode convidar. */
 export const getTeamMembers = cache(() => listTeam())

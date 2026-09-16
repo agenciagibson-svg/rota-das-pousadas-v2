@@ -14,6 +14,8 @@ import {
   suspendMember,
   reactivateMember,
   revokeMember,
+  acceptInvite,
+  declineInvite,
 } from './services/team.service'
 
 export const inviteMemberAction = createAction(inviteMemberSchema, async (input) => {
@@ -43,5 +45,18 @@ export const reactivateMemberAction = createAction(membershipIdSchema, async (in
 export const revokeMemberAction = createAction(membershipIdSchema, async (input) => {
   await revokeMember(input.membershipId)
   revalidatePath('/dashboard/membros')
+  return { membershipId: input.membershipId }
+})
+
+/** [0049] Convidado aceita — o layout do /dashboard reavalia o contexto de tenant na próxima renderização. */
+export const acceptInviteAction = createAction(membershipIdSchema, async (input) => {
+  const { pousadaId } = await acceptInvite(input.membershipId)
+  revalidatePath('/dashboard', 'layout')
+  return { pousadaId }
+})
+
+export const declineInviteAction = createAction(membershipIdSchema, async (input) => {
+  await declineInvite(input.membershipId)
+  revalidatePath('/dashboard', 'layout')
   return { membershipId: input.membershipId }
 })

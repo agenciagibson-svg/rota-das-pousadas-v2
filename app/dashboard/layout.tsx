@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { resolveTenantAccess } from '@/lib/auth/tenant-context'
 import { listPousadaNamesByIds } from '@/repositories/memberships.repository'
+import { getMyPendingInvites } from '@/server/queries'
 import {
   NoMembershipScreen,
   InvitedOnlyScreen,
   SuspendedScreen,
   SelectPousadaScreen,
+  PendingInvitesBanner,
 } from '@/components/dashboard/tenant-gate'
 
 /**
@@ -26,8 +28,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       return <NoMembershipScreen />
 
     case 'invited_only': {
-      const [pousada] = await listPousadaNamesByIds([state.membership.pousadaId])
-      return <InvitedOnlyScreen pousadaName={pousada?.name ?? 'uma pousada'} />
+      // Pode haver mais de um convite; o usuário responde a cada um (0049).
+      return <InvitedOnlyScreen invites={await getMyPendingInvites()} />
     }
 
     case 'suspended': {
@@ -41,15 +43,26 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     }
 
     case 'needs_selection': {
-      const pousadas = await listPousadaNamesByIds(state.memberships.map((m) => m.pousadaId))
+      const [pousadas, invites] = await Promise.all([
+        listPousadaNamesByIds(state.memberships.map((m) => m.pousadaId)),
+        getMyPendingInvites(),
+      ])
       const options = state.memberships.map((m) => ({
         pousadaId: m.pousadaId,
         name: pousadas.find((p) => p.id === m.pousadaId)?.name ?? 'Pousada',
       }))
-      return <SelectPousadaScreen options={options} />
+      return <SelectPousadaScreen options={options} invites={invites} />
     }
 
-    case 'ok':
-      return <>{children}</>
+    case 'ok': {
+      // Já tem pousada ativa, mas pode ter sido convidado para outra.
+      const invites = await getMyPendingInvites()
+      return (
+        <>
+          <PendingInvitesBanner invites={invites} />
+          {children}
+        </>
+      )
+    }
   }
 }

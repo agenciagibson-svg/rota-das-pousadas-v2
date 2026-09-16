@@ -156,6 +156,26 @@ export async function listPousadaNamesByIds(ids: string[]): Promise<{ id: string
   return data ?? []
 }
 
+/**
+ * [0049] Resposta do PRÓPRIO convidado. As RPCs travam a linha e conferem
+ * `user_id = auth.uid()` e `status = 'invited'` no banco — aqui não há
+ * `pousadaId` de propósito: o convidado ainda não tem contexto de tenant.
+ */
+export async function acceptInviteRpc(membershipId: string): Promise<{ pousadaId: string }> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('accept_membership_invite', { p_membership_id: membershipId })
+  if (error) throw new Error(error.message)
+  const pousadaId = (data as { pousadaId?: string } | null)?.pousadaId
+  if (!pousadaId) throw new Error('Não foi possível aceitar o convite.')
+  return { pousadaId }
+}
+
+export async function declineInviteRpc(membershipId: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('decline_membership_invite', { p_membership_id: membershipId })
+  if (error) throw new Error(error.message)
+}
+
 export async function revokeMembership(pousadaId: string, id: string): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('revoke_member', {

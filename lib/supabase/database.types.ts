@@ -1844,7 +1844,7 @@ export type Database = {
     Functions: {
       accept_membership_invite: {
         Args: { p_membership_id: string }
-        Returns: undefined
+        Returns: Json
       }
       assert_can_manage_membership: {
         Args: { p_membership_id: string; p_pousada_id: string }
@@ -1983,6 +1983,10 @@ export type Database = {
           p_source?: string
           p_starts_at: string
         }
+        Returns: Json
+      }
+      decline_membership_invite: {
+        Args: { p_membership_id: string }
         Returns: Json
       }
       delete_channel_calendar: {
