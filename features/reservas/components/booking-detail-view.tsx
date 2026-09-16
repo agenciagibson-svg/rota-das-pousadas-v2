@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Printer } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
@@ -116,8 +117,21 @@ export function BookingDetailView({
         </div>
 
         <Card className="p-6">
-          <h2 className="font-semibold text-foreground">Acompanhantes</h2>
-          <p className="text-sm text-muted-foreground">Responsável + acompanhantes cadastrados nesta reserva.</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-foreground">Acompanhantes</h2>
+              <p className="text-sm text-muted-foreground">Responsável + acompanhantes cadastrados nesta reserva.</p>
+            </div>
+            <Link
+              href={`/dashboard/reservas/${booking.id}/fnrh`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
+            >
+              <Printer className="size-3.5" />
+              Imprimir ficha FNRH
+            </Link>
+          </div>
           <div className="mt-4">
             <BookingCompanionsPanel booking={booking} canEdit={canEdit} />
           </div>

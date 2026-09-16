@@ -73,3 +73,24 @@ Rodar no Supabase (SQL Editor), em ordem:
 - Rastreabilidade em `bookings.checked_in_at/by` e `checked_out_at/by`;
   auditoria `booking.checked_in` / `booking.checked_out`.
 - Rollback: `supabase/rollback/0048_rollback.sql`.
+
+## Ficha FNRH imprimível
+
+- Sem migration — só código. `/dashboard/reservas/[id]/fnrh` monta a Ficha
+  Nacional de Registro de Hóspedes a partir do que já está cadastrado:
+  reserva (`bookings`), perfil completo do hóspede responsável (`guests`,
+  não o snapshot de `bookings.guest_name/email/phone`) e acompanhantes
+  (`booking_guests`).
+- Campos que o negócio não rastreia hoje (profissão, procedência, próximo
+  destino, meio de transporte, placa do veículo) entram em branco na ficha
+  impressa — preenchimento manual no check-in, prática comum com o
+  formulário do Ministério do Turismo.
+- Mesma barreira de `getOwnerReservationDetail`: `getBookingFnrh`
+  (`server/queries.ts`) exige `booking:manage`, então quem confere a
+  reserva também imprime a ficha (proprietário, gestor, recepção).
+- Página fora do `DashboardShell` de propósito (sem menu para não ir para o
+  papel); botão "Imprimir ficha FNRH" no detalhe da reserva abre em nova
+  aba. Impressão é `window.print()` puro — sem geração de PDF no servidor.
+- Repositório: `getBookingFnrhData` (`repositories/bookings.repository.ts`).
+  Componentes: `features/reservas/components/fnrh-print-view.tsx`,
+  `print-button.tsx`, `guest-type-labels.ts`.

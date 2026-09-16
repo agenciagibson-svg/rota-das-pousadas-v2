@@ -67,6 +67,60 @@ export type BookingCompanion = {
   operationalNotes: string
 }
 
+/** Um acompanhante na ficha FNRH — só os campos que a ficha imprime. */
+export type FnrhCompanion = {
+  fullName: string
+  guestType: BookingCompanion['guestType']
+  documentType: string | null
+  documentNumber: string | null
+  birthDate: string | null
+}
+
+/**
+ * Dados para a Ficha Nacional de Registro de Hóspedes (impressão).
+ * Só projeta o que já está cadastrado — campos que o negócio não rastreia
+ * hoje (profissão, procedência, destino, meio de transporte, placa) ficam em
+ * branco na ficha impressa, para preenchimento manual no check-in.
+ */
+export type FnrhData = {
+  pousada: {
+    name: string
+    legalName: string
+    taxId: string
+    address: string
+    cep: string
+    city: string
+    state: string
+    checkinTime: string
+    checkoutTime: string
+  }
+  booking: {
+    code: string
+    roomName: string
+    checkin: string
+    checkout: string
+    nights: number
+    adults: number
+    children: number
+    infants: number
+  }
+  responsible: {
+    fullName: string
+    email: string | null
+    phone: string | null
+    documentType: string | null
+    documentNumber: string | null
+    birthDate: string | null
+    nationality: string | null
+    country: string | null
+    city: string | null
+    state: string | null
+    address: string | null
+    cep: string | null
+  }
+  companions: FnrhCompanion[]
+}
+
 /** Reserva completa, visão administrativa (/dashboard/reservas/[id]). */
 export type BookingDetail = {
   id: string

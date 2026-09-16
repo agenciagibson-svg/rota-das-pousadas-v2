@@ -1,7 +1,7 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { nightsBetween } from '@/features/reservas/pricing'
-import type { Booking, BookingCompanion, BookingDetail, BookingOrigin, BookingStatus } from '@/features/reservas/types'
+import type { Booking, BookingCompanion, BookingDetail, BookingOrigin, BookingStatus, FnrhData } from '@/features/reservas/types'
 
 export type CreateBookingParams = {
   pousadaId: string
@@ -360,5 +360,79 @@ export async function getBookingDetailById(bookingId: string, pousadaId: string)
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     companions,
+  }
+}
+
+/**
+ * Dados para a ficha FNRH impressa — reserva + hóspede responsável (o
+ * PERFIL completo em `guests`, não só o snapshot em `bookings.guest_name/
+ * email/phone`) + acompanhantes. Mesmo escopo de leitura de
+ * `getBookingDetailById` (pousadaId já resolvido por `booking:manage`); só
+ * projeta as colunas que a ficha usa. Dados da pousada (cabeçalho impresso)
+ * ficam de fora — quem chama junta com `getPousadaSettings`.
+ */
+export async function getBookingFnrhData(
+  bookingId: string,
+  pousadaId: string,
+): Promise<Omit<FnrhData, 'pousada'> | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('id, code, room_id, responsible_guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants')
+    .eq('id', bookingId)
+    .eq('pousada_id', pousadaId)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+
+  const [{ data: room }, { data: guest }, { data: companionRows }] = await Promise.all([
+    supabase.from('rooms').select('name').eq('id', data.room_id).maybeSingle(),
+    supabase
+      .from('guests')
+      .select('full_name, email, phone, document_type, document_number, birth_date, nationality, country, city, state, address, cep')
+      .eq('id', data.responsible_guest_id)
+      .maybeSingle(),
+    supabase
+      .from('booking_guests')
+      .select('full_name, guest_type, document_type, document_number, birth_date')
+      .eq('booking_id', bookingId)
+      .neq('guest_type', 'responsible')
+      .order('created_at', { ascending: true }),
+  ])
+
+  return {
+    booking: {
+      code: data.code,
+      roomName: room?.name ?? 'Acomodação',
+      checkin: data.checkin,
+      checkout: data.checkout,
+      nights: nightsBetween(data.checkin, data.checkout),
+      adults: data.adults,
+      children: data.children,
+      infants: data.infants,
+    },
+    responsible: {
+      // `guests` pode não ter linha (reserva antiga ou hóspede removido) — cai
+      // para o snapshot da reserva, igual a `getBookingDetailById`.
+      fullName: guest?.full_name ?? data.guest_name ?? 'Hóspede',
+      email: guest?.email ?? data.guest_email,
+      phone: guest?.phone ?? data.guest_phone,
+      documentType: guest?.document_type ?? null,
+      documentNumber: guest?.document_number ?? null,
+      birthDate: guest?.birth_date ?? null,
+      nationality: guest?.nationality ?? null,
+      country: guest?.country ?? null,
+      city: guest?.city ?? null,
+      state: guest?.state ?? null,
+      address: guest?.address ?? null,
+      cep: guest?.cep ?? null,
+    },
+    companions: (companionRows ?? []).map((c) => ({
+      fullName: c.full_name,
+      guestType: c.guest_type as BookingCompanion['guestType'],
+      documentType: c.document_type,
+      documentNumber: c.document_number,
+      birthDate: c.birth_date,
+    })),
   }
 }

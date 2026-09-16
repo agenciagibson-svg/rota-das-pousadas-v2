@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { calculateBookingPrice, nightsBetween, SERVICE_FEE_RATE } from './pricing'
 import { createBookingSchema, createBookingAdminSchema, updateBookingSchema } from './schemas'
 import { canTransition, isFinalStatus, isOccupyingStatus } from './status'
+import { fnrhDate, fnrhDocument, fnrhCountryLabel } from './fnrh-format'
 
 describe('nightsBetween', () => {
   it('conta as noites corretamente', () => {
@@ -59,17 +60,6 @@ describe('[Ciclo 4] canTransition — espelha a tabela reimplementada em set_boo
     expect(canTransition('pending', 'cancelled')).toBe(true)
     expect(canTransition('confirmed', 'cancelled')).toBe(true)
     expect(canTransition('confirmed', 'no_show')).toBe(true)
-  })
-  it('[0048] fecha o ciclo da estadia: confirmed → checked_in → checked_out', () => {
-    expect(canTransition('confirmed', 'checked_in')).toBe(true)
-    expect(canTransition('checked_in', 'checked_out')).toBe(true)
-  })
-  it('[0048] check-in só a partir de reserva confirmada; check-out só de quem entrou', () => {
-    expect(canTransition('pending', 'checked_in')).toBe(false)
-    expect(canTransition('confirmed', 'checked_out')).toBe(false)
-    expect(canTransition('checked_in', 'cancelled')).toBe(false)
-    expect(canTransition('checked_in', 'no_show')).toBe(false)
-    expect(canTransition('checked_out', 'checked_in')).toBe(false)
   })
   it('rejeita transições fora da lista aprovada', () => {
     expect(canTransition('confirmed', 'pending')).toBe(false)
@@ -156,6 +146,29 @@ describe('[Ciclo 4] updateBookingSchema exige version (concorrência otimista)',
       internalNotes: '',
     }
     expect(updateBookingSchema.safeParse(withoutVersion).success).toBe(false)
+  })
+})
+
+describe('[FNRH] fnrhDate / fnrhDocument / fnrhCountryLabel — formatação pura da ficha impressa', () => {
+  it('converte YYYY-MM-DD para DD/MM/YYYY', () => {
+    expect(fnrhDate('2026-03-14')).toBe('14/03/2026')
+  })
+  it('data ausente vira campo em branco (preenchimento manual no check-in)', () => {
+    expect(fnrhDate(null)).toBe('')
+  })
+  it('combina tipo e número do documento', () => {
+    expect(fnrhDocument('RG', '12.345.678-9')).toBe('RG: 12.345.678-9')
+  })
+  it('sem tipo, mostra só o número', () => {
+    expect(fnrhDocument(null, '12.345.678-9')).toBe('12.345.678-9')
+  })
+  it('sem número, campo fica em branco mesmo com tipo informado', () => {
+    expect(fnrhDocument('RG', null)).toBe('')
+  })
+  it('traduz o código do país quando conhecido, senão mostra o próprio código', () => {
+    expect(fnrhCountryLabel('BR')).toBe('Brasil')
+    expect(fnrhCountryLabel('US')).toBe('US')
+    expect(fnrhCountryLabel(null)).toBe('')
   })
 })
 

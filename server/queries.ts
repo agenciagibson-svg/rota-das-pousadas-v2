@@ -37,7 +37,8 @@ import { listTeam, listMyPendingInvites } from '@/features/membros/services/team
 import { listGuests, getGuestProfile as guestProfile } from '@/features/hospedes/services/guests.service'
 import { listChannels as ownerChannels } from '@/features/canais/services/channels.service'
 import { getLinkReport as linkReport, listQuoteRequests as quoteRequests } from '@/features/bio/services/bio.service'
-import { getBookingDetailById } from '@/repositories/bookings.repository'
+import { getBookingDetailById, getBookingFnrhData } from '@/repositories/bookings.repository'
+import { getPousadaSettings } from '@/repositories/management.repository'
 import { requireCapability } from '@/features/acomodacoes/services/access'
 import { resolveTenantAccess } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
@@ -131,6 +132,35 @@ export const getOwnerReservationDetail = cache(async (bookingId: string) => {
 export const canManageBookings = cache(async () => {
   const state = await resolveTenantAccess()
   return state.status === 'ok' && can(state.membership.role, 'booking:manage')
+})
+
+/**
+ * Ficha FNRH (impressão) de uma reserva — dados da reserva + hóspede
+ * responsável + acompanhantes + identificação da pousada para o cabeçalho.
+ * Mesma barreira de `getOwnerReservationDetail` (`booking:manage`): quem
+ * confere a reserva também pode imprimir a ficha de check-in.
+ */
+export const getBookingFnrh = cache(async (bookingId: string) => {
+  const { pousadaId } = await requireCapability('booking:manage')
+  const [data, settings] = await Promise.all([
+    getBookingFnrhData(bookingId, pousadaId),
+    getPousadaSettings(pousadaId),
+  ])
+  if (!data) return null
+  return {
+    ...data,
+    pousada: {
+      name: settings?.name ?? 'Pousada',
+      legalName: settings?.legalName || settings?.name || 'Pousada',
+      taxId: settings?.taxId ?? '',
+      address: settings?.address ?? '',
+      cep: settings?.cep ?? '',
+      city: settings?.city ?? '',
+      state: settings?.state ?? '',
+      checkinTime: settings?.checkinTime ?? '',
+      checkoutTime: settings?.checkoutTime ?? '',
+    },
+  }
 })
 
 /** Canais (iCal) da pousada ativa — quem vê é definido por `channel:view`. */
