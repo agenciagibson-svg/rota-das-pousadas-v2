@@ -140,3 +140,28 @@ Rodar no Supabase (SQL Editor), em ordem:
   policy de insert. Se a linha não existir (não deveria: o projeto assume
   que o cadastro sempre cria uma), o update afeta zero linhas e a função
   lança um erro explícito em vez de falhar calado.
+
+## Página de pagamento (16/09/2026)
+
+- `createBookingAction` sempre redirecionou para
+  `/pousada/[slug]/reservar/[id]/pagamento`, mas essa página nunca existiu —
+  toda reserva pública terminava em 404 logo depois de criada (a reserva em
+  si ficava salva como `pending`, só a navegação quebrava). Criada agora em
+  `app/pousada/[slug]/reservar/[id]/pagamento/page.tsx`.
+- A página busca a reserva em `getMyBookings()` (já escopada ao hóspede
+  logado) e, se ela ainda está `pending` com saldo devedor, chama
+  `getBookingCheckout` (`server/queries.ts` → `createCheckoutPreference`,
+  `features/pagamentos/services/checkout.service.ts`) para gerar o link de
+  Checkout Pro do Mercado Pago **da própria pousada** (sem split — ver
+  `checkout.service.ts`). O botão "Pagar agora" leva direto para esse link.
+- Se a pousada ainda não conectou a conta do Mercado Pago (ou qualquer outra
+  condição do `createCheckoutPreference` falhar), a página não trata como
+  erro fatal: a reserva já existe e está garantida até `payment_due_at`, só
+  mostra "pagamento a combinar" em vez do botão. Reservas em outros status
+  (confirmada, cancelada, etc.) mostram uma nota correspondente, sem botão.
+- O Mercado Pago já está configurado (`checkout.service.ts`) para trazer o
+  hóspede de volta para `/minhas-reservas` depois do pagamento (sucesso,
+  pendente ou falha) — essa página já existia e já lista todas as reservas
+  do hóspede com datas, valores e status, sem mudança necessária nela.
+- Sem migration — só código novo (`server/queries.ts#getBookingCheckout` +
+  a página).

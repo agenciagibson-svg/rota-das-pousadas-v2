@@ -39,6 +39,7 @@ import { listChannels as ownerChannels } from '@/features/canais/services/channe
 import { getLinkReport as linkReport, listQuoteRequests as quoteRequests } from '@/features/bio/services/bio.service'
 import { getBookingDetailById, getBookingFnrhData } from '@/repositories/bookings.repository'
 import { getPousadaSettings } from '@/repositories/management.repository'
+import { createCheckoutPreference } from '@/features/pagamentos/services/checkout.service'
 import { requireCapability } from '@/features/acomodacoes/services/access'
 import { resolveTenantAccess } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
@@ -65,6 +66,13 @@ export const getMyBookings = cache(() => listMyBookings())
 
 /** Diária + capacidade de uma pousada para o fluxo de reserva. */
 export const getBookableRoom = cache((slug: string, checkin?: string, checkout?: string, guests = 1) => bookableRoom(slug, checkin, checkout, guests))
+
+/**
+ * Pagamento: cria a preferência de checkout (Mercado Pago) da reserva do
+ * hóspede autenticado. Lança erro se a pousada ainda não conectou a conta —
+ * a página de pagamento trata isso como "a combinar", não como falha fatal.
+ */
+export const getBookingCheckout = cache((bookingId: string) => createCheckoutPreference(bookingId))
 
 /** Gestão (PMS): pousada gerida, reservas e calendário do proprietário. */
 export const getOwnerPousada = cache(() => ownerPousada())
