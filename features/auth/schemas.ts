@@ -17,3 +17,9 @@ export const signupSchema = z.object({
     .max(72, 'A senha deve ter no máximo 72 caracteres.'),
 })
 export type SignupInput = z.infer<typeof signupSchema>
+
+/** Completar/corrigir o nome de um cadastro que chegou sem nome (conta de teste, magic link). */
+export const updateNameSchema = z.object({
+  name: z.string().min(2, 'Informe seu nome completo.').max(80, 'Nome muito longo.'),
+})
+export type UpdateNameInput = z.infer<typeof updateNameSchema>

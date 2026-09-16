@@ -6,9 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { createBookingSchema, type CreateBookingInput } from '../schemas'
 import { createBookingAction } from '../actions'
+import { updateMyNameAction } from '@/features/auth/actions'
 import { calculateBookingPrice } from '../pricing'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+
+/** Mesma mensagem de `bookings.service.ts` (`createBooking`) — usada para decidir
+ * quando trocar o erro genérico pelo mini-formulário de completar o nome. */
+const MISSING_NAME_ERROR = 'Complete seu nome no cadastro antes de reservar.'
 
 export function BookingForm({
   pousadaSlug,
@@ -27,10 +32,14 @@ export function BookingForm({
 }) {
   const router = useRouter()
   const [formError, setFormError] = useState<string | null>(null)
+  const [nameValue, setNameValue] = useState('')
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [savingName, setSavingName] = useState(false)
   const {
     register,
     handleSubmit,
     watch,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<CreateBookingInput>({
     resolver: zodResolver(createBookingSchema),
@@ -56,6 +65,24 @@ export function BookingForm({
     }
     router.push(result.data.redirectTo)
     router.refresh()
+  }
+
+  /** Salva o nome que faltava e tenta a reserva de novo, sem o hóspede precisar clicar duas vezes. */
+  async function handleSaveName() {
+    setNameError(null)
+    if (nameValue.trim().length < 2) {
+      setNameError('Informe seu nome completo.')
+      return
+    }
+    setSavingName(true)
+    const result = await updateMyNameAction({ name: nameValue.trim() })
+    setSavingName(false)
+    if (!result.ok) {
+      setNameError(result.error)
+      return
+    }
+    router.refresh()
+    await onSubmit(getValues())
   }
 
   return (
@@ -90,7 +117,23 @@ export function BookingForm({
         </div>
       )}
 
-      {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
+      {formError === MISSING_NAME_ERROR ? (
+        <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+          <p className="text-sm font-medium text-destructive">{formError}</p>
+          <Input
+            label="Seu nome completo"
+            placeholder="Como você quer ser identificado na reserva"
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+            error={nameError ?? undefined}
+          />
+          <Button type="button" variant="secondary" disabled={savingName} onClick={handleSaveName} className="w-full">
+            {savingName ? 'Salvando…' : 'Salvar nome e continuar'}
+          </Button>
+        </div>
+      ) : (
+        formError && <p className="text-sm font-medium text-destructive">{formError}</p>
+      )}
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Confirmando…' : 'Confirmar reserva'}

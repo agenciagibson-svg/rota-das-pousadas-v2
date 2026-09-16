@@ -16,6 +16,26 @@ export type ProfileWithRoles = {
  * Lê o profile e os vínculos (memberships) de um usuário. Única porta ao banco
  * para dados de perfil/papéis. Sem regra de negócio (isso é dos Services).
  */
+/**
+ * Atualiza o nome do profile do próprio usuário (RLS `profiles_self_update`
+ * só deixa alterar a própria linha). Não faz upsert: a linha em `profiles` é
+ * criada no cadastro (fora do controle desta camada) — se ela não existir, o
+ * update afeta zero linhas e isso vira um erro explícito, em vez de falhar
+ * calado e deixar o chamador tentando de novo sem nunca dar certo.
+ */
+export async function updateProfileName(userId: string, fullName: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName })
+    .eq('id', userId)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length === 0) {
+    throw new Error('Não foi possível salvar seu nome. Fale com o suporte.')
+  }
+}
+
 export async function getProfileWithRoles(userId: string): Promise<ProfileWithRoles | null> {
   const supabase = await createSupabaseServerClient()
 

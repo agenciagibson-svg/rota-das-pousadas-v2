@@ -119,3 +119,24 @@ Rodar no Supabase (SQL Editor), em ordem:
   Serviço: `features/reservas/services/expire-overdue.service.ts`.
 - Rollback: `supabase/rollback/0050_rollback.sql` (só remove a RPC — nenhuma
   coluna nova).
+
+## Completar nome no cadastro (reserva pública)
+
+- `createBooking` (`bookings.service.ts`) exige `user.name.trim().length >= 2`
+  antes de chamar `ensureTravelerGuestRpc` — sem nome, a pousada receberia uma
+  reserva anônima. Cadastro pelo `/entrar` já exige nome (`signupSchema`,
+  min. 2 caracteres) e ele vai para `user_metadata.full_name`
+  (`getCurrentUser` usa isso como fallback quando `profiles.full_name` está
+  vazio); contas sem nome só acontecem fora desse fluxo (conta de teste
+  criada direto no Supabase, por exemplo) — mas até 16/09 não havia NENHUMA
+  tela para corrigir isso: o erro aparecia e travava ali, sem saída.
+- `BookingForm` agora detecta essa mensagem específica e troca o erro
+  genérico por um mini-formulário inline (nome + "Salvar nome e continuar"),
+  que chama `updateMyNameAction` (`features/auth/actions.ts` →
+  `updateMyName` → `repositories/profiles.repository.ts#updateProfileName`)
+  e, no sucesso, tenta a reserva de novo automaticamente.
+- `updateProfileName` faz `update` (não upsert) em `profiles` — a RLS
+  `profiles_self_update` (0002) só permite alterar a própria linha e não há
+  policy de insert. Se a linha não existir (não deveria: o projeto assume
+  que o cadastro sempre cria uma), o update afeta zero linhas e a função
+  lança um erro explícito em vez de falhar calado.

@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createAction } from '@/actions/create-action'
-import { getCurrentUser } from './services/auth.service'
-import { loginSchema, signupSchema } from './schemas'
+import { getCurrentUser, updateMyName } from './services/auth.service'
+import { loginSchema, signupSchema, updateNameSchema } from './schemas'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -65,6 +65,13 @@ export const signUpAction = createAction(signupSchema, async (input) => {
   revalidatePath('/', 'layout')
   // Sem sessão = projeto exige confirmação de e-mail.
   return { needsEmailConfirmation: !data.session, redirectTo: '/minhas-reservas' as const }
+})
+
+/** Completa/corrige o nome do usuário autenticado (ver `updateMyName`). */
+export const updateMyNameAction = createAction(updateNameSchema, async (input) => {
+  await updateMyName(input.name)
+  revalidatePath('/', 'layout')
+  return { ok: true as const }
 })
 
 export async function signOutAction() {
