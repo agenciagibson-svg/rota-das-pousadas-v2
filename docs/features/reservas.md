@@ -141,13 +141,26 @@ Rodar no Supabase (SQL Editor), em ordem:
   que o cadastro sempre cria uma), o update afeta zero linhas e a função
   lança um erro explícito em vez de falhar calado.
 
-## Página de pagamento (16/09/2026)
+## Página de pagamento (16/09/2026, corrigido em 17/09/2026)
 
 - `createBookingAction` sempre redirecionou para
-  `/pousada/[slug]/reservar/[id]/pagamento`, mas essa página nunca existiu —
-  toda reserva pública terminava em 404 logo depois de criada (a reserva em
-  si ficava salva como `pending`, só a navegação quebrava). Criada agora em
-  `app/pousada/[slug]/reservar/[id]/pagamento/page.tsx`.
+  `/pousada/[slug]/reservar/[id]/pagamento`. Diagnóstico original (16/09)
+  achou que essa página não existia; estava errado — já existia uma página
+  em `[bookingId]/pagamento/page.tsx` (nome de parâmetro diferente do usado
+  no redirect) que fazia `redirect()` imediato para o Checkout Pro do
+  Mercado Pago assim que a preferência era criada. Ou seja, o fluxo público
+  já funcionava; só não tinha uma tela de resumo antes de sair para o
+  Mercado Pago.
+- Criada `app/pousada/[slug]/reservar/[id]/pagamento/page.tsx` — mesma rota
+  que o `createBookingAction` já usa — com uma tela de resumo (dados da
+  reserva + botão "Pagar agora") em vez do redirect imediato, seguindo a
+  escolha do cliente por essa versão mais completa.
+- Isso deixou duas páginas apontando pro mesmo padrão de rota
+  (`[bookingId]` e `[id]` na mesma posição), o que o Next.js rejeita no
+  build ("Ambiguous app routes detected") — pego pela Vercel, não em dev
+  local. Corrigido removendo `[bookingId]/pagamento/page.tsx`: nada no
+  código linkava para ela com esse nome de parâmetro (só o `[id]` é
+  alcançável a partir do `createBookingAction`), então era código órfão.
 - A página busca a reserva em `getMyBookings()` (já escopada ao hóspede
   logado) e, se ela ainda está `pending` com saldo devedor, chama
   `getBookingCheckout` (`server/queries.ts` → `createCheckoutPreference`,
@@ -164,4 +177,4 @@ Rodar no Supabase (SQL Editor), em ordem:
   pendente ou falha) — essa página já existia e já lista todas as reservas
   do hóspede com datas, valores e status, sem mudança necessária nela.
 - Sem migration — só código novo (`server/queries.ts#getBookingCheckout` +
-  a página).
+  a página) e a remoção da página órfã.
