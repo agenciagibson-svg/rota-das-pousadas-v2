@@ -1,7 +1,9 @@
 import 'server-only'
+import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { can, type Action } from '@/lib/auth/rbac'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 import {
   createQuoteRequestRpc,
   getLinkReportRpc,
@@ -50,9 +52,20 @@ export async function updateQuoteStatus(input: QuoteStatusInput): Promise<{ ok: 
  *
  * Sem `requireCapability`: quem envia é um visitante sem sessão. A defesa está
  * na RPC — valida pousada publicada, telefone, datas, e limita a 3 pedidos por
- * telefone por hora.
+ * telefone por hora — e agora também no Turnstile abaixo, que barra antes de
+ * sequer chamar a RPC (`create_quote_request` só tinha o rate limit por
+ * telefone; um robô trocando de número a cada envio passava direto).
  */
 export async function submitQuoteRequest(input: QuoteRequestInput): Promise<{ id: string }> {
+  const h = await headers()
+  const remoteIp = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || null
+  const humanVerified = await verifyTurnstileToken(input.turnstileToken, remoteIp)
+  if (!humanVerified) {
+    throw new Error(
+      'Não foi possível confirmar que você não é um robô. Atualize a página e tente de novo.',
+    )
+  }
+
   const result = await createQuoteRequestRpc({
     pousadaId: input.pousadaId,
     name: input.name,

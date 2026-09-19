@@ -11,6 +11,8 @@ export const publicEnv = {
   siteUrl: cleanEnv(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
   supabaseUrl: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''),
   supabaseAnonKey: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''),
+  /** Vazio até Gibson criar o site no Cloudflare Turnstile — nesse caso o widget não renderiza. */
+  turnstileSiteKey: cleanEnv(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''),
 } as const
 
 /** True quando as credenciais públicas do Supabase estão presentes. */

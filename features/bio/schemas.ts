@@ -33,6 +33,9 @@ export const quoteRequestSchema = z
     pets: z.boolean(),
     occasion: z.string().trim().max(80),
     message: z.string().trim().max(2000),
+    // Vazio até o Cloudflare Turnstile estar configurado (lib/turnstile.ts) —
+    // aí a verificação do lado do servidor é quem decide se bloqueia.
+    turnstileToken: z.string().optional().default(''),
   })
   .refine((q) => Boolean(q.checkin) === Boolean(q.checkout), {
     message: 'Informe entrada e saída, ou deixe as duas em branco.',
@@ -53,6 +56,9 @@ export type QuoteStatusInput = z.infer<typeof quoteStatusSchema>
 
 export const reportRangeSchema = z.object({
   /** Janelas que cabem numa conversa: semana, mês, trimestre. */
-  days: z.coerce.number().int().refine((d) => [7, 30, 90].includes(d), 'Período inválido.'),
+  days: z.coerce
+    .number()
+    .int()
+    .refine((d) => [7, 30, 90].includes(d), 'Período inválido.'),
 })
 export type ReportRangeInput = z.infer<typeof reportRangeSchema>
