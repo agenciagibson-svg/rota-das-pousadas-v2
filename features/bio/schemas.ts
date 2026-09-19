@@ -33,9 +33,12 @@ export const quoteRequestSchema = z
     pets: z.boolean(),
     occasion: z.string().trim().max(80),
     message: z.string().trim().max(2000),
-    // Vazio até o Cloudflare Turnstile estar configurado (lib/turnstile.ts) —
-    // aí a verificação do lado do servidor é quem decide se bloqueia.
-    turnstileToken: z.string().optional().default(''),
+    // Sempre string (nunca opcional/default): `createAction` exige que o tipo de
+    // ENTRADA do schema seja igual ao de SAÍDA (sem .transform() nem .default()
+    // divergindo optional->required) — o client sempre manda pelo menos '' (o
+    // estado inicial do widget em quote-card.tsx). Vazio até o Cloudflare
+    // Turnstile estar configurado (lib/turnstile.ts) é quem decide se bloqueia.
+    turnstileToken: z.string(),
   })
   .refine((q) => Boolean(q.checkin) === Boolean(q.checkout), {
     message: 'Informe entrada e saída, ou deixe as duas em branco.',
