@@ -1,16 +1,10 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: '14.5'
   }
   public: {
     Tables: {
@@ -28,7 +22,7 @@ export type Database = {
           max_capacity: number | null
           name: string
           pousada_id: string
-          status: Database["public"]["Enums"]["accommodation_status"]
+          status: Database['public']['Enums']['accommodation_status']
           updated_at: string
         }
         Insert: {
@@ -44,7 +38,7 @@ export type Database = {
           max_capacity?: number | null
           name: string
           pousada_id: string
-          status?: Database["public"]["Enums"]["accommodation_status"]
+          status?: Database['public']['Enums']['accommodation_status']
           updated_at?: string
         }
         Update: {
@@ -60,23 +54,23 @@ export type Database = {
           max_capacity?: number | null
           name?: string
           pousada_id?: string
-          status?: Database["public"]["Enums"]["accommodation_status"]
+          status?: Database['public']['Enums']['accommodation_status']
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "accommodation_categories_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'accommodation_categories_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "accommodation_categories_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'accommodation_categories_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -128,11 +122,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "audit_log_actor_id_fkey"
-            columns: ["actor_id"]
+            foreignKeyName: 'audit_log_actor_id_fkey'
+            columns: ['actor_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -160,11 +154,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "availability_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'availability_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -177,7 +171,7 @@ export type Database = {
           document_type: string | null
           full_name: string
           guest_id: string | null
-          guest_type: Database["public"]["Enums"]["booking_guest_type"]
+          guest_type: Database['public']['Enums']['booking_guest_type']
           has_special_needs: boolean
           id: string
           operational_notes: string
@@ -190,7 +184,7 @@ export type Database = {
           document_type?: string | null
           full_name: string
           guest_id?: string | null
-          guest_type: Database["public"]["Enums"]["booking_guest_type"]
+          guest_type: Database['public']['Enums']['booking_guest_type']
           has_special_needs?: boolean
           id?: string
           operational_notes?: string
@@ -203,25 +197,25 @@ export type Database = {
           document_type?: string | null
           full_name?: string
           guest_id?: string | null
-          guest_type?: Database["public"]["Enums"]["booking_guest_type"]
+          guest_type?: Database['public']['Enums']['booking_guest_type']
           has_special_needs?: boolean
           id?: string
           operational_notes?: string
         }
         Relationships: [
           {
-            foreignKeyName: "booking_guests_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: 'booking_guests_booking_id_fkey'
+            columns: ['booking_id']
             isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "booking_guests_guest_id_fkey"
-            columns: ["guest_id"]
+            foreignKeyName: 'booking_guests_guest_id_fkey'
+            columns: ['guest_id']
             isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
+            referencedRelation: 'guests'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -262,7 +256,7 @@ export type Database = {
           no_show_at: string | null
           no_show_by: string | null
           no_show_reason: string | null
-          origin: Database["public"]["Enums"]["booking_origin"]
+          origin: Database['public']['Enums']['booking_origin']
           payment_due_at: string | null
           pets: boolean
           pousada_id: string
@@ -270,7 +264,7 @@ export type Database = {
           room_id: string
           services_amount: number
           special_requests: string
-          status: Database["public"]["Enums"]["booking_status"]
+          status: Database['public']['Enums']['booking_status']
           stay_range: unknown
           subtotal: number
           surcharge: number
@@ -315,7 +309,7 @@ export type Database = {
           no_show_at?: string | null
           no_show_by?: string | null
           no_show_reason?: string | null
-          origin?: Database["public"]["Enums"]["booking_origin"]
+          origin?: Database['public']['Enums']['booking_origin']
           payment_due_at?: string | null
           pets?: boolean
           pousada_id: string
@@ -323,7 +317,7 @@ export type Database = {
           room_id: string
           services_amount?: number
           special_requests?: string
-          status?: Database["public"]["Enums"]["booking_status"]
+          status?: Database['public']['Enums']['booking_status']
           stay_range?: unknown
           subtotal?: number
           surcharge?: number
@@ -368,7 +362,7 @@ export type Database = {
           no_show_at?: string | null
           no_show_by?: string | null
           no_show_reason?: string | null
-          origin?: Database["public"]["Enums"]["booking_origin"]
+          origin?: Database['public']['Enums']['booking_origin']
           payment_due_at?: string | null
           pets?: boolean
           pousada_id?: string
@@ -376,7 +370,7 @@ export type Database = {
           room_id?: string
           services_amount?: number
           special_requests?: string
-          status?: Database["public"]["Enums"]["booking_status"]
+          status?: Database['public']['Enums']['booking_status']
           stay_range?: unknown
           subtotal?: number
           surcharge?: number
@@ -387,60 +381,60 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bookings_cancelled_by_fkey"
-            columns: ["cancelled_by"]
+            foreignKeyName: 'bookings_cancelled_by_fkey'
+            columns: ['cancelled_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'bookings_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_guest_id_fkey"
-            columns: ["guest_id"]
+            foreignKeyName: 'bookings_guest_id_fkey'
+            columns: ['guest_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_no_show_by_fkey"
-            columns: ["no_show_by"]
+            foreignKeyName: 'bookings_no_show_by_fkey'
+            columns: ['no_show_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'bookings_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_responsible_guest_id_fkey"
-            columns: ["responsible_guest_id"]
+            foreignKeyName: 'bookings_responsible_guest_id_fkey'
+            columns: ['responsible_guest_id']
             isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
+            referencedRelation: 'guests'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'bookings_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "bookings_updated_by_fkey"
-            columns: ["updated_by"]
+            foreignKeyName: 'bookings_updated_by_fkey'
+            columns: ['updated_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -457,9 +451,9 @@ export type Database = {
           last_event_count: number
           last_sync_at: string | null
           last_sync_error: string
-          last_sync_status: Database["public"]["Enums"]["channel_sync_status"]
+          last_sync_status: Database['public']['Enums']['channel_sync_status']
           pousada_id: string
-          provider: Database["public"]["Enums"]["channel_provider"]
+          provider: Database['public']['Enums']['channel_provider']
           room_id: string
           updated_at: string
         }
@@ -475,9 +469,9 @@ export type Database = {
           last_event_count?: number
           last_sync_at?: string | null
           last_sync_error?: string
-          last_sync_status?: Database["public"]["Enums"]["channel_sync_status"]
+          last_sync_status?: Database['public']['Enums']['channel_sync_status']
           pousada_id: string
-          provider: Database["public"]["Enums"]["channel_provider"]
+          provider: Database['public']['Enums']['channel_provider']
           room_id: string
           updated_at?: string
         }
@@ -493,33 +487,33 @@ export type Database = {
           last_event_count?: number
           last_sync_at?: string | null
           last_sync_error?: string
-          last_sync_status?: Database["public"]["Enums"]["channel_sync_status"]
+          last_sync_status?: Database['public']['Enums']['channel_sync_status']
           pousada_id?: string
-          provider?: Database["public"]["Enums"]["channel_provider"]
+          provider?: Database['public']['Enums']['channel_provider']
           room_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "channel_calendars_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'channel_calendars_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "channel_calendars_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'channel_calendars_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "channel_calendars_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'channel_calendars_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -562,25 +556,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "channel_events_calendar_id_fkey"
-            columns: ["calendar_id"]
+            foreignKeyName: 'channel_events_calendar_id_fkey'
+            columns: ['calendar_id']
             isOneToOne: false
-            referencedRelation: "channel_calendars"
-            referencedColumns: ["id"]
+            referencedRelation: 'channel_calendars'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "channel_events_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'channel_events_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "channel_events_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'channel_events_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -602,11 +596,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cities_state_id_fkey"
-            columns: ["state_id"]
+            foreignKeyName: 'cities_state_id_fkey'
+            columns: ['state_id']
             isOneToOne: false
-            referencedRelation: "states"
-            referencedColumns: ["id"]
+            referencedRelation: 'states'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -682,11 +676,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "expenses_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'expenses_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -750,18 +744,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "favorite_alerts_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'favorite_alerts_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "favorite_alerts_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'favorite_alerts_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -783,18 +777,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "favorites_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'favorites_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'favorites_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -824,7 +818,7 @@ export type Database = {
           pousada_id: string
           preferences: string[]
           preferred_name: string | null
-          source: Database["public"]["Enums"]["guest_source"]
+          source: Database['public']['Enums']['guest_source']
           state: string | null
           updated_at: string
           user_id: string | null
@@ -855,7 +849,7 @@ export type Database = {
           pousada_id: string
           preferences?: string[]
           preferred_name?: string | null
-          source?: Database["public"]["Enums"]["guest_source"]
+          source?: Database['public']['Enums']['guest_source']
           state?: string | null
           updated_at?: string
           user_id?: string | null
@@ -886,7 +880,7 @@ export type Database = {
           pousada_id?: string
           preferences?: string[]
           preferred_name?: string | null
-          source?: Database["public"]["Enums"]["guest_source"]
+          source?: Database['public']['Enums']['guest_source']
           state?: string | null
           updated_at?: string
           user_id?: string | null
@@ -894,25 +888,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "guests_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'guests_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "guests_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'guests_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "guests_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'guests_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -922,7 +916,7 @@ export type Database = {
           checkin: string | null
           checkout: string | null
           created_at: string
-          event: Database["public"]["Enums"]["link_event_type"]
+          event: Database['public']['Enums']['link_event_type']
           guests: number | null
           id: string
           pousada_id: string
@@ -932,7 +926,7 @@ export type Database = {
           checkin?: string | null
           checkout?: string | null
           created_at?: string
-          event: Database["public"]["Enums"]["link_event_type"]
+          event: Database['public']['Enums']['link_event_type']
           guests?: number | null
           id?: string
           pousada_id: string
@@ -942,18 +936,18 @@ export type Database = {
           checkin?: string | null
           checkout?: string | null
           created_at?: string
-          event?: Database["public"]["Enums"]["link_event_type"]
+          event?: Database['public']['Enums']['link_event_type']
           guests?: number | null
           id?: string
           pousada_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "link_events_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'link_events_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -987,18 +981,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "media_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'media_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "media_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'media_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1010,8 +1004,8 @@ export type Database = {
           id: string
           invited_at: string | null
           pousada_id: string
-          role: Database["public"]["Enums"]["user_role"]
-          status: Database["public"]["Enums"]["membership_status"]
+          role: Database['public']['Enums']['user_role']
+          status: Database['public']['Enums']['membership_status']
           suspended_by: string | null
           suspended_reason: string | null
           updated_at: string
@@ -1024,8 +1018,8 @@ export type Database = {
           id?: string
           invited_at?: string | null
           pousada_id: string
-          role: Database["public"]["Enums"]["user_role"]
-          status?: Database["public"]["Enums"]["membership_status"]
+          role: Database['public']['Enums']['user_role']
+          status?: Database['public']['Enums']['membership_status']
           suspended_by?: string | null
           suspended_reason?: string | null
           updated_at?: string
@@ -1038,8 +1032,8 @@ export type Database = {
           id?: string
           invited_at?: string | null
           pousada_id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          status?: Database["public"]["Enums"]["membership_status"]
+          role?: Database['public']['Enums']['user_role']
+          status?: Database['public']['Enums']['membership_status']
           suspended_by?: string | null
           suspended_reason?: string | null
           updated_at?: string
@@ -1047,32 +1041,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "memberships_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'memberships_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "memberships_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'memberships_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "memberships_suspended_by_fkey"
-            columns: ["suspended_by"]
+            foreignKeyName: 'memberships_suspended_by_fkey'
+            columns: ['suspended_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "memberships_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'memberships_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1087,7 +1081,7 @@ export type Database = {
           provider_ref: string | null
           provider_updated_at: string | null
           refunded_amount: number
-          status: Database["public"]["Enums"]["payment_status"]
+          status: Database['public']['Enums']['payment_status']
         }
         Insert: {
           amount: number
@@ -1099,7 +1093,7 @@ export type Database = {
           provider_ref?: string | null
           provider_updated_at?: string | null
           refunded_amount?: number
-          status?: Database["public"]["Enums"]["payment_status"]
+          status?: Database['public']['Enums']['payment_status']
         }
         Update: {
           amount?: number
@@ -1111,15 +1105,15 @@ export type Database = {
           provider_ref?: string | null
           provider_updated_at?: string | null
           refunded_amount?: number
-          status?: Database["public"]["Enums"]["payment_status"]
+          status?: Database['public']['Enums']['payment_status']
         }
         Relationships: [
           {
-            foreignKeyName: "payments_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: 'payments_booking_id_fkey'
+            columns: ['booking_id']
             isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1156,25 +1150,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "platform_access_grants_granted_by_fkey"
-            columns: ["granted_by"]
+            foreignKeyName: 'platform_access_grants_granted_by_fkey'
+            columns: ['granted_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "platform_access_grants_granted_to_fkey"
-            columns: ["granted_to"]
+            foreignKeyName: 'platform_access_grants_granted_to_fkey'
+            columns: ['granted_to']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "platform_access_grants_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'platform_access_grants_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1193,18 +1187,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "pousada_amenities_amenity_id_fkey"
-            columns: ["amenity_id"]
+            foreignKeyName: 'pousada_amenities_amenity_id_fkey'
+            columns: ['amenity_id']
             isOneToOne: false
-            referencedRelation: "amenities"
-            referencedColumns: ["id"]
+            referencedRelation: 'amenities'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "pousada_amenities_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'pousada_amenities_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1223,18 +1217,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "pousada_experiences_experience_id_fkey"
-            columns: ["experience_id"]
+            foreignKeyName: 'pousada_experiences_experience_id_fkey'
+            columns: ['experience_id']
             isOneToOne: false
-            referencedRelation: "experiences"
-            referencedColumns: ["id"]
+            referencedRelation: 'experiences'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "pousada_experiences_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'pousada_experiences_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1286,18 +1280,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "pousada_payment_accounts_connected_by_fkey"
-            columns: ["connected_by"]
+            foreignKeyName: 'pousada_payment_accounts_connected_by_fkey'
+            columns: ['connected_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "pousada_payment_accounts_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'pousada_payment_accounts_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: true
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1330,10 +1324,10 @@ export type Database = {
           reviews: number
           slug: string
           state: string
-          status: Database["public"]["Enums"]["pousada_status"]
+          status: Database['public']['Enums']['pousada_status']
           tags: string[]
           tax_id: string
-          tenant_status: Database["public"]["Enums"]["tenant_status"]
+          tenant_status: Database['public']['Enums']['tenant_status']
           timezone: string
           updated_at: string
           whatsapp: string
@@ -1366,10 +1360,10 @@ export type Database = {
           reviews?: number
           slug: string
           state: string
-          status?: Database["public"]["Enums"]["pousada_status"]
+          status?: Database['public']['Enums']['pousada_status']
           tags?: string[]
           tax_id?: string
-          tenant_status?: Database["public"]["Enums"]["tenant_status"]
+          tenant_status?: Database['public']['Enums']['tenant_status']
           timezone?: string
           updated_at?: string
           whatsapp?: string
@@ -1402,28 +1396,28 @@ export type Database = {
           reviews?: number
           slug?: string
           state?: string
-          status?: Database["public"]["Enums"]["pousada_status"]
+          status?: Database['public']['Enums']['pousada_status']
           tags?: string[]
           tax_id?: string
-          tenant_status?: Database["public"]["Enums"]["tenant_status"]
+          tenant_status?: Database['public']['Enums']['tenant_status']
           timezone?: string
           updated_at?: string
           whatsapp?: string
         }
         Relationships: [
           {
-            foreignKeyName: "pousadas_destination_id_fkey"
-            columns: ["destination_id"]
+            foreignKeyName: 'pousadas_destination_id_fkey'
+            columns: ['destination_id']
             isOneToOne: false
-            referencedRelation: "destinations"
-            referencedColumns: ["id"]
+            referencedRelation: 'destinations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "pousadas_owner_id_fkey"
-            columns: ["owner_id"]
+            foreignKeyName: 'pousadas_owner_id_fkey'
+            columns: ['owner_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1433,7 +1427,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
-          platform_role: Database["public"]["Enums"]["platform_role"] | null
+          platform_role: Database['public']['Enums']['platform_role'] | null
           updated_at: string
         }
         Insert: {
@@ -1441,7 +1435,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id: string
-          platform_role?: Database["public"]["Enums"]["platform_role"] | null
+          platform_role?: Database['public']['Enums']['platform_role'] | null
           updated_at?: string
         }
         Update: {
@@ -1449,7 +1443,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
-          platform_role?: Database["public"]["Enums"]["platform_role"] | null
+          platform_role?: Database['public']['Enums']['platform_role'] | null
           updated_at?: string
         }
         Relationships: []
@@ -1472,7 +1466,7 @@ export type Database = {
           pets: boolean
           phone: string
           pousada_id: string
-          status: Database["public"]["Enums"]["quote_request_status"]
+          status: Database['public']['Enums']['quote_request_status']
           updated_at: string
         }
         Insert: {
@@ -1492,7 +1486,7 @@ export type Database = {
           pets?: boolean
           phone: string
           pousada_id: string
-          status?: Database["public"]["Enums"]["quote_request_status"]
+          status?: Database['public']['Enums']['quote_request_status']
           updated_at?: string
         }
         Update: {
@@ -1512,23 +1506,23 @@ export type Database = {
           pets?: boolean
           phone?: string
           pousada_id?: string
-          status?: Database["public"]["Enums"]["quote_request_status"]
+          status?: Database['public']['Enums']['quote_request_status']
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "quote_requests_handled_by_fkey"
-            columns: ["handled_by"]
+            foreignKeyName: 'quote_requests_handled_by_fkey'
+            columns: ['handled_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "quote_requests_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'quote_requests_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1565,25 +1559,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_author_id_fkey"
-            columns: ["author_id"]
+            foreignKeyName: 'reviews_author_id_fkey'
+            columns: ['author_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: 'reviews_booking_id_fkey'
+            columns: ['booking_id']
             isOneToOne: true
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'reviews_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1602,24 +1596,24 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "room_amenities_amenity_id_fkey"
-            columns: ["amenity_id"]
+            foreignKeyName: 'room_amenities_amenity_id_fkey'
+            columns: ['amenity_id']
             isOneToOne: false
-            referencedRelation: "amenities"
-            referencedColumns: ["id"]
+            referencedRelation: 'amenities'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "room_amenities_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'room_amenities_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
         ]
       }
       room_blocks: {
         Row: {
-          block_type: Database["public"]["Enums"]["room_block_type"]
+          block_type: Database['public']['Enums']['room_block_type']
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
@@ -1633,10 +1627,10 @@ export type Database = {
           room_id: string
           source: string
           starts_at: string
-          status: Database["public"]["Enums"]["room_block_status"]
+          status: Database['public']['Enums']['room_block_status']
         }
         Insert: {
-          block_type: Database["public"]["Enums"]["room_block_type"]
+          block_type: Database['public']['Enums']['room_block_type']
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -1650,10 +1644,10 @@ export type Database = {
           room_id: string
           source?: string
           starts_at: string
-          status?: Database["public"]["Enums"]["room_block_status"]
+          status?: Database['public']['Enums']['room_block_status']
         }
         Update: {
-          block_type?: Database["public"]["Enums"]["room_block_type"]
+          block_type?: Database['public']['Enums']['room_block_type']
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -1667,36 +1661,36 @@ export type Database = {
           room_id?: string
           source?: string
           starts_at?: string
-          status?: Database["public"]["Enums"]["room_block_status"]
+          status?: Database['public']['Enums']['room_block_status']
         }
         Relationships: [
           {
-            foreignKeyName: "room_blocks_cancelled_by_fkey"
-            columns: ["cancelled_by"]
+            foreignKeyName: 'room_blocks_cancelled_by_fkey'
+            columns: ['cancelled_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "room_blocks_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'room_blocks_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "room_blocks_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'room_blocks_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "room_blocks_room_id_fkey"
-            columns: ["room_id"]
+            foreignKeyName: 'room_blocks_room_id_fkey'
+            columns: ['room_id']
             isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1721,12 +1715,12 @@ export type Database = {
           location: string
           name: string
           operational_description: string
-          operational_status: Database["public"]["Enums"]["room_operational_status"]
+          operational_status: Database['public']['Enums']['room_operational_status']
           pets_allowed: boolean
           pousada_id: string
           public_visible: boolean
           size: string | null
-          status: Database["public"]["Enums"]["accommodation_status"]
+          status: Database['public']['Enums']['accommodation_status']
           updated_at: string
           updated_by: string | null
         }
@@ -1750,12 +1744,12 @@ export type Database = {
           location?: string
           name: string
           operational_description?: string
-          operational_status?: Database["public"]["Enums"]["room_operational_status"]
+          operational_status?: Database['public']['Enums']['room_operational_status']
           pets_allowed?: boolean
           pousada_id: string
           public_visible?: boolean
           size?: string | null
-          status?: Database["public"]["Enums"]["accommodation_status"]
+          status?: Database['public']['Enums']['accommodation_status']
           updated_at?: string
           updated_by?: string | null
         }
@@ -1779,43 +1773,43 @@ export type Database = {
           location?: string
           name?: string
           operational_description?: string
-          operational_status?: Database["public"]["Enums"]["room_operational_status"]
+          operational_status?: Database['public']['Enums']['room_operational_status']
           pets_allowed?: boolean
           pousada_id?: string
           public_visible?: boolean
           size?: string | null
-          status?: Database["public"]["Enums"]["accommodation_status"]
+          status?: Database['public']['Enums']['accommodation_status']
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "rooms_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: 'rooms_category_id_fkey'
+            columns: ['category_id']
             isOneToOne: false
-            referencedRelation: "accommodation_categories"
-            referencedColumns: ["id"]
+            referencedRelation: 'accommodation_categories'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "rooms_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'rooms_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "rooms_pousada_id_fkey"
-            columns: ["pousada_id"]
+            foreignKeyName: 'rooms_pousada_id_fkey'
+            columns: ['pousada_id']
             isOneToOne: false
-            referencedRelation: "pousadas"
-            referencedColumns: ["id"]
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "rooms_updated_by_fkey"
-            columns: ["updated_by"]
+            foreignKeyName: 'rooms_updated_by_fkey'
+            columns: ['updated_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1849,8 +1843,8 @@ export type Database = {
       assert_can_manage_membership: {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: {
-          target_role: Database["public"]["Enums"]["user_role"]
-          target_status: Database["public"]["Enums"]["membership_status"]
+          target_role: Database['public']['Enums']['user_role']
+          target_status: Database['public']['Enums']['membership_status']
           target_user_id: string
         }[]
       }
@@ -1929,7 +1923,7 @@ export type Database = {
           p_fee: number
           p_infants: number
           p_internal_notes?: string
-          p_origin?: Database["public"]["Enums"]["booking_origin"]
+          p_origin?: Database['public']['Enums']['booking_origin']
           p_payment_due_at?: string
           p_pets: boolean
           p_pousada_id: string
@@ -1937,7 +1931,7 @@ export type Database = {
           p_room_id: string
           p_services_amount: number
           p_special_requests?: string
-          p_status: Database["public"]["Enums"]["booking_status"]
+          p_status: Database['public']['Enums']['booking_status']
           p_subtotal: number
           p_surcharge: number
           p_total: number
@@ -1974,7 +1968,7 @@ export type Database = {
       }
       create_room_block: {
         Args: {
-          p_block_type: Database["public"]["Enums"]["room_block_type"]
+          p_block_type: Database['public']['Enums']['room_block_type']
           p_ends_at: string
           p_notes?: string
           p_pousada_id: string
@@ -2008,8 +2002,12 @@ export type Database = {
         Args: {
           p_email: string
           p_pousada_id: string
-          p_role: Database["public"]["Enums"]["user_role"]
+          p_role: Database['public']['Enums']['user_role']
         }
+        Returns: Json
+      }
+      link_pousada_owner: {
+        Args: { p_email: string; p_pousada_id: string }
         Returns: Json
       }
       list_bookable_rooms: {
@@ -2050,7 +2048,7 @@ export type Database = {
           pousada_id: string
           pousada_name: string
           pousada_slug: string
-          role: Database["public"]["Enums"]["user_role"]
+          role: Database['public']['Enums']['user_role']
           user_id: string
         }[]
       }
@@ -2081,7 +2079,7 @@ export type Database = {
           name: string
           next_block_starts_at: string
           operational_note: string
-          operational_status: Database["public"]["Enums"]["room_operational_status"]
+          operational_status: Database['public']['Enums']['room_operational_status']
         }[]
       }
       reactivate_member: {
@@ -2096,7 +2094,7 @@ export type Database = {
           p_method: string
           p_provider_ref: string
           p_refunded_amount?: number
-          p_status: Database["public"]["Enums"]["payment_status"]
+          p_status: Database['public']['Enums']['payment_status']
           p_updated_at: string
         }
         Returns: Json
@@ -2106,7 +2104,7 @@ export type Database = {
           p_available_count?: number
           p_checkin?: string
           p_checkout?: string
-          p_event: Database["public"]["Enums"]["link_event_type"]
+          p_event: Database['public']['Enums']['link_event_type']
           p_guests?: number
           p_pousada_id: string
         }
@@ -2119,7 +2117,7 @@ export type Database = {
           p_method: string
           p_provider_ref: string
           p_raw?: Json
-          p_status: Database["public"]["Enums"]["payment_status"]
+          p_status: Database['public']['Enums']['payment_status']
         }
         Returns: Json
       }
@@ -2132,7 +2130,7 @@ export type Database = {
           p_export_token: string
           p_import_url: string
           p_label: string
-          p_provider: Database["public"]["Enums"]["channel_provider"]
+          p_provider: Database['public']['Enums']['channel_provider']
           p_room_id: string
         }
         Returns: string
@@ -2167,7 +2165,7 @@ export type Database = {
       set_booking_status: {
         Args: {
           p_booking_id: string
-          p_new_status: Database["public"]["Enums"]["booking_status"]
+          p_new_status: Database['public']['Enums']['booking_status']
           p_reason?: string
         }
         Returns: Json
@@ -2176,7 +2174,7 @@ export type Database = {
         Args: {
           p_notes?: string
           p_request_id: string
-          p_status: Database["public"]["Enums"]["quote_request_status"]
+          p_status: Database['public']['Enums']['quote_request_status']
         }
         Returns: undefined
       }
@@ -2193,7 +2191,7 @@ export type Database = {
           p_calendar_id: string
           p_error?: string
           p_events: Json
-          p_status: Database["public"]["Enums"]["channel_sync_status"]
+          p_status: Database['public']['Enums']['channel_sync_status']
         }
         Returns: Json
       }
@@ -2209,7 +2207,7 @@ export type Database = {
           p_fee: number
           p_infants: number
           p_internal_notes: string
-          p_origin: Database["public"]["Enums"]["booking_origin"]
+          p_origin: Database['public']['Enums']['booking_origin']
           p_pets: boolean
           p_responsible_guest_id: string
           p_room_id: string
@@ -2226,7 +2224,7 @@ export type Database = {
         Args: {
           p_membership_id: string
           p_pousada_id: string
-          p_role: Database["public"]["Enums"]["user_role"]
+          p_role: Database['public']['Enums']['user_role']
         }
         Returns: Json
       }
@@ -2234,7 +2232,7 @@ export type Database = {
         Args: {
           p_pousada_id: string
           p_room_id: string
-          p_status: Database["public"]["Enums"]["room_operational_status"]
+          p_status: Database['public']['Enums']['room_operational_status']
         }
         Returns: Json
       }
@@ -2260,7 +2258,7 @@ export type Database = {
           p_pousada_id: string
           p_preferences?: string[]
           p_preferred_name?: string
-          p_source?: Database["public"]["Enums"]["guest_source"]
+          p_source?: Database['public']['Enums']['guest_source']
           p_state?: string
           p_user_id?: string
           p_whatsapp?: string
@@ -2269,79 +2267,59 @@ export type Database = {
       }
     }
     Enums: {
-      accommodation_status: "active" | "inactive"
-      booking_guest_type: "responsible" | "adult" | "child" | "infant"
+      accommodation_status: 'active' | 'inactive'
+      booking_guest_type: 'responsible' | 'adult' | 'child' | 'infant'
       booking_origin:
-        | "rota_das_pousadas"
-        | "site_proprio"
-        | "whatsapp"
-        | "telefone"
-        | "balcao"
-        | "booking_com"
-        | "airbnb"
-        | "expedia"
-        | "agencia"
-        | "outro"
-        | "link_bio"
+        | 'rota_das_pousadas'
+        | 'site_proprio'
+        | 'whatsapp'
+        | 'telefone'
+        | 'balcao'
+        | 'booking_com'
+        | 'airbnb'
+        | 'expedia'
+        | 'agencia'
+        | 'outro'
+        | 'link_bio'
       booking_status:
-        | "quote"
-        | "pending"
-        | "confirmed"
-        | "checked_in"
-        | "checked_out"
-        | "cancelled"
-        | "no_show"
-      channel_provider: "airbnb" | "booking" | "outro"
-      channel_sync_status: "never" | "ok" | "error"
+        'quote' | 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
+      channel_provider: 'airbnb' | 'booking' | 'outro'
+      channel_sync_status: 'never' | 'ok' | 'error'
       guest_source:
-        | "platform_account"
-        | "front_desk"
-        | "owner"
-        | "public_booking"
-        | "import"
-        | "other"
-      link_event_type: "view" | "search" | "quote_request" | "booking_started"
-      membership_status: "invited" | "active" | "suspended" | "revoked"
-      payment_status: "pendente" | "aprovado" | "recusado" | "estornado"
-      platform_role:
-        | "suporte"
-        | "comercial"
-        | "marketing"
-        | "financeiro_plataforma"
-        | "master"
+        'platform_account' | 'front_desk' | 'owner' | 'public_booking' | 'import' | 'other'
+      link_event_type: 'view' | 'search' | 'quote_request' | 'booking_started'
+      membership_status: 'invited' | 'active' | 'suspended' | 'revoked'
+      payment_status: 'pendente' | 'aprovado' | 'recusado' | 'estornado'
+      platform_role: 'suporte' | 'comercial' | 'marketing' | 'financeiro_plataforma' | 'master'
       pousada_status:
-        | "rascunho"
-        | "em_analise"
-        | "aprovada"
-        | "publicada"
-        | "suspensa"
-        | "arquivada"
-        | "reprovada"
-      quote_request_status: "novo" | "respondido" | "convertido" | "descartado"
-      room_block_status: "active" | "cancelled" | "expired"
+        | 'rascunho'
+        | 'em_analise'
+        | 'aprovada'
+        | 'publicada'
+        | 'suspensa'
+        | 'arquivada'
+        | 'reprovada'
+      quote_request_status: 'novo' | 'respondido' | 'convertido' | 'descartado'
+      room_block_status: 'active' | 'cancelled' | 'expired'
       room_block_type:
-        | "maintenance"
-        | "internal_use"
-        | "owner_reservation"
-        | "interdiction"
-        | "renovation"
-        | "operational_unavailability"
-        | "other"
+        | 'maintenance'
+        | 'internal_use'
+        | 'owner_reservation'
+        | 'interdiction'
+        | 'renovation'
+        | 'operational_unavailability'
+        | 'other'
       room_operational_status:
-        | "available"
-        | "occupied"
-        | "awaiting_cleaning"
-        | "cleaning"
-        | "inspection_pending"
-        | "maintenance"
-        | "blocked"
-      tenant_status: "onboarding" | "active" | "suspended" | "inactive"
+        | 'available'
+        | 'occupied'
+        | 'awaiting_cleaning'
+        | 'cleaning'
+        | 'inspection_pending'
+        | 'maintenance'
+        | 'blocked'
+      tenant_status: 'onboarding' | 'active' | 'suspended' | 'inactive'
       user_role:
-        | "proprietario"
-        | "admin_pousada"
-        | "recepcionista"
-        | "financeiro_pousada"
-        | "governanca"
+        'proprietario' | 'admin_pousada' | 'recepcionista' | 'financeiro_pousada' | 'governanca'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2349,33 +2327,31 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -2384,23 +2360,22 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -2409,23 +2384,22 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -2434,121 +2408,113 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
     Enums: {
-      accommodation_status: ["active", "inactive"],
-      booking_guest_type: ["responsible", "adult", "child", "infant"],
+      accommodation_status: ['active', 'inactive'],
+      booking_guest_type: ['responsible', 'adult', 'child', 'infant'],
       booking_origin: [
-        "rota_das_pousadas",
-        "site_proprio",
-        "whatsapp",
-        "telefone",
-        "balcao",
-        "booking_com",
-        "airbnb",
-        "expedia",
-        "agencia",
-        "outro",
-        "link_bio",
+        'rota_das_pousadas',
+        'site_proprio',
+        'whatsapp',
+        'telefone',
+        'balcao',
+        'booking_com',
+        'airbnb',
+        'expedia',
+        'agencia',
+        'outro',
+        'link_bio',
       ],
       booking_status: [
-        "quote",
-        "pending",
-        "confirmed",
-        "checked_in",
-        "checked_out",
-        "cancelled",
-        "no_show",
+        'quote',
+        'pending',
+        'confirmed',
+        'checked_in',
+        'checked_out',
+        'cancelled',
+        'no_show',
       ],
-      channel_provider: ["airbnb", "booking", "outro"],
-      channel_sync_status: ["never", "ok", "error"],
+      channel_provider: ['airbnb', 'booking', 'outro'],
+      channel_sync_status: ['never', 'ok', 'error'],
       guest_source: [
-        "platform_account",
-        "front_desk",
-        "owner",
-        "public_booking",
-        "import",
-        "other",
+        'platform_account',
+        'front_desk',
+        'owner',
+        'public_booking',
+        'import',
+        'other',
       ],
-      link_event_type: ["view", "search", "quote_request", "booking_started"],
-      membership_status: ["invited", "active", "suspended", "revoked"],
-      payment_status: ["pendente", "aprovado", "recusado", "estornado"],
-      platform_role: [
-        "suporte",
-        "comercial",
-        "marketing",
-        "financeiro_plataforma",
-        "master",
-      ],
+      link_event_type: ['view', 'search', 'quote_request', 'booking_started'],
+      membership_status: ['invited', 'active', 'suspended', 'revoked'],
+      payment_status: ['pendente', 'aprovado', 'recusado', 'estornado'],
+      platform_role: ['suporte', 'comercial', 'marketing', 'financeiro_plataforma', 'master'],
       pousada_status: [
-        "rascunho",
-        "em_analise",
-        "aprovada",
-        "publicada",
-        "suspensa",
-        "arquivada",
-        "reprovada",
+        'rascunho',
+        'em_analise',
+        'aprovada',
+        'publicada',
+        'suspensa',
+        'arquivada',
+        'reprovada',
       ],
-      quote_request_status: ["novo", "respondido", "convertido", "descartado"],
-      room_block_status: ["active", "cancelled", "expired"],
+      quote_request_status: ['novo', 'respondido', 'convertido', 'descartado'],
+      room_block_status: ['active', 'cancelled', 'expired'],
       room_block_type: [
-        "maintenance",
-        "internal_use",
-        "owner_reservation",
-        "interdiction",
-        "renovation",
-        "operational_unavailability",
-        "other",
+        'maintenance',
+        'internal_use',
+        'owner_reservation',
+        'interdiction',
+        'renovation',
+        'operational_unavailability',
+        'other',
       ],
       room_operational_status: [
-        "available",
-        "occupied",
-        "awaiting_cleaning",
-        "cleaning",
-        "inspection_pending",
-        "maintenance",
-        "blocked",
+        'available',
+        'occupied',
+        'awaiting_cleaning',
+        'cleaning',
+        'inspection_pending',
+        'maintenance',
+        'blocked',
       ],
-      tenant_status: ["onboarding", "active", "suspended", "inactive"],
+      tenant_status: ['onboarding', 'active', 'suspended', 'inactive'],
       user_role: [
-        "proprietario",
-        "admin_pousada",
-        "recepcionista",
-        "financeiro_pousada",
-        "governanca",
+        'proprietario',
+        'admin_pousada',
+        'recepcionista',
+        'financeiro_pousada',
+        'governanca',
       ],
     },
   },

@@ -9,7 +9,15 @@ export type PousadaIdInput = z.infer<typeof pousadaIdSchema>
 /** Status que a equipe da plataforma pode atribuir manualmente (tela "Pousadas"). */
 export const changePousadaStatusSchema = z.object({
   id: z.string().uuid('Identificador inválido.'),
-  status: z.enum(['rascunho', 'em_analise', 'aprovada', 'publicada', 'suspensa', 'arquivada', 'reprovada']),
+  status: z.enum([
+    'rascunho',
+    'em_analise',
+    'aprovada',
+    'publicada',
+    'suspensa',
+    'arquivada',
+    'reprovada',
+  ]),
 })
 export type ChangePousadaStatusInput = z.infer<typeof changePousadaStatusSchema>
 
@@ -57,3 +65,10 @@ export const createPousadaAdminSchema = z.object({
   publishNow: z.boolean(),
 })
 export type CreatePousadaAdminInput = z.infer<typeof createPousadaAdminSchema>
+
+/** Vincular um e-mail ja cadastrado como proprietario de uma pousada sem dono. */
+export const linkPousadaOwnerSchema = z.object({
+  pousadaId: z.string().uuid('Identificador inválido.'),
+  email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
+})
+export type LinkPousadaOwnerInput = z.infer<typeof linkPousadaOwnerSchema>

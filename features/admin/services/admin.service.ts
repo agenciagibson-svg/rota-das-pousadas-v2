@@ -8,6 +8,7 @@ import {
   listAllPousadasForAdmin,
   listPendingPousadas,
   listPlatformHosts,
+  linkPousadaOwnerRpc,
   setPousadaStatus,
   type PousadaStatus,
 } from '@/repositories/admin.repository'
@@ -17,8 +18,16 @@ import {
   getBookingsByRegion,
   getOccupancyRate,
 } from '@/repositories/admin-metrics.repository'
-import { insertGrant, revokeGrant, listActiveGrantsByPousada } from '@/repositories/platform-access.repository'
-import { insertPousadaAsAdmin, deletePousada, getPousadaRepository } from '@/repositories/pousadas.repository'
+import {
+  insertGrant,
+  revokeGrant,
+  listActiveGrantsByPousada,
+} from '@/repositories/platform-access.repository'
+import {
+  insertPousadaAsAdmin,
+  deletePousada,
+  getPousadaRepository,
+} from '@/repositories/pousadas.repository'
 import { getDestinationRepository } from '@/repositories/destinations.repository'
 import { insertRoom } from '@/repositories/rooms.repository'
 import { uniqueSlug } from '@/lib/slug'
@@ -74,7 +83,9 @@ function normalizeInstagram(value: string | undefined): string {
  * padrão; se a acomodação falhar, desfaz a pousada para não deixar cadastro
  * pela metade.
  */
-export async function createPousadaAsAdmin(input: CreatePousadaAdminInput): Promise<{ slug: string }> {
+export async function createPousadaAsAdmin(
+  input: CreatePousadaAdminInput,
+): Promise<{ slug: string }> {
   const user = await assertCanCreate()
   const slug = uniqueSlug(input.name)
   const [cover, ...gallery] = input.images
@@ -139,14 +150,15 @@ export async function listPending(): Promise<PendingPousada[]> {
 export async function getPlatformOverview(): Promise<PlatformOverview> {
   await assertPlatform()
 
-  const [kpis, revenueByMonth, bookingsByRegion, occupancyRate, destinations, pousadasPage] = await Promise.all([
-    getPlatformKpis(),
-    getRevenueByMonth(12),
-    getBookingsByRegion(),
-    getOccupancyRate(),
-    getDestinationRepository().list(),
-    getPousadaRepository().list({ pageSize: 5 }),
-  ])
+  const [kpis, revenueByMonth, bookingsByRegion, occupancyRate, destinations, pousadasPage] =
+    await Promise.all([
+      getPlatformKpis(),
+      getRevenueByMonth(12),
+      getBookingsByRegion(),
+      getOccupancyRate(),
+      getDestinationRepository().list(),
+      getPousadaRepository().list({ pageSize: 5 }),
+    ])
 
   return {
     kpis,
@@ -204,6 +216,33 @@ export async function rejectPousada(id: string): Promise<string | null> {
   const slug = await getPousadaSlugById(id)
   await setPousadaStatus(id, 'reprovada')
   return slug
+}
+
+/** Apenas quem pode gerenciar pousadas da plataforma (comercial/master) vincula proprietário. */
+async function assertCanLinkOwner() {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'pousada:link_owner')) {
+    throw new Error('Você não tem permissão para vincular proprietário.')
+  }
+  return user
+}
+
+/** Papel ativo pode vincular proprietário? Usa pra decidir se mostra o botão, sem lançar erro. */
+export async function canLinkOwner(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'pousada:link_owner'))
+}
+
+/**
+ * Vincula um e-mail já cadastrado como proprietário ativo de uma pousada sem
+ * dono (achado da avaliação de painéis de 15/09/2026: o cadastro rápido do
+ * admin cria a pousada sem nenhuma membership, e não havia como vincular o
+ * dono depois). RPC `link_pousada_owner` (0052) resolve o e-mail, valida
+ * permissão e grava a auditoria dentro da mesma transação.
+ */
+export async function linkPousadaOwner(input: { pousadaId: string; email: string }): Promise<void> {
+  await assertCanLinkOwner()
+  await linkPousadaOwnerRpc(input.pousadaId, input.email.trim().toLowerCase())
 }
 
 /** Apenas quem pode gerenciar concessões (master) acessa dados sensíveis de forma justificada. */

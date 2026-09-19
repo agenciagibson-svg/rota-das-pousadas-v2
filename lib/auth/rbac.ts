@@ -35,6 +35,7 @@ export type Action =
   | 'pousada:edit'
   | 'pousada:delete'
   | 'pousada:approve'
+  | 'pousada:link_owner'
   | 'room:manage'
   | 'calendar:manage'
   | 'pricing:manage'
@@ -214,8 +215,21 @@ const MATRIX: Record<Role, Action[]> = {
     'reports:global:view',
     'audit:view',
   ],
-  comercial: ['catalog:view', 'search:run', 'pousada:approve', 'pousada:create', 'reports:global:view'],
-  marketing: ['catalog:view', 'search:run', 'coupon:platform:create', 'content:moderate', 'reports:global:view'],
+  comercial: [
+    'catalog:view',
+    'search:run',
+    'pousada:approve',
+    'pousada:create',
+    'pousada:link_owner',
+    'reports:global:view',
+  ],
+  marketing: [
+    'catalog:view',
+    'search:run',
+    'coupon:platform:create',
+    'content:moderate',
+    'reports:global:view',
+  ],
   financeiro_plataforma: ['catalog:view', 'search:run', 'reports:global:view'],
   master: [
     'catalog:view',
@@ -229,6 +243,7 @@ const MATRIX: Record<Role, Action[]> = {
     'pousada:edit',
     'pousada:delete',
     'pousada:approve',
+    'pousada:link_owner',
     'room:manage',
     'calendar:manage',
     'pricing:manage',

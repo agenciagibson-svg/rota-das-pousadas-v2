@@ -34,6 +34,13 @@ describe('rbac.can', () => {
     expect(can('marketing', 'pousada:approve')).toBe(false)
   })
 
+  it('somente comercial/master vinculam proprietário a pousada cadastrada pelo admin', () => {
+    expect(can('comercial', 'pousada:link_owner')).toBe(true)
+    expect(can('master', 'pousada:link_owner')).toBe(true)
+    expect(can('marketing', 'pousada:link_owner')).toBe(false)
+    expect(can('proprietario', 'pousada:link_owner')).toBe(false)
+  })
+
   it('master pode configurar a plataforma; ninguém mais', () => {
     expect(can('master', 'platform:configure')).toBe(true)
     for (const role of ['proprietario', 'suporte', 'comercial', 'marketing'] as Role[]) {
@@ -71,7 +78,13 @@ describe('rbac.can', () => {
 
   it('somente master gerencia concessões de acesso institucional', () => {
     expect(can('master', 'platform:grant:manage')).toBe(true)
-    for (const role of ['suporte', 'comercial', 'marketing', 'financeiro_plataforma', 'proprietario'] as Role[]) {
+    for (const role of [
+      'suporte',
+      'comercial',
+      'marketing',
+      'financeiro_plataforma',
+      'proprietario',
+    ] as Role[]) {
       expect(can(role, 'platform:grant:manage')).toBe(false)
     }
   })
@@ -97,7 +110,12 @@ describe('rbac.can', () => {
   it('somente proprietario/master conectam conta de pagamento — muda quem recebe o dinheiro', () => {
     expect(can('proprietario', 'payment:connect_account')).toBe(true)
     expect(can('master', 'payment:connect_account')).toBe(true)
-    for (const role of ['admin_pousada', 'financeiro_pousada', 'recepcionista', 'governanca'] as Role[]) {
+    for (const role of [
+      'admin_pousada',
+      'financeiro_pousada',
+      'recepcionista',
+      'governanca',
+    ] as Role[]) {
       expect(can(role, 'payment:connect_account')).toBe(false)
     }
   })

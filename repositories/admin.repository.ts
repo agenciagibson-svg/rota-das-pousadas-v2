@@ -33,9 +33,15 @@ export async function getPousadaSlugById(id: string): Promise<string | null> {
 }
 
 /** Nome + slug — cabeçalho da tela de acessos institucionais de uma pousada. */
-export async function getPousadaHeaderById(id: string): Promise<{ name: string; slug: string } | null> {
+export async function getPousadaHeaderById(
+  id: string,
+): Promise<{ name: string; slug: string } | null> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from('pousadas').select('name, slug').eq('id', id).maybeSingle()
+  const { data, error } = await supabase
+    .from('pousadas')
+    .select('name, slug')
+    .eq('id', id)
+    .maybeSingle()
   if (error) throw error
   return data ? { name: data.name, slug: data.slug } : null
 }
@@ -74,7 +80,9 @@ export async function listAllPousadasForAdmin(filter?: PousadaStatus): Promise<A
     .select('pousada_id, user_id, profiles(full_name)')
     .eq('role', 'proprietario')
     .in('pousada_id', pousadaIds)
-  const ownerByPousada = new Map((owners ?? []).map((o) => [o.pousada_id, o.profiles[0]?.full_name ?? null]))
+  const ownerByPousada = new Map(
+    (owners ?? []).map((o) => [o.pousada_id, o.profiles[0]?.full_name ?? null]),
+  )
 
   return rows.map((r) => ({
     id: r.id,
@@ -87,6 +95,16 @@ export async function listAllPousadasForAdmin(filter?: PousadaStatus): Promise<A
     ownerName: ownerByPousada.get(r.id) ?? null,
     createdAt: r.created_at,
   }))
+}
+
+/** Vincula um e-mail ja cadastrado como proprietario ativo (RPC `link_pousada_owner`, 0052). */
+export async function linkPousadaOwnerRpc(pousadaId: string, email: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('link_pousada_owner', {
+    p_pousada_id: pousadaId,
+    p_email: email,
+  })
+  if (error) throw new Error(error.message)
 }
 
 type PlatformHostRow = {

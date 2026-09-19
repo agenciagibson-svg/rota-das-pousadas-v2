@@ -8,6 +8,7 @@ import {
   pousadaIdSchema,
   createPousadaAdminSchema,
   changePousadaStatusSchema,
+  linkPousadaOwnerSchema,
 } from './schemas'
 import {
   approvePousada,
@@ -16,6 +17,7 @@ import {
   revokeSensitiveAccess,
   createPousadaAsAdmin,
   changePousadaStatus,
+  linkPousadaOwner,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -56,11 +58,21 @@ export const rejectPousadaAction = createAction(pousadaIdSchema, async ({ id }) 
   return { id }
 })
 
-/** Suspender/reativar/arquivar uma pousada pela tela "Pousadas" do admin. */
-export const changePousadaStatusAction = createAction(changePousadaStatusSchema, async ({ id, status }) => {
-  await changePousadaStatus(id, status)
+/** Vincula um e-mail já cadastrado como proprietário de uma pousada sem dono. */
+export const linkPousadaOwnerAction = createAction(linkPousadaOwnerSchema, async (input) => {
+  await linkPousadaOwner(input)
   revalidatePath('/admin/pousadas')
-  revalidatePath('/')
-  revalidatePath('/sitemap.xml')
-  return { id, status }
+  return { id: input.pousadaId }
 })
+
+/** Suspender/reativar/arquivar uma pousada pela tela "Pousadas" do admin. */
+export const changePousadaStatusAction = createAction(
+  changePousadaStatusSchema,
+  async ({ id, status }) => {
+    await changePousadaStatus(id, status)
+    revalidatePath('/admin/pousadas')
+    revalidatePath('/')
+    revalidatePath('/sitemap.xml')
+    return { id, status }
+  },
+)
