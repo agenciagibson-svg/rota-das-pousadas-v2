@@ -27,6 +27,7 @@ import {
   getGmvByMonth,
   getBookingsByRegion,
   getOccupancyRate,
+  getPousadaPerformance,
 } from '@/repositories/admin-metrics.repository'
 import {
   insertGrant,
@@ -58,6 +59,7 @@ import type {
   PlatformKpis,
   GmvMonthPoint,
   RegionBookingCount,
+  PousadaPerformance,
   PlatformTeamMember,
   PlatformRoleValue,
   AuditLogEntry,
@@ -443,18 +445,22 @@ export async function getReportsData(months = 12): Promise<{
   gmvByMonth: GmvMonthPoint[]
   bookingsByRegion: RegionBookingCount[]
   occupancyRate: number
+  pousadaPerformance: PousadaPerformance[]
 }> {
   const user = await getCurrentUser()
   if (!user?.platformRole || !can(user.platformRole, 'reports:global:view')) {
     throw new Error('Você não tem permissão para ver relatórios.')
   }
-  const [kpis, gmvByMonth, bookingsByRegion, occupancyRate] = await Promise.all([
-    getPlatformKpis(),
-    getGmvByMonth(months),
-    getBookingsByRegion(),
-    getOccupancyRate(),
-  ])
-  return { kpis, gmvByMonth, bookingsByRegion, occupancyRate }
+  const [kpis, gmvByMonth, bookingsByRegion, occupancyRate, pousadaPerformance] = await Promise.all(
+    [
+      getPlatformKpis(),
+      getGmvByMonth(months),
+      getBookingsByRegion(),
+      getOccupancyRate(),
+      getPousadaPerformance(),
+    ],
+  )
+  return { kpis, gmvByMonth, bookingsByRegion, occupancyRate, pousadaPerformance }
 }
 
 /**

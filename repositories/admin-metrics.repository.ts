@@ -1,7 +1,12 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { nightsBetween } from '@/features/reservas/pricing'
-import type { PlatformKpis, GmvMonthPoint, RegionBookingCount } from '@/features/admin/types'
+import type {
+  PlatformKpis,
+  GmvMonthPoint,
+  RegionBookingCount,
+  PousadaPerformance,
+} from '@/features/admin/types'
 
 /** Reservas que contam como receita/ocupação real — nunca cotação/cancelada/no-show. */
 const REVENUE_STATUSES = ['confirmed', 'checked_in', 'checked_out'] as const
@@ -153,4 +158,87 @@ export async function getOccupancyRate(): Promise<number> {
   const capacity = (roomCount ?? 0) * daysInMonth
   if (capacity <= 0) return 0
   return Math.min(100, Math.round((nightsBooked / capacity) * 1000) / 10)
+}
+const PERFORMANCE_WINDOW_DAYS = 90
+/** Carência pra anúncio novo antes de poder ser marcado como "sem resultado". */
+const NO_RESULT_GRACE_DAYS = 30
+
+/**
+ * Desempenho por pousada (publicada) nos últimos 90 dias — GMV, nº de
+ * reservas reais, ocupação aproximada e a flag `noResult` (zero reservas na
+ * janela e publicada há mais de 30 dias). Mesma limitação de `getOccupancyRate`:
+ * não considera bloqueios manuais nem reserva que atravessa a virada da
+ * janela. `created_at` da pousada é usado como proxy de "há quanto tempo está
+ * no ar" — não existe um campo separado de "quando virou publicada".
+ */
+export async function getPousadaPerformance(): Promise<PousadaPerformance[]> {
+  const supabase = await createSupabaseServerClient()
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - PERFORMANCE_WINDOW_DAYS * 86_400_000)
+
+  const [{ data: pousadas, error: pError }, { data: bookings, error: bError }] = await Promise.all([
+    supabase
+      .from('pousadas')
+      .select('id, slug, name, city, state, created_at')
+      .eq('status', 'publicada'),
+    supabase
+      .from('bookings')
+      .select('pousada_id, fee, checkin, checkout')
+      .in('status', REVENUE_STATUSES)
+      .gte('checkin', windowStart.toISOString().slice(0, 10)),
+  ])
+  if (pError) throw pError
+  if (bError) throw bError
+
+  const pousadaList = pousadas ?? []
+  if (pousadaList.length === 0) return []
+  const pousadaIds = pousadaList.map((p) => p.id)
+
+  const { data: rooms, error: rError } = await supabase
+    .from('rooms')
+    .select('id, pousada_id')
+    .in('pousada_id', pousadaIds)
+  if (rError) throw rError
+
+  const roomCountByPousada = new Map<string, number>()
+  for (const r of rooms ?? []) {
+    roomCountByPousada.set(r.pousada_id, (roomCountByPousada.get(r.pousada_id) ?? 0) + 1)
+  }
+
+  const gmvByPousada = new Map<string, number>()
+  const bookingsCountByPousada = new Map<string, number>()
+  const nightsByPousada = new Map<string, number>()
+  for (const b of bookings ?? []) {
+    gmvByPousada.set(b.pousada_id, (gmvByPousada.get(b.pousada_id) ?? 0) + Number(b.fee))
+    bookingsCountByPousada.set(b.pousada_id, (bookingsCountByPousada.get(b.pousada_id) ?? 0) + 1)
+    nightsByPousada.set(
+      b.pousada_id,
+      (nightsByPousada.get(b.pousada_id) ?? 0) + nightsBetween(b.checkin, b.checkout),
+    )
+  }
+
+  return pousadaList.map((p) => {
+    const bookingsCount = bookingsCountByPousada.get(p.id) ?? 0
+    const roomCount = roomCountByPousada.get(p.id) ?? 0
+    const capacity = roomCount * PERFORMANCE_WINDOW_DAYS
+    const nights = nightsByPousada.get(p.id) ?? 0
+    const occupancyRate =
+      capacity > 0 ? Math.min(100, Math.round((nights / capacity) * 1000) / 10) : 0
+    const createdDaysAgo = Math.floor(
+      (now.getTime() - new Date(p.created_at).getTime()) / 86_400_000,
+    )
+
+    return {
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      city: p.city,
+      state: p.state,
+      gmv: gmvByPousada.get(p.id) ?? 0,
+      bookingsCount,
+      occupancyRate,
+      createdAt: p.created_at,
+      noResult: bookingsCount === 0 && createdDaysAgo >= NO_RESULT_GRACE_DAYS,
+    }
+  })
 }

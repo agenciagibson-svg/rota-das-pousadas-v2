@@ -47,6 +47,26 @@ export type PlatformKpis = {
 export type GmvMonthPoint = { month: string; amount: number }
 export type RegionBookingCount = { state: string; count: number }
 
+/**
+ * Desempenho por pousada nos últimos 90 dias — achado da análise de
+ * 19/09/2026: faltava um jeito de ver quais pousadas publicadas estão
+ * captando (GMV/reservas/ocupação) e quais estão "sem resultado". `noResult`
+ * só marca pousadas publicadas há mais de 30 dias (carência pra anúncio
+ * novo) e com zero reservas reais na janela.
+ */
+export type PousadaPerformance = {
+  id: string
+  slug: string
+  name: string
+  city: string
+  state: string
+  gmv: number
+  bookingsCount: number
+  occupancyRate: number
+  createdAt: string
+  noResult: boolean
+}
+
 export type PlatformOverview = {
   kpis: PlatformKpis
   gmvByMonth: GmvMonthPoint[]

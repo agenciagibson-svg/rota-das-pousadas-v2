@@ -3,6 +3,7 @@
 import { useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
+  AlertTriangle,
   Building2,
   CheckCircle2,
   DollarSign,
@@ -15,7 +16,7 @@ import { AreaChart, BarChart, Donut } from '@/components/dashboard/charts'
 import { Card } from '@/components/ui/card'
 import { IconBadge } from '@/components/ui/icon-badge'
 import { Badge } from '@/components/ui/badge'
-import type { PlatformKpis, GmvMonthPoint, RegionBookingCount } from '../types'
+import type { PlatformKpis, GmvMonthPoint, RegionBookingCount, PousadaPerformance } from '../types'
 
 const MONTH_OPTIONS = [3, 6, 12, 24]
 
@@ -62,17 +63,25 @@ export function ReportsView({
   gmvByMonth,
   bookingsByRegion,
   occupancyRate,
+  pousadaPerformance,
 }: {
   months: number
   kpis: PlatformKpis
   gmvByMonth: GmvMonthPoint[]
   bookingsByRegion: RegionBookingCount[]
   occupancyRate: number
+  pousadaPerformance: PousadaPerformance[]
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const gmvDelta = formatDelta(kpis.gmvDeltaPct)
+
+  const noResultCount = pousadaPerformance.filter((p) => p.noResult).length
+  const sortedPerformance = [...pousadaPerformance].sort((a, b) => {
+    if (a.noResult !== b.noResult) return a.noResult ? -1 : 1
+    return a.gmv - b.gmv
+  })
 
   function changeMonths(value: number) {
     startTransition(() => {
@@ -213,6 +222,83 @@ export function ReportsView({
             color="var(--ocean)"
           />
         </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-foreground font-serif text-lg font-semibold">
+              Desempenho por pousada
+            </h3>
+            <p className="text-muted-foreground text-sm">
+              Últimos 90 dias · {noResultCount} sem resultado
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              downloadCsv(
+                'desempenho-por-pousada-90d.csv',
+                [
+                  'Pousada',
+                  'Cidade',
+                  'UF',
+                  'GMV (R$)',
+                  'Reservas',
+                  'Ocupação (%)',
+                  'Sem resultado',
+                ],
+                sortedPerformance.map((p) => [
+                  p.name,
+                  p.city,
+                  p.state,
+                  p.gmv,
+                  p.bookingsCount,
+                  p.occupancyRate,
+                  p.noResult ? 'sim' : 'não',
+                ]),
+              )
+            }
+            className="border-border text-foreground hover:bg-secondary inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+          >
+            <Download className="size-3.5" />
+            Exportar CSV
+          </button>
+        </div>
+        {sortedPerformance.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Nenhuma pousada publicada ainda.</p>
+        ) : (
+          <div className="space-y-2">
+            {sortedPerformance.map((p) => (
+              <div
+                key={p.id}
+                className={`flex items-center justify-between gap-3 rounded-xl p-3 ${
+                  p.noResult ? 'bg-destructive/10' : 'bg-secondary/50'
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-foreground truncate font-medium">{p.name}</span>
+                    {p.noResult && (
+                      <Badge
+                        variant="destructiveSoft"
+                        size="md"
+                        className="gap-1 px-2 py-0.5 font-semibold"
+                      >
+                        <AlertTriangle className="size-3" />
+                        Sem resultado
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {p.city}/{p.state} · {formatCurrency(p.gmv)} · {p.bookingsCount} reserva(s) ·{' '}
+                    {p.occupancyRate.toFixed(1)}% ocupação
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   )

@@ -34,6 +34,7 @@ export default async function AdminRelatoriosPage({
         gmvByMonth={data.gmvByMonth}
         bookingsByRegion={data.bookingsByRegion}
         occupancyRate={data.occupancyRate}
+        pousadaPerformance={data.pousadaPerformance}
       />
     </AdminShell>
   )
