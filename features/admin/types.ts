@@ -36,19 +36,20 @@ export type PlatformHost = {
 
 /** KPIs do topo da Visão Geral — números reais, não mais fixos. */
 export type PlatformKpis = {
-  revenueThisMonth: number
-  revenueDeltaPct: number | null
+  /** GMV (bookings.fee) do mês — dinheiro do hóspede que vai pra pousada, NÃO é receita da Rota. */
+  gmvThisMonth: number
+  gmvDeltaPct: number | null
   activePousadas: number
   bookingsThisMonth: number
   newHostsThisMonth: number
 }
 
-export type RevenueMonthPoint = { month: string; amount: number }
+export type GmvMonthPoint = { month: string; amount: number }
 export type RegionBookingCount = { state: string; count: number }
 
 export type PlatformOverview = {
   kpis: PlatformKpis
-  revenueByMonth: RevenueMonthPoint[]
+  gmvByMonth: GmvMonthPoint[]
   bookingsByRegion: RegionBookingCount[]
   occupancyRate: number
   featuredDestinations: { slug: string; name: string; state: string; pousadas: number }[]
@@ -105,5 +106,16 @@ export type PlatformTeamMember = {
   fullName: string
   email: string
   platformRole: PlatformRoleValue
+  createdAt: string
+}
+
+/** Linha da tela "Auditoria" — trilha de audit_log, plataforma inteira (só master lê). */
+export type AuditLogEntry = {
+  id: string
+  actorName: string | null
+  action: string
+  targetTable: string | null
+  targetId: string | null
+  metadata: Record<string, unknown>
   createdAt: string
 }

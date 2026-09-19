@@ -31,7 +31,7 @@ export default async function AdminRelatoriosPage({
       <ReportsView
         months={months}
         kpis={data.kpis}
-        revenueByMonth={data.revenueByMonth}
+        gmvByMonth={data.gmvByMonth}
         bookingsByRegion={data.bookingsByRegion}
         occupancyRate={data.occupancyRate}
       />

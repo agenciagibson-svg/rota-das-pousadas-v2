@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { Enums } from '@/lib/supabase/database.types'
 import type {
   AdminPousadaRow,
+  AuditLogEntry,
   PendingPousada,
   PlatformHost,
   PlatformTeamMember,
@@ -181,4 +182,44 @@ export async function revokePlatformRoleByEmail(email: string): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('revoke_platform_role_by_email', { p_email: email })
   if (error) throw new Error(error.message)
+}
+
+export type AuditLogFilter = {
+  /** Busca parcial (ilike) em `action`, ex.: "member", "pousada.status". */
+  action?: string
+  from?: string
+  to?: string
+  limit?: number
+}
+
+/**
+ * Trilha de auditoria plataforma inteira. RLS `audit_read` (0053) restringe
+ * a leitura direta desta tabela a `master` — de propósito, ver rota-seguranca
+ * no histórico do projeto. Nome do ator vem de join em `profiles` (só
+ * `full_name`; e-mail vive em `auth.users` e não é acessível por join direto
+ * do client, mesmo padrão de `listAllPousadasForAdmin`). `actor_id` pode ser
+ * `null` (eventos disparados por cron, ex. expiração de reserva).
+ */
+export async function listAuditLog(filter: AuditLogFilter = {}): Promise<AuditLogEntry[]> {
+  const supabase = await createSupabaseServerClient()
+  let query = supabase
+    .from('audit_log')
+    .select('id, action, target_table, target_id, metadata, created_at, profiles(full_name)')
+    .order('created_at', { ascending: false })
+    .limit(filter.limit ?? 200)
+  if (filter.action) query = query.ilike('action', `%${filter.action}%`)
+  if (filter.from) query = query.gte('created_at', filter.from)
+  if (filter.to) query = query.lte('created_at', filter.to)
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    actorName: r.profiles?.[0]?.full_name ?? null,
+    action: r.action,
+    targetTable: r.target_table,
+    targetId: r.target_id,
+    metadata: (r.metadata ?? {}) as Record<string, unknown>,
+    createdAt: r.created_at,
+  }))
 }

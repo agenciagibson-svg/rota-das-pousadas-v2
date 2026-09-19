@@ -13,11 +13,13 @@ import {
   listPlatformTeam,
   setPlatformRoleByEmail,
   revokePlatformRoleByEmail,
+  listAuditLog,
   type PousadaStatus,
+  type AuditLogFilter,
 } from '@/repositories/admin.repository'
 import {
   getPlatformKpis,
-  getRevenueByMonth,
+  getGmvByMonth,
   getBookingsByRegion,
   getOccupancyRate,
 } from '@/repositories/admin-metrics.repository'
@@ -49,10 +51,11 @@ import type {
   PlatformHost,
   PlatformOverview,
   PlatformKpis,
-  RevenueMonthPoint,
+  GmvMonthPoint,
   RegionBookingCount,
   PlatformTeamMember,
   PlatformRoleValue,
+  AuditLogEntry,
 } from '@/features/admin/types'
 import type { CreatePousadaAdminInput } from '@/features/admin/schemas'
 
@@ -166,10 +169,10 @@ export async function listPending(): Promise<PendingPousada[]> {
 export async function getPlatformOverview(): Promise<PlatformOverview> {
   await assertPlatform()
 
-  const [kpis, revenueByMonth, bookingsByRegion, occupancyRate, destinations, pousadasPage] =
+  const [kpis, gmvByMonth, bookingsByRegion, occupancyRate, destinations, pousadasPage] =
     await Promise.all([
       getPlatformKpis(),
-      getRevenueByMonth(12),
+      getGmvByMonth(12),
       getBookingsByRegion(),
       getOccupancyRate(),
       getDestinationRepository().list(),
@@ -178,7 +181,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
 
   return {
     kpis,
-    revenueByMonth,
+    gmvByMonth,
     bookingsByRegion,
     occupancyRate,
     featuredDestinations: destinations
@@ -431,7 +434,7 @@ export async function revokePlatformRole(email: string): Promise<void> {
  */
 export async function getReportsData(months = 12): Promise<{
   kpis: PlatformKpis
-  revenueByMonth: RevenueMonthPoint[]
+  gmvByMonth: GmvMonthPoint[]
   bookingsByRegion: RegionBookingCount[]
   occupancyRate: number
 }> {
@@ -439,11 +442,39 @@ export async function getReportsData(months = 12): Promise<{
   if (!user?.platformRole || !can(user.platformRole, 'reports:global:view')) {
     throw new Error('Você não tem permissão para ver relatórios.')
   }
-  const [kpis, revenueByMonth, bookingsByRegion, occupancyRate] = await Promise.all([
+  const [kpis, gmvByMonth, bookingsByRegion, occupancyRate] = await Promise.all([
     getPlatformKpis(),
-    getRevenueByMonth(months),
+    getGmvByMonth(months),
     getBookingsByRegion(),
     getOccupancyRate(),
   ])
-  return { kpis, revenueByMonth, bookingsByRegion, occupancyRate }
+  return { kpis, gmvByMonth, bookingsByRegion, occupancyRate }
+}
+
+/**
+ * Reaproveita 'platform:configure' (master-only, mesma ação de Configurações)
+ * em vez da action genérica 'audit:view' — 'audit:view' já é concedida a
+ * suporte/admin_pousada pra escopos que ainda não têm tela (auditoria por
+ * pousada), mas a RLS de audit_log (0053) só libera leitura direta pra
+ * master; gatear esta tela com 'audit:view' mostraria pra suporte e
+ * devolveria sempre vazio (RLS filtrando em silêncio) — confuso.
+ */
+async function assertCanViewAuditLog() {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'platform:configure')) {
+    throw new Error('Você não tem permissão para ver a auditoria da plataforma.')
+  }
+  return user
+}
+
+/** Papel ativo pode ver a auditoria da plataforma? Usa pra decidir se mostra a tela. */
+export async function canViewAuditLog(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'platform:configure'))
+}
+
+/** Dados da tela "Auditoria" — trilha de audit_log, com filtro por ação/período. */
+export async function listAuditLogAdmin(filter: AuditLogFilter = {}): Promise<AuditLogEntry[]> {
+  await assertCanViewAuditLog()
+  return listAuditLog(filter)
 }

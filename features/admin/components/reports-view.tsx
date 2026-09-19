@@ -15,7 +15,7 @@ import { AreaChart, BarChart, Donut } from '@/components/dashboard/charts'
 import { Card } from '@/components/ui/card'
 import { IconBadge } from '@/components/ui/icon-badge'
 import { Badge } from '@/components/ui/badge'
-import type { PlatformKpis, RevenueMonthPoint, RegionBookingCount } from '../types'
+import type { PlatformKpis, GmvMonthPoint, RegionBookingCount } from '../types'
 
 const MONTH_OPTIONS = [3, 6, 12, 24]
 
@@ -59,20 +59,20 @@ function downloadCsv(filename: string, headers: string[], rows: (string | number
 export function ReportsView({
   months,
   kpis,
-  revenueByMonth,
+  gmvByMonth,
   bookingsByRegion,
   occupancyRate,
 }: {
   months: number
   kpis: PlatformKpis
-  revenueByMonth: RevenueMonthPoint[]
+  gmvByMonth: GmvMonthPoint[]
   bookingsByRegion: RegionBookingCount[]
   occupancyRate: number
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
-  const revenueDelta = formatDelta(kpis.revenueDeltaPct)
+  const gmvDelta = formatDelta(kpis.gmvDeltaPct)
 
   function changeMonths(value: number) {
     startTransition(() => {
@@ -82,9 +82,9 @@ export function ReportsView({
 
   const kpiCards = [
     {
-      label: 'Receita da plataforma (mês)',
-      value: formatCurrency(kpis.revenueThisMonth),
-      delta: revenueDelta,
+      label: 'Volume processado (GMV) — mês',
+      value: formatCurrency(kpis.gmvThisMonth),
+      delta: gmvDelta,
       icon: DollarSign,
     },
     { label: 'Pousadas ativas', value: String(kpis.activePousadas), delta: null, icon: Building2 },
@@ -151,16 +151,16 @@ export function ReportsView({
         <Card className="p-6 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-foreground font-serif text-lg font-semibold">Receita mensal</h3>
+              <h3 className="text-foreground font-serif text-lg font-semibold">GMV mensal</h3>
               <p className="text-muted-foreground text-sm">Últimos {months} meses</p>
             </div>
             <button
               type="button"
               onClick={() =>
                 downloadCsv(
-                  `receita-mensal-${months}m.csv`,
-                  ['Mês', 'Receita (R$)'],
-                  revenueByMonth.map((m) => [m.month, m.amount]),
+                  `gmv-mensal-${months}m.csv`,
+                  ['Mês', 'GMV (R$)'],
+                  gmvByMonth.map((m) => [m.month, m.amount]),
                 )
               }
               className="border-border text-foreground hover:bg-secondary inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
@@ -170,7 +170,7 @@ export function ReportsView({
             </button>
           </div>
           <div className="h-40">
-            <AreaChart data={revenueByMonth.map((m) => m.amount)} color="var(--ocean)" />
+            <AreaChart data={gmvByMonth.map((m) => m.amount)} color="var(--ocean)" />
           </div>
         </Card>
 
