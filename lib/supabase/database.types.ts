@@ -1172,6 +1172,47 @@ export type Database = {
           },
         ]
       }
+      platform_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          paid: boolean
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          paid?: boolean
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          paid?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'platform_expenses_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       pousada_amenities: {
         Row: {
           amenity_id: string

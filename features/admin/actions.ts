@@ -14,6 +14,8 @@ import {
   destinationIdSchema,
   assignPlatformRoleSchema,
   revokePlatformRoleSchema,
+  createPlatformExpenseSchema,
+  setPlatformExpensePaidSchema,
 } from './schemas'
 import {
   approvePousada,
@@ -28,6 +30,8 @@ import {
   deleteDestinationAdmin,
   assignPlatformRole,
   revokePlatformRole,
+  addPlatformExpense,
+  markPlatformExpensePaid,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -128,5 +132,25 @@ export const revokePlatformRoleAction = createAction(
     await revokePlatformRole(email)
     revalidatePath('/admin/configuracoes')
     return { email }
+  },
+)
+
+/** Lança uma conta a pagar da própria Rota — financeiro_plataforma/master. */
+export const createPlatformExpenseAction = createAction(
+  createPlatformExpenseSchema,
+  async (input) => {
+    await addPlatformExpense(input)
+    revalidatePath('/admin/financeiro')
+    return { ok: true as const }
+  },
+)
+
+/** Marca/desmarca uma despesa da Rota como paga. */
+export const setPlatformExpensePaidAction = createAction(
+  setPlatformExpensePaidSchema,
+  async (input) => {
+    await markPlatformExpensePaid(input.expenseId, input.paid)
+    revalidatePath('/admin/financeiro')
+    return { expenseId: input.expenseId, paid: input.paid }
   },
 )

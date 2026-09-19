@@ -6,11 +6,19 @@ import {
   ScrollText,
   Settings,
   Users,
+  Wallet,
 } from 'lucide-react'
 import type { NavItem } from '@/components/dashboard/shell'
 
 export type AdminSection =
-  'overview' | 'pousadas' | 'anfitrioes' | 'destinos' | 'relatorios' | 'configuracoes' | 'auditoria'
+  | 'overview'
+  | 'pousadas'
+  | 'anfitrioes'
+  | 'destinos'
+  | 'relatorios'
+  | 'configuracoes'
+  | 'auditoria'
+  | 'financeiro'
 
 export function adminNav(active: AdminSection): NavItem[] {
   return [
@@ -28,6 +36,12 @@ export function adminNav(active: AdminSection): NavItem[] {
       icon: BarChart3,
       href: '/admin/relatorios',
       active: active === 'relatorios',
+    },
+    {
+      label: 'Financeiro',
+      icon: Wallet,
+      href: '/admin/financeiro',
+      active: active === 'financeiro',
     },
     {
       label: 'Configurações',

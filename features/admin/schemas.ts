@@ -138,3 +138,36 @@ export const reportsFilterSchema = z.object({
   months: z.coerce.number().int().min(1, 'Mínimo de 1 mês.').max(24, 'Máximo de 24 meses.'),
 })
 export type ReportsFilterInput = z.infer<typeof reportsFilterSchema>
+
+/** Contas a pagar da própria Rota — tela "Financeiro". Mesmo padrão de `createExpenseSchema`
+ * (features/financeiro/schemas.ts), sem `.refine()` pra não quebrar a inferência do `createAction`. */
+export const platformExpenseCategorySchema = z.enum([
+  'infraestrutura',
+  'pessoal',
+  'marketing',
+  'impostos',
+  'juridico',
+  'outros',
+])
+
+export const createPlatformExpenseSchema = z.object({
+  description: z.string().trim().min(2, 'Descreva a despesa.').max(120),
+  amount: z.coerce
+    .number({ invalid_type_error: 'Informe o valor.' })
+    .int()
+    .min(1, 'Informe o valor.')
+    .max(10_000_000),
+  category: platformExpenseCategorySchema,
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
+    .optional()
+    .or(z.literal('')),
+})
+export type CreatePlatformExpenseInput = z.infer<typeof createPlatformExpenseSchema>
+
+export const setPlatformExpensePaidSchema = z.object({
+  expenseId: z.string().uuid('Despesa inválida.'),
+  paid: z.boolean(),
+})
+export type SetPlatformExpensePaidInput = z.infer<typeof setPlatformExpensePaidSchema>

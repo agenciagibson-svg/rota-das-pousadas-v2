@@ -57,6 +57,14 @@ describe('rbac.can', () => {
     }
   })
 
+  it('financeiro_plataforma/master gerenciam o financeiro da própria Rota; ninguém mais', () => {
+    expect(can('financeiro_plataforma', 'platform_finance:manage')).toBe(true)
+    expect(can('master', 'platform_finance:manage')).toBe(true)
+    for (const role of ['proprietario', 'suporte', 'comercial', 'marketing'] as Role[]) {
+      expect(can(role, 'platform_finance:manage')).toBe(false)
+    }
+  })
+
   it('IA só faz triagem de moderação, nunca ações irreversíveis', () => {
     expect(can('ia', 'content:moderate')).toBe(true)
     expect(can('ia', 'payment:pay')).toBe(false)

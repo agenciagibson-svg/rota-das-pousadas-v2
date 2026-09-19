@@ -66,6 +66,11 @@ export type Action =
   // mesmo escopo de quem hoje aprova/cadastra pousada. Espelha
   // `auth_can_manage_destinations` na migration 0054.
   | 'destination:manage'
+  // Contas a pagar da própria Rota (não confundir com 'finance:pousada:view',
+  // que é o financeiro de CADA pousada). Espelha
+  // `auth_can_manage_platform_finance` na migration 0055 — só
+  // financeiro_plataforma/master, dado interno sensível.
+  | 'platform_finance:manage'
   | 'room:block:manage'
   | 'room:block:view'
   | 'availability:check'
@@ -236,7 +241,12 @@ const MATRIX: Record<Role, Action[]> = {
     'reports:global:view',
     'destination:manage',
   ],
-  financeiro_plataforma: ['catalog:view', 'search:run', 'reports:global:view'],
+  financeiro_plataforma: [
+    'catalog:view',
+    'search:run',
+    'reports:global:view',
+    'platform_finance:manage',
+  ],
   master: [
     'catalog:view',
     'search:run',
@@ -277,6 +287,7 @@ const MATRIX: Record<Role, Action[]> = {
     'audit:view',
     'category:manage',
     'destination:manage',
+    'platform_finance:manage',
     'room:block:manage',
     'room:block:view',
     'availability:check',

@@ -18,6 +18,11 @@ import {
   type AuditLogFilter,
 } from '@/repositories/admin.repository'
 import {
+  listPlatformExpenses,
+  insertPlatformExpense,
+  setPlatformExpensePaid,
+} from '@/repositories/platform-finance.repository'
+import {
   getPlatformKpis,
   getGmvByMonth,
   getBookingsByRegion,
@@ -56,8 +61,9 @@ import type {
   PlatformTeamMember,
   PlatformRoleValue,
   AuditLogEntry,
+  PlatformExpense,
 } from '@/features/admin/types'
-import type { CreatePousadaAdminInput } from '@/features/admin/schemas'
+import type { CreatePousadaAdminInput, CreatePlatformExpenseInput } from '@/features/admin/schemas'
 
 /** Qualquer papel de plataforma pode visualizar o painel admin. */
 async function assertPlatform() {
@@ -477,4 +483,47 @@ export async function canViewAuditLog(): Promise<boolean> {
 export async function listAuditLogAdmin(filter: AuditLogFilter = {}): Promise<AuditLogEntry[]> {
   await assertCanViewAuditLog()
   return listAuditLog(filter)
+}
+
+/**
+ * Contas a pagar da própria Rota — tela "Financeiro" do painel master. Ação
+ * dedicada `platform_finance:manage` (financeiro_plataforma/master) — dado
+ * interno sensível, não reaproveita 'reports:global:view' nem 'audit:view'
+ * (mais abertos, escopos diferentes).
+ */
+async function assertCanManagePlatformFinance() {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'platform_finance:manage')) {
+    throw new Error('Você não tem permissão para gerenciar o financeiro da plataforma.')
+  }
+  return user
+}
+
+/** Papel ativo pode gerenciar o financeiro da própria Rota? Usa pra decidir se mostra a tela. */
+export async function canManagePlatformFinance(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'platform_finance:manage'))
+}
+
+export async function listPlatformExpensesAdmin(): Promise<PlatformExpense[]> {
+  await assertCanManagePlatformFinance()
+  return listPlatformExpenses()
+}
+
+export async function addPlatformExpense(input: CreatePlatformExpenseInput): Promise<void> {
+  const user = await assertCanManagePlatformFinance()
+  await insertPlatformExpense(
+    {
+      description: input.description,
+      amount: input.amount,
+      category: input.category,
+      dueDate: input.dueDate ? input.dueDate : null,
+    },
+    user.id,
+  )
+}
+
+export async function markPlatformExpensePaid(expenseId: string, paid: boolean): Promise<void> {
+  await assertCanManagePlatformFinance()
+  await setPlatformExpensePaid(expenseId, paid)
 }

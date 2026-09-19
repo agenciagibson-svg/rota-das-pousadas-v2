@@ -119,3 +119,18 @@ export type AuditLogEntry = {
   metadata: Record<string, unknown>
   createdAt: string
 }
+
+export type PlatformExpenseCategory =
+  'infraestrutura' | 'pessoal' | 'marketing' | 'impostos' | 'juridico' | 'outros'
+
+/** Conta a pagar da própria Rota — tela "Financeiro" do painel master. Não confundir com
+ * `Expense` (features/financeiro/types.ts), que é a despesa de CADA pousada. */
+export type PlatformExpense = {
+  id: string
+  description: string
+  amount: number
+  category: PlatformExpenseCategory
+  dueDate: string | null
+  paid: boolean
+  createdAt: string
+}
