@@ -51,15 +51,24 @@ function buildPrivateBlockList(): BlockList {
     ['224.0.0.0', 4], // multicast
     ['240.0.0.0', 4], // reservado
   ]
-  const v6: Array<[string, number]> = [
+  const v6Only: Array<[string, number]> = [
     ['::1', 128],
-    ['::ffff:0:0', 96], // IPv4-mapped — o IPv4 embutido é checado à parte
     ['64:ff9b::', 96], // NAT64
     ['fc00::', 7], // unique local
     ['fe80::', 10], // link-local
   ]
-  for (const [address, prefix] of v4) list.addSubnet(address, prefix, 'ipv4')
-  for (const [address, prefix] of v6) list.addSubnet(address, prefix, 'ipv6')
+  for (const [address, prefix] of v4) {
+    list.addSubnet(address, prefix, 'ipv4')
+    // Espelha o mesmo range no espaço IPv4-mapeado-em-IPv6 (::ffff:a.b.c.d),
+    // senão alguém contorna o bloqueio escrevendo o IP privado como literal
+    // IPv6 (`http://[::ffff:169.254.169.254]/`). Bloquear ::ffff:0:0/96
+    // inteiro pareceria mais simples e mais seguro, mas um comportamento do
+    // `BlockList` do Node faz isso vazar para checagens de família 'ipv4'
+    // pura (todo IP público passaria a bater como bloqueado) — confirmado
+    // testando localmente. Espelhar faixa a faixa evita o problema.
+    list.addSubnet(`::ffff:${address}`, 96 + prefix, 'ipv6')
+  }
+  for (const [address, prefix] of v6Only) list.addSubnet(address, prefix, 'ipv6')
   return list
 }
 const PRIVATE_BLOCKLIST = buildPrivateBlockList()
