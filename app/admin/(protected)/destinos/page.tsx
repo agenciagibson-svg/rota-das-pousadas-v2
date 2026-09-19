@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
-import { Globe } from 'lucide-react'
 import { AdminShell } from '@/features/admin/components/admin-shell'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Card } from '@/components/ui/card'
+import { DestinationsManager } from '@/features/admin/components/destinations-manager'
+import {
+  listDestinationsAdmin,
+  canManageDestinations,
+} from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -10,7 +14,11 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminDestinosPage() {
-  const user = await getCurrentUser()
+  const [user, destinations, canManage] = await Promise.all([
+    getCurrentUser(),
+    listDestinationsAdmin(),
+    canManageDestinations(),
+  ])
 
   return (
     <AdminShell
@@ -19,11 +27,9 @@ export default async function AdminDestinosPage() {
       subtitle="Curadoria de destinos da plataforma"
       displayName={user?.name || user?.email || 'Equipe'}
     >
-      <EmptyState
-        icon={Globe}
-        title="Em breve"
-        description="Gestão de destinos (criar, editar, destacar) ainda não foi construída."
-      />
+      <Card className="p-6">
+        <DestinationsManager items={destinations} canManage={canManage} />
+      </Card>
     </AdminShell>
   )
 }

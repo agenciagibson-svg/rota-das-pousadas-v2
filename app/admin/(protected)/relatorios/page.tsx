@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import { BarChart3 } from 'lucide-react'
 import { AdminShell } from '@/features/admin/components/admin-shell'
-import { EmptyState } from '@/components/ui/empty-state'
+import { ReportsView } from '@/features/admin/components/reports-view'
+import { getReportsData } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -9,8 +9,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default async function AdminRelatoriosPage() {
-  const user = await getCurrentUser()
+const VALID_MONTHS = [3, 6, 12, 24]
+
+export default async function AdminRelatoriosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ months?: string }>
+}) {
+  const { months: monthsParam } = await searchParams
+  const months = VALID_MONTHS.includes(Number(monthsParam)) ? Number(monthsParam) : 12
+
+  const [user, data] = await Promise.all([getCurrentUser(), getReportsData(months)])
 
   return (
     <AdminShell
@@ -19,10 +28,12 @@ export default async function AdminRelatoriosPage() {
       subtitle="Exportações e análises detalhadas"
       displayName={user?.name || user?.email || 'Equipe'}
     >
-      <EmptyState
-        icon={BarChart3}
-        title="Em breve"
-        description="Relatórios exportáveis (financeiro, ocupação, aquisição) ainda não foram construídos."
+      <ReportsView
+        months={months}
+        kpis={data.kpis}
+        revenueByMonth={data.revenueByMonth}
+        bookingsByRegion={data.bookingsByRegion}
+        occupancyRate={data.occupancyRate}
       />
     </AdminShell>
   )

@@ -1,7 +1,13 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { Enums } from '@/lib/supabase/database.types'
-import type { AdminPousadaRow, PendingPousada, PlatformHost } from '@/features/admin/types'
+import type {
+  AdminPousadaRow,
+  PendingPousada,
+  PlatformHost,
+  PlatformTeamMember,
+  PlatformRoleValue,
+} from '@/features/admin/types'
 
 export type PousadaStatus = Enums<'pousada_status'>
 
@@ -132,4 +138,47 @@ export async function listPlatformHosts(): Promise<PlatformHost[]> {
     pousadaSlug: r.pousada_slug,
     createdAt: r.created_at,
   }))
+}
+
+type PlatformTeamRow = {
+  user_id: string
+  full_name: string
+  email: string
+  platform_role: PlatformRoleValue
+  created_at: string
+}
+
+/** Equipe atual de plataforma (RPC `list_platform_team`, 0054 — só master enxerga). */
+export async function listPlatformTeam(): Promise<PlatformTeamMember[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('list_platform_team')
+  if (error) throw error
+  const rows = (data ?? []) as PlatformTeamRow[]
+  return rows.map((r) => ({
+    userId: r.user_id,
+    fullName: r.full_name,
+    email: r.email,
+    platformRole: r.platform_role,
+    createdAt: r.created_at,
+  }))
+}
+
+/** Atribui/troca o papel de plataforma de um e-mail já cadastrado (RPC `set_platform_role_by_email`, 0054). */
+export async function setPlatformRoleByEmail(
+  email: string,
+  role: PlatformRoleValue,
+): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('set_platform_role_by_email', {
+    p_email: email,
+    p_role: role,
+  })
+  if (error) throw new Error(error.message)
+}
+
+/** Remove o papel de plataforma de um e-mail (RPC `revoke_platform_role_by_email`, 0054). */
+export async function revokePlatformRoleByEmail(email: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('revoke_platform_role_by_email', { p_email: email })
+  if (error) throw new Error(error.message)
 }

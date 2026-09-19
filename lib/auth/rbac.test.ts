@@ -41,6 +41,15 @@ describe('rbac.can', () => {
     expect(can('proprietario', 'pousada:link_owner')).toBe(false)
   })
 
+  it('comercial/marketing/master gerenciam o catálogo de destinos; ninguém mais', () => {
+    expect(can('comercial', 'destination:manage')).toBe(true)
+    expect(can('marketing', 'destination:manage')).toBe(true)
+    expect(can('master', 'destination:manage')).toBe(true)
+    for (const role of ['proprietario', 'suporte', 'financeiro_plataforma'] as Role[]) {
+      expect(can(role, 'destination:manage')).toBe(false)
+    }
+  })
+
   it('master pode configurar a plataforma; ninguém mais', () => {
     expect(can('master', 'platform:configure')).toBe(true)
     for (const role of ['proprietario', 'suporte', 'comercial', 'marketing'] as Role[]) {

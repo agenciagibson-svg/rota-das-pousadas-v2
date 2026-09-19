@@ -10,6 +10,9 @@ import {
   listPlatformHosts,
   linkPousadaOwnerRpc,
   setPousadaStatus,
+  listPlatformTeam,
+  setPlatformRoleByEmail,
+  revokePlatformRoleByEmail,
   type PousadaStatus,
 } from '@/repositories/admin.repository'
 import {
@@ -28,15 +31,28 @@ import {
   deletePousada,
   getPousadaRepository,
 } from '@/repositories/pousadas.repository'
-import { getDestinationRepository } from '@/repositories/destinations.repository'
+import {
+  getDestinationRepository,
+  listDestinationsForAdmin,
+  insertDestinationRpc,
+  updateDestinationRpc,
+  deleteDestinationRpc,
+  type DestinationInput,
+} from '@/repositories/destinations.repository'
 import { insertRoom } from '@/repositories/rooms.repository'
 import { uniqueSlug } from '@/lib/slug'
 import type {
   AdminPousadaRow,
+  AdminDestinationRow,
   PendingPousada,
   PlatformAccessGrant,
   PlatformHost,
   PlatformOverview,
+  PlatformKpis,
+  RevenueMonthPoint,
+  RegionBookingCount,
+  PlatformTeamMember,
+  PlatformRoleValue,
 } from '@/features/admin/types'
 import type { CreatePousadaAdminInput } from '@/features/admin/schemas'
 
@@ -312,4 +328,122 @@ export async function revokeSensitiveAccess(grantId: string): Promise<void> {
 export async function listSensitiveAccessGrants(pousadaId: string): Promise<PlatformAccessGrant[]> {
   await assertCanManageGrants()
   return listActiveGrantsByPousada(pousadaId)
+}
+
+/** Só quem pode gerenciar destinos (comercial/marketing/master) usa o CRUD da tela "Destinos". */
+async function assertCanManageDestinations() {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'destination:manage')) {
+    throw new Error('Você não tem permissão para gerenciar destinos.')
+  }
+  return user
+}
+
+/** Papel ativo pode gerenciar destinos? Usa pra decidir se mostra o formulário, sem lançar erro. */
+export async function canManageDestinations(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'destination:manage'))
+}
+
+/**
+ * Catálogo de destinos para a tela de gestão — `pousadasCount` vem calculado
+ * ao vivo (repositories/destinations.repository.ts), nunca digitado.
+ */
+export async function listDestinationsAdmin(): Promise<AdminDestinationRow[]> {
+  // Ver é para qualquer papel de plataforma (mesmo padrão de listPousadasAdmin);
+  // só criar/editar/excluir exige destination:manage (assertCanManageDestinations).
+  await assertPlatform()
+  return listDestinationsForAdmin()
+}
+
+/** Cria um destino (RPC `create_destination`, 0054 — valida e audita no banco). */
+export async function createDestinationAdmin(input: DestinationInput): Promise<{ slug: string }> {
+  await assertCanManageDestinations()
+  return insertDestinationRpc(input)
+}
+
+/** Edita um destino existente (RPC `update_destination`, 0054). */
+export async function updateDestinationAdmin(
+  id: string,
+  input: DestinationInput,
+): Promise<{ slug: string }> {
+  await assertCanManageDestinations()
+  return updateDestinationRpc(id, input)
+}
+
+/** Remove um destino (RPC `delete_destination`, 0054 — bloqueia se houver pousada vinculada). */
+export async function deleteDestinationAdmin(id: string): Promise<void> {
+  await assertCanManageDestinations()
+  await deleteDestinationRpc(id)
+}
+
+/**
+ * Só master gerencia papéis de plataforma — reaproveita `platform:configure`
+ * (já restrita a master na matriz), em vez de criar uma ação nova só pra
+ * isso: gerenciar quem tem acesso à plataforma É configurar a plataforma.
+ */
+async function assertCanManageRoles() {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'platform:configure')) {
+    throw new Error('Você não tem permissão para gerenciar papéis de plataforma.')
+  }
+  return user
+}
+
+/** Papel ativo pode gerenciar papéis de plataforma? Usa pra decidir se mostra a tela, sem lançar erro. */
+export async function canManageRoles(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'platform:configure'))
+}
+
+/**
+ * Equipe atual de plataforma — tela "Configurações". Fecha o achado crítico
+ * da avaliação de 19/09/2026: atribuição de papel só existia via SQL manual
+ * (e, pior, `profiles_self_update` deixava qualquer usuário se autopromover
+ * a master pela API direta — corrigido na migration 0054 junto com esta UI).
+ */
+export async function listPlatformTeamAdmin(): Promise<PlatformTeamMember[]> {
+  await assertCanManageRoles()
+  return listPlatformTeam()
+}
+
+/** Atribui (ou troca) o papel de plataforma de um e-mail já cadastrado. */
+export async function assignPlatformRole(input: {
+  email: string
+  role: PlatformRoleValue
+}): Promise<void> {
+  await assertCanManageRoles()
+  await setPlatformRoleByEmail(input.email.trim().toLowerCase(), input.role)
+}
+
+/** Remove o papel de plataforma de um e-mail (volta a ser usuário comum). */
+export async function revokePlatformRole(email: string): Promise<void> {
+  await assertCanManageRoles()
+  await revokePlatformRoleByEmail(email.trim().toLowerCase())
+}
+
+/**
+ * Dados da tela "Relatórios" — reaproveita os mesmos cálculos ao vivo da
+ * Visão Geral (repositories/admin-metrics.repository.ts), com janela de
+ * meses configurável. Sem tabela/RPC nova: o ganho da tela é filtro de
+ * período + exportação em CSV (features/admin/components/reports-view.tsx),
+ * não dado que já não existisse.
+ */
+export async function getReportsData(months = 12): Promise<{
+  kpis: PlatformKpis
+  revenueByMonth: RevenueMonthPoint[]
+  bookingsByRegion: RegionBookingCount[]
+  occupancyRate: number
+}> {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'reports:global:view')) {
+    throw new Error('Você não tem permissão para ver relatórios.')
+  }
+  const [kpis, revenueByMonth, bookingsByRegion, occupancyRate] = await Promise.all([
+    getPlatformKpis(),
+    getRevenueByMonth(months),
+    getBookingsByRegion(),
+    getOccupancyRate(),
+  ])
+  return { kpis, revenueByMonth, bookingsByRegion, occupancyRate }
 }

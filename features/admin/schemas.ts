@@ -72,3 +72,69 @@ export const linkPousadaOwnerSchema = z.object({
   email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
 })
 export type LinkPousadaOwnerInput = z.infer<typeof linkPousadaOwnerSchema>
+
+/** Estações do ano usadas na curadoria de destinos (mesmo enum do banco — migration 0001). */
+export const seasonSchema = z.enum(['verao', 'outono', 'inverno', 'primavera'])
+
+/**
+ * Campos editáveis de um destino. `rating`/`priceFrom` são conteúdo
+ * editorial curado pela equipe (ver repositories/destinations.repository.ts)
+ * — `pousadasCount` NÃO entra aqui porque é calculado ao vivo, nunca digitado.
+ */
+export const destinationInputSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(2, 'Slug muito curto.')
+    .max(60, 'Slug muito longo.')
+    .regex(/^[a-z0-9-]+$/, 'Use apenas letras minúsculas, números e hífen.'),
+  name: z.string().trim().min(2, 'Nome muito curto.').max(80, 'Nome muito longo.'),
+  state: ufSchema,
+  image: z.string().trim().url('URL de imagem inválida.'),
+  season: z.array(seasonSchema).min(1, 'Selecione ao menos uma estação.'),
+  rating: z.coerce
+    .number({ invalid_type_error: 'Informe a nota.' })
+    .min(0, 'Nota mínima é 0.')
+    .max(5, 'Nota máxima é 5.'),
+  priceFrom: z.coerce
+    .number({ invalid_type_error: 'Informe o preço.' })
+    .int()
+    .min(0, 'Preço não pode ser negativo.'),
+})
+export type DestinationFormInput = z.infer<typeof destinationInputSchema>
+
+export const updateDestinationInputSchema = destinationInputSchema.extend({
+  id: z.string().uuid('Identificador inválido.'),
+})
+export type UpdateDestinationFormInput = z.infer<typeof updateDestinationInputSchema>
+
+export const destinationIdSchema = z.object({
+  id: z.string().uuid('Identificador inválido.'),
+})
+export type DestinationIdInput = z.infer<typeof destinationIdSchema>
+
+/** Papéis de plataforma atribuíveis pela tela "Configurações" (espelha o enum `platform_role` do banco). */
+export const platformRoleValueSchema = z.enum([
+  'suporte',
+  'comercial',
+  'marketing',
+  'financeiro_plataforma',
+  'master',
+])
+
+export const assignPlatformRoleSchema = z.object({
+  email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
+  role: platformRoleValueSchema,
+})
+export type AssignPlatformRoleInput = z.infer<typeof assignPlatformRoleSchema>
+
+export const revokePlatformRoleSchema = z.object({
+  email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
+})
+export type RevokePlatformRoleInput = z.infer<typeof revokePlatformRoleSchema>
+
+/** Janela de meses da tela "Relatórios" (reaproveita `getRevenueByMonth`, que já aceita esse parâmetro). */
+export const reportsFilterSchema = z.object({
+  months: z.coerce.number().int().min(1, 'Mínimo de 1 mês.').max(24, 'Máximo de 24 meses.'),
+})
+export type ReportsFilterInput = z.infer<typeof reportsFilterSchema>

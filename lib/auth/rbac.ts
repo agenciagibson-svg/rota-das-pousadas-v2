@@ -62,6 +62,10 @@ export type Action =
   | 'platform:grant:manage'
   | 'audit:view'
   | 'category:manage'
+  // Catálogo de destinos (curadoria da home) — comercial/marketing/master,
+  // mesmo escopo de quem hoje aprova/cadastra pousada. Espelha
+  // `auth_can_manage_destinations` na migration 0054.
+  | 'destination:manage'
   | 'room:block:manage'
   | 'room:block:view'
   | 'availability:check'
@@ -222,6 +226,7 @@ const MATRIX: Record<Role, Action[]> = {
     'pousada:create',
     'pousada:link_owner',
     'reports:global:view',
+    'destination:manage',
   ],
   marketing: [
     'catalog:view',
@@ -229,6 +234,7 @@ const MATRIX: Record<Role, Action[]> = {
     'coupon:platform:create',
     'content:moderate',
     'reports:global:view',
+    'destination:manage',
   ],
   financeiro_plataforma: ['catalog:view', 'search:run', 'reports:global:view'],
   master: [
@@ -270,6 +276,7 @@ const MATRIX: Record<Role, Action[]> = {
     'platform:grant:manage',
     'audit:view',
     'category:manage',
+    'destination:manage',
     'room:block:manage',
     'room:block:view',
     'availability:check',

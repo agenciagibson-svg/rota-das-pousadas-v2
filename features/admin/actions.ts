@@ -9,6 +9,11 @@ import {
   createPousadaAdminSchema,
   changePousadaStatusSchema,
   linkPousadaOwnerSchema,
+  destinationInputSchema,
+  updateDestinationInputSchema,
+  destinationIdSchema,
+  assignPlatformRoleSchema,
+  revokePlatformRoleSchema,
 } from './schemas'
 import {
   approvePousada,
@@ -18,6 +23,11 @@ import {
   createPousadaAsAdmin,
   changePousadaStatus,
   linkPousadaOwner,
+  createDestinationAdmin,
+  updateDestinationAdmin,
+  deleteDestinationAdmin,
+  assignPlatformRole,
+  revokePlatformRole,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -74,5 +84,49 @@ export const changePousadaStatusAction = createAction(
     revalidatePath('/')
     revalidatePath('/sitemap.xml')
     return { id, status }
+  },
+)
+
+/** Cria um destino (curadoria da home) — comercial/marketing/master. */
+export const createDestinationAction = createAction(destinationInputSchema, async (input) => {
+  const { slug } = await createDestinationAdmin(input)
+  revalidatePath('/admin/destinos')
+  revalidatePath('/')
+  return { slug }
+})
+
+/** Edita um destino existente. */
+export const updateDestinationAction = createAction(
+  updateDestinationInputSchema,
+  async ({ id, ...input }) => {
+    const { slug } = await updateDestinationAdmin(id, input)
+    revalidatePath('/admin/destinos')
+    revalidatePath('/')
+    return { id, slug }
+  },
+)
+
+/** Remove um destino — a RPC bloqueia se houver pousada vinculada. */
+export const deleteDestinationAction = createAction(destinationIdSchema, async ({ id }) => {
+  await deleteDestinationAdmin(id)
+  revalidatePath('/admin/destinos')
+  revalidatePath('/')
+  return { id }
+})
+
+/** Atribui (ou troca) o papel de plataforma de um e-mail já cadastrado — só master. */
+export const assignPlatformRoleAction = createAction(assignPlatformRoleSchema, async (input) => {
+  await assignPlatformRole(input)
+  revalidatePath('/admin/configuracoes')
+  return { email: input.email }
+})
+
+/** Remove o papel de plataforma de um e-mail — só master. */
+export const revokePlatformRoleAction = createAction(
+  revokePlatformRoleSchema,
+  async ({ email }) => {
+    await revokePlatformRole(email)
+    revalidatePath('/admin/configuracoes')
+    return { email }
   },
 )

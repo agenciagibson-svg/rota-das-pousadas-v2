@@ -1866,6 +1866,7 @@ export type Database = {
         Args: { target_pousada: string }
         Returns: boolean
       }
+      auth_can_manage_destinations: { Args: never; Returns: boolean }
       auth_can_manage_pousada: {
         Args: { target_pousada: string }
         Returns: boolean
@@ -1941,6 +1942,18 @@ export type Database = {
         }
         Returns: Json
       }
+      create_destination: {
+        Args: {
+          p_image: string
+          p_name: string
+          p_price_from: number
+          p_rating: number
+          p_season: string[]
+          p_slug: string
+          p_state: string
+        }
+        Returns: Json
+      }
       create_pousada: {
         Args: {
           p_city: string
@@ -1989,6 +2002,7 @@ export type Database = {
         Args: { p_calendar_id: string }
         Returns: undefined
       }
+      delete_destination: { Args: { p_id: string }; Returns: Json }
       expire_overdue_pending_bookings: { Args: never; Returns: Json }
       expire_pending_booking: { Args: { p_booking_id: string }; Returns: Json }
       get_channel_export_feed: { Args: { p_token: string }; Returns: Json }
@@ -2051,6 +2065,16 @@ export type Database = {
           pousada_name: string
           pousada_slug: string
           role: Database['public']['Enums']['user_role']
+          user_id: string
+        }[]
+      }
+      list_platform_team: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          platform_role: Database['public']['Enums']['platform_role'] | null
           user_id: string
         }[]
       }
@@ -2131,6 +2155,7 @@ export type Database = {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
       }
+      revoke_platform_role_by_email: { Args: { p_email: string }; Returns: Json }
       save_channel_calendar: {
         Args: {
           p_export_token: string
@@ -2173,6 +2198,13 @@ export type Database = {
           p_booking_id: string
           p_new_status: Database['public']['Enums']['booking_status']
           p_reason?: string
+        }
+        Returns: Json
+      }
+      set_platform_role_by_email: {
+        Args: {
+          p_email: string
+          p_role: Database['public']['Enums']['platform_role'] | null
         }
         Returns: Json
       }
@@ -2223,6 +2255,19 @@ export type Database = {
           p_surcharge: number
           p_total: number
           p_version: number
+        }
+        Returns: Json
+      }
+      update_destination: {
+        Args: {
+          p_id: string
+          p_image: string
+          p_name: string
+          p_price_from: number
+          p_rating: number
+          p_season: string[]
+          p_slug: string
+          p_state: string
         }
         Returns: Json
       }

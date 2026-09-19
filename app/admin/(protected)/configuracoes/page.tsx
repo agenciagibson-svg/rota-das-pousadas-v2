@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
-import { Settings } from 'lucide-react'
+import { ShieldOff } from 'lucide-react'
 import { AdminShell } from '@/features/admin/components/admin-shell'
+import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { PlatformTeam } from '@/features/admin/components/platform-team'
+import { listPlatformTeamAdmin, canManageRoles } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -10,20 +13,27 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminConfiguracoesPage() {
-  const user = await getCurrentUser()
+  const [user, canManage] = await Promise.all([getCurrentUser(), canManageRoles()])
+  const team = canManage ? await listPlatformTeamAdmin() : []
 
   return (
     <AdminShell
       active="configuracoes"
       title="Configurações"
-      subtitle="Parâmetros globais da plataforma"
+      subtitle="Papéis de plataforma"
       displayName={user?.name || user?.email || 'Equipe'}
     >
-      <EmptyState
-        icon={Settings}
-        title="Em breve"
-        description="Configurações de plataforma (comissão padrão, integrações, papéis) ainda não foram construídas."
-      />
+      <Card className="p-6">
+        {canManage ? (
+          <PlatformTeam initialTeam={team} />
+        ) : (
+          <EmptyState
+            icon={ShieldOff}
+            title="Acesso restrito"
+            description="Gestão de papéis de plataforma é exclusiva do master."
+          />
+        )}
+      </Card>
     </AdminShell>
   )
 }

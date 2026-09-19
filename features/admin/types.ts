@@ -1,3 +1,5 @@
+import type { Season } from '@/types'
+
 /** Pousada aguardando aprovação da curadoria. */
 export type PendingPousada = {
   id: string
@@ -50,7 +52,14 @@ export type PlatformOverview = {
   bookingsByRegion: RegionBookingCount[]
   occupancyRate: number
   featuredDestinations: { slug: string; name: string; state: string; pousadas: number }[]
-  featuredPousadas: { slug: string; name: string; city: string; state: string; image: string; rating: number }[]
+  featuredPousadas: {
+    slug: string
+    name: string
+    city: string
+    state: string
+    image: string
+    rating: number
+  }[]
 }
 
 /**
@@ -66,4 +75,35 @@ export type PlatformAccessGrant = {
   reason: string
   grantedAt: string
   expiresAt: string
+}
+
+/** Linha da tela "Destinos" do admin — inclui `id` (editar/excluir) e `pousadasCount` calculado ao vivo. */
+export type AdminDestinationRow = {
+  id: string
+  slug: string
+  name: string
+  state: string
+  image: string
+  season: Season[]
+  rating: number
+  priceFrom: number
+  pousadasCount: number
+}
+
+/**
+ * Papel de plataforma atribuível pela UI de Configurações — subconjunto de
+ * `Role` (lib/auth/rbac.ts) que corresponde exatamente ao enum `platform_role`
+ * do banco (migration 0001). Papéis de tenant (proprietario, etc.) nunca
+ * passam por aqui — são atribuídos via membership, não platform_role.
+ */
+export type PlatformRoleValue =
+  'suporte' | 'comercial' | 'marketing' | 'financeiro_plataforma' | 'master'
+
+/** Membro da equipe de plataforma (tela "Configurações" — gestão de papéis). */
+export type PlatformTeamMember = {
+  userId: string
+  fullName: string
+  email: string
+  platformRole: PlatformRoleValue
+  createdAt: string
 }
