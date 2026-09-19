@@ -15,7 +15,18 @@ import { getPaymentById, type MpPayment } from './mp-client'
  * `id:<data.id, minúsculo>;request-id:<x-request-id>;ts:<ts>;` — conferido
  * na documentação oficial em 2026-09. Revalidar se o Mercado Pago mudar o
  * esquema antes de operar em produção.
+ *
+ * Além do HMAC, exige `ts` recente (`WEBHOOK_MAX_CLOCK_SKEW_MS`): sem isso,
+ * uma notificação capturada (log de proxy, extensão de navegador no painel
+ * do Mercado Pago) continuaria com assinatura válida para sempre e poderia
+ * ser reenviada manualmente. O impacto de um replay já era limitado —
+ * `processPaymentNotification` sempre reconsulta o pagamento de verdade na
+ * API do Mercado Pago antes de gravar, nunca confia no corpo — mas rejeitar
+ * `ts` velho fecha a reexecução gratuita sem custo nenhum de UX (o Mercado
+ * Pago reenvia no mesmo segundo do evento).
  */
+const WEBHOOK_MAX_CLOCK_SKEW_MS = 5 * 60 * 1000
+
 export function verifyWebhookSignature(params: {
   xSignatureHeader: string | null
   xRequestId: string | null
@@ -34,6 +45,10 @@ export function verifyWebhookSignature(params: {
   const ts = parts.ts
   const v1 = parts.v1
   if (!ts || !v1) return false
+
+  const tsMs = Number(ts)
+  if (!Number.isFinite(tsMs) || Math.abs(Date.now() - tsMs) > WEBHOOK_MAX_CLOCK_SKEW_MS)
+    return false
 
   const manifest = `id:${params.dataId.toLowerCase()};request-id:${params.xRequestId};ts:${ts};`
   const expected = createHmac('sha256', secret).update(manifest).digest('hex')
@@ -64,10 +79,15 @@ function mapMpStatus(status: MpPayment['status']): PaymentStatus {
  * permite saber de qual pousada é o token ANTES de reconsultar o pagamento
  * de verdade na API do Mercado Pago (nunca confiar no corpo do webhook).
  */
-export async function processPaymentNotification(params: { bookingId: string; mpPaymentId: string }): Promise<void> {
+export async function processPaymentNotification(params: {
+  bookingId: string
+  mpPaymentId: string
+}): Promise<void> {
   const context = await getPousadaPaymentContextForWebhook(params.bookingId)
   if (!context) {
-    throw new Error(`Reserva ${params.bookingId} sem conta de pagamento conectada — notificação ignorada.`)
+    throw new Error(
+      `Reserva ${params.bookingId} sem conta de pagamento conectada — notificação ignorada.`,
+    )
   }
 
   const sellerAccessToken = decryptToken(context.accessTokenEncrypted)

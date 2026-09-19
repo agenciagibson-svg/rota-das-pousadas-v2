@@ -6,9 +6,18 @@ beforeAll(() => {
 })
 
 describe('oauth-state', () => {
-  it('assina e verifica de volta o mesmo pousadaId', () => {
+  it('assina e verifica de volta o mesmo pousadaId, com um nonce', () => {
     const state = signState('pousada-123')
-    expect(verifyState(state)).toEqual({ pousadaId: 'pousada-123' })
+    const decoded = verifyState(state)
+    expect(decoded?.pousadaId).toBe('pousada-123')
+    expect(decoded?.nonce).toEqual(expect.any(String))
+    expect(decoded?.nonce.length).toBeGreaterThan(0)
+  })
+
+  it('gera nonces diferentes a cada chamada (base do uso único)', () => {
+    const a = verifyState(signState('pousada-123'))
+    const b = verifyState(signState('pousada-123'))
+    expect(a?.nonce).not.toBe(b?.nonce)
   })
 
   it('rejeita state adulterado (assinatura não bate)', () => {

@@ -1,8 +1,10 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createAction } from '@/actions/create-action'
+import { assertLoginNotLocked, recordLoginAttempt } from '@/repositories/auth-rate-limit.repository'
 import { getCurrentUser, updateMyName } from './services/auth.service'
 import { loginSchema, signupSchema, updateNameSchema } from './schemas'
 
@@ -13,12 +15,22 @@ import { loginSchema, signupSchema, updateNameSchema } from './schemas'
  * não conflitar com o tratamento de erro do createAction).
  */
 
+/** `x-forwarded-for` só para telemetria do rate limit (migration 0053) — nunca para decisão de acesso. */
+async function clientIp(): Promise<string | null> {
+  const h = await headers()
+  return h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || null
+}
+
 export const signInAction = createAction(loginSchema, async (input) => {
+  const ip = await clientIp()
+  await assertLoginNotLocked(input.email)
+
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.auth.signInWithPassword({
     email: input.email,
     password: input.password,
   })
+  await recordLoginAttempt(input.email, ip, !error)
   if (error) throw new Error('E-mail ou senha inválidos.')
   revalidatePath('/', 'layout')
   return { redirectTo: '/minhas-reservas' as const }
@@ -32,11 +44,15 @@ export const signInAction = createAction(loginSchema, async (input) => {
  * não for staff, em vez de deixar uma sessão autenticada sem propósito.
  */
 export const signInAdminAction = createAction(loginSchema, async (input) => {
+  const ip = await clientIp()
+  await assertLoginNotLocked(input.email)
+
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.auth.signInWithPassword({
     email: input.email,
     password: input.password,
   })
+  await recordLoginAttempt(input.email, ip, !error)
   if (error) throw new Error('E-mail ou senha inválidos.')
 
   const user = await getCurrentUser()

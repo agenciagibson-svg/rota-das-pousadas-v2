@@ -41,11 +41,15 @@ export async function getPaymentAccountStatusByPousada(
 }
 
 /** Para o checkout — traz os tokens cifrados da pousada que vai receber o pagamento. */
-export async function getPaymentAccountByPousada(pousadaId: string): Promise<PaymentAccountRow | null> {
+export async function getPaymentAccountByPousada(
+  pousadaId: string,
+): Promise<PaymentAccountRow | null> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('pousada_payment_accounts')
-    .select('pousada_id, mp_user_id, access_token, refresh_token, public_key, live_mode, connected_at')
+    .select(
+      'pousada_id, mp_user_id, access_token, refresh_token, public_key, live_mode, connected_at',
+    )
     .eq('pousada_id', pousadaId)
     .maybeSingle()
   if (error) throw error
@@ -74,4 +78,17 @@ export async function savePaymentAccountRpc(p: SavePaymentAccountParams): Promis
     p_expires_at: p.expiresAt,
   })
   if (error) throw new Error(error.message)
+}
+
+/**
+ * Consome (marca como usado) o nonce de um `state` OAuth já validado
+ * (assinatura + validade) — RPC `consume_oauth_state_nonce` (migration 0053).
+ * `true` na primeira vez; `false` se este nonce já foi consumido antes
+ * (replay do mesmo `state` dentro da janela de 10 minutos).
+ */
+export async function consumeOauthStateNonce(nonce: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('consume_oauth_state_nonce', { p_nonce: nonce })
+  if (error) throw new Error(error.message)
+  return Boolean(data)
 }

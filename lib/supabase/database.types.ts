@@ -1848,6 +1848,7 @@ export type Database = {
           target_user_id: string
         }[]
       }
+      assert_login_not_locked: { Args: { p_email: string }; Returns: undefined }
       assert_room_available_for_booking: {
         Args: {
           p_adults: number
@@ -1908,6 +1909,7 @@ export type Database = {
         Returns: Json
       }
       catalog_search_text: { Args: { p_text: string }; Returns: string }
+      consume_oauth_state_nonce: { Args: { p_nonce: string }; Returns: boolean }
       create_booking: {
         Args: {
           p_adults: number
@@ -2108,6 +2110,10 @@ export type Database = {
           p_guests?: number
           p_pousada_id: string
         }
+        Returns: undefined
+      }
+      record_login_attempt: {
+        Args: { p_email: string; p_ip?: string; p_success: boolean }
         Returns: undefined
       }
       record_payment_and_confirm_booking: {

@@ -5,6 +5,7 @@ import { can } from '@/lib/auth/rbac'
 import { encryptToken } from '@/lib/crypto/token-cipher'
 import { publicEnv } from '@/lib/env'
 import {
+  consumeOauthStateNonce,
   getPaymentAccountStatusByPousada,
   savePaymentAccountRpc,
 } from '@/repositories/payment-accounts.repository'
@@ -35,12 +36,22 @@ export async function completeConnection(input: { code: string; state: string })
   const decoded = verifyState(input.state)
   if (!decoded) throw new Error('Link de conexão inválido ou expirado. Tente novamente.')
 
+  // Uso único: um `state` válido (assinatura + prazo) só completa a conexão
+  // uma vez. Sem isso, um `state` capturado (log de proxy, histórico do
+  // navegador) continuaria utilizável por até 10 minutos.
+  const isFreshNonce = await consumeOauthStateNonce(decoded.nonce)
+  if (!isFreshNonce)
+    throw new Error('Este link de conexão já foi usado. Inicie a conexão novamente.')
+
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login para concluir a conexão.')
 
   const isPlatformMaster = user.platformRole === 'master'
-  const membership = user.memberships.find((m) => m.pousadaId === decoded.pousadaId && m.status === 'active')
-  const authorized = isPlatformMaster || (membership && can(membership.role, 'payment:connect_account'))
+  const membership = user.memberships.find(
+    (m) => m.pousadaId === decoded.pousadaId && m.status === 'active',
+  )
+  const authorized =
+    isPlatformMaster || (membership && can(membership.role, 'payment:connect_account'))
   if (!authorized) {
     throw new Error('Você não tem permissão para conectar a conta de pagamento desta pousada.')
   }
