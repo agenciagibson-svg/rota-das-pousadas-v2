@@ -65,6 +65,19 @@ describe('rbac.can', () => {
     }
   })
 
+  it('proprietario/master assinam o plano da pousada; ninguém mais (nem financeiro_plataforma)', () => {
+    expect(can('proprietario', 'subscription:manage')).toBe(true)
+    expect(can('master', 'subscription:manage')).toBe(true)
+    for (const role of [
+      'admin_pousada',
+      'financeiro_plataforma',
+      'suporte',
+      'comercial',
+    ] as Role[]) {
+      expect(can(role, 'subscription:manage')).toBe(false)
+    }
+  })
+
   it('IA só faz triagem de moderação, nunca ações irreversíveis', () => {
     expect(can('ia', 'content:moderate')).toBe(true)
     expect(can('ia', 'payment:pay')).toBe(false)

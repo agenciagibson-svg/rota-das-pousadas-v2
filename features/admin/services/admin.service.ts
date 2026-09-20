@@ -22,6 +22,8 @@ import {
   insertPlatformExpense,
   setPlatformExpensePaid,
 } from '@/repositories/platform-finance.repository'
+import { getActivePlan } from '@/repositories/subscriptions.repository'
+import { bootstrapPlatformPlan } from '@/features/pagamentos/services/subscription.service'
 import {
   getPlatformKpis,
   getGmvByMonth,
@@ -532,4 +534,29 @@ export async function addPlatformExpense(input: CreatePlatformExpenseInput): Pro
 export async function markPlatformExpensePaid(expenseId: string, paid: boolean): Promise<void> {
   await assertCanManagePlatformFinance()
   await setPlatformExpensePaid(expenseId, paid)
+}
+
+export type PlatformPlanStatus = {
+  name: string
+  price: number
+  configured: boolean
+}
+
+/**
+ * Status do plano de assinatura pra tela de Financeiro — se `configured` for
+ * falso, o botão "Configurar cobrança" chama `bootstrapPlatformPlanAdmin`
+ * (que cria o plano de verdade na API do Mercado Pago, uma vez só). Sem
+ * isso, nenhuma pousada consegue assinar (`startSubscriptionAuthorization`
+ * recusa sem `mpPreapprovalPlanId`).
+ */
+export async function getPlatformPlanStatus(): Promise<PlatformPlanStatus | null> {
+  await assertCanManagePlatformFinance()
+  const plan = await getActivePlan()
+  if (!plan) return null
+  return { name: plan.name, price: plan.price, configured: Boolean(plan.mpPreapprovalPlanId) }
+}
+
+/** Cria o plano de verdade no Mercado Pago (`MERCADO_PAGO_PLATFORM_ACCESS_TOKEN` precisa estar configurada) — só master. */
+export async function bootstrapPlatformPlanAdmin(): Promise<void> {
+  await bootstrapPlatformPlan()
 }

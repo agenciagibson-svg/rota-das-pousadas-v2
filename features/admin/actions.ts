@@ -1,5 +1,6 @@
 'use server'
 
+import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createAction } from '@/actions/create-action'
 import {
@@ -32,6 +33,7 @@ import {
   revokePlatformRole,
   addPlatformExpense,
   markPlatformExpensePaid,
+  bootstrapPlatformPlanAdmin,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -154,3 +156,10 @@ export const setPlatformExpensePaidAction = createAction(
     return { expenseId: input.expenseId, paid: input.paid }
   },
 )
+
+/** Cria o plano de assinatura de verdade no Mercado Pago — só master, uma vez. */
+export const bootstrapPlatformPlanAction = createAction(z.object({}), async () => {
+  await bootstrapPlatformPlanAdmin()
+  revalidatePath('/admin/financeiro')
+  return { ok: true as const }
+})

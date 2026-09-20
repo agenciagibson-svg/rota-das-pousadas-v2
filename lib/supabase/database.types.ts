@@ -910,6 +910,50 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          mp_payment_id: string | null
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          subscription_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_subscription_id_fkey'
+            columns: ['subscription_id']
+            isOneToOne: false
+            referencedRelation: 'subscriptions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       link_events: {
         Row: {
           available_count: number | null
@@ -1116,6 +1160,33 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      plans: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          mp_preapproval_plan_id: string | null
+          name: string
+          price: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          mp_preapproval_plan_id?: string | null
+          name: string
+          price: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          mp_preapproval_plan_id?: string | null
+          name?: string
+          price?: number
+        }
+        Relationships: []
       }
       platform_access_grants: {
         Row: {
@@ -1872,6 +1943,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          mp_preapproval_id: string | null
+          next_billing_date: string | null
+          plan_id: string
+          pousada_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mp_preapproval_id?: string | null
+          next_billing_date?: string | null
+          plan_id: string
+          pousada_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mp_preapproval_id?: string | null
+          next_billing_date?: string | null
+          plan_id?: string
+          pousada_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'subscriptions_plan_id_fkey'
+            columns: ['plan_id']
+            isOneToOne: false
+            referencedRelation: 'plans'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'subscriptions_pousada_id_fkey'
+            columns: ['pousada_id']
+            isOneToOne: true
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1994,6 +2113,10 @@ export type Database = {
           p_state: string
         }
         Returns: Json
+      }
+      create_pending_subscription: {
+        Args: { p_mp_preapproval_id: string; p_plan_id: string; p_pousada_id: string }
+        Returns: string
       }
       create_pousada: {
         Args: {
@@ -2192,6 +2315,18 @@ export type Database = {
         }
         Returns: Json
       }
+      record_subscription_invoice: {
+        Args: {
+          p_amount: number
+          p_mp_payment_id: string
+          p_mp_preapproval_id: string
+          p_paid_at: string | null
+          p_period_end: string | null
+          p_period_start: string | null
+          p_status: string
+        }
+        Returns: Json
+      }
       revoke_member: {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
@@ -2272,6 +2407,10 @@ export type Database = {
           p_events: Json
           p_status: Database['public']['Enums']['channel_sync_status']
         }
+        Returns: Json
+      }
+      sync_subscription_status: {
+        Args: { p_mp_preapproval_id: string; p_next_billing_date: string | null; p_status: string }
         Returns: Json
       }
       update_booking: {

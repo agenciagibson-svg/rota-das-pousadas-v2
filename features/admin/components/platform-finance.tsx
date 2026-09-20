@@ -2,10 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, CircleDollarSign, Plus } from 'lucide-react'
+import { CheckCircle2, CircleDollarSign, CreditCard, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { createPlatformExpenseAction, setPlatformExpensePaidAction } from '../actions'
+import {
+  createPlatformExpenseAction,
+  setPlatformExpensePaidAction,
+  bootstrapPlatformPlanAction,
+} from '../actions'
 import type { PlatformExpense, PlatformExpenseCategory } from '../types'
 
 const CATEGORY_LABEL: Record<PlatformExpenseCategory, string> = {
@@ -29,6 +33,11 @@ function formatCurrency(value: number): string {
   return `R$ ${value.toLocaleString('pt-BR')}`
 }
 
+/** Preço de assinatura tem centavos (R$59,90) — sempre 2 casas, diferente de `formatCurrency` (reais inteiros das despesas). */
+function formatPlanPrice(value: number): string {
+  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
 function fmtDate(iso: string | null): string {
   if (!iso) return 'sem vencimento'
   return new Intl.DateTimeFormat('pt-BR', {
@@ -44,15 +53,36 @@ function fmtDate(iso: string | null): string {
  * registrar as despesas da empresa. Contas a receber/fluxo de caixa entram
  * aqui depois, quando o motor de cobrança de assinatura existir.
  */
-export function PlatformFinance({ initialExpenses }: { initialExpenses: PlatformExpense[] }) {
+export function PlatformFinance({
+  initialExpenses,
+  planStatus,
+}: {
+  initialExpenses: PlatformExpense[]
+  planStatus: { name: string; price: number; configured: boolean } | null
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [payingId, setPayingId] = useState<string | null>(null)
+  const [bootstrapping, setBootstrapping] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState<PlatformExpenseCategory>('outros')
   const [dueDate, setDueDate] = useState('')
+
+  function bootstrapPlan() {
+    setError(null)
+    setBootstrapping(true)
+    startTransition(async () => {
+      const result = await bootstrapPlatformPlanAction({})
+      setBootstrapping(false)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
 
   const openCount = initialExpenses.filter((e) => !e.paid).length
   const openTotal = initialExpenses.filter((e) => !e.paid).reduce((sum, e) => sum + e.amount, 0)
@@ -97,6 +127,24 @@ export function PlatformFinance({ initialExpenses }: { initialExpenses: Platform
 
   return (
     <div className="space-y-5">
+      {planStatus && (
+        <div className="border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
+          <div className="flex items-center gap-2">
+            <CreditCard className="text-ocean size-5" />
+            <span className="text-muted-foreground text-sm">
+              Assinatura das pousadas: plano {planStatus.name} · {formatPlanPrice(planStatus.price)}
+              /mês ·{' '}
+              {planStatus.configured ? 'configurado no Mercado Pago' : 'ainda não configurado'}
+            </span>
+          </div>
+          {!planStatus.configured && (
+            <Button size="sm" variant="outline" disabled={bootstrapping} onClick={bootstrapPlan}>
+              {bootstrapping ? 'Configurando…' : 'Configurar cobrança'}
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="border-border flex flex-wrap items-center gap-2 rounded-2xl border p-4">
         <CircleDollarSign className="text-ocean size-5" />
         <span className="text-muted-foreground text-sm">

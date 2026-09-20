@@ -1,24 +1,47 @@
 'use client'
 
-import { Clock3, Mail, Phone, Settings, Wallet } from 'lucide-react'
+import { Clock3, CreditCard, Mail, Phone, Settings, Wallet } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConnectMpButton } from '@/features/pagamentos/components/connect-mp-button'
+import { SubscribeButton } from '@/features/pagamentos/components/subscribe-button'
 import type { OwnerPousadaSettings } from '../types'
 import { OwnerSettingsForm } from './owner-settings-form'
+
+function formatSubscriptionAmount(value: number): string {
+  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+type SubscriptionStatusValue = 'none' | 'pending' | 'authorized' | 'paused' | 'cancelled'
+
+const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatusValue, string> = {
+  none: 'Ainda não assinado',
+  pending: 'Autorização pendente',
+  authorized: 'Ativa',
+  paused: 'Pausada',
+  cancelled: 'Cancelada',
+}
 
 export function OwnerSettingsView({
   displayName,
   pousadaName,
   settings,
   paymentAccount,
+  subscription,
 }: {
   displayName: string
   pousadaName: string
   settings: OwnerPousadaSettings | null
   paymentAccount: { connected: boolean; liveMode: boolean; canConnect: boolean } | null
+  subscription: {
+    planName: string
+    planPrice: number
+    status: SubscriptionStatusValue
+    nextBillingDate: string | null
+    canManage: boolean
+  } | null
 }) {
   return (
     <DashboardShell
@@ -38,8 +61,8 @@ export function OwnerSettingsView({
       ) : (
         <div className="grid gap-5 2xl:grid-cols-[1.3fr_0.7fr]">
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Dados da pousada</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-foreground font-semibold">Dados da pousada</h2>
+            <p className="text-muted-foreground text-sm">
               Essas informações alimentam a página pública e a operação de reservas.
             </p>
             <div className="mt-6">
@@ -49,59 +72,81 @@ export function OwnerSettingsView({
 
           <div className="space-y-4">
             <Card className="p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Clock3 className="size-4 text-primary" />
+              <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                <Clock3 className="text-primary size-4" />
                 Horários
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-2 text-sm">
                 Check-in às {settings.checkinTime}; check-out às {settings.checkoutTime}.
               </p>
             </Card>
             <Card className="p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Phone className="size-4 text-primary" />
+              <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                <Phone className="text-primary size-4" />
                 Atendimento
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-2 text-sm">
                 {settings.contactPhone || 'Telefone não informado.'}
               </p>
             </Card>
             <Card className="p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Mail className="size-4 text-primary" />
+              <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                <Mail className="text-primary size-4" />
                 Notificações
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-2 text-sm">
                 {settings.notificationEmail || 'E-mail de notificação não informado.'}
               </p>
             </Card>
             <Card className="p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Wallet className="size-4 text-primary" />
+              <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                <Wallet className="text-primary size-4" />
                 Pagamentos
               </div>
               {paymentAccount?.connected ? (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Conta Mercado Pago conectada{paymentAccount.liveMode ? '' : ' (modo de teste)'}. Os pagamentos das
-                  reservas caem direto nela.
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Conta Mercado Pago conectada{paymentAccount.liveMode ? '' : ' (modo de teste)'}.
+                  Os pagamentos das reservas caem direto nela.
                 </p>
               ) : (
                 <>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Conecte sua conta Mercado Pago para receber o pagamento das reservas diretamente.
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Conecte sua conta Mercado Pago para receber o pagamento das reservas
+                    diretamente.
                   </p>
                   {paymentAccount?.canConnect ? (
                     <div className="mt-3">
                       <ConnectMpButton />
                     </div>
                   ) : (
-                    <p className="mt-3 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-3 text-xs">
                       Só o proprietário pode conectar a conta de pagamento.
                     </p>
                   )}
                 </>
               )}
             </Card>
+            {subscription && (
+              <Card className="p-5">
+                <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  <CreditCard className="text-primary size-4" />
+                  Assinatura
+                </div>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Plano {subscription.planName} · {formatSubscriptionAmount(subscription.planPrice)}
+                  /mês · {SUBSCRIPTION_STATUS_LABEL[subscription.status]}
+                </p>
+                {subscription.status === 'authorized' ? null : subscription.canManage ? (
+                  <div className="mt-3">
+                    <SubscribeButton reassinar={subscription.status === 'cancelled'} />
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground mt-3 text-xs">
+                    Só o proprietário pode assinar o plano desta pousada.
+                  </p>
+                )}
+              </Card>
+            )}
           </div>
         </div>
       )}

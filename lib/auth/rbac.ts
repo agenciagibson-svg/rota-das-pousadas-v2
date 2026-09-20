@@ -77,6 +77,11 @@ export type Action =
   | 'booking:manage'
   | 'booking:no_show'
   | 'payment:connect_account'
+  // Assinatura da PLATAFORMA (Mercado Pago Assinaturas) — a receita real da
+  // Rota, não confundir com 'payment:connect_account' (conta MP da própria
+  // pousada, usada nos pagamentos de hóspede). Concedida a proprietario
+  // (assina em nome da pousada) e master (suporte).
+  | 'subscription:manage'
   // Canais (iCal com Airbnb/Booking). `manage` espelha exatamente
   // `auth_can_manage_channels` e `view` espelha `auth_can_read_channels`, ambos
   // na migration 0044 — as duas barreiras precisam concordar, senão a tela
@@ -119,6 +124,7 @@ const MATRIX: Record<Role, Action[]> = {
     'search:run',
     'payout:receive',
     'payment:connect_account',
+    'subscription:manage',
     'pousada:create',
     'pousada:edit',
     'pousada:delete',
@@ -255,6 +261,7 @@ const MATRIX: Record<Role, Action[]> = {
     'booking:cancel',
     'payout:receive',
     'payment:connect_account',
+    'subscription:manage',
     'pousada:create',
     'pousada:edit',
     'pousada:delete',
