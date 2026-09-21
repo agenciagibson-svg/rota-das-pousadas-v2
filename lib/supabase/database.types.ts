@@ -2212,6 +2212,16 @@ export type Database = {
           import_url: string
         }[]
       }
+      list_login_attempts: {
+        Args: { p_email: string | null; p_limit: number }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          ip_masked: string | null
+          success: boolean
+        }[]
+      }
       list_membership_emails: {
         Args: { p_pousada_id: string }
         Returns: {

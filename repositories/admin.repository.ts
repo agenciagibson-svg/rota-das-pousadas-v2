@@ -4,6 +4,7 @@ import type { Enums } from '@/lib/supabase/database.types'
 import type {
   AdminPousadaRow,
   AuditLogEntry,
+  LoginAttemptRow,
   PendingPousada,
   PlatformHost,
   PlatformTeamMember,
@@ -220,6 +221,46 @@ export async function listAuditLog(filter: AuditLogFilter = {}): Promise<AuditLo
     targetTable: r.target_table,
     targetId: r.target_id,
     metadata: (r.metadata ?? {}) as Record<string, unknown>,
+    createdAt: r.created_at,
+  }))
+}
+
+export type LoginAttemptFilter = {
+  /** Busca parcial (ilike) em `email`, aplicada dentro da própria RPC. */
+  email?: string
+  limit?: number
+}
+
+/**
+ * Relatório de login (tentativas recentes) — `login_attempts` (0053) não
+ * tem NENHUMA policy de leitura direta de propósito (só as RPCs de rate
+ * limiting), então a única forma de ler é a RPC dedicada `list_login_attempts`
+ * (0057), que já devolve o IP mascarado e só funciona para `master`
+ * (`auth_is_platform_master` dentro da função — segunda camada de defesa
+ * além do `can()` no service). A tabela se autolimpa sozinha (~1 dia), então
+ * isto é sempre uma janela recente, não um histórico longo.
+ */
+export async function listLoginAttempts(
+  filter: LoginAttemptFilter = {},
+): Promise<LoginAttemptRow[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('list_login_attempts', {
+    p_email: filter.email?.trim() || null,
+    p_limit: filter.limit ?? 200,
+  })
+  if (error) throw error
+  const rows = (data ?? []) as {
+    id: string
+    email: string
+    ip_masked: string | null
+    success: boolean
+    created_at: string
+  }[]
+  return rows.map((r) => ({
+    id: r.id,
+    email: r.email,
+    ipMasked: r.ip_masked,
+    success: r.success,
     createdAt: r.created_at,
   }))
 }

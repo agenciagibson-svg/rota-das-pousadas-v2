@@ -14,8 +14,10 @@ import {
   setPlatformRoleByEmail,
   revokePlatformRoleByEmail,
   listAuditLog,
+  listLoginAttempts,
   type PousadaStatus,
   type AuditLogFilter,
+  type LoginAttemptFilter,
 } from '@/repositories/admin.repository'
 import {
   listPlatformExpenses,
@@ -74,6 +76,7 @@ import type {
   PlatformTeamMember,
   PlatformRoleValue,
   AuditLogEntry,
+  LoginAttemptRow,
   PlatformExpense,
   BillingMetrics,
   CashFlowMonthPoint,
@@ -504,6 +507,40 @@ export async function canViewAuditLog(): Promise<boolean> {
 export async function listAuditLogAdmin(filter: AuditLogFilter = {}): Promise<AuditLogEntry[]> {
   await assertCanViewAuditLog()
   return listAuditLog(filter)
+}
+
+/**
+ * Mesmo raciocínio de `assertCanViewAuditLog`: `login_attempts` (0053) não
+ * tem NENHUMA policy de leitura direta de propósito — só master, e só via
+ * `list_login_attempts` (0057), que já mascara o IP.
+ */
+async function assertCanViewLoginAttempts() {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'platform:configure')) {
+    throw new Error('Você não tem permissão para ver o relatório de login.')
+  }
+  return user
+}
+
+/** Papel ativo pode ver o relatório de login? Usa pra decidir se mostra a tela. */
+export async function canViewLoginAttempts(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return Boolean(user?.platformRole && can(user.platformRole, 'platform:configure'))
+}
+
+/**
+ * Relatório de login (tentativas recentes) — achado da avaliação de
+ * 19/09/2026: `login_attempts` (0053) já grava toda tentativa pro rate
+ * limiting, mas não tinha tela nem RPC de leitura. A tabela se autolimpa
+ * sozinha (~1 dia) — isto é sempre uma janela recente, não um histórico
+ * longo. IP vem sempre mascarado da própria RPC (decisão de 21/09/2026 com
+ * Gibson: privacidade/LGPD antes de precisão de geolocalização).
+ */
+export async function listLoginAttemptsAdmin(
+  filter: LoginAttemptFilter = {},
+): Promise<LoginAttemptRow[]> {
+  await assertCanViewLoginAttempts()
+  return listLoginAttempts(filter)
 }
 
 /**

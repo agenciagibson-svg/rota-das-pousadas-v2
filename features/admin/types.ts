@@ -144,6 +144,15 @@ export type AuditLogEntry = {
   createdAt: string
 }
 
+/** Linha do relatório de login — `list_login_attempts` (0057) já devolve o IP mascarado. */
+export type LoginAttemptRow = {
+  id: string
+  email: string
+  ipMasked: string | null
+  success: boolean
+  createdAt: string
+}
+
 export type PlatformExpenseCategory =
   'infraestrutura' | 'pessoal' | 'marketing' | 'impostos' | 'juridico' | 'outros'
 
