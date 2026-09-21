@@ -48,6 +48,7 @@ export function QuoteCard({
       pets: formData.get('pets') === 'on',
       occasion: String(formData.get('occasion') ?? ''),
       message: String(formData.get('message') ?? ''),
+      consent: formData.get('consent') === 'on',
       turnstileToken,
     })
     setPending(false)
@@ -231,6 +232,23 @@ export function QuoteCard({
               placeholder="Ex.: somos duas famílias, precisamos de 3 quartos e café mais cedo."
             />
           </label>
+
+          <label className="text-foreground flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="consent"
+              id="quote-consent"
+              required
+              className="border-input mt-0.5 size-4 rounded"
+            />
+            <span>
+              Concordo que meus dados sejam usados pela pousada só pra responder este pedido de
+              orçamento.
+            </span>
+          </label>
+          {fieldErrors.consent && (
+            <span className="text-destructive text-xs">{fieldErrors.consent}</span>
+          )}
 
           <TurnstileWidget onVerify={setTurnstileToken} />
 

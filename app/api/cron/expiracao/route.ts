@@ -1,8 +1,13 @@
 import { timingSafeEqual } from 'node:crypto'
 import { expireOverduePendingBookings } from '@/features/reservas/services/expire-overdue.service'
+import { purgeStaleQuoteRequests } from '@/features/bio/services/bio.service'
 
 /**
- * Rodada de expiração automática de pré-reservas vencidas.
+ * Rodada diária de manutenção: expira pré-reserva vencida e purga pedido de
+ * orçamento não convertido com mais de 180 dias (0059, LGPD). As duas tarefas
+ * dividem o mesmo cron de propósito — o plano Hobby da Vercel limita
+ * quantidade e frequência de cron job, então um cron novo só pra isso custaria
+ * uma vaga que não sobra.
  *
  * Disparada pelo Vercel Cron (ver `vercel.json`), que envia
  * `Authorization: Bearer <CRON_SECRET>` — mesmo segredo e mesmo padrão de
@@ -27,8 +32,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const report = await expireOverduePendingBookings()
-    return Response.json(report, { status: 200 })
+    const [bookings, quoteRequests] = await Promise.all([
+      expireOverduePendingBookings(),
+      purgeStaleQuoteRequests(),
+    ])
+    return Response.json({ bookings, quoteRequests }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Falha inesperada.'
     return Response.json({ error: message }, { status: 500 })

@@ -1,8 +1,16 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
+import { safeDecryptDocumentNumber } from '@/lib/crypto/document-cipher'
 import { nightsBetween } from '@/features/reservas/pricing'
-import type { Booking, BookingCompanion, BookingDetail, BookingOrigin, BookingStatus, FnrhData } from '@/features/reservas/types'
+import type {
+  Booking,
+  BookingCompanion,
+  BookingDetail,
+  BookingOrigin,
+  BookingStatus,
+  FnrhData,
+} from '@/features/reservas/types'
 
 export type CreateBookingParams = {
   pousadaId: string
@@ -34,7 +42,9 @@ export type CreateBookingParams = {
 }
 
 /** Única porta de criação de reserva — pública e administrativa (create_booking, 0034). */
-export async function createBookingRpc(p: CreateBookingParams): Promise<{ id: string; code: string }> {
+export async function createBookingRpc(
+  p: CreateBookingParams,
+): Promise<{ id: string; code: string }> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc('create_booking', {
     p_pousada_id: p.pousadaId,
@@ -120,7 +130,11 @@ export async function updateBookingRpc(p: UpdateBookingParams): Promise<{ versio
   return data as { version: number }
 }
 
-export async function setBookingStatusRpc(bookingId: string, status: BookingStatus, reason?: string): Promise<void> {
+export async function setBookingStatusRpc(
+  bookingId: string,
+  status: BookingStatus,
+  reason?: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('set_booking_status', {
     p_booking_id: bookingId,
@@ -274,7 +288,10 @@ export type BookingForCheckout = {
   guestEmail: string | null
 }
 
-export async function getBookingForCheckout(bookingId: string, guestId: string): Promise<BookingForCheckout | null> {
+export async function getBookingForCheckout(
+  bookingId: string,
+  guestId: string,
+): Promise<BookingForCheckout | null> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('bookings')
@@ -301,7 +318,10 @@ export async function getBookingForCheckout(bookingId: string, guestId: string):
 // Leitura administrativa completa (/dashboard/reservas/[id]) — só alcançável
 // por quem tem acesso operacional à pousada (garantido pela RLS de bookings_read).
 // ----------------------------------------------------------------------------
-export async function getBookingDetailById(bookingId: string, pousadaId: string): Promise<BookingDetail | null> {
+export async function getBookingDetailById(
+  bookingId: string,
+  pousadaId: string,
+): Promise<BookingDetail | null> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('bookings')
@@ -314,10 +334,16 @@ export async function getBookingDetailById(bookingId: string, pousadaId: string)
   if (error) throw error
   if (!data) return null
 
-  const { data: room } = await supabase.from('rooms').select('name').eq('id', data.room_id).maybeSingle()
+  const { data: room } = await supabase
+    .from('rooms')
+    .select('name')
+    .eq('id', data.room_id)
+    .maybeSingle()
   const { data: companionRows } = await supabase
     .from('booking_guests')
-    .select('id, guest_id, full_name, guest_type, has_special_needs, birth_date, document_type, document_number, operational_notes')
+    .select(
+      'id, guest_id, full_name, guest_type, has_special_needs, birth_date, document_type, document_number, operational_notes',
+    )
     .eq('booking_id', bookingId)
 
   const companions: BookingCompanion[] = (companionRows ?? []).map((c) => ({
@@ -393,7 +419,9 @@ export async function getBookingFnrhData(
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, code, room_id, responsible_guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants')
+    .select(
+      'id, code, room_id, responsible_guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants',
+    )
     .eq('id', bookingId)
     .eq('pousada_id', pousadaId)
     .maybeSingle()
@@ -404,7 +432,9 @@ export async function getBookingFnrhData(
     supabase.from('rooms').select('name').eq('id', data.room_id).maybeSingle(),
     supabase
       .from('guests')
-      .select('full_name, email, phone, document_type, document_number, birth_date, nationality, country, city, state, address, cep')
+      .select(
+        'full_name, email, phone, document_type, document_number, birth_date, nationality, country, city, state, address, cep',
+      )
       .eq('id', data.responsible_guest_id)
       .maybeSingle(),
     supabase
@@ -433,7 +463,9 @@ export async function getBookingFnrhData(
       email: guest?.email ?? data.guest_email,
       phone: guest?.phone ?? data.guest_phone,
       documentType: guest?.document_type ?? null,
-      documentNumber: guest?.document_number ?? null,
+      documentNumber: guest?.document_number
+        ? safeDecryptDocumentNumber(guest.document_number)
+        : null,
       birthDate: guest?.birth_date ?? null,
       nationality: guest?.nationality ?? null,
       country: guest?.country ?? null,

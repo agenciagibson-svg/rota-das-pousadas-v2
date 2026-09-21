@@ -39,6 +39,12 @@ export const quoteRequestSchema = z
     // estado inicial do widget em quote-card.tsx). Vazio até o Cloudflare
     // Turnstile estar configurado (lib/turnstile.ts) é quem decide se bloqueia.
     turnstileToken: z.string(),
+    // Exigido pelo checkbox de consentimento no formulário público — a RPC
+    // (create_quote_request, 0059) também valida, então isto é a primeira
+    // das duas barreiras, não a única.
+    consent: z.boolean().refine((v) => v === true, {
+      message: 'É necessário concordar com o uso dos seus dados para continuar.',
+    }),
   })
   .refine((q) => Boolean(q.checkin) === Boolean(q.checkout), {
     message: 'Informe entrada e saída, ou deixe as duas em branco.',

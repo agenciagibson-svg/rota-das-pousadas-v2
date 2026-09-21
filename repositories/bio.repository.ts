@@ -1,5 +1,6 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import type { LinkReport, QuoteRequest, QuoteRequestStatus } from '@/features/bio/types'
 
 type QuoteRow = {
@@ -70,6 +71,22 @@ export async function recordLinkEvent(p: {
   }
 }
 
+/**
+ * Purga pedidos de orçamento não convertidos com mais de N dias (cron
+ * diário, 0059). service_role só — mesmo padrão de
+ * `expireOverduePendingBookingsRpc`.
+ */
+export async function purgeStaleQuoteRequestsRpc(
+  retentionDays = 180,
+): Promise<{ deleted: number }> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { data, error } = await supabase.rpc('purge_stale_quote_requests', {
+    p_retention_days: retentionDays,
+  })
+  if (error) throw new Error(error.message)
+  return data as { deleted: number }
+}
+
 export async function createQuoteRequestRpc(p: {
   pousadaId: string
   name: string
@@ -82,6 +99,7 @@ export async function createQuoteRequestRpc(p: {
   pets: boolean
   occasion: string
   message: string
+  consent: boolean
 }): Promise<{ status: string; id: string }> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc('create_quote_request', {
@@ -96,6 +114,7 @@ export async function createQuoteRequestRpc(p: {
     p_pets: p.pets,
     p_occasion: p.occasion,
     p_message: p.message,
+    p_consent: p.consent,
   })
   if (error) throw new Error(error.message)
   return data as { status: string; id: string }
@@ -170,15 +189,21 @@ export async function listBookableRooms(
     p_guests: guests,
   })
   if (error) throw new Error(error.message)
-  return ((data ?? []) as { id: string; name: string; description: string; base_price: number; capacity: number }[]).map(
-    (r) => ({
-      id: r.id,
-      name: r.name,
-      description: r.description ?? '',
-      basePrice: Number(r.base_price ?? 0),
-      capacity: Number(r.capacity ?? 1),
-    }),
-  )
+  return (
+    (data ?? []) as {
+      id: string
+      name: string
+      description: string
+      base_price: number
+      capacity: number
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description ?? '',
+    basePrice: Number(r.base_price ?? 0),
+    capacity: Number(r.capacity ?? 1),
+  }))
 }
 
 export type BioPousada = {

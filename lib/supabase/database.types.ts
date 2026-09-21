@@ -803,7 +803,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           dietary_restrictions: string
+          document_last4: string | null
           document_number: string | null
+          document_number_hash: string | null
           document_type: string | null
           email: string | null
           email_normalized: string | null
@@ -834,7 +836,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dietary_restrictions?: string
+          document_last4?: string | null
           document_number?: string | null
+          document_number_hash?: string | null
           document_type?: string | null
           email?: string | null
           email_normalized?: string | null
@@ -865,7 +869,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dietary_restrictions?: string
+          document_last4?: string | null
           document_number?: string | null
+          document_number_hash?: string | null
           document_type?: string | null
           email?: string | null
           email_normalized?: string | null
@@ -1566,6 +1572,7 @@ export type Database = {
           checkin: string | null
           checkout: string | null
           children: number
+          consent: boolean
           created_at: string
           email: string | null
           handled_at: string | null
@@ -1586,6 +1593,7 @@ export type Database = {
           checkin?: string | null
           checkout?: string | null
           children?: number
+          consent?: boolean
           created_at?: string
           email?: string | null
           handled_at?: string | null
@@ -1606,6 +1614,7 @@ export type Database = {
           checkin?: string | null
           checkout?: string | null
           children?: number
+          consent?: boolean
           created_at?: string
           email?: string | null
           handled_at?: string | null
@@ -2000,6 +2009,15 @@ export type Database = {
         Args: { p_membership_id: string }
         Returns: Json
       }
+      apply_document_backfill: {
+        Args: {
+          p_document_last4: string
+          p_document_number_encrypted: string
+          p_document_number_hash: string
+          p_guest_id: string
+        }
+        Returns: undefined
+      }
       assert_can_manage_membership: {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: {
@@ -2135,6 +2153,7 @@ export type Database = {
           p_checkin?: string
           p_checkout?: string
           p_children?: number
+          p_consent?: boolean
           p_email?: string
           p_message?: string
           p_name: string
@@ -2212,6 +2231,10 @@ export type Database = {
           import_url: string
         }[]
       }
+      list_guests_pending_document_backfill: {
+        Args: { p_limit?: number }
+        Returns: { document_number: string | null; id: string }[]
+      }
       list_login_attempts: {
         Args: { p_email: string | null; p_limit: number }
         Returns: {
@@ -2281,6 +2304,10 @@ export type Database = {
           operational_note: string
           operational_status: Database['public']['Enums']['room_operational_status']
         }[]
+      }
+      purge_stale_quote_requests: {
+        Args: { p_retention_days?: number }
+        Returns: Json
       }
       reactivate_member: {
         Args: { p_membership_id: string; p_pousada_id: string }
@@ -2486,7 +2513,9 @@ export type Database = {
           p_city?: string
           p_country?: string
           p_dietary_restrictions?: string
+          p_document_last4?: string
           p_document_number?: string
+          p_document_number_hash?: string
           p_document_type?: string
           p_email?: string
           p_emergency_contact?: Json

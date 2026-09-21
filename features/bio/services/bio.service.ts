@@ -8,6 +8,7 @@ import {
   createQuoteRequestRpc,
   getLinkReportRpc,
   listQuoteRequestsByPousada,
+  purgeStaleQuoteRequestsRpc,
   setQuoteRequestStatusRpc,
 } from '@/repositories/bio.repository'
 import type { QuoteRequestInput, QuoteStatusInput, ReportRangeInput } from '../schemas'
@@ -78,6 +79,16 @@ export async function submitQuoteRequest(input: QuoteRequestInput): Promise<{ id
     pets: input.pets,
     occasion: input.occasion,
     message: input.message,
+    consent: input.consent,
   })
   return { id: result.id }
+}
+
+/**
+ * Purga diária de pedidos de orçamento não convertidos com mais de 180 dias
+ * (0059, LGPD) — chamada pelo mesmo cron que já expira pré-reserva vencida
+ * (`/api/cron/expiracao`), sem precisar de um cron novo.
+ */
+export async function purgeStaleQuoteRequests(): Promise<{ deleted: number }> {
+  return purgeStaleQuoteRequestsRpc()
 }

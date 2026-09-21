@@ -10,6 +10,7 @@ vi.mock('@/repositories/bio.repository', () => ({
   createQuoteRequestRpc: mocks.createQuoteRequestRpc,
   getLinkReportRpc: vi.fn(),
   listQuoteRequestsByPousada: vi.fn(),
+  purgeStaleQuoteRequestsRpc: vi.fn(),
   setQuoteRequestStatusRpc: vi.fn(),
 }))
 vi.mock('@/lib/turnstile', () => ({ verifyTurnstileToken: mocks.verifyTurnstileToken }))
@@ -30,6 +31,7 @@ const INPUT = {
   pets: false,
   occasion: '',
   message: '',
+  consent: true,
   turnstileToken: 'token-do-widget',
 }
 

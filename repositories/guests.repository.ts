@@ -1,14 +1,28 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import type { EmergencyContact, GuestBookingSummary, GuestDetail, GuestListItem, GuestSource } from '@/features/hospedes/types'
+import {
+  documentNumberLast4,
+  encryptDocumentNumber,
+  hashDocumentNumberForLookup,
+  safeDecryptDocumentNumber,
+} from '@/lib/crypto/document-cipher'
+import type {
+  EmergencyContact,
+  GuestBookingSummary,
+  GuestDetail,
+  GuestListItem,
+  GuestSource,
+} from '@/features/hospedes/types'
 import type { GuestFilters } from '@/features/hospedes/schemas'
 
-/** Nunca expõe o documento completo fora do perfil individual (RB seção 3). */
-function maskDocument(documentNumber: string | null): string | null {
-  if (!documentNumber) return null
-  const digits = documentNumber.trim()
-  if (digits.length <= 4) return '••••'
-  return `•••• ${digits.slice(-4)}`
+/**
+ * Nunca expõe o documento completo fora do perfil individual (RB seção 3).
+ * Recebe `document_last4` já calculado na escrita (0058) — nunca decifra
+ * `document_number` só pra montar a listagem.
+ */
+function maskDocument(last4: string | null): string | null {
+  if (!last4) return null
+  return `•••• ${last4}`
 }
 
 type GuestRow = {
@@ -18,28 +32,45 @@ type GuestRow = {
   email: string | null
   phone: string | null
   document_number: string | null
+  document_last4: string | null
   city: string | null
   created_at: string
 }
 
-export async function listGuestsByPousada(pousadaId: string, filters: GuestFilters = {}): Promise<GuestListItem[]> {
+export async function listGuestsByPousada(
+  pousadaId: string,
+  filters: GuestFilters = {},
+): Promise<GuestListItem[]> {
   const supabase = await createSupabaseServerClient()
 
   let query = supabase
     .from('guests')
-    .select('id, full_name, preferred_name, email, phone, document_number, city, created_at')
+    .select(
+      'id, full_name, preferred_name, email, phone, document_number, document_last4, city, created_at',
+    )
     .eq('pousada_id', pousadaId)
     .order('created_at', { ascending: false })
 
   if (filters.name) query = query.ilike('full_name', `%${filters.name}%`)
   if (filters.email) query = query.ilike('email', `%${filters.email}%`)
   if (filters.phone) query = query.ilike('phone', `%${filters.phone}%`)
-  if (filters.document) query = query.ilike('document_number', `%${filters.document}%`)
 
   const { data, error } = await query
   if (error) throw error
-  const rows = (data ?? []) as GuestRow[]
+  let rows = (data ?? []) as GuestRow[]
   if (rows.length === 0) return []
+
+  // A busca por documento não dá mais pra fazer com ILIKE no Postgres (a
+  // coluna agora guarda o valor cifrado) — decifra e filtra em memória.
+  // Volume por pousada é pequeno (piloto), então isso é seguro em custo.
+  const documentNeedle = filters.document?.trim().toLowerCase()
+  if (documentNeedle) {
+    rows = rows.filter((r) => {
+      const plain = safeDecryptDocumentNumber(r.document_number)
+      return plain ? plain.toLowerCase().includes(documentNeedle) : false
+    })
+    if (rows.length === 0) return []
+  }
 
   const guestIds = rows.map((r) => r.id)
   const { data: bookingRows } = await supabase
@@ -63,7 +94,7 @@ export async function listGuestsByPousada(pousadaId: string, filters: GuestFilte
     email: r.email,
     phone: r.phone,
     city: r.city,
-    documentMasked: maskDocument(r.document_number),
+    documentMasked: maskDocument(r.document_last4),
     bookingsCount: countByGuest.get(r.id) ?? 0,
     lastBookingAt: lastByGuest.get(r.id) ?? null,
     isIncomplete: !r.email && !r.phone,
@@ -76,7 +107,10 @@ export async function listGuestsByPousada(pousadaId: string, filters: GuestFilte
   return items
 }
 
-export async function getGuestById(pousadaId: string, guestId: string): Promise<GuestDetail | null> {
+export async function getGuestById(
+  pousadaId: string,
+  guestId: string,
+): Promise<GuestDetail | null> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('guests')
@@ -121,7 +155,7 @@ export async function getGuestById(pousadaId: string, guestId: string): Promise<
     phone: data.phone,
     whatsapp: data.whatsapp,
     documentType: data.document_type,
-    documentNumber: data.document_number,
+    documentNumber: safeDecryptDocumentNumber(data.document_number),
     birthDate: data.birth_date,
     nationality: data.nationality,
     country: data.country,
@@ -197,9 +231,21 @@ export async function ensureTravelerGuestRpc(input: {
   return { id: result.id }
 }
 
-/** Cria ou atualiza um hóspede via RPC (regras de acesso e deduplicação vivem no banco). */
+/**
+ * Cria ou atualiza um hóspede via RPC (regras de acesso e deduplicação vivem
+ * no banco). O documento (CPF/RG/passaporte) é cifrado aqui, na borda, antes
+ * de sair do app — a RPC nunca vê o valor em claro (0058). O casamento de
+ * hóspede repetido pelo documento usa o hash determinístico, não o valor
+ * cifrado (que nunca bateria duas vezes, já que o IV é aleatório a cada
+ * chamada).
+ */
 export async function upsertGuestRpc(input: UpsertGuestInput): Promise<{ id: string }> {
   const supabase = await createSupabaseServerClient()
+  const trimmedDocument = input.documentNumber?.trim() || null
+  const encryptedDocument = trimmedDocument ? encryptDocumentNumber(trimmedDocument) : null
+  const documentHash = trimmedDocument ? hashDocumentNumberForLookup(trimmedDocument) : null
+  const last4 = trimmedDocument ? documentNumberLast4(trimmedDocument) : null
+
   const { data, error } = await supabase.rpc('upsert_guest', {
     p_pousada_id: input.pousadaId,
     p_guest_id: input.guestId ?? null,
@@ -210,7 +256,9 @@ export async function upsertGuestRpc(input: UpsertGuestInput): Promise<{ id: str
     p_phone: input.phone ?? null,
     p_whatsapp: input.whatsapp ?? null,
     p_document_type: input.documentType ?? null,
-    p_document_number: input.documentNumber ?? null,
+    p_document_number: encryptedDocument,
+    p_document_number_hash: documentHash,
+    p_document_last4: last4,
     p_birth_date: input.birthDate ?? null,
     p_nationality: input.nationality ?? null,
     p_country: input.country ?? 'BR',
