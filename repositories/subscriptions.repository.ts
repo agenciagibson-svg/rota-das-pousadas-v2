@@ -130,3 +130,134 @@ export async function recordSubscriptionInvoiceRpc(params: {
   if (error) throw new Error(error.message)
   return data as { status: string; invoiceId?: string }
 }
+
+// -----------------------------------------------------------------------
+// Contas a receber / MRR / churn / faturas — tela "Financeiro" do painel
+// master (achado da avaliação de 19/09/2026, item que ficava bloqueado até
+// o motor de cobrança existir). Junta em JS em vez de usar embed do
+// PostgREST (`plans(price)`) — mesmo padrão de `getPousadaPerformance` em
+// `admin-metrics.repository.ts`, evita depender da tipagem de relação
+// aninhada do `database.types.ts` pra uma consulta que roda raramente.
+// -----------------------------------------------------------------------
+
+export type SubscriptionForMetricsRow = {
+  status: SubscriptionStatus
+  price: number
+  createdAt: string
+  updatedAt: string
+}
+
+/** Dado bruto pra `computeBillingMetrics` (features/pagamentos/services/billing-metrics.ts). */
+export async function listSubscriptionsForMetrics(): Promise<SubscriptionForMetricsRow[]> {
+  const supabase = await createSupabaseServerClient()
+  const [{ data: subs, error: subsError }, { data: plans, error: plansError }] = await Promise.all([
+    supabase.from('subscriptions').select('plan_id, status, created_at, updated_at'),
+    supabase.from('plans').select('id, price'),
+  ])
+  if (subsError) throw subsError
+  if (plansError) throw plansError
+
+  const priceByPlan = new Map((plans ?? []).map((p) => [p.id, Number(p.price)]))
+  return (subs ?? []).map((s) => ({
+    status: s.status as SubscriptionStatus,
+    price: priceByPlan.get(s.plan_id) ?? 0,
+    createdAt: s.created_at,
+    updatedAt: s.updated_at,
+  }))
+}
+
+export type ReceivableSubscriptionRow = {
+  pousadaId: string
+  pousadaName: string
+  planName: string
+  amount: number
+  status: SubscriptionStatus
+  nextBillingDate: string | null
+}
+
+/** "Contas a receber": toda assinatura não cancelada, ordenada pela próxima cobrança. */
+export async function listReceivableSubscriptions(): Promise<ReceivableSubscriptionRow[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data: subs, error: subsError } = await supabase
+    .from('subscriptions')
+    .select('pousada_id, plan_id, status, next_billing_date')
+    .neq('status', 'cancelled')
+    .order('next_billing_date', { ascending: true, nullsFirst: false })
+  if (subsError) throw subsError
+  if (!subs || subs.length === 0) return []
+
+  const pousadaIds = [...new Set(subs.map((s) => s.pousada_id))]
+  const planIds = [...new Set(subs.map((s) => s.plan_id))]
+  const [{ data: pousadas, error: pousadasError }, { data: plans, error: plansError }] =
+    await Promise.all([
+      supabase.from('pousadas').select('id, name').in('id', pousadaIds),
+      supabase.from('plans').select('id, name, price').in('id', planIds),
+    ])
+  if (pousadasError) throw pousadasError
+  if (plansError) throw plansError
+
+  const nameByPousada = new Map((pousadas ?? []).map((p) => [p.id, p.name]))
+  const planById = new Map(
+    (plans ?? []).map((p) => [p.id, { name: p.name, price: Number(p.price) }]),
+  )
+
+  return subs.map((s) => ({
+    pousadaId: s.pousada_id,
+    pousadaName: nameByPousada.get(s.pousada_id) ?? '—',
+    planName: planById.get(s.plan_id)?.name ?? '—',
+    amount: planById.get(s.plan_id)?.price ?? 0,
+    status: s.status as SubscriptionStatus,
+    nextBillingDate: s.next_billing_date,
+  }))
+}
+
+export type InvoiceRow = {
+  id: string
+  pousadaName: string
+  amount: number
+  status: 'pending' | 'approved' | 'rejected' | 'refunded' | 'cancelled'
+  periodStart: string | null
+  periodEnd: string | null
+  paidAt: string | null
+}
+
+/** Últimas faturas de assinatura (qualquer status), pra tela de Financeiro do master. */
+export async function listRecentInvoices(limit = 30): Promise<InvoiceRow[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data: invoices, error: invoicesError } = await supabase
+    .from('invoices')
+    .select('id, subscription_id, amount, status, period_start, period_end, paid_at, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (invoicesError) throw invoicesError
+  if (!invoices || invoices.length === 0) return []
+
+  const subscriptionIds = [...new Set(invoices.map((i) => i.subscription_id))]
+  const { data: subs, error: subsError } = await supabase
+    .from('subscriptions')
+    .select('id, pousada_id')
+    .in('id', subscriptionIds)
+  if (subsError) throw subsError
+
+  const pousadaIdBySubscription = new Map((subs ?? []).map((s) => [s.id, s.pousada_id]))
+  const pousadaIds = [...new Set((subs ?? []).map((s) => s.pousada_id))]
+  const { data: pousadas, error: pousadasError } = await supabase
+    .from('pousadas')
+    .select('id, name')
+    .in('id', pousadaIds)
+  if (pousadasError) throw pousadasError
+  const nameByPousada = new Map((pousadas ?? []).map((p) => [p.id, p.name]))
+
+  return invoices.map((i) => {
+    const pousadaId = pousadaIdBySubscription.get(i.subscription_id)
+    return {
+      id: i.id,
+      pousadaName: (pousadaId && nameByPousada.get(pousadaId)) ?? '—',
+      amount: Number(i.amount),
+      status: i.status as InvoiceRow['status'],
+      periodStart: i.period_start,
+      periodEnd: i.period_end,
+      paidAt: i.paid_at,
+    }
+  })
+}

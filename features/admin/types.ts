@@ -1,4 +1,8 @@
 import type { Season } from '@/types'
+import type {
+  BillingMetrics,
+  CashFlowMonthPoint,
+} from '@/features/pagamentos/services/billing-metrics'
 
 /** Pousada aguardando aprovação da curadoria. */
 export type PendingPousada = {
@@ -142,6 +146,34 @@ export type AuditLogEntry = {
 
 export type PlatformExpenseCategory =
   'infraestrutura' | 'pessoal' | 'marketing' | 'impostos' | 'juridico' | 'outros'
+
+/** Espelho do tipo de `billing-metrics.ts`, só pra manter os imports do admin autocontidos. */
+export type { BillingMetrics, CashFlowMonthPoint }
+
+export type SubscriptionStatusValue = 'pending' | 'authorized' | 'paused' | 'cancelled'
+
+/** Linha da tela "Contas a receber" — assinatura não cancelada, com o nome já resolvido. */
+export type ReceivableSubscription = {
+  pousadaId: string
+  pousadaName: string
+  planName: string
+  amount: number
+  status: SubscriptionStatusValue
+  nextBillingDate: string | null
+}
+
+export type InvoiceStatusValue = 'pending' | 'approved' | 'rejected' | 'refunded' | 'cancelled'
+
+/** Linha da tela "Faturas recentes" — fatura de assinatura, com o nome da pousada já resolvido. */
+export type InvoiceRecord = {
+  id: string
+  pousadaName: string
+  amount: number
+  status: InvoiceStatusValue
+  periodStart: string | null
+  periodEnd: string | null
+  paidAt: string | null
+}
 
 /** Conta a pagar da própria Rota — tela "Financeiro" do painel master. Não confundir com
  * `Expense` (features/financeiro/types.ts), que é a despesa de CADA pousada. */

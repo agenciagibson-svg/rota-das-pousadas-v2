@@ -22,8 +22,17 @@ import {
   insertPlatformExpense,
   setPlatformExpensePaid,
 } from '@/repositories/platform-finance.repository'
-import { getActivePlan } from '@/repositories/subscriptions.repository'
+import {
+  getActivePlan,
+  listSubscriptionsForMetrics,
+  listReceivableSubscriptions,
+  listRecentInvoices,
+} from '@/repositories/subscriptions.repository'
 import { bootstrapPlatformPlan } from '@/features/pagamentos/services/subscription.service'
+import {
+  computeBillingMetrics,
+  projectCashFlow,
+} from '@/features/pagamentos/services/billing-metrics'
 import {
   getPlatformKpis,
   getGmvByMonth,
@@ -66,6 +75,10 @@ import type {
   PlatformRoleValue,
   AuditLogEntry,
   PlatformExpense,
+  BillingMetrics,
+  CashFlowMonthPoint,
+  ReceivableSubscription,
+  InvoiceRecord,
 } from '@/features/admin/types'
 import type { CreatePousadaAdminInput, CreatePlatformExpenseInput } from '@/features/admin/schemas'
 
@@ -559,4 +572,31 @@ export async function getPlatformPlanStatus(): Promise<PlatformPlanStatus | null
 /** Cria o plano de verdade no Mercado Pago (`MERCADO_PAGO_PLATFORM_ACCESS_TOKEN` precisa estar configurada) — só master. */
 export async function bootstrapPlatformPlanAdmin(): Promise<void> {
   await bootstrapPlatformPlan()
+}
+const CASH_FLOW_MONTHS = 6
+
+/**
+ * Contas a receber + MRR/churn + projeção de caixa — segunda peça do
+ * Financeiro do painel master (a primeira foi as contas a pagar, 0055,
+ * `listPlatformExpensesAdmin`). Mesma permissão (`platform_finance:manage`):
+ * é o espelho financeiro do lado da receita de assinatura, dado interno da
+ * própria Rota — não é dado de reserva/pagamento de hóspede de nenhuma
+ * pousada. Cálculo de métricas/projeção é puro (`billing-metrics.ts`), só a
+ * leitura das linhas é I/O (`subscriptions.repository.ts`).
+ */
+export async function getBillingOverview(): Promise<{
+  metrics: BillingMetrics
+  cashFlow: CashFlowMonthPoint[]
+  receivables: ReceivableSubscription[]
+  recentInvoices: InvoiceRecord[]
+}> {
+  await assertCanManagePlatformFinance()
+  const [subscriptionsForMetrics, receivables, recentInvoices] = await Promise.all([
+    listSubscriptionsForMetrics(),
+    listReceivableSubscriptions(),
+    listRecentInvoices(30),
+  ])
+  const metrics = computeBillingMetrics(subscriptionsForMetrics)
+  const cashFlow = projectCashFlow(metrics.mrr, CASH_FLOW_MONTHS)
+  return { metrics, cashFlow, receivables, recentInvoices }
 }
