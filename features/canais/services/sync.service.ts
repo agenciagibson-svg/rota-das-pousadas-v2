@@ -196,9 +196,17 @@ export async function syncOneFeed(
 /**
  * Sincroniza todos os feeds habilitados, um a um.
  *
- * Sequencial de propósito: a rodada roda a cada 15 minutos e o volume por
- * pousada é pequeno. Paralelizar aqui só multiplicaria o risco de bater em
- * limite de requisição da OTA para ganhar segundos que ninguém está esperando.
+ * Sequencial de propósito: o volume por pousada é pequeno, então paralelizar
+ * aqui só multiplicaria o risco de bater em limite de requisição da OTA para
+ * ganhar segundos que ninguém está esperando.
+ *
+ * Cadência real (corrigido em 21/09/2026 — o comentário aqui dizia "a cada 15
+ * minutos", que nunca bateu com `vercel.json`): o cron roda 1x/dia
+ * (`0 6 * * *`), porque o plano Hobby da Vercel só permite disparo diário por
+ * cron job — rodar de fato a cada 15 min exige Vercel Pro. Isso deixa uma
+ * janela de até ~24h em que uma reserva feita direto no Airbnb/Booking pode
+ * não bloquear o calendário aqui a tempo (risco de overbooking). Decisão
+ * pendente: aceitar o risco (o volume do piloto é baixo) ou migrar pra Pro.
  */
 export async function syncAllFeeds(deps?: Partial<SyncDeps>): Promise<{
   total: number

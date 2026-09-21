@@ -14,30 +14,41 @@ import { isSupabaseConfigured, publicEnv } from '@/lib/env'
  * NÃO faz autorização de negócio (isso é RBAC nos Services + RLS no Postgres).
  */
 
-const CONNECT_SRC = ["'self'", 'https://*.supabase.co', 'https://*.supabase.in', 'https://vitals.vercel-insights.com']
+const CONNECT_SRC = [
+  "'self'",
+  'https://*.supabase.co',
+  'https://*.supabase.in',
+  'https://vitals.vercel-insights.com',
+]
 
 /**
- * A CSP tem dois perfis, e a diferença não é preciosismo — é o que o Next
- * consegue entregar em cada tipo de página.
+ * CSP estrita em TODO o site desde 21/09/2026 — `script-src 'self'
+ * 'nonce-…'`, sem `unsafe-inline`. Script inline injetado sem o nonce não
+ * executa: é a contenção real de XSS.
  *
- * `strict` (rotas logadas): `script-src 'self' 'nonce-…'`, SEM `unsafe-inline`.
- * Script inline injetado sem o nonce não executa — é a contenção real de XSS.
- * Só é possível aqui porque `/dashboard` e `/admin` dependem de sessão e são
- * renderizadas por requisição: o Next lê o nonce do cabeçalho da REQUISIÇÃO e
- * carimba nos próprios scripts.
+ * Isso só é seguro porque toda página do app hoje é dinâmica (renderizada
+ * por requisição) — seja por `export const dynamic = 'force-dynamic'`
+ * explícito (catálogo, bio), seja porque a página lê `searchParams` ou
+ * chama `createSupabaseServerClient()` (que chama `cookies()` internamente
+ * — qualquer query via repositório cai nisso), o que já basta pro Next
+ * tratar a rota como dinâmica sem precisar do export. O Next só carimba o
+ * nonce nos próprios scripts quando existe uma requisição de verdade por
+ * trás — por isso a política antiga (`/dashboard`/`/admin` estrita, resto
+ * do site com `unsafe-inline` "porque é estático") não valia mais: nenhuma
+ * página do site é gerada só uma vez no build.
  *
- * `public` (catálogo, páginas da bio, landing): mantém `'unsafe-inline'` em
- * `script-src`. Página estática é gerada UMA vez no build — não existe nonce
- * por requisição para carimbar, e exigir um deixaria o site em branco. Ainda
- * assim a política é APLICADA (não Report-Only): bloqueia script de origem
- * externa, `object-src`, `base-uri` e `form-action`. É menos do que se quer,
- * e mais do que havia.
+ * A única exceção real era `app/not-found.tsx`: sem nenhuma leitura de
+ * cookie/searchParams/query, o Next pré-renderiza a rota especial
+ * `/_not-found` estaticamente no build por padrão — sem requisição, sem
+ * nonce. Corrigido forçando `dynamic = 'force-dynamic'` naquele arquivo (ver
+ * comentário lá). Os outros `not-found.tsx` (admin/dashboard/pousada/[slug])
+ * vivem dentro de segmentos que já são dinâmicos por outro motivo, então não
+ * precisaram do mesmo ajuste.
  *
- * `style-src 'unsafe-inline'` fica nos dois: `next/font` e o Tailwind injetam
- * estilo inline. Dívida registrada, não esquecimento.
+ * `style-src 'unsafe-inline'` continua em todo lugar: `next/font` e o
+ * Tailwind injetam estilo inline. Dívida registrada, não esquecimento.
  */
-function contentSecurityPolicy(nonce: string | null): string {
-  const scriptSrc = nonce ? `'self' 'nonce-${nonce}'` : "'self' 'unsafe-inline'"
+function contentSecurityPolicy(nonce: string): string {
   return [
     "default-src 'self'",
     "base-uri 'self'",
@@ -47,7 +58,7 @@ function contentSecurityPolicy(nonce: string | null): string {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
-    `script-src ${scriptSrc}`,
+    `script-src 'self' 'nonce-${nonce}'`,
     `connect-src ${CONNECT_SRC.join(' ')}`,
     'upgrade-insecure-requests',
   ].join('; ')
@@ -60,7 +71,10 @@ function applySecurityHeaders(response: NextResponse, csp: string): NextResponse
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)')
   response.headers.set('X-DNS-Prefetch-Control', 'on')
   if (publicEnv.siteUrl.startsWith('https://')) {
-    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=63072000; includeSubDomains; preload',
+    )
   }
   response.headers.set('Content-Security-Policy', csp)
   return response
@@ -81,20 +95,9 @@ const PROTECTED: { prefix: string; loginPath: string }[] = [
 /** Páginas de login dedicadas — sempre públicas, mesmo vivendo sob um prefixo protegido. */
 const PUBLIC_AUTH_PAGES = ['/admin/login']
 
-/**
- * Onde a CSP estrita vale. Só áreas de gestão: são as que carregam dado de
- * hóspede, financeiro e configuração, e as únicas garantidamente dinâmicas.
- * Não inclua aqui uma rota que possa ser renderizada estaticamente.
- */
-const STRICT_CSP_PREFIXES = ['/dashboard', '/admin']
-
-function usesStrictCsp(path: string): boolean {
-  return STRICT_CSP_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
-}
-
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
-  const nonce = usesStrictCsp(path) ? crypto.randomUUID().replaceAll('-', '') : null
+  const nonce = crypto.randomUUID().replaceAll('-', '')
   const csp = contentSecurityPolicy(nonce)
 
   if (!isSupabaseConfigured()) {
@@ -103,7 +106,7 @@ export default async function proxy(request: NextRequest) {
 
   // O Next só carimba o nonce nos próprios scripts se enxergar a CSP no
   // cabeçalho da REQUISIÇÃO — por isso ela vai nos dois lados.
-  const extraRequestHeaders = nonce ? { 'x-nonce': nonce, 'content-security-policy': csp } : undefined
+  const extraRequestHeaders = { 'x-nonce': nonce, 'content-security-policy': csp }
 
   const { response, user } = await updateSession(request, extraRequestHeaders)
   const matched = PUBLIC_AUTH_PAGES.includes(path)
