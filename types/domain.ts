@@ -41,6 +41,20 @@ export type Pousada = {
   tags: string[]
   description: string
   instagram: string
+  /**
+   * Campos reais abaixo (existem no banco desde a 0010, editáveis pelo
+   * proprietário em `/dashboard/configuracoes`) — opcionais porque o modo
+   * demonstração (`lib/data.ts`, sem Supabase configurado) não os preenche.
+   */
+  id?: string
+  address?: string
+  cep?: string | null
+  checkinTime?: string
+  checkoutTime?: string
+  cancellationPolicy?: string
+  houseRules?: string
+  whatsapp?: string
+  contactPhone?: string
 }
 
 export type Room = {

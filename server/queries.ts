@@ -13,7 +13,10 @@ import { cache } from 'react'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
-import { listMyBookings, getBookableRoom as bookableRoom } from '@/features/reservas/services/bookings.service'
+import {
+  listMyBookings,
+  getBookableRoom as bookableRoom,
+} from '@/features/reservas/services/bookings.service'
 import {
   getOwnerPousada as ownerPousada,
   getOwnerSettings as ownerSettings,
@@ -21,22 +24,34 @@ import {
   getOwnerCalendar as ownerCalendar,
   listOwnerReviews,
 } from '@/features/gestao/services/pms.service'
-import { listPending, isPlatformAdmin as platformAdmin } from '@/features/admin/services/admin.service'
+import {
+  listPending,
+  isPlatformAdmin as platformAdmin,
+} from '@/features/admin/services/admin.service'
 import {
   getFinance as ownerFinance,
   canViewFinance as viewFinance,
   canManageExpenses as manageExpenses,
 } from '@/features/financeiro/services/finance.service'
-import { getOwnerRooms as ownerRooms, getHousekeepingRooms as housekeepingRooms } from '@/features/acomodacoes/services/rooms.service'
+import {
+  getOwnerRooms as ownerRooms,
+  getHousekeepingRooms as housekeepingRooms,
+} from '@/features/acomodacoes/services/rooms.service'
 import { listCategories } from '@/features/acomodacoes/services/categories.service'
 import { listBlocks } from '@/features/acomodacoes/services/blocks.service'
 import { listAmenitiesCatalog } from '@/repositories/rooms.repository'
 import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services/favorites.service'
 import { listMyFavoriteAlertStates } from '@/features/alertas/services/favorite-alerts.service'
 import { listTeam, listMyPendingInvites } from '@/features/membros/services/team.service'
-import { listGuests, getGuestProfile as guestProfile } from '@/features/hospedes/services/guests.service'
+import {
+  listGuests,
+  getGuestProfile as guestProfile,
+} from '@/features/hospedes/services/guests.service'
 import { listChannels as ownerChannels } from '@/features/canais/services/channels.service'
-import { getLinkReport as linkReport, listQuoteRequests as quoteRequests } from '@/features/bio/services/bio.service'
+import {
+  getLinkReport as linkReport,
+  listQuoteRequests as quoteRequests,
+} from '@/features/bio/services/bio.service'
 import { getBookingDetailById, getBookingFnrhData } from '@/repositories/bookings.repository'
 import { getPousadaSettings } from '@/repositories/management.repository'
 import { createCheckoutPreference } from '@/features/pagamentos/services/checkout.service'
@@ -53,6 +68,10 @@ export const getPousadaSlugs = cache(() => pousadas.listPousadaSlugs())
 export const getNearbyPousadas = cache((slug: string, limit?: number) =>
   pousadas.listNearbyPousadas(slug, limit),
 )
+/** Avaliações públicas de uma pousada (vazio em modo demonstração ou sem id). */
+export const getPublicReviews = cache((pousadaId?: string, limit?: number) =>
+  pousadas.listPublicReviews(pousadaId, limit),
+)
 
 export const getDestinations = cache(() => destinations.listDestinations())
 export const getDestination = cache((slug: string) => destinations.getDestinationBySlug(slug))
@@ -65,7 +84,10 @@ export const getCurrentUser = cache(() => currentUser())
 export const getMyBookings = cache(() => listMyBookings())
 
 /** Diária + capacidade de uma pousada para o fluxo de reserva. */
-export const getBookableRoom = cache((slug: string, checkin?: string, checkout?: string, guests = 1) => bookableRoom(slug, checkin, checkout, guests))
+export const getBookableRoom = cache(
+  (slug: string, checkin?: string, checkout?: string, guests = 1) =>
+    bookableRoom(slug, checkin, checkout, guests),
+)
 
 /**
  * Pagamento: cria a preferência de checkout (Mercado Pago) da reserva do
@@ -77,7 +99,9 @@ export const getBookingCheckout = cache((bookingId: string) => createCheckoutPre
 /** Gestão (PMS): pousada gerida, reservas e calendário do proprietário. */
 export const getOwnerPousada = cache(() => ownerPousada())
 export const getOwnerSettings = cache(() => ownerSettings())
-export const getOwnerReservations = cache((filters: GestaoReservationFilters = {}) => listOwnerReservations(filters))
+export const getOwnerReservations = cache((filters: GestaoReservationFilters = {}) =>
+  listOwnerReservations(filters),
+)
 export const getOwnerCalendar = cache(() => ownerCalendar())
 export const getOwnerReviews = cache(() => listOwnerReviews())
 export const canRespondReviews = cache(async () => {

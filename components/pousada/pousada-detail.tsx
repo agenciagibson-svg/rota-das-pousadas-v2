@@ -8,35 +8,47 @@ import {
   Star,
   MapPin,
   Share2,
-  Wifi,
-  Coffee,
-  Flame,
-  Bath,
-  WavesLadder,
-  Car,
-  PawPrint,
-  Wind,
-  Mountain,
-  BellRing,
-  Sparkles,
-  Trees,
   ChevronLeft,
   ChevronRight,
   Users,
   Quote,
-  Compass,
   Camera,
   AtSign,
+  Clock3,
+  ClipboardList,
+  ShieldCheck,
+  Phone,
+  MessageCircle,
+  Navigation,
 } from 'lucide-react'
 import type { Pousada } from '@/lib/data'
-import { amenities, reviews } from '@/lib/data'
 import { Reveal } from '@/components/reveal'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { calculateBookingPrice } from '@/features/reservas/pricing'
 import { FavoriteButton } from './favorite-button'
 
-const amenityIcons = [Wifi, Coffee, Flame, Bath, WavesLadder, Car, PawPrint, Wind, Mountain, BellRing, Sparkles, Trees]
+/** Avaliação pública (sem nome do autor — ver `reviews.repository.ts::listPublicReviewsByPousada`). */
+type PublicReview = {
+  id: string
+  rating: number
+  text: string
+  response: string | null
+  createdAt: string
+}
+
+function formatReviewDate(iso: string): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(iso))
+}
+
+/** Dígitos puros de um telefone BR ("(34) 99999-0000" -> "34999990000"). */
+function onlyDigits(value: string): string {
+  return value.replace(/\D/g, '')
+}
 
 function addDays(date: string, days: number): string {
   const next = new Date(`${date}T00:00:00Z`)
@@ -67,18 +79,20 @@ export type BookableRoomInfo = {
 export function PousadaDetail({
   pousada,
   room,
+  reviews,
   initialBooking,
   favorite,
   isLoggedIn,
 }: {
   pousada: Pousada
   room: BookableRoomInfo | null
+  reviews: PublicReview[]
   initialBooking?: { checkin?: string; checkout?: string; guests?: string }
   favorite: boolean
   isLoggedIn: boolean
 }) {
   const [active, setActive] = useState(0)
-  const [selectedDay, setSelectedDay] = useState<number | null>(14)
+  const [shared, setShared] = useState(false)
   const [checkin, setCheckin] = useState(() => {
     const fallback = addDays(todayIso(), 1)
     return isIsoDate(initialBooking?.checkin) && initialBooking.checkin >= todayIso()
@@ -108,10 +122,37 @@ export function PousadaDetail({
     setActive((current) => (current === gallery.length - 1 ? 0 : current + 1))
   }
 
+  async function handleShare() {
+    const shareData = {
+      title: pousada.name,
+      text: `Confira ${pousada.name} na Rota das Pousadas`,
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    }
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share(shareData)
+        return
+      }
+      if (typeof navigator !== 'undefined' && navigator.clipboard && shareData.url) {
+        await navigator.clipboard.writeText(shareData.url)
+        setShared(true)
+        setTimeout(() => setShared(false), 2000)
+      }
+    } catch {
+      // Usuário cancelou o compartilhamento nativo — não é erro.
+    }
+  }
+
+  const mapsUrl = pousada.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pousada.address}, ${pousada.city} - ${pousada.state}`)}`
+    : null
+  const whatsappDigits = pousada.whatsapp ? onlyDigits(pousada.whatsapp) : ''
+  const phoneDigits = pousada.contactPhone ? onlyDigits(pousada.contactPhone) : ''
+
   return (
     <div className="pb-24">
       <section className="mx-auto max-w-7xl px-5 pt-28 lg:px-8">
-        <div className="overflow-hidden rounded-3xl border border-border bg-card">
+        <div className="border-border bg-card overflow-hidden rounded-3xl border">
           <div className="relative aspect-[16/10] min-h-[320px] overflow-hidden md:aspect-[21/9] md:min-h-[520px]">
             <Image
               src={activeImage}
@@ -127,14 +168,16 @@ export function PousadaDetail({
                   <Camera className="size-3.5" />
                   {active + 1} de {gallery.length}
                 </span>
-                <h2 className="mt-3 font-serif text-2xl font-semibold md:text-4xl">{pousada.name}</h2>
+                <h2 className="mt-3 font-serif text-2xl font-semibold md:text-4xl">
+                  {pousada.name}
+                </h2>
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={showPreviousImage}
                   aria-label="Foto anterior"
-                  className="flex size-11 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm transition-colors hover:bg-white"
+                  className="text-foreground flex size-11 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white"
                 >
                   <ChevronLeft className="size-5" />
                 </button>
@@ -142,7 +185,7 @@ export function PousadaDetail({
                   type="button"
                   onClick={showNextImage}
                   aria-label="Próxima foto"
-                  className="flex size-11 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm transition-colors hover:bg-white"
+                  className="text-foreground flex size-11 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white"
                 >
                   <ChevronRight className="size-5" />
                 </button>
@@ -157,7 +200,9 @@ export function PousadaDetail({
                 onClick={() => setActive(index)}
                 aria-label={`Abrir foto ${index + 1}`}
                 className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border transition-all ${
-                  active === index ? 'border-primary ring-2 ring-primary/20' : 'border-border opacity-75 hover:opacity-100'
+                  active === index
+                    ? 'border-primary ring-primary/20 ring-2'
+                    : 'border-border opacity-75 hover:opacity-100'
                 }`}
               >
                 <Image
@@ -184,12 +229,16 @@ export function PousadaDetail({
                 </Badge>
               ))}
             </div>
-            <h1 className="mt-4 font-serif text-3xl font-semibold text-foreground sm:text-5xl">{pousada.name}</h1>
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
-                <Star className="size-4 fill-gold text-gold" />
+            <h1 className="text-foreground mt-4 font-serif text-3xl font-semibold sm:text-5xl">
+              {pousada.name}
+            </h1>
+            <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-4 text-sm">
+              <span className="text-foreground inline-flex items-center gap-1.5 font-semibold">
+                <Star className="fill-gold text-gold size-4" />
                 {pousada.rating.toFixed(1)}
-                <span className="font-normal text-muted-foreground">({pousada.reviews} avaliações)</span>
+                <span className="text-muted-foreground font-normal">
+                  ({pousada.reviews} avaliações)
+                </span>
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="size-4" />
@@ -200,7 +249,7 @@ export function PousadaDetail({
                   href={pousada.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-foreground hover:text-primary"
+                  className="text-foreground hover:text-primary inline-flex items-center gap-1.5 font-semibold"
                 >
                   <AtSign className="size-4" />
                   Instagram
@@ -209,11 +258,19 @@ export function PousadaDetail({
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="border-border text-foreground hover:bg-secondary inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors"
+            >
               <Share2 className="size-4" />
-              Compartilhar
+              {shared ? 'Link copiado!' : 'Compartilhar'}
             </button>
-            <FavoriteButton slug={pousada.slug} initialFavorite={favorite} isLoggedIn={isLoggedIn} />
+            <FavoriteButton
+              slug={pousada.slug}
+              initialFavorite={favorite}
+              isLoggedIn={isLoggedIn}
+            />
           </div>
         </div>
       </section>
@@ -223,190 +280,233 @@ export function PousadaDetail({
         <div className="min-w-0">
           {/* Description */}
           <Reveal>
-            <div className="border-b border-border pb-10">
-              <h2 className="font-serif text-2xl font-semibold text-foreground">Sobre o refúgio</h2>
-              <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">{pousada.description}</p>
-              <div className="mt-6 grid grid-cols-3 gap-4">
-                {[
-                  { icon: Users, label: 'Até 4 hóspedes' },
-                  { icon: Mountain, label: 'Vista para o vale' },
-                  { icon: Compass, label: 'Trilhas guiadas' },
-                ].map((f) => (
-                  <div key={f.label} className="flex flex-col items-center gap-2 rounded-2xl bg-secondary/60 p-4 text-center">
-                    <f.icon className="size-6 text-primary" />
-                    <span className="text-xs font-medium text-foreground">{f.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Amenities */}
-          <Reveal>
-            <div className="border-b border-border py-10">
-              <h2 className="font-serif text-2xl font-semibold text-foreground">Comodidades</h2>
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {amenities.map((a, i) => {
-                  const Icon = amenityIcons[i % amenityIcons.length]
-                  return (
-                    <div key={a} className="flex items-center gap-3 text-sm text-foreground">
-                      <Icon className="size-5 shrink-0 text-primary" />
-                      {a}
-                    </div>
-                  )
-                })}
-              </div>
+            <div className="border-border border-b pb-10">
+              <h2 className="text-foreground font-serif text-2xl font-semibold">Sobre o refúgio</h2>
+              <p className="text-muted-foreground mt-4 leading-relaxed text-pretty">
+                {pousada.description}
+              </p>
             </div>
           </Reveal>
 
           {/* Rooms */}
           <Reveal>
-            <div className="border-b border-border py-10">
-              <h2 className="font-serif text-2xl font-semibold text-foreground">Quartos & acomodações</h2>
+            <div className="border-border border-b py-10">
+              <h2 className="text-foreground font-serif text-2xl font-semibold">
+                Quartos & acomodações
+              </h2>
               <div className="mt-6">
                 {room ? (
-                  <div className="flex w-full items-center justify-between rounded-2xl border border-primary bg-primary/5 p-4 text-left">
+                  <div className="border-primary bg-primary/5 flex w-full items-center justify-between rounded-2xl border p-4 text-left">
                     <div>
-                      <h3 className="font-semibold text-foreground">{room.name}</h3>
+                      <h3 className="text-foreground font-semibold">{room.name}</h3>
                       {room.description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground">{room.description}</p>
+                        <p className="text-muted-foreground mt-0.5 text-sm">{room.description}</p>
                       )}
-                      <p className="mt-1 text-xs text-muted-foreground">até {room.capacity} hóspedes</p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        até {room.capacity} hóspedes
+                      </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="font-semibold text-foreground">R$ {room.nightly}</div>
-                      <div className="text-xs text-muted-foreground">/ diária</div>
+                      <div className="text-foreground font-semibold">R$ {room.nightly}</div>
+                      <div className="text-muted-foreground text-xs">/ diária</div>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Nenhuma acomodação disponível no momento.</p>
+                  <p className="text-muted-foreground text-sm">
+                    Nenhuma acomodação disponível no momento.
+                  </p>
                 )}
               </div>
             </div>
           </Reveal>
 
-          {/* Calendar */}
-          <Reveal>
-            <div className="border-b border-border py-10">
-              <h2 className="font-serif text-2xl font-semibold text-foreground">Disponibilidade</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Selecione seu período em Março de 2026</p>
-              <div className="mt-6 max-w-sm">
-                <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground">
-                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
-                    <span key={i} className="py-2">{d}</span>
-                  ))}
-                </div>
-                <div className="mt-1 grid grid-cols-7 gap-1">
-                  {Array.from({ length: 34 }).map((_, i) => {
-                    const day = i - 5
-                    if (day < 1 || day > 31) return <span key={i} />
-                    const unavailable = [3, 4, 5, 20, 21].includes(day)
-                    const selected = selectedDay === day
-                    return (
-                      <button
-                        key={i}
-                        disabled={unavailable}
-                        onClick={() => setSelectedDay(day)}
-                        className={`aspect-square rounded-lg text-sm font-medium transition-colors ${
-                          selected
-                            ? 'bg-primary text-primary-foreground'
-                            : unavailable
-                              ? 'cursor-not-allowed text-muted-foreground/30 line-through'
-                              : 'text-foreground hover:bg-secondary'
-                        }`}
-                      >
-                        {day}
-                      </button>
-                    )
-                  })}
+          {/* Informações importantes */}
+          {(pousada.checkinTime ||
+            pousada.checkoutTime ||
+            pousada.houseRules ||
+            pousada.cancellationPolicy ||
+            whatsappDigits ||
+            phoneDigits) && (
+            <Reveal>
+              <div className="border-border border-b py-10">
+                <h2 className="text-foreground font-serif text-2xl font-semibold">
+                  Informações importantes
+                </h2>
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  {(pousada.checkinTime || pousada.checkoutTime) && (
+                    <div className="flex items-start gap-3">
+                      <Clock3 className="text-primary mt-0.5 size-5 shrink-0" />
+                      <div className="text-sm">
+                        <div className="text-foreground font-semibold">Check-in e check-out</div>
+                        <p className="text-muted-foreground mt-1">
+                          Check-in a partir das {pousada.checkinTime || '—'} · check-out até{' '}
+                          {pousada.checkoutTime || '—'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {pousada.cancellationPolicy && (
+                    <div className="flex items-start gap-3">
+                      <ShieldCheck className="text-primary mt-0.5 size-5 shrink-0" />
+                      <div className="text-sm">
+                        <div className="text-foreground font-semibold">
+                          Política de cancelamento
+                        </div>
+                        <p className="text-muted-foreground mt-1 text-pretty">
+                          {pousada.cancellationPolicy}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {pousada.houseRules && (
+                    <div className="flex items-start gap-3">
+                      <ClipboardList className="text-primary mt-0.5 size-5 shrink-0" />
+                      <div className="text-sm">
+                        <div className="text-foreground font-semibold">Regras da casa</div>
+                        <p className="text-muted-foreground mt-1 text-pretty">
+                          {pousada.houseRules}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {(whatsappDigits || phoneDigits) && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="text-primary mt-0.5 size-5 shrink-0" />
+                      <div className="text-sm">
+                        <div className="text-foreground font-semibold">Fale com a pousada</div>
+                        <div className="mt-1 flex flex-wrap gap-3">
+                          {whatsappDigits && (
+                            <a
+                              href={`https://wa.me/55${whatsappDigits}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-foreground hover:text-primary inline-flex items-center gap-1.5 font-semibold"
+                            >
+                              <MessageCircle className="size-4" />
+                              WhatsApp
+                            </a>
+                          )}
+                          {phoneDigits && (
+                            <a
+                              href={`tel:+55${phoneDigits}`}
+                              className="text-foreground hover:text-primary inline-flex items-center gap-1.5 font-semibold"
+                            >
+                              <Phone className="size-4" />
+                              {pousada.contactPhone}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          )}
 
           {/* Reviews */}
           <Reveal>
-            <div className="border-b border-border py-10">
+            <div className="border-border border-b py-10">
               <div className="flex items-center gap-3">
-                <h2 className="font-serif text-2xl font-semibold text-foreground">Avaliações</h2>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-foreground">
-                  <Star className="size-4 fill-gold text-gold" />
+                <h2 className="text-foreground font-serif text-2xl font-semibold">Avaliações</h2>
+                <span className="bg-secondary text-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold">
+                  <Star className="fill-gold text-gold size-4" />
                   {pousada.rating.toFixed(1)}
                 </span>
               </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                {reviews.map((r) => (
-                  <Card key={r.name} className="p-5">
-                    <Quote className="size-6 text-primary/30" />
-                    <p className="mt-3 text-sm leading-relaxed text-foreground">{r.text}</p>
-                    <div className="mt-4 flex items-center gap-1 text-gold">
-                      {Array.from({ length: r.rating }).map((_, i) => (
-                        <Star key={i} className="size-3.5 fill-gold" />
-                      ))}
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-sm font-semibold text-foreground">{r.name}</div>
-                      <div className="text-xs text-muted-foreground">{r.location}</div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+              {reviews.length > 0 ? (
+                <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                  {reviews.map((r) => (
+                    <Card key={r.id} className="p-5">
+                      <Quote className="text-primary/30 size-6" />
+                      <p className="text-foreground mt-3 text-sm leading-relaxed">{r.text}</p>
+                      <div className="text-gold mt-4 flex items-center gap-1">
+                        {Array.from({ length: r.rating }).map((_, i) => (
+                          <Star key={i} className="fill-gold size-3.5" />
+                        ))}
+                      </div>
+                      <div className="text-muted-foreground mt-3 text-xs">
+                        {formatReviewDate(r.createdAt)}
+                      </div>
+                      {r.response && (
+                        <div className="bg-secondary/60 text-muted-foreground mt-3 rounded-xl p-3 text-xs">
+                          <span className="text-foreground font-semibold">
+                            Resposta da pousada:{' '}
+                          </span>
+                          {r.response}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground mt-6 text-sm">
+                  Ainda sem avaliações públicas por aqui — as primeiras aparecem depois que um
+                  hóspede avalia a estadia.
+                </p>
+              )}
             </div>
           </Reveal>
 
           {/* Location */}
           <Reveal>
             <div className="py-10">
-              <h2 className="font-serif text-2xl font-semibold text-foreground">Localização</h2>
-              <div className="relative mt-6 h-72 overflow-hidden rounded-2xl border border-border bg-secondary">
-                <div
-                  className="absolute inset-0 opacity-70"
-                  style={{
-                    backgroundImage:
-                      'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
-                    backgroundSize: '40px 40px',
-                  }}
-                />
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <span className="relative flex size-4">
-                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent/60" />
-                    <span className="relative inline-flex size-4 rounded-full bg-accent" />
-                  </span>
+              <h2 className="text-foreground font-serif text-2xl font-semibold">Localização</h2>
+              <div className="border-border bg-secondary/40 mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center">
+                <div className="flex items-start gap-3 text-sm">
+                  <MapPin className="text-primary mt-0.5 size-5 shrink-0" />
+                  <div>
+                    <div className="text-foreground font-semibold">
+                      {pousada.city}, {pousada.state}
+                    </div>
+                    {pousada.address && (
+                      <div className="text-muted-foreground mt-0.5">{pousada.address}</div>
+                    )}
+                  </div>
                 </div>
-                <div className="absolute bottom-4 left-4 rounded-xl glass px-4 py-2.5 text-sm">
-                  <div className="font-semibold text-foreground">{pousada.city}, {pousada.state}</div>
-                  <div className="text-xs text-muted-foreground">A 12 min do centro</div>
-                </div>
+                {mapsUrl && (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-border text-foreground hover:bg-secondary inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors"
+                  >
+                    <Navigation className="size-4" />
+                    Ver no mapa
+                  </a>
+                )}
               </div>
             </div>
           </Reveal>
         </div>
 
         {/* Booking card */}
-        <div className="order-first lg:order-none lg:relative">
+        <div className="order-first lg:relative lg:order-none">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:sticky lg:top-24 rounded-3xl border border-border bg-card p-6 shadow-xl shadow-stone-deep/5"
+            className="border-border bg-card shadow-stone-deep/5 rounded-3xl border p-6 shadow-xl lg:sticky lg:top-24"
           >
             <div className="flex items-end justify-between">
               <div>
-                <span className="text-2xl font-semibold text-foreground">
+                <span className="text-foreground text-2xl font-semibold">
                   {room ? `R$ ${nightly}` : 'Indisponível'}
                 </span>
-                {room && <span className="text-sm text-muted-foreground"> / diária</span>}
+                {room && <span className="text-muted-foreground text-sm"> / diária</span>}
               </div>
-              <span className="inline-flex items-center gap-1 text-sm font-semibold text-foreground">
-                <Star className="size-4 fill-gold text-gold" />
+              <span className="text-foreground inline-flex items-center gap-1 text-sm font-semibold">
+                <Star className="fill-gold text-gold size-4" />
                 {pousada.rating.toFixed(1)}
               </span>
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-2xl border border-border">
-              <div className="grid grid-cols-2 divide-x divide-border border-b border-border">
+            <div className="border-border mt-5 overflow-hidden rounded-2xl border">
+              <div className="divide-border border-border grid grid-cols-2 divide-x border-b">
                 <label className="block p-3">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Check-in</span>
+                  <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                    Check-in
+                  </span>
                   <input
                     type="date"
                     value={checkin}
@@ -416,33 +516,37 @@ export function PousadaDetail({
                       setCheckin(nextCheckin)
                       if (checkout <= nextCheckin) setCheckout(addDays(nextCheckin, 1))
                     }}
-                    className="mt-1 w-full bg-transparent text-sm font-medium text-foreground outline-none"
+                    className="text-foreground mt-1 w-full bg-transparent text-sm font-medium outline-none"
                   />
                 </label>
                 <label className="block p-3">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Check-out</span>
+                  <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                    Check-out
+                  </span>
                   <input
                     type="date"
                     value={checkout}
                     min={addDays(checkin, 1)}
                     onChange={(event) => setCheckout(event.target.value)}
-                    className="mt-1 w-full bg-transparent text-sm font-medium text-foreground outline-none"
+                    className="text-foreground mt-1 w-full bg-transparent text-sm font-medium outline-none"
                   />
                 </label>
               </div>
               <div className="flex items-center justify-between p-3">
                 <label className="min-w-0 flex-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Hóspedes</span>
+                  <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                    Hóspedes
+                  </span>
                   <input
                     type="number"
                     value={guests}
                     min={1}
                     max={capacity}
                     onChange={(event) => setGuests(Number(event.target.value))}
-                    className="mt-1 w-full bg-transparent text-sm font-medium text-foreground outline-none"
+                    className="text-foreground mt-1 w-full bg-transparent text-sm font-medium outline-none"
                   />
                 </label>
-                <Users className="size-4 text-muted-foreground" />
+                <Users className="text-muted-foreground size-4" />
               </div>
             </div>
 
@@ -455,22 +559,24 @@ export function PousadaDetail({
               className={`mt-4 block w-full rounded-2xl py-3.5 text-center text-sm font-semibold transition-all ${
                 canReserve
                   ? 'bg-accent text-accent-foreground hover:brightness-105'
-                  : 'pointer-events-none bg-muted text-muted-foreground'
+                  : 'bg-muted text-muted-foreground pointer-events-none'
               }`}
             >
               Reservar agora
             </Link>
-            <p className="mt-2 text-center text-xs text-muted-foreground">Você ainda não será cobrado</p>
+            <p className="text-muted-foreground mt-2 text-center text-xs">
+              Você ainda não será cobrado
+            </p>
 
             {room && (
               <div className="mt-5 space-y-2 text-sm">
-                <div className="flex justify-between text-muted-foreground">
+                <div className="text-muted-foreground flex justify-between">
                   <span>
                     R$ {nightly} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
                   </span>
                   <span>R$ {price.subtotal}</span>
                 </div>
-                <div className="flex justify-between border-t border-border pt-3 text-base font-semibold text-foreground">
+                <div className="border-border text-foreground flex justify-between border-t pt-3 text-base font-semibold">
                   <span>Total</span>
                   <span>R$ {price.total}</span>
                 </div>

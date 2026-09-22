@@ -32,8 +32,9 @@ function paginate<T>(items: T[], page = 1, pageSize = DEFAULT_PAGE_SIZE): Pagina
 }
 
 function matches(p: Pousada, search: string): boolean {
-  return normalizeCatalogText([p.name, p.city, p.state, p.description, ...p.tags].join(' '))
-    .includes(normalizeCatalogText(search))
+  return normalizeCatalogText(
+    [p.name, p.city, p.state, p.description, ...p.tags].join(' '),
+  ).includes(normalizeCatalogText(search))
 }
 
 // ---------------------------------------------------------------------------
@@ -43,7 +44,8 @@ const mockRepository: PousadaRepository = {
   async list(query) {
     const { search, page = 1, pageSize = DEFAULT_PAGE_SIZE } = query
     // Sem invent?rio real, o modo demonstra??o n?o pode confirmar disponibilidade.
-    const items = query.checkin || query.guests ? [] : mockData.filter((p) => !search || matches(p, search))
+    const items =
+      query.checkin || query.guests ? [] : mockData.filter((p) => !search || matches(p, search))
     items.sort((a, b) => a.slug.localeCompare(b.slug))
     return paginate(items, page, pageSize)
   },
@@ -77,6 +79,19 @@ function rowToPousada(r: PousadaRow): Pousada {
     tags: r.tags,
     description: r.description,
     instagram: r.instagram,
+    // Campos abaixo faltam quando a linha vem de `search_public_pousadas`
+    // (RPC de busca, que só seleciona as colunas da vitrine) — `undefined`
+    // nesse caso é esperado, e a página de detalhe (que usa `.select('*')`
+    // de verdade) é a única que precisa deles.
+    id: r.id,
+    address: r.address,
+    cep: r.cep,
+    checkinTime: r.checkin_time,
+    checkoutTime: r.checkout_time,
+    cancellationPolicy: r.cancellation_policy,
+    houseRules: r.house_rules,
+    whatsapp: r.whatsapp,
+    contactPhone: r.contact_phone,
   }
 }
 
@@ -85,11 +100,21 @@ const supabaseRepository: PousadaRepository = {
     const filters = parseCatalogQuery(query)
     const supabase = createSupabaseStaticClient()
     const { data, error } = await supabase.rpc('search_public_pousadas', {
-      p_search: filters.search ?? '', p_page: filters.page, p_page_size: filters.pageSize,
-      p_checkin: filters.checkin, p_checkout: filters.checkout, p_guests: filters.guests,
+      p_search: filters.search ?? '',
+      p_page: filters.page,
+      p_page_size: filters.pageSize,
+      p_checkin: filters.checkin,
+      p_checkout: filters.checkout,
+      p_guests: filters.guests,
     })
     if (error) throw error
-    const result = data as { items: PousadaRow[]; total: number; page: number; pageSize: number; totalPages: number }
+    const result = data as {
+      items: PousadaRow[]
+      total: number
+      page: number
+      pageSize: number
+      totalPages: number
+    }
     return { ...result, items: result.items.map((row) => rowToPousada({ ...row, gallery: [] })) }
   },
   async findBySlug(slug) {
@@ -149,7 +174,9 @@ export type NewPousadaAdmin = {
  * — autorização de negócio (quem pode cadastrar) é responsabilidade do
  * Service (`assertCanCreate`).
  */
-export async function insertPousadaAsAdmin(input: NewPousadaAdmin): Promise<{ id: string; slug: string }> {
+export async function insertPousadaAsAdmin(
+  input: NewPousadaAdmin,
+): Promise<{ id: string; slug: string }> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('pousadas')

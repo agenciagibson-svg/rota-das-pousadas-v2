@@ -1,5 +1,6 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseStaticClient } from '@/lib/supabase/static'
 
 export type OwnerReviewRow = {
   id: string
@@ -55,6 +56,47 @@ export async function listReviewsByPousada(pousadaId: string): Promise<OwnerRevi
       createdAt: review.created_at,
     }
   })
+}
+
+export type PublicReviewRow = {
+  id: string
+  rating: number
+  text: string
+  response: string | null
+  createdAt: string
+}
+
+/**
+ * Avaliações públicas de uma pousada, para a página de vitrine.
+ *
+ * RLS `reviews_public_read` (migration 0002) já libera `select` pra
+ * qualquer um — leitura anônima, cliente sem sessão (mesmo padrão de
+ * `listSlugs` em `pousadas.repository.ts`). NUNCA junta com `profiles`
+ * (não é público, RLS `profiles_self_select`) nem com `bookings` (também
+ * protegida) pra pegar nome do hóspede — o dado de quem escreveu a
+ * avaliação não é pra sair na vitrine sem o consentimento explícito dele,
+ * então a avaliação pública sai sem nome, só nota + texto + resposta da
+ * pousada + data.
+ */
+export async function listPublicReviewsByPousada(
+  pousadaId: string,
+  limit = 6,
+): Promise<PublicReviewRow[]> {
+  const supabase = createSupabaseStaticClient()
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('id, rating, text, response, created_at')
+    .eq('pousada_id', pousadaId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    text: r.text,
+    response: r.response,
+    createdAt: r.created_at,
+  }))
 }
 
 export async function updateReviewResponseByPousada(

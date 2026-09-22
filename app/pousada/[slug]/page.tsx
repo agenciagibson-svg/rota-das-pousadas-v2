@@ -13,6 +13,7 @@ import {
   getPousada,
   getPousadaSlugs,
   getNearbyPousadas,
+  getPublicReviews,
   isFavoritePousada,
   getBookableRoom,
 } from '@/server/queries'
@@ -46,25 +47,35 @@ export default async function PousadaPage({
 }) {
   const { slug } = await params
   const initialBooking = await searchParams
-  const filters = catalogQuerySchema.safeParse({ checkin: initialBooking.checkin, checkout: initialBooking.checkout, guests: initialBooking.guests })
+  const filters = catalogQuerySchema.safeParse({
+    checkin: initialBooking.checkin,
+    checkout: initialBooking.checkout,
+    guests: initialBooking.guests,
+  })
   const [pousada, currentUser, favorite, room] = await Promise.all([
     getPousada(slug),
     getCurrentUser(),
     isFavoritePousada(slug),
-    filters.success ? getBookableRoom(slug, filters.data.checkin, filters.data.checkout, filters.data.guests) : Promise.resolve(null),
+    filters.success
+      ? getBookableRoom(slug, filters.data.checkin, filters.data.checkout, filters.data.guests)
+      : Promise.resolve(null),
   ])
   if (!pousada) notFound()
 
-  const nearby = await getNearbyPousadas(slug, 3)
+  const [nearby, reviews] = await Promise.all([
+    getNearbyPousadas(slug, 3),
+    getPublicReviews(pousada.id),
+  ])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <JsonLd data={pousadaJsonLd(pousada)} />
       <SiteHeader forceSolid />
       <main>
         <PousadaDetail
           pousada={pousada}
           room={room}
+          reviews={reviews}
           initialBooking={{
             checkin: initialBooking.checkin,
             checkout: initialBooking.checkout,
@@ -78,10 +89,10 @@ export default async function PousadaPage({
         <section className="bg-secondary/50 py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-5 lg:px-8">
             <Reveal>
-              <h2 className="font-serif text-3xl font-semibold text-foreground sm:text-4xl">
+              <h2 className="text-foreground font-serif text-3xl font-semibold sm:text-4xl">
                 Experiências próximas
               </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-2 text-sm">
                 Outros refúgios para continuar a sua rota.
               </p>
             </Reveal>
@@ -90,7 +101,7 @@ export default async function PousadaPage({
                 <Reveal key={p.slug} delay={i * 0.08}>
                   <Link
                     href={`/pousada/${p.slug}`}
-                    className="group block overflow-hidden rounded-3xl border border-border bg-card transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-stone-deep/10"
+                    className="group border-border bg-card hover:shadow-stone-deep/10 block overflow-hidden rounded-3xl border transition-all hover:-translate-y-1 hover:shadow-2xl"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <Image
@@ -103,18 +114,20 @@ export default async function PousadaPage({
                     </div>
                     <div className="p-5">
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
                           <MapPin className="size-3.5" />
                           {p.city}, {p.state}
                         </span>
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground">
-                          <Star className="size-3.5 fill-gold text-gold" />
+                        <span className="text-foreground inline-flex items-center gap-1 text-xs font-semibold">
+                          <Star className="fill-gold text-gold size-3.5" />
                           {p.rating.toFixed(1)}
                         </span>
                       </div>
-                      <h3 className="mt-2 font-serif text-xl font-semibold text-foreground">{p.name}</h3>
+                      <h3 className="text-foreground mt-2 font-serif text-xl font-semibold">
+                        {p.name}
+                      </h3>
                       <div className="mt-3 text-sm">
-                        <span className="font-semibold text-foreground">R$ {p.pricePerNight}</span>
+                        <span className="text-foreground font-semibold">R$ {p.pricePerNight}</span>
                         <span className="text-muted-foreground"> / diária</span>
                       </div>
                     </div>
