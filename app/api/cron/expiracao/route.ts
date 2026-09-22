@@ -1,20 +1,22 @@
 import { timingSafeEqual } from 'node:crypto'
 import { expireOverduePendingBookings } from '@/features/reservas/services/expire-overdue.service'
 import { purgeStaleQuoteRequests } from '@/features/bio/services/bio.service'
+import { sendCheckinReminders } from '@/features/reservas/services/checkin-reminders.service'
 
 /**
- * Rodada diária de manutenção: expira pré-reserva vencida e purga pedido de
- * orçamento não convertido com mais de 180 dias (0059, LGPD). As duas tarefas
- * dividem o mesmo cron de propósito — o plano Hobby da Vercel limita
- * quantidade e frequência de cron job, então um cron novo só pra isso custaria
- * uma vaga que não sobra.
+ * Rodada diária de manutenção: expira pré-reserva vencida, purga pedido de
+ * orçamento não convertido com mais de 180 dias (0059, LGPD) e envia lembrete
+ * de check-in por e-mail pras reservas confirmadas de daqui a 2 dias (0060).
+ * As três tarefas dividem o mesmo cron de propósito — o plano Hobby da
+ * Vercel só permite cron 1x/dia, então um cron novo só pra isso custaria uma
+ * segunda rodada diária que não sobra.
  *
  * Disparada pelo Vercel Cron (ver `vercel.json`), que envia
  * `Authorization: Bearer <CRON_SECRET>` — mesmo segredo e mesmo padrão de
  * `/api/cron/canais`. Sem o segredo correto a rota responde 401.
  */
 export const dynamic = 'force-dynamic'
-export const maxDuration = 30
+export const maxDuration = 60
 
 function authorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -32,11 +34,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [bookings, quoteRequests] = await Promise.all([
+    const [bookings, quoteRequests, checkinReminders] = await Promise.all([
       expireOverduePendingBookings(),
       purgeStaleQuoteRequests(),
+      sendCheckinReminders(),
     ])
-    return Response.json({ bookings, quoteRequests }, { status: 200 })
+    return Response.json({ bookings, quoteRequests, checkinReminders }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Falha inesperada.'
     return Response.json({ error: message }, { status: 500 })

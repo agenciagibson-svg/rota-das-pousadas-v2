@@ -102,7 +102,7 @@ export async function syncSubscriptionStatusRpc(params: {
   const { data, error } = await supabase.rpc('sync_subscription_status', {
     p_mp_preapproval_id: params.mpPreapprovalId,
     p_status: params.status,
-    p_next_billing_date: params.nextBillingDate,
+    p_next_billing_date: params.nextBillingDate ?? undefined,
   })
   if (error) throw new Error(error.message)
   return data as { status: string; subscriptionId?: string }
@@ -123,9 +123,9 @@ export async function recordSubscriptionInvoiceRpc(params: {
     p_mp_payment_id: params.mpPaymentId,
     p_amount: params.amount,
     p_status: params.status,
-    p_period_start: params.periodStart,
-    p_period_end: params.periodEnd,
-    p_paid_at: params.paidAt,
+    p_period_start: params.periodStart ?? undefined,
+    p_period_end: params.periodEnd ?? undefined,
+    p_paid_at: params.paidAt ?? undefined,
   })
   if (error) throw new Error(error.message)
   return data as { status: string; invoiceId?: string }

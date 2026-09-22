@@ -6,6 +6,9 @@ import {
   recordPaymentAndConfirmBookingRpc,
   type PaymentStatus,
 } from '@/repositories/payments.repository'
+import { getBookingNotificationContextRpc } from '@/repositories/bookings.repository'
+import { sendEmail } from '@/lib/email/mailer'
+import { bookingConfirmedEmail } from '@/lib/email/templates'
 import { getPaymentById, type MpPayment } from './mp-client'
 
 /**
@@ -100,7 +103,7 @@ export async function processPaymentNotification(params: {
   }
   if (String(payment.id) !== params.mpPaymentId) throw new Error('ID de pagamento divergente.')
 
-  await recordPaymentAndConfirmBookingRpc({
+  const result = await recordPaymentAndConfirmBookingRpc({
     bookingId: params.bookingId,
     providerRef: String(payment.id),
     amount: payment.transaction_amount,
@@ -110,4 +113,27 @@ export async function processPaymentNotification(params: {
     updatedAt: payment.date_last_updated,
     refundedAmount: payment.transaction_amount_refunded,
   })
+
+  // `status === 'ok'` é a ÚNICA vez que esta chamada de fato confirmou a
+  // reserva agora (0042) — `stale`/`already_recorded` são reentrega do
+  // mesmo webhook pelo Mercado Pago; sem essa checagem o hóspede receberia
+  // o e-mail de confirmação de novo a cada reenvio (0060).
+  if (result.status === 'ok') {
+    await notifyBookingConfirmed(params.bookingId)
+  }
+}
+
+/**
+ * Envia o e-mail de confirmação/"ticket" (0060). Fail-soft: nunca deve
+ * derrubar o webhook — o pagamento já foi gravado nesse ponto.
+ */
+async function notifyBookingConfirmed(bookingId: string): Promise<void> {
+  try {
+    const ctx = await getBookingNotificationContextRpc(bookingId)
+    if (!ctx || !ctx.guestEmail) return
+    const { subject, html, text } = bookingConfirmedEmail(ctx)
+    await sendEmail({ to: ctx.guestEmail, subject, html, text })
+  } catch (error) {
+    console.error(`[email] Falha ao notificar confirmação da reserva ${bookingId}:`, error)
+  }
 }

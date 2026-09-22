@@ -5,11 +5,14 @@ import { getBookableRoomBySlug } from '@/repositories/rooms.repository'
 import {
   createBookingRpc,
   getBookingByGuest,
+  getBookingNotificationContextRpc,
   listBookingsByGuest,
   setBookingStatusRpc,
 } from '@/repositories/bookings.repository'
 import { ensureTravelerGuestRpc, upsertGuestRpc } from '@/repositories/guests.repository'
 import { calculateBookingPrice } from '@/features/reservas/pricing'
+import { sendEmail } from '@/lib/email/mailer'
+import { bookingRequestReceivedEmail } from '@/lib/email/templates'
 import type { CreateBookingInput, CreateBookingAdminInput } from '@/features/reservas/schemas'
 import type { Booking } from '@/features/reservas/types'
 
@@ -36,14 +39,23 @@ function paymentDueAt(): string {
  * TUDO de novo no banco (disponibilidade real, capacidade, conflito),
  * nunca confia apenas neste cálculo do servidor de aplicação.
  */
-export async function createBooking(input: CreateBookingInput): Promise<{ id: string; code: string }> {
+export async function createBooking(
+  input: CreateBookingInput,
+): Promise<{ id: string; code: string }> {
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login para concluir a reserva.')
 
-  const bookable = await getBookableRoomBySlug(input.pousadaSlug, input.checkin, input.checkout, input.guests)
+  const bookable = await getBookableRoomBySlug(
+    input.pousadaSlug,
+    input.checkin,
+    input.checkout,
+    input.guests,
+  )
   if (!bookable) throw new Error('Esta pousada não está disponível para reserva.')
   if (input.expectedNightly !== undefined && input.expectedNightly !== bookable.nightly) {
-    throw new Error('A diária disponível mudou. Volte à busca com estas datas e hóspedes para revisar o valor antes de reservar.')
+    throw new Error(
+      'A diária disponível mudou. Volte à busca com estas datas e hóspedes para revisar o valor antes de reservar.',
+    )
   }
 
   if (input.guests > bookable.capacity) {
@@ -88,7 +100,26 @@ export async function createBooking(input: CreateBookingInput): Promise<{ id: st
     paymentDueAt: paymentDueAt(),
   })
 
+  // Notificação por e-mail (0060) — nunca bloqueia a reserva se falhar.
+  await notifyBookingRequestReceived(id)
+
   return { id, code }
+}
+
+/**
+ * Envia o e-mail de "pedido recebido" (0060). Fail-soft: qualquer falha aqui
+ * (RPC, SMTP) é logada e engolida — a reserva já foi criada com sucesso e
+ * nunca deve ser desfeita por causa de uma notificação.
+ */
+async function notifyBookingRequestReceived(bookingId: string): Promise<void> {
+  try {
+    const ctx = await getBookingNotificationContextRpc(bookingId)
+    if (!ctx || !ctx.guestEmail) return
+    const { subject, html, text } = bookingRequestReceivedEmail(ctx)
+    await sendEmail({ to: ctx.guestEmail, subject, html, text })
+  } catch (error) {
+    console.error(`[email] Falha ao notificar pedido recebido da reserva ${bookingId}:`, error)
+  }
 }
 
 /**
@@ -97,7 +128,9 @@ export async function createBooking(input: CreateBookingInput): Promise<{ id: st
  * do formulário (reaproveita cadastro existente pelo mesmo critério da RPC:
  * e-mail/telefone/documento normalizados, dentro da mesma pousada).
  */
-export async function createAdminBooking(input: CreateBookingAdminInput): Promise<{ id: string; code: string }> {
+export async function createAdminBooking(
+  input: CreateBookingAdminInput,
+): Promise<{ id: string; code: string }> {
   const { pousadaId } = await requireCapability('booking:manage')
 
   const price = calculateBookingPrice(input.nightlyRate, input.checkin, input.checkout, {

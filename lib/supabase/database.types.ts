@@ -233,6 +233,7 @@ export type Database = {
           checked_out_at: string | null
           checked_out_by: string | null
           checkin: string
+          checkin_reminder_sent_at: string | null
           checkout: string
           children: number
           code: string
@@ -286,6 +287,7 @@ export type Database = {
           checked_out_at?: string | null
           checked_out_by?: string | null
           checkin: string
+          checkin_reminder_sent_at?: string | null
           checkout: string
           children?: number
           code: string
@@ -339,6 +341,7 @@ export type Database = {
           checked_out_at?: string | null
           checked_out_by?: string | null
           checkin?: string
+          checkin_reminder_sent_at?: string | null
           checkout?: string
           children?: number
           code?: string
@@ -383,6 +386,20 @@ export type Database = {
           {
             foreignKeyName: 'bookings_cancelled_by_fkey'
             columns: ['cancelled_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bookings_checked_in_by_fkey'
+            columns: ['checked_in_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bookings_checked_out_by_fkey'
+            columns: ['checked_out_by']
             isOneToOne: false
             referencedRelation: 'profiles'
             referencedColumns: ['id']
@@ -1000,6 +1017,30 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip: string | null
+          success: boolean
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip?: string | null
+          success: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip?: string | null
+          success?: boolean
+        }
+        Relationships: []
       }
       media: {
         Row: {
@@ -2000,6 +2041,21 @@ export type Database = {
           },
         ]
       }
+      used_oauth_states: {
+        Row: {
+          created_at: string
+          nonce: string
+        }
+        Insert: {
+          created_at?: string
+          nonce: string
+        }
+        Update: {
+          created_at?: string
+          nonce?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2045,10 +2101,12 @@ export type Database = {
         Returns: boolean
       }
       auth_can_manage_destinations: { Args: never; Returns: boolean }
+      auth_can_manage_platform_finance: { Args: never; Returns: boolean }
       auth_can_manage_pousada: {
         Args: { target_pousada: string }
         Returns: boolean
       }
+      auth_can_manage_pousadas_platform: { Args: never; Returns: boolean }
       auth_can_read_channels: {
         Args: { target_pousada: string }
         Returns: boolean
@@ -2079,6 +2137,7 @@ export type Database = {
       }
       auth_is_member_of: { Args: { target_pousada: string }; Returns: boolean }
       auth_is_platform_admin: { Args: never; Returns: boolean }
+      auth_is_platform_master: { Args: never; Returns: boolean }
       cancel_room_block: {
         Args: {
           p_block_id: string
@@ -2133,7 +2192,11 @@ export type Database = {
         Returns: Json
       }
       create_pending_subscription: {
-        Args: { p_mp_preapproval_id: string; p_plan_id: string; p_pousada_id: string }
+        Args: {
+          p_mp_preapproval_id: string
+          p_plan_id: string
+          p_pousada_id: string
+        }
         Returns: string
       }
       create_pousada: {
@@ -2186,8 +2249,16 @@ export type Database = {
         Returns: undefined
       }
       delete_destination: { Args: { p_id: string }; Returns: Json }
+      ensure_traveler_guest: {
+        Args: { p_email?: string; p_full_name: string; p_pousada_id: string }
+        Returns: Json
+      }
       expire_overdue_pending_bookings: { Args: never; Returns: Json }
       expire_pending_booking: { Args: { p_booking_id: string }; Returns: Json }
+      get_booking_notification_context: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
       get_channel_export_feed: { Args: { p_token: string }; Returns: Json }
       get_link_report: {
         Args: { p_days?: number; p_pousada_id: string }
@@ -2196,6 +2267,15 @@ export type Database = {
       get_pousada_payment_context: {
         Args: { p_booking_id: string }
         Returns: Json
+      }
+      grant_platform_access: {
+        Args: {
+          p_expires_at: string
+          p_granted_to: string
+          p_pousada_id: string
+          p_reason: string
+        }
+        Returns: string
       }
       invite_membership: {
         Args: {
@@ -2207,6 +2287,10 @@ export type Database = {
       }
       link_pousada_owner: {
         Args: { p_email: string; p_pousada_id: string }
+        Returns: Json
+      }
+      list_and_mark_checkin_reminders: {
+        Args: { p_days_ahead?: number }
         Returns: Json
       }
       list_bookable_rooms: {
@@ -2233,15 +2317,18 @@ export type Database = {
       }
       list_guests_pending_document_backfill: {
         Args: { p_limit?: number }
-        Returns: { document_number: string | null; id: string }[]
+        Returns: {
+          document_number: string
+          id: string
+        }[]
       }
       list_login_attempts: {
-        Args: { p_email: string | null; p_limit: number }
+        Args: { p_email?: string; p_limit?: number }
         Returns: {
           created_at: string
           email: string
           id: string
-          ip_masked: string | null
+          ip_masked: string
           success: boolean
         }[]
       }
@@ -2271,7 +2358,7 @@ export type Database = {
           created_at: string
           email: string
           full_name: string
-          platform_role: Database['public']['Enums']['platform_role'] | null
+          platform_role: Database['public']['Enums']['platform_role']
           user_id: string
         }[]
       }
@@ -2338,7 +2425,7 @@ export type Database = {
         Returns: undefined
       }
       record_login_attempt: {
-        Args: { p_email: string; p_ip?: string; p_success: boolean }
+        Args: { p_email: string; p_ip: string; p_success: boolean }
         Returns: undefined
       }
       record_payment_and_confirm_booking: {
@@ -2357,9 +2444,9 @@ export type Database = {
           p_amount: number
           p_mp_payment_id: string
           p_mp_preapproval_id: string
-          p_paid_at: string | null
-          p_period_end: string | null
-          p_period_start: string | null
+          p_paid_at?: string
+          p_period_end?: string
+          p_period_start?: string
           p_status: string
         }
         Returns: Json
@@ -2368,7 +2455,14 @@ export type Database = {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
       }
-      revoke_platform_role_by_email: { Args: { p_email: string }; Returns: Json }
+      revoke_platform_access: {
+        Args: { p_grant_id: string }
+        Returns: undefined
+      }
+      revoke_platform_role_by_email: {
+        Args: { p_email: string }
+        Returns: Json
+      }
       save_channel_calendar: {
         Args: {
           p_export_token: string
@@ -2417,7 +2511,7 @@ export type Database = {
       set_platform_role_by_email: {
         Args: {
           p_email: string
-          p_role: Database['public']['Enums']['platform_role'] | null
+          p_role: Database['public']['Enums']['platform_role']
         }
         Returns: Json
       }
@@ -2447,7 +2541,11 @@ export type Database = {
         Returns: Json
       }
       sync_subscription_status: {
-        Args: { p_mp_preapproval_id: string; p_next_billing_date: string | null; p_status: string }
+        Args: {
+          p_mp_preapproval_id: string
+          p_next_billing_date?: string
+          p_status: string
+        }
         Returns: Json
       }
       update_booking: {

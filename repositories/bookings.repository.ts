@@ -483,3 +483,66 @@ export async function getBookingFnrhData(
     })),
   }
 }
+
+export type BookingNotificationContext = {
+  bookingId: string
+  code: string
+  guestName: string | null
+  guestEmail: string | null
+  checkin: string
+  checkout: string
+  total: number
+  currency: string
+  roomName: string
+  pousada: {
+    name: string
+    slug: string
+    address: string | null
+    cep: string | null
+    checkinTime: string
+    checkoutTime: string
+    contactPhone: string
+    whatsapp: string
+    houseRules: string
+    cancellationPolicy: string
+  }
+}
+
+/**
+ * Reserva + pousada pra montar e-mail de notificação (0060). `service_role`
+ * só, via RPC estreita — nunca lê tabela direto (mesmo padrão de
+ * `expireOverduePendingBookingsRpc` acima).
+ *
+ * Chamada também a partir de `createBooking` (com sessão de usuário) e não só
+ * do webhook (sem sessão): é seguro porque o `bookingId` ali vem de uma
+ * reserva que o PRÓPRIO código acabou de criar na mesma chamada — nunca um
+ * id vindo de fora sendo confiado às cegas. A função no banco não expõe
+ * `authenticated`/`anon` de propósito (ver 0060), então não dá pra ler
+ * reserva alheia mesmo que alguém tentasse chamar a RPC direto.
+ */
+export async function getBookingNotificationContextRpc(
+  bookingId: string,
+): Promise<BookingNotificationContext | null> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { data, error } = await supabase.rpc('get_booking_notification_context', {
+    p_booking_id: bookingId,
+  })
+  if (error) throw new Error(error.message)
+  return (data as BookingNotificationContext | null) ?? null
+}
+
+/**
+ * Lembrete de check-in (0060) — cron diário, sem sessão de usuário. Seleciona
+ * e marca `checkin_reminder_sent_at` na mesma chamada (ver comentário da RPC
+ * na migration) — idempotente entre execuções.
+ */
+export async function listAndMarkCheckinRemindersRpc(
+  daysAhead = 2,
+): Promise<BookingNotificationContext[]> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { data, error } = await supabase.rpc('list_and_mark_checkin_reminders', {
+    p_days_ahead: daysAhead,
+  })
+  if (error) throw new Error(error.message)
+  return (data as BookingNotificationContext[] | null) ?? []
+}
