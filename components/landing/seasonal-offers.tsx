@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowUpRight, CalendarDays, Clock, Flame, Sparkles, Tag } from 'lucide-react'
+import { isoDateInTimeZone } from '@/lib/dates'
 import { Reveal } from '@/components/reveal'
 
 type SeasonKey = 'verao' | 'outono' | 'inverno' | 'primavera'
@@ -192,8 +193,9 @@ function addDays(date: string, days: number): string {
   return next.toISOString().slice(0, 10)
 }
 
+/** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
+  return isoDateInTimeZone(new Date())
 }
 
 function offerHref(season: SeasonKey, search: string) {

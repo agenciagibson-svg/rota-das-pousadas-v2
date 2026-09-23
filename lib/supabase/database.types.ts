@@ -2396,6 +2396,10 @@ export type Database = {
           operational_status: Database['public']['Enums']['room_operational_status']
         }[]
       }
+      pousada_local_date: {
+        Args: { p_pousada_id: string }
+        Returns: string
+      }
       purge_stale_quote_requests: {
         Args: { p_retention_days?: number }
         Returns: Json

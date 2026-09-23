@@ -22,6 +22,7 @@ export function BookingForm({
   initialCheckin = '',
   initialCheckout = '',
   initialGuests,
+  origin,
 }: {
   pousadaSlug: string
   nightly: number
@@ -29,6 +30,8 @@ export function BookingForm({
   initialCheckin?: string
   initialCheckout?: string
   initialGuests?: string
+  /** `link_bio` quando o hóspede chegou pelo link da bio — vai junto na reserva. */
+  origin?: 'link_bio'
 }) {
   const router = useRouter()
   const [formError, setFormError] = useState<string | null>(null)
@@ -49,6 +52,7 @@ export function BookingForm({
       checkin: initialCheckin,
       checkout: initialCheckout,
       guests: Number(initialGuests) || 2,
+      origin,
     },
   })
 

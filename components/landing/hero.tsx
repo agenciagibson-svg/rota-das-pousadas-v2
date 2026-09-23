@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, MapPin, Calendar, Users, Sparkles, ArrowRight, Shuffle } from 'lucide-react'
+import { isoDateInTimeZone } from '@/lib/dates'
 import { SearchField } from '@/components/ui/search-field'
 
 type SeasonKey = 'verao' | 'outono' | 'inverno' | 'primavera'
@@ -78,8 +79,9 @@ function addDays(date: string, days: number): string {
   return next.toISOString().slice(0, 10)
 }
 
+/** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
+  return isoDateInTimeZone(new Date())
 }
 
 export function Hero() {

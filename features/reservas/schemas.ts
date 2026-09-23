@@ -3,11 +3,24 @@ import { phoneSchema } from '@/lib/validation/br'
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
 
+/**
+ * Origens aceitas na reserva pelo site: a padrão e a de quem chegou pelo link
+ * da bio (`?origem=link_bio`), que alimenta o relatório do link (0046). O banco
+ * aceita exatamente estas duas no fluxo público (`create_booking`, 0067).
+ */
+export const PUBLIC_BOOKING_ORIGINS = ['rota_das_pousadas', 'link_bio'] as const
+
+/** Lê `?origem=` da URL: só o link da bio marca a reserva; qualquer outro valor é ignorado. */
+export function bioOriginFromParam(value: string | undefined): 'link_bio' | undefined {
+  return value === 'link_bio' ? 'link_bio' : undefined
+}
+
 /** Validação de criação de reserva PÚBLICA (client + server) — layout preservado do Ciclo 1. */
 export const createBookingSchema = z
   .object({
     pousadaSlug: z.string().min(1, 'Pousada inválida.'),
     expectedNightly: z.number().nonnegative().optional(),
+    origin: z.enum(PUBLIC_BOOKING_ORIGINS).optional(),
     checkin: isoDate,
     checkout: isoDate,
     guests: z.coerce
@@ -20,7 +33,11 @@ export const createBookingSchema = z
     message: 'A data de saída deve ser posterior à de entrada.',
     path: ['checkout'],
   })
-  .refine((d) => d.checkin >= new Date().toISOString().slice(0, 10), {
+  // O "hoje" exato depende do fuso da pousada e quem confere é o banco
+  // (`create_booking`, 0067). Aqui só barramos datas claramente passadas: com
+  // um dia de folga sobre UTC, nenhum fuso do Brasil perde o dia de hoje — antes,
+  // das 21h à meia-noite o site recusava a entrada no mesmo dia.
+  .refine((d) => d.checkin >= new Date(Date.now() - 86_400_000).toISOString().slice(0, 10), {
     message: 'A data de entrada não pode ser no passado.',
     path: ['checkin'],
   })
@@ -38,6 +55,7 @@ const bookingOrigins = [
   'expedia',
   'agencia',
   'outro',
+  'link_bio',
 ] as const
 
 /** Consulta de disponibilidade para o wizard administrativo. */

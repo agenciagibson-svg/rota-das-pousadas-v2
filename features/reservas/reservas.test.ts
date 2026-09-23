@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { calculateBookingPrice, nightsBetween, SERVICE_FEE_RATE } from './pricing'
 import { createBookingSchema, createBookingAdminSchema, updateBookingSchema } from './schemas'
 import { canTransition, isFinalStatus, isOccupyingStatus } from './status'
@@ -212,6 +212,21 @@ describe('createBookingSchema', () => {
       guests: 2,
     })
     expect(r.success).toBe(false)
+  })
+  it('aceita entrada no mesmo dia depois das 21h de Brasília (UTC já virou o dia)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-24T01:30:00Z')) // 23/09 22:30 em Brasília
+    try {
+      const r = createBookingSchema.safeParse({
+        pousadaSlug: 'x',
+        checkin: '2026-09-23',
+        checkout: '2026-09-24',
+        guests: 2,
+      })
+      expect(r.success).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
   })
   it('coage e valida hóspedes', () => {
     const r = createBookingSchema.safeParse({

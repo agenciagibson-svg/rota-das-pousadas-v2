@@ -8,7 +8,7 @@ import { SiteHeader } from '@/components/site-header'
 import { Container } from '@/components/ui/container'
 import { Card } from '@/components/ui/card'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { BookingForm } from '@/features/reservas'
+import { BookingForm, bioOriginFromParam } from '@/features/reservas'
 import { getPousada, getCurrentUser, getBookableRoom } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -23,10 +23,11 @@ export default async function ReservarPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string }>
+  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string; origem?: string }>
 }) {
   const { slug } = await params
   const initial = await searchParams
+  const origin = bioOriginFromParam(initial.origem)
   const filters = catalogQuerySchema.safeParse({
     checkin: initial.checkin,
     checkout: initial.checkout,
@@ -46,6 +47,7 @@ export default async function ReservarPage({
     if (initial.checkin) bookingParams.set('checkin', initial.checkin)
     if (initial.checkout) bookingParams.set('checkout', initial.checkout)
     if (initial.guests) bookingParams.set('guests', initial.guests)
+    if (origin) bookingParams.set('origem', origin)
 
     const nextPath = `/pousada/${slug}/reservar${
       bookingParams.size > 0 ? `?${bookingParams.toString()}` : ''
@@ -111,6 +113,7 @@ export default async function ReservarPage({
                   initialCheckin={initial.checkin}
                   initialCheckout={initial.checkout}
                   initialGuests={initial.guests}
+                  origin={origin}
                 />
               </div>
             </Card>

@@ -17,6 +17,8 @@ export type BookingOrigin =
   | 'expedia'
   | 'agencia'
   | 'outro'
+  // Reserva feita pelo site por quem chegou pelo link da bio (0045/0067).
+  | 'link_bio'
 
 /** Detalhamento de preço de uma reserva (valores em reais inteiros). */
 export type PriceBreakdown = {
