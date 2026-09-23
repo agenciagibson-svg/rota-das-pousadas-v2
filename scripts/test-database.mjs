@@ -10,39 +10,73 @@ function docker(args, input) {
   return result.stdout
 }
 function sql(source) {
-  return docker(['exec', '-i', container, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], source)
+  return docker(
+    ['exec', '-i', container, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'],
+    source,
+  )
 }
 function sqlAsync(source) {
   return new Promise((resolve) => {
-    const child = spawn('docker', ['exec', '-i', container, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'])
+    const child = spawn('docker', [
+      'exec',
+      '-i',
+      container,
+      'psql',
+      '-U',
+      'postgres',
+      '-v',
+      'ON_ERROR_STOP=1',
+    ])
     let output = ''
-    child.stdout.on('data', (data) => { output += data })
-    child.stderr.on('data', (data) => { output += data })
+    child.stdout.on('data', (data) => {
+      output += data
+    })
+    child.stderr.on('data', (data) => {
+      output += data
+    })
     child.on('close', (code) => resolve({ code, output }))
     child.stdin.end(source)
   })
 }
 try {
-  docker(['run', '--detach', '--name', container, '--env', 'POSTGRES_PASSWORD=local-test-only', 'postgres:17'])
+  docker([
+    'run',
+    '--detach',
+    '--name',
+    container,
+    '--env',
+    'POSTGRES_PASSWORD=local-test-only',
+    'postgres:17',
+  ])
   let ready = false
   for (let attempt = 0; attempt < 30; attempt++) {
-    try { docker(['exec', container, 'pg_isready', '-U', 'postgres']); ready = true; break } catch {
+    try {
+      docker(['exec', container, 'pg_isready', '-U', 'postgres'])
+      ready = true
+      break
+    } catch {
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
   }
   if (!ready) throw new Error('Postgres de teste não iniciou.')
   sql(readFileSync(`${root}/supabase/tests/bootstrap.sql`, 'utf8'))
-  for (const file of readdirSync(`${root}/supabase/migrations`).filter((file) => file.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(`${root}/supabase/migrations`)
+    .filter((file) => file.endsWith('.sql'))
+    .sort()) {
     sql(`BEGIN;\n${readFileSync(`${root}/supabase/migrations/${file}`, 'utf8')}\nCOMMIT;`)
     console.log(`migration ${file}: OK`)
   }
   sql(readFileSync(`${root}/supabase/tests/priorities.sql`, 'utf8'))
   console.log('Disponibilidade, pagamentos e isolamento: OK')
   const concurrentBooking = readFileSync(`${root}/supabase/tests/concurrent-booking.sql`, 'utf8')
-  const bookings = await Promise.all([sqlAsync(concurrentBooking.replaceAll('CONCURRENT_CODE', 'RACE-A')),
-    sqlAsync(concurrentBooking.replaceAll('CONCURRENT_CODE', 'RACE-B'))])
-  if (bookings.filter((result) => result.code === 0).length !== 1 ||
-    !bookings.some((result) => result.output.includes('bookings_no_overlap'))) {
+  const bookings = await Promise.all([
+    sqlAsync(concurrentBooking.replaceAll('CONCURRENT_CODE', 'RACE-A')),
+    sqlAsync(concurrentBooking.replaceAll('CONCURRENT_CODE', 'RACE-B')),
+  ])
+  if (
+    bookings.filter((result) => result.code === 0).length !== 1 ||
+    !bookings.some((result) => result.output.includes('bookings_no_overlap'))
+  ) {
     throw new Error(`Concorrência de reservas: ${JSON.stringify(bookings)}`)
   }
   const payment = `select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '999', 1000, 'aprovado', 'pix', 'BRL', '2026-10-01T12:00:00Z', 0);`
