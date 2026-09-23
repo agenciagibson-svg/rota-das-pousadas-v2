@@ -12,6 +12,21 @@ function formatISODate(date: Date, timeZone: string): string {
   return `${part('year')}-${part('month')}-${part('day')}`
 }
 
+function formatISODateTime(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(date)
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value
+  return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}:${part('second')}`
+}
+
 /**
  * Data civil (YYYY-MM-DD) de `date` no fuso informado.
  *
@@ -36,5 +51,24 @@ export function isValidTimeZone(timeZone: string): boolean {
     return true
   } catch {
     return false
+  }
+}
+
+/**
+ * Data/hora de um `<input type="datetime-local">` (sem fuso) no referencial que
+ * o banco usa para bloqueios: a hora civil da pousada gravada como UTC, o mesmo
+ * das datas de check-in/check-out (o dia D vale D 00:00 UTC). Com
+ * `new Date(valor)` o resultado dependia do fuso de quem executa.
+ */
+export function civilDateTimeToISO(value: string): string {
+  return new Date(`${value}Z`).toISOString()
+}
+
+/** Relógio da pousada nesse mesmo referencial: 22:30 em Brasília vira 22:30 UTC. */
+export function civilNow(date: Date, timeZone: string = DEFAULT_TIMEZONE): Date {
+  try {
+    return new Date(`${formatISODateTime(date, timeZone || DEFAULT_TIMEZONE)}Z`)
+  } catch {
+    return new Date(`${formatISODateTime(date, DEFAULT_TIMEZONE)}Z`)
   }
 }

@@ -23,29 +23,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { AcomodacoesTabs } from './acomodacoes-tabs'
 import { BLOCK_TYPE_LABEL } from './status-labels'
 import { createBlockAction, cancelBlockAction } from '../actions'
+import { blockTimeStatus, formatBlockDateTime } from '../block-time'
 import type { ManagedRoom, RoomBlock, RoomBlockType } from '../types'
 import type { ActionResult } from '@/types'
-
-function fmt(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
-
-function derivedStatus(block: RoomBlock): {
-  label: string
-  variant: 'primarySoft' | 'secondary' | 'goldSoft'
-} {
-  if (block.status === 'cancelled') return { label: 'Cancelado', variant: 'secondary' }
-  const now = Date.now()
-  if (new Date(block.endsAt).getTime() < now) return { label: 'Expirado', variant: 'secondary' }
-  if (new Date(block.startsAt).getTime() > now) return { label: 'Futuro', variant: 'goldSoft' }
-  return { label: 'Vigente', variant: 'primarySoft' }
-}
 
 const BLOCK_TYPES: RoomBlockType[] = [
   'maintenance',
@@ -143,12 +123,15 @@ export function BlocksView({
   blocks,
   rooms,
   canManage,
+  nowCivilISO,
 }: {
   displayName: string
   pousadaName: string
   blocks: RoomBlock[]
   rooms: ManagedRoom[]
   canManage: boolean
+  /** Relógio da pousada no referencial dos bloqueios (`civilNow`), calculado no servidor. */
+  nowCivilISO: string
 }) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
@@ -162,6 +145,7 @@ export function BlocksView({
     () => (roomFilter ? blocks.filter((b) => b.roomId === roomFilter) : blocks),
     [blocks, roomFilter],
   )
+  const nowCivilMs = new Date(nowCivilISO).getTime()
 
   function run(promise: Promise<ActionResult<unknown>>) {
     setError(null)
@@ -238,7 +222,7 @@ export function BlocksView({
               </TableHeader>
               <TableBody>
                 {filtered.map((b) => {
-                  const status = derivedStatus(b)
+                  const status = blockTimeStatus(b, nowCivilMs)
                   return (
                     <TableRow key={b.id}>
                       <TableCell className="text-foreground font-medium">{b.roomName}</TableCell>
@@ -246,7 +230,7 @@ export function BlocksView({
                         {BLOCK_TYPE_LABEL[b.blockType]}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {fmt(b.startsAt)} — {fmt(b.endsAt)}
+                        {formatBlockDateTime(b.startsAt)} — {formatBlockDateTime(b.endsAt)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{b.reason}</TableCell>
                       <TableCell>

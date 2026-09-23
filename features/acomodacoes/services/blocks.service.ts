@@ -1,5 +1,6 @@
 import 'server-only'
 import { requireCapability } from './access'
+import { civilDateTimeToISO } from '@/lib/dates'
 import {
   listBlocksByPousada,
   createRoomBlock,
@@ -21,8 +22,8 @@ export async function addBlock(input: CreateBlockInput): Promise<void> {
     pousadaId,
     roomId: input.roomId,
     blockType: input.blockType,
-    startsAt: new Date(input.startsAt).toISOString(),
-    endsAt: new Date(input.endsAt).toISOString(),
+    startsAt: civilDateTimeToISO(input.startsAt),
+    endsAt: civilDateTimeToISO(input.endsAt),
     reason: input.reason,
     notes: input.notes ?? '',
   })
