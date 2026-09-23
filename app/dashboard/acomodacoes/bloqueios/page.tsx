@@ -1,4 +1,10 @@
-import { getCurrentUser, getOwnerPousada, getOwnerBlocks, getOwnerRooms, canManageBlocks } from '@/server/queries'
+import {
+  getCurrentUser,
+  getOwnerPousada,
+  getOwnerBlocks,
+  getOwnerRooms,
+  canManageBlocks,
+} from '@/server/queries'
 import { BlocksView } from '@/features/acomodacoes'
 
 export default async function DashboardBloqueiosPage() {

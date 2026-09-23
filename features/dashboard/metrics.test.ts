@@ -13,7 +13,12 @@ import {
   type MetricBooking,
 } from './metrics'
 
-function booking(checkin: string, checkout: string, status: BookingStatus = 'confirmed', total = 0): MetricBooking {
+function booking(
+  checkin: string,
+  checkout: string,
+  status: BookingStatus = 'confirmed',
+  total = 0,
+): MetricBooking {
   return { checkin, checkout, status, total }
 }
 
@@ -63,7 +68,13 @@ describe('calculateOccupancy', () => {
     expect(snapshot.rate).toBe(25)
   })
   it('não inventa ocupação sem quarto cadastrado', () => {
-    const snapshot = calculateOccupancy([booking('2026-09-10', '2026-09-15')], 0, '2026-09-10', '2026-09-20', TODAY)
+    const snapshot = calculateOccupancy(
+      [booking('2026-09-10', '2026-09-15')],
+      0,
+      '2026-09-10',
+      '2026-09-20',
+      TODAY,
+    )
     expect(snapshot.availableNights).toBe(0)
     expect(snapshot.rate).toBe(0)
   })
@@ -81,7 +92,10 @@ describe('calculateOccupancy', () => {
   })
   it('ignora canceladas e no-show', () => {
     const snapshot = calculateOccupancy(
-      [booking('2026-09-10', '2026-09-15', 'cancelled'), booking('2026-09-10', '2026-09-15', 'no_show')],
+      [
+        booking('2026-09-10', '2026-09-15', 'cancelled'),
+        booking('2026-09-10', '2026-09-15', 'no_show'),
+      ],
       2,
       '2026-09-10',
       '2026-09-20',
@@ -107,7 +121,10 @@ describe('monthlyRevenue', () => {
   })
   it('não conta cancelada nem no-show', () => {
     const points = monthlyRevenue(
-      [booking('2026-09-02', '2026-09-04', 'cancelled', 900), booking('2026-09-05', '2026-09-06', 'no_show', 300)],
+      [
+        booking('2026-09-02', '2026-09-04', 'cancelled', 900),
+        booking('2026-09-05', '2026-09-06', 'no_show', 300),
+      ],
       TODAY,
     )
     expect(points[11].value).toBe(0)
@@ -126,7 +143,10 @@ describe('weeklyDailies', () => {
     expect(week.total).toBe(2)
   })
   it('soma quartos simultâneos no mesmo dia', () => {
-    const week = weeklyDailies([booking('2026-09-16', '2026-09-17'), booking('2026-09-16', '2026-09-17')], TODAY)
+    const week = weeklyDailies(
+      [booking('2026-09-16', '2026-09-17'), booking('2026-09-16', '2026-09-17')],
+      TODAY,
+    )
     expect(week.data[2]).toBe(2)
   })
 })

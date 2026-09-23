@@ -125,17 +125,17 @@ export function Hero() {
           />
         </motion.div>
       </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-b from-stone-deep/50 via-stone-deep/25 to-stone-deep/80" />
+      <div className="from-stone-deep/50 via-stone-deep/25 to-stone-deep/80 absolute inset-0 bg-gradient-to-b" />
 
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-5 pb-10 pt-32 lg:px-8 lg:pb-16">
+      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-5 pt-32 pb-10 lg:px-8 lg:pb-16">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="mb-6 flex flex-wrap items-center gap-2"
         >
-          <span className="mr-1 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-medium text-primary-foreground backdrop-blur">
-            <Sparkles className="size-3.5 text-gold" />
+          <span className="bg-primary-foreground/10 text-primary-foreground mr-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur">
+            <Sparkles className="text-gold size-3.5" />
             Home viva
           </span>
           {(Object.keys(seasons) as SeasonKey[]).map((key) => (
@@ -163,10 +163,10 @@ export function Hero() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-3xl"
           >
-            <h1 className="text-balance font-serif text-4xl font-semibold leading-[1.05] text-primary-foreground sm:text-6xl lg:text-7xl">
+            <h1 className="text-primary-foreground font-serif text-4xl leading-[1.05] font-semibold text-balance sm:text-6xl lg:text-7xl">
               {current.headline}
             </h1>
-            <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-primary-foreground/85 sm:text-lg">
+            <p className="text-primary-foreground/85 mt-5 max-w-xl text-base leading-relaxed text-pretty sm:text-lg">
               {current.sub}
             </p>
           </motion.div>
@@ -178,19 +178,19 @@ export function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="glass mt-8 rounded-3xl border border-primary-foreground/20 p-2.5 shadow-2xl shadow-stone-deep/30"
+          className="glass border-primary-foreground/20 shadow-stone-deep/30 mt-8 rounded-3xl border p-2.5 shadow-2xl"
         >
           <input type="hidden" name="temporada" value={season} />
           <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.25fr_0.95fr_0.95fr_0.8fr_auto]">
             <SearchField
-              icon={<MapPin className="size-4 text-primary" />}
+              icon={<MapPin className="text-primary size-4" />}
               label="Destino"
               name="busca"
               placeholder="Cidade, pousada ou estilo"
               autoComplete="off"
             />
             <SearchField
-              icon={<Calendar className="size-4 text-primary" />}
+              icon={<Calendar className="text-primary size-4" />}
               label="Check-in"
               name="checkin"
               type="date"
@@ -198,7 +198,7 @@ export function Hero() {
               defaultValue={tomorrow}
             />
             <SearchField
-              icon={<Calendar className="size-4 text-primary" />}
+              icon={<Calendar className="text-primary size-4" />}
               label="Check-out"
               name="checkout"
               type="date"
@@ -206,7 +206,7 @@ export function Hero() {
               defaultValue={dayAfterTomorrow}
             />
             <SearchField
-              icon={<Users className="size-4 text-primary" />}
+              icon={<Users className="text-primary size-4" />}
               label="Hóspedes"
               name="hospedes"
               type="number"
@@ -214,20 +214,23 @@ export function Hero() {
               max={12}
               defaultValue={2}
             />
-            <button type="submit" className="group flex items-center justify-center gap-2 rounded-2xl bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105 md:px-7">
+            <button
+              type="submit"
+              className="group bg-accent text-accent-foreground flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-all hover:brightness-105 md:px-7"
+            >
               <Search className="size-4" />
               Encontrar meu refúgio
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-3">
-            <span className="text-xs font-medium text-foreground/60">Sugestões da estação:</span>
+          <div className="flex flex-wrap items-center gap-2 px-2 pt-3 pb-1">
+            <span className="text-foreground/60 text-xs font-medium">Sugestões da estação:</span>
             {current.tags.map((tag) => (
               <button
                 key={tag}
                 type="submit"
                 name="busca"
                 value={tag}
-                className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
+                className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
               >
                 {tag}
               </button>
@@ -239,14 +242,14 @@ export function Hero() {
           <button
             type="button"
             onClick={openSurpriseRoute}
-            className="inline-flex items-center gap-2 rounded-full bg-primary-foreground px-5 py-3 text-sm font-semibold text-stone-deep transition-all hover:bg-accent hover:text-accent-foreground"
+            className="bg-primary-foreground text-stone-deep hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all"
           >
             <Shuffle className="size-4" />
             Rota surpresa
           </button>
           <a
             href="#destinos"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground"
+            className="text-primary-foreground/80 hover:text-primary-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors"
           >
             Explorar destinos em destaque
             <ArrowRight className="size-4" />

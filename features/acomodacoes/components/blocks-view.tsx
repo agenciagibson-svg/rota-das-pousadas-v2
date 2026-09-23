@@ -10,7 +10,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { AcomodacoesTabs } from './acomodacoes-tabs'
@@ -20,12 +27,19 @@ import type { ManagedRoom, RoomBlock, RoomBlockType } from '../types'
 import type { ActionResult } from '@/types'
 
 function fmt(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(
-    new Date(iso),
-  )
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso))
 }
 
-function derivedStatus(block: RoomBlock): { label: string; variant: 'primarySoft' | 'secondary' | 'goldSoft' } {
+function derivedStatus(block: RoomBlock): {
+  label: string
+  variant: 'primarySoft' | 'secondary' | 'goldSoft'
+} {
   if (block.status === 'cancelled') return { label: 'Cancelado', variant: 'secondary' }
   const now = Date.now()
   if (new Date(block.endsAt).getTime() < now) return { label: 'Expirado', variant: 'secondary' }
@@ -71,8 +85,14 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
   return (
     <form action={onSubmit} className="space-y-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Acomodação</span>
-        <select name="roomId" required className="rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none">
+        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          Acomodação
+        </span>
+        <select
+          name="roomId"
+          required
+          className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+        >
           <option value="">Selecione…</option>
           {rooms
             .filter((r) => r.status === 'active')
@@ -84,8 +104,13 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
         </select>
       </label>
       <label className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</span>
-        <select name="blockType" className="rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none">
+        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          Tipo
+        </span>
+        <select
+          name="blockType"
+          className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+        >
           {BLOCK_TYPES.map((t) => (
             <option key={t} value={t}>
               {BLOCK_TYPE_LABEL[t]}
@@ -99,7 +124,7 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
       </div>
       <Textarea label="Motivo" name="reason" rows={2} required />
       <Textarea label="Observações (opcional)" name="notes" rows={2} />
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancelar
@@ -133,7 +158,10 @@ export function BlocksView({
   const [pending, setPending] = useState(false)
   const [roomFilter, setRoomFilter] = useState('')
 
-  const filtered = useMemo(() => (roomFilter ? blocks.filter((b) => b.roomId === roomFilter) : blocks), [blocks, roomFilter])
+  const filtered = useMemo(
+    () => (roomFilter ? blocks.filter((b) => b.roomId === roomFilter) : blocks),
+    [blocks, roomFilter],
+  )
 
   function run(promise: Promise<ActionResult<unknown>>) {
     setError(null)
@@ -172,7 +200,7 @@ export function BlocksView({
           <select
             value={roomFilter}
             onChange={(e) => setRoomFilter(e.target.value)}
-            className="rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground outline-none"
+            className="border-input bg-card text-foreground rounded-xl border px-3 py-2 text-sm outline-none"
           >
             <option value="">Todas as acomodações</option>
             {rooms.map((r) => (
@@ -187,11 +215,15 @@ export function BlocksView({
             </Button>
           )}
         </div>
-        {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+        {error && <p className="text-destructive text-sm font-medium">{error}</p>}
 
         <Card className="p-4">
           {filtered.length === 0 ? (
-            <EmptyState icon={CalendarClock} title="Nenhum bloqueio" description="Não há períodos bloqueados para este filtro." />
+            <EmptyState
+              icon={CalendarClock}
+              title="Nenhum bloqueio"
+              description="Não há períodos bloqueados para este filtro."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -209,8 +241,10 @@ export function BlocksView({
                   const status = derivedStatus(b)
                   return (
                     <TableRow key={b.id}>
-                      <TableCell className="font-medium text-foreground">{b.roomName}</TableCell>
-                      <TableCell className="text-muted-foreground">{BLOCK_TYPE_LABEL[b.blockType]}</TableCell>
+                      <TableCell className="text-foreground font-medium">{b.roomName}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {BLOCK_TYPE_LABEL[b.blockType]}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {fmt(b.startsAt)} — {fmt(b.endsAt)}
                       </TableCell>
@@ -258,13 +292,22 @@ export function BlocksView({
             <Button variant="ghost" onClick={() => setCancelling(null)}>
               Voltar
             </Button>
-            <Button variant="destructive" onClick={confirmCancel} disabled={cancelReason.trim().length < 3}>
+            <Button
+              variant="destructive"
+              onClick={confirmCancel}
+              disabled={cancelReason.trim().length < 3}
+            >
               Cancelar bloqueio
             </Button>
           </>
         }
       >
-        <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={2} placeholder="Motivo do cancelamento" />
+        <Textarea
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          rows={2}
+          placeholder="Motivo do cancelamento"
+        />
       </Dialog>
     </DashboardShell>
   )

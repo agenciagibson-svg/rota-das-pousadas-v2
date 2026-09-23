@@ -28,8 +28,16 @@ export const createBookingSchema = z
 export type CreateBookingInput = z.infer<typeof createBookingSchema>
 
 const bookingOrigins = [
-  'rota_das_pousadas', 'site_proprio', 'whatsapp', 'telefone', 'balcao',
-  'booking_com', 'airbnb', 'expedia', 'agencia', 'outro',
+  'rota_das_pousadas',
+  'site_proprio',
+  'whatsapp',
+  'telefone',
+  'balcao',
+  'booking_com',
+  'airbnb',
+  'expedia',
+  'agencia',
+  'outro',
 ] as const
 
 /** Consulta de disponibilidade para o wizard administrativo. */
@@ -41,7 +49,10 @@ export const availabilityCheckSchema = z
     children: z.coerce.number().int().min(0).max(20),
     pets: z.boolean(),
   })
-  .refine((d) => d.checkout > d.checkin, { message: 'A saída deve ser posterior à entrada.', path: ['checkout'] })
+  .refine((d) => d.checkout > d.checkin, {
+    message: 'A saída deve ser posterior à entrada.',
+    path: ['checkout'],
+  })
 export type AvailabilityCheckInput = z.infer<typeof availabilityCheckSchema>
 
 /** Criação administrativa (recepção/proprietário) — formulário único dividido por seção. */
@@ -70,7 +81,10 @@ export const createBookingAdminSchema = z
     internalNotes: z.string().trim().max(2000).optional().or(z.literal('')),
     initialStatus: z.enum(['quote', 'pending', 'confirmed']),
   })
-  .refine((d) => d.checkout > d.checkin, { message: 'A saída deve ser posterior à entrada.', path: ['checkout'] })
+  .refine((d) => d.checkout > d.checkin, {
+    message: 'A saída deve ser posterior à entrada.',
+    path: ['checkout'],
+  })
 export type CreateBookingAdminInput = z.infer<typeof createBookingAdminSchema>
 
 /** Edição administrativa — sempre com `version` para concorrência otimista. */
@@ -95,12 +109,23 @@ export const updateBookingSchema = z
     specialRequests: z.string().trim().max(1000).optional().or(z.literal('')),
     internalNotes: z.string().trim().max(2000).optional().or(z.literal('')),
   })
-  .refine((d) => d.checkout > d.checkin, { message: 'A saída deve ser posterior à entrada.', path: ['checkout'] })
+  .refine((d) => d.checkout > d.checkin, {
+    message: 'A saída deve ser posterior à entrada.',
+    path: ['checkout'],
+  })
 export type UpdateBookingInput = z.infer<typeof updateBookingSchema>
 
 export const bookingStatusActionSchema = z.object({
   bookingId: z.string().uuid('Reserva inválida.'),
-  status: z.enum(['quote', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'no_show']),
+  status: z.enum([
+    'quote',
+    'pending',
+    'confirmed',
+    'checked_in',
+    'checked_out',
+    'cancelled',
+    'no_show',
+  ]),
   reason: z.string().trim().max(500).optional(),
 })
 export type BookingStatusActionInput = z.infer<typeof bookingStatusActionSchema>

@@ -9,8 +9,18 @@ import { cn } from '@/lib/utils'
 
 const WEEKDAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
 ]
 
 export function ReservationsCalendar({
@@ -65,28 +75,28 @@ export function ReservationsCalendar({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-foreground">
+        <h3 className="text-foreground font-semibold">
           {MONTHS[month]} de {year}
         </h3>
         <div className="flex gap-1">
           <button
             onClick={() => move(-1)}
             aria-label="Mês anterior"
-            className="flex size-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-secondary"
+            className="border-border text-foreground hover:bg-secondary flex size-8 items-center justify-center rounded-lg border transition-colors"
           >
             <ChevronLeft className="size-4" />
           </button>
           <button
             onClick={() => move(1)}
             aria-label="Próximo mês"
-            className="flex size-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-secondary"
+            className="border-border text-foreground hover:bg-secondary flex size-8 items-center justify-center rounded-lg border transition-colors"
           >
             <ChevronRight className="size-4" />
           </button>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground">
+      <div className="text-muted-foreground mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold">
         {WEEKDAYS.map((w, i) => (
           <span key={i} className="py-2">
             {w}
@@ -113,9 +123,9 @@ export function ReservationsCalendar({
               className={cn(
                 'aspect-square rounded-lg text-sm font-medium transition-colors',
                 !d.inMonth && 'opacity-30',
-                d.status === 'past' && 'cursor-not-allowed text-muted-foreground/40',
+                d.status === 'past' && 'text-muted-foreground/40 cursor-not-allowed',
                 d.status === 'free' && 'text-foreground hover:bg-secondary',
-                d.status === 'booked' && 'cursor-not-allowed bg-primary/15 text-primary',
+                d.status === 'booked' && 'bg-primary/15 text-primary cursor-not-allowed',
                 d.status === 'blocked' && 'bg-destructive/10 text-destructive line-through',
               )}
             >
@@ -125,15 +135,15 @@ export function ReservationsCalendar({
         })}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+      <div className="text-muted-foreground mt-4 flex flex-wrap gap-4 text-xs">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded bg-primary/15" /> Reservado
+          <span className="bg-primary/15 size-3 rounded" /> Reservado
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded bg-destructive/10" /> Bloqueado
+          <span className="bg-destructive/10 size-3 rounded" /> Bloqueado
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded border border-border" /> Livre (clique para bloquear)
+          <span className="border-border size-3 rounded border" /> Livre (clique para bloquear)
         </span>
       </div>
     </div>

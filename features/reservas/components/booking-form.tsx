@@ -90,8 +90,18 @@ export function BookingForm({
       <input type="hidden" {...register('pousadaSlug')} />
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Check-in" type="date" error={errors.checkin?.message} {...register('checkin')} />
-        <Input label="Check-out" type="date" error={errors.checkout?.message} {...register('checkout')} />
+        <Input
+          label="Check-in"
+          type="date"
+          error={errors.checkin?.message}
+          {...register('checkin')}
+        />
+        <Input
+          label="Check-out"
+          type="date"
+          error={errors.checkout?.message}
+          {...register('checkout')}
+        />
       </div>
       <Input
         label={`Hóspedes (máx. ${capacity})`}
@@ -103,14 +113,14 @@ export function BookingForm({
       />
 
       {price && price.nights > 0 && (
-        <div className="space-y-2 rounded-2xl border border-border bg-secondary/40 p-4 text-sm">
-          <div className="flex justify-between text-muted-foreground">
+        <div className="border-border bg-secondary/40 space-y-2 rounded-2xl border p-4 text-sm">
+          <div className="text-muted-foreground flex justify-between">
             <span>
               R$ {nightly} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
             </span>
             <span>R$ {price.subtotal}</span>
           </div>
-          <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
+          <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
             <span>Total</span>
             <span>R$ {price.total}</span>
           </div>
@@ -118,8 +128,8 @@ export function BookingForm({
       )}
 
       {formError === MISSING_NAME_ERROR ? (
-        <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-          <p className="text-sm font-medium text-destructive">{formError}</p>
+        <div className="border-destructive/30 bg-destructive/5 space-y-3 rounded-2xl border p-4">
+          <p className="text-destructive text-sm font-medium">{formError}</p>
           <Input
             label="Seu nome completo"
             placeholder="Como você quer ser identificado na reserva"
@@ -127,18 +137,24 @@ export function BookingForm({
             onChange={(e) => setNameValue(e.target.value)}
             error={nameError ?? undefined}
           />
-          <Button type="button" variant="secondary" disabled={savingName} onClick={handleSaveName} className="w-full">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={savingName}
+            onClick={handleSaveName}
+            className="w-full"
+          >
             {savingName ? 'Salvando…' : 'Salvar nome e continuar'}
           </Button>
         </div>
       ) : (
-        formError && <p className="text-sm font-medium text-destructive">{formError}</p>
+        formError && <p className="text-destructive text-sm font-medium">{formError}</p>
       )}
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Confirmando…' : 'Confirmar reserva'}
       </Button>
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-center text-xs">
         Você ainda não será cobrado — o pagamento será solicitado na próxima etapa.
       </p>
     </form>

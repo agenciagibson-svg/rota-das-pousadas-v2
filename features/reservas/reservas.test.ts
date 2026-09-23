@@ -33,7 +33,11 @@ describe('calculateBookingPrice', () => {
     expect(p.total).toBe(0)
   })
   it('[Ciclo 4] aplica desconto, acréscimo e serviços previstos', () => {
-    const p = calculateBookingPrice(720, '2026-03-14', '2026-03-16', { discount: 100, surcharge: 50, servicesAmount: 30 })
+    const p = calculateBookingPrice(720, '2026-03-14', '2026-03-16', {
+      discount: 100,
+      surcharge: 50,
+      servicesAmount: 30,
+    })
     expect(p.subtotal).toBe(1440)
     expect(p.discount).toBe(100)
     expect(p.surcharge).toBe(50)
@@ -41,7 +45,10 @@ describe('calculateBookingPrice', () => {
     expect(p.total).toBe(p.subtotal - 100 + 50 + 30)
   })
   it('[Ciclo 4] nunca aceita ajuste negativo (RB seção 5)', () => {
-    const p = calculateBookingPrice(720, '2026-03-14', '2026-03-16', { discount: -50, surcharge: -10 })
+    const p = calculateBookingPrice(720, '2026-03-14', '2026-03-16', {
+      discount: -50,
+      surcharge: -10,
+    })
     expect(p.discount).toBe(0)
     expect(p.surcharge).toBe(0)
   })
@@ -119,7 +126,10 @@ describe('[Ciclo 4] createBookingAdminSchema', () => {
     expect(createBookingAdminSchema.safeParse({ ...base, guestFullName: '' }).success).toBe(false)
   })
   it('rejeita checkout antes do checkin', () => {
-    expect(createBookingAdminSchema.safeParse({ ...base, checkin: '2026-03-16', checkout: '2026-03-14' }).success).toBe(false)
+    expect(
+      createBookingAdminSchema.safeParse({ ...base, checkin: '2026-03-16', checkout: '2026-03-14' })
+        .success,
+    ).toBe(false)
   })
 })
 
@@ -177,19 +187,39 @@ describe('createBookingSchema', () => {
   const later = new Date(Date.now() + 86_400_000 * 12).toISOString().slice(0, 10)
 
   it('aceita reserva válida', () => {
-    const r = createBookingSchema.safeParse({ pousadaSlug: 'x', checkin: future, checkout: later, guests: 2 })
+    const r = createBookingSchema.safeParse({
+      pousadaSlug: 'x',
+      checkin: future,
+      checkout: later,
+      guests: 2,
+    })
     expect(r.success).toBe(true)
   })
   it('rejeita checkout antes do checkin', () => {
-    const r = createBookingSchema.safeParse({ pousadaSlug: 'x', checkin: later, checkout: future, guests: 2 })
+    const r = createBookingSchema.safeParse({
+      pousadaSlug: 'x',
+      checkin: later,
+      checkout: future,
+      guests: 2,
+    })
     expect(r.success).toBe(false)
   })
   it('rejeita data no passado', () => {
-    const r = createBookingSchema.safeParse({ pousadaSlug: 'x', checkin: '2020-01-01', checkout: '2020-01-03', guests: 2 })
+    const r = createBookingSchema.safeParse({
+      pousadaSlug: 'x',
+      checkin: '2020-01-01',
+      checkout: '2020-01-03',
+      guests: 2,
+    })
     expect(r.success).toBe(false)
   })
   it('coage e valida hóspedes', () => {
-    const r = createBookingSchema.safeParse({ pousadaSlug: 'x', checkin: future, checkout: later, guests: '3' })
+    const r = createBookingSchema.safeParse({
+      pousadaSlug: 'x',
+      checkin: future,
+      checkout: later,
+      guests: '3',
+    })
     expect(r.success).toBe(true)
     if (r.success) expect(r.data.guests).toBe(3)
   })

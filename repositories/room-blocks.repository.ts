@@ -113,7 +113,11 @@ function nextDayIso(date: string): string {
  * de timezone diferente do resto do app) com `source='legacy_calendar'` e um
  * motivo padrão (o calendário legado não coleta motivo — UX de um clique).
  */
-export async function blockCalendarDay(pousadaId: string, roomId: string, date: string): Promise<void> {
+export async function blockCalendarDay(
+  pousadaId: string,
+  roomId: string,
+  date: string,
+): Promise<void> {
   await createRoomBlock({
     pousadaId,
     roomId,
@@ -132,7 +136,11 @@ export async function blockCalendarDay(pousadaId: string, roomId: string, date: 
  * bloqueio maior (criado na tela de Bloqueios), recusa e orienta o usuário —
  * nunca cancela um bloqueio maior por engano a partir de um clique de 1 dia.
  */
-export async function unblockCalendarDay(pousadaId: string, roomId: string, date: string): Promise<void> {
+export async function unblockCalendarDay(
+  pousadaId: string,
+  roomId: string,
+  date: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const dayStart = toDayIso(date)
   const dayEnd = nextDayIso(date)
@@ -158,7 +166,11 @@ export async function unblockCalendarDay(pousadaId: string, roomId: string, date
 /** Expande os bloqueios ATIVOS de um quarto em datas civis individuais (para o calendário legado, que trabalha com lista de dias). */
 export async function listBlockedCalendarDays(roomId: string): Promise<string[]> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from('room_blocks').select('starts_at, ends_at').eq('room_id', roomId).eq('status', 'active')
+  const { data, error } = await supabase
+    .from('room_blocks')
+    .select('starts_at, ends_at')
+    .eq('room_id', roomId)
+    .eq('status', 'active')
   if (error) throw error
 
   const days = new Set<string>()
@@ -173,7 +185,11 @@ export async function listBlockedCalendarDays(roomId: string): Promise<string[]>
   return [...days]
 }
 
-export async function cancelRoomBlock(pousadaId: string, blockId: string, cancellationReason: string): Promise<void> {
+export async function cancelRoomBlock(
+  pousadaId: string,
+  blockId: string,
+  cancellationReason: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('cancel_room_block', {
     p_pousada_id: pousadaId,

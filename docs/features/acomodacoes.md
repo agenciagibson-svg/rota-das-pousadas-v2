@@ -5,16 +5,16 @@ com uma acomodação padrão; aqui o dono adiciona, lista e remove quartos.
 
 ## Camadas
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Types | `features/acomodacoes/types.ts` | `ManagedRoom` |
-| Schemas | `features/acomodacoes/schemas.ts` | `createRoomSchema`, `roomIdSchema` (Zod) |
-| Repository | `repositories/rooms.repository.ts` | `listRoomsByPousada`, `insertRoom`, `deleteRoom` |
-| Service | `features/acomodacoes/services/rooms.service.ts` | resolve pousada do dono; add/list/remove (guarda de FK) |
-| Server Query | `server/queries.ts` → `getOwnerRooms` | cache por request |
-| Server Actions | `features/acomodacoes/actions.ts` | `createRoomAction`, `deleteRoomAction` |
-| UI | `rooms-view`, `room-form` | lista + form + remover (Design System) |
-| Página | `app/dashboard/acomodacoes` | painel de acomodações |
+| Camada         | Arquivo                                          | Papel                                                   |
+| -------------- | ------------------------------------------------ | ------------------------------------------------------- |
+| Types          | `features/acomodacoes/types.ts`                  | `ManagedRoom`                                           |
+| Schemas        | `features/acomodacoes/schemas.ts`                | `createRoomSchema`, `roomIdSchema` (Zod)                |
+| Repository     | `repositories/rooms.repository.ts`               | `listRoomsByPousada`, `insertRoom`, `deleteRoom`        |
+| Service        | `features/acomodacoes/services/rooms.service.ts` | resolve pousada do dono; add/list/remove (guarda de FK) |
+| Server Query   | `server/queries.ts` → `getOwnerRooms`            | cache por request                                       |
+| Server Actions | `features/acomodacoes/actions.ts`                | `createRoomAction`, `deleteRoomAction`                  |
+| UI             | `rooms-view`, `room-form`                        | lista + form + remover (Design System)                  |
+| Página         | `app/dashboard/acomodacoes`                      | painel de acomodações                                   |
 
 ## Regras
 

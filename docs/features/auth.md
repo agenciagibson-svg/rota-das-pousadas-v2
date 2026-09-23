@@ -6,16 +6,16 @@ gerencia usuários; o app resolve sessão → profile → papéis.
 
 ## Camadas (ordem da arquitetura)
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Schemas | `features/auth/schemas.ts` | `loginSchema`, `signupSchema` (Zod) |
-| Types | `features/auth/types.ts` | `SessionUser`, `TenantMembership` |
-| Repository | `repositories/profiles.repository.ts` | lê `profiles` + `memberships` (papéis) |
-| Service | `features/auth/services/auth.service.ts` | `getCurrentUser()` (sessão + profile) |
-| Server Query | `server/queries.ts` → `getCurrentUser` | wrapper com cache por request |
-| Server Actions | `features/auth/actions.ts` | `signInAction`, `signUpAction`, `signOutAction` |
-| Components | `features/auth/components/*` | `LoginForm`, `SignupForm`, `LogoutButton` (RHF + Zod + Design System) |
-| Páginas | `app/(auth)/login`, `app/(auth)/cadastro` | grupo de rotas de auth |
+| Camada         | Arquivo                                   | Papel                                                                 |
+| -------------- | ----------------------------------------- | --------------------------------------------------------------------- |
+| Schemas        | `features/auth/schemas.ts`                | `loginSchema`, `signupSchema` (Zod)                                   |
+| Types          | `features/auth/types.ts`                  | `SessionUser`, `TenantMembership`                                     |
+| Repository     | `repositories/profiles.repository.ts`     | lê `profiles` + `memberships` (papéis)                                |
+| Service        | `features/auth/services/auth.service.ts`  | `getCurrentUser()` (sessão + profile)                                 |
+| Server Query   | `server/queries.ts` → `getCurrentUser`    | wrapper com cache por request                                         |
+| Server Actions | `features/auth/actions.ts`                | `signInAction`, `signUpAction`, `signOutAction`                       |
+| Components     | `features/auth/components/*`              | `LoginForm`, `SignupForm`, `LogoutButton` (RHF + Zod + Design System) |
+| Páginas        | `app/(auth)/login`, `app/(auth)/cadastro` | grupo de rotas de auth                                                |
 
 ## Fluxo
 

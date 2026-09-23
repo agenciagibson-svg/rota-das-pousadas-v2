@@ -67,9 +67,7 @@ export function OwnerDashboardView({
   const activeReservations = reservations.filter(
     (reservation) => !['cancelled', 'no_show'].includes(reservation.status),
   )
-  const pendingReservations = reservations.filter(
-    (reservation) => reservation.status === 'pending',
-  )
+  const pendingReservations = reservations.filter((reservation) => reservation.status === 'pending')
   const confirmedReservations = reservations.filter(
     (reservation) =>
       reservation.status === 'confirmed' ||
@@ -164,45 +162,55 @@ export function OwnerDashboardView({
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
-          <StatCard key={s.label} label={s.label} value={s.value} delta={s.delta} up={s.up} icon={s.icon} />
+          <StatCard
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            delta={s.delta}
+            up={s.up}
+            icon={s.icon}
+          />
         ))}
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
         {/* Revenue */}
-        <div className="rounded-2xl border border-border bg-card p-6 xl:col-span-2">
+        <div className="border-border bg-card rounded-2xl border p-6 xl:col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-foreground">Receita por mês</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-foreground font-semibold">Receita por mês</h2>
+              <p className="text-muted-foreground text-sm">
                 Últimos 12 meses, pelo mês do check-in
               </p>
             </div>
-            <span className="text-sm font-semibold text-primary">R$ {activeRevenue} ativo</span>
+            <span className="text-primary text-sm font-semibold">R$ {activeRevenue} ativo</span>
           </div>
           <div className="mt-6 h-48">
             {revenueSeries.some((point) => point.value > 0) ? (
               <AreaChart data={revenueSeries.map((point) => point.value)} />
             ) : (
-              <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
-                Ainda sem reservas nos últimos 12 meses. O gráfico aparece assim que a
-                primeira estadia for lançada.
+              <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
+                Ainda sem reservas nos últimos 12 meses. O gráfico aparece assim que a primeira
+                estadia for lançada.
               </div>
             )}
           </div>
         </div>
 
         {/* Occupancy */}
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-6">
-          <h2 className="self-start font-semibold text-foreground">Ocupação</h2>
+        <div className="border-border bg-card flex flex-col items-center justify-center rounded-2xl border p-6">
+          <h2 className="text-foreground self-start font-semibold">Ocupação</h2>
           {occupancy === null ? (
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-6 text-center text-sm">
               A ocupação não está disponível para o seu perfil de acesso.
             </p>
           ) : occupancy.totalRooms === 0 ? (
-            <div className="mt-6 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-6 text-center text-sm">
               <p>Nenhuma acomodação disponível para venda.</p>
-              <Link href="/dashboard/acomodacoes" className="mt-2 inline-block font-semibold text-primary hover:underline">
+              <Link
+                href="/dashboard/acomodacoes"
+                className="text-primary mt-2 inline-block font-semibold hover:underline"
+              >
                 Cadastrar acomodações
               </Link>
             </div>
@@ -211,12 +219,13 @@ export function OwnerDashboardView({
               <div className="mt-4">
                 <Donut value={occupancy.rate} />
               </div>
-              <p className="mt-4 text-center text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-4 text-center text-sm">
                 {occupancy.roomsOccupiedToday} de {occupancy.totalRooms}{' '}
                 {occupancy.totalRooms === 1 ? 'acomodação ocupada' : 'acomodações ocupadas'} hoje
                 <br />
                 <span className="text-xs">
-                  {occupancy.occupiedNights} de {occupancy.availableNights} diárias nos próximos 7 dias
+                  {occupancy.occupiedNights} de {occupancy.availableNights} diárias nos próximos 7
+                  dias
                 </span>
               </p>
             </>
@@ -226,12 +235,12 @@ export function OwnerDashboardView({
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
         {/* Reservations table */}
-        <div className="rounded-2xl border border-border bg-card p-6 xl:col-span-2">
+        <div className="border-border bg-card rounded-2xl border p-6 xl:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-foreground">Próximas reservas</h2>
+            <h2 className="text-foreground font-semibold">Próximas reservas</h2>
             <Link
               href="/dashboard/reservas"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              className="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
             >
               Ver agenda <ArrowUpRight className="size-4" />
             </Link>
@@ -242,9 +251,9 @@ export function OwnerDashboardView({
         </div>
 
         {/* Weekly bookings */}
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-semibold text-foreground">Reservas na semana</h2>
-          <p className="text-sm text-muted-foreground">
+        <div className="border-border bg-card rounded-2xl border p-6">
+          <h2 className="text-foreground font-semibold">Reservas na semana</h2>
+          <p className="text-muted-foreground text-sm">
             {week.total === 1 ? '1 diária' : `${week.total} diárias`} de segunda a domingo
           </p>
           <div className="mt-6 h-40">
@@ -255,33 +264,38 @@ export function OwnerDashboardView({
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
         {/* Movimento de hoje — substitui a antiga lista de mensagens de exemplo. */}
-        <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="border-border bg-card rounded-2xl border p-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-foreground">Movimento de hoje</h2>
+            <h2 className="text-foreground font-semibold">Movimento de hoje</h2>
             <Link
               href="/dashboard/reservas"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              className="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
             >
               Ver todas <ArrowUpRight className="size-4" />
             </Link>
           </div>
           {arrivalsToday.length === 0 && departuresToday.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-4 text-sm">
               Nenhuma chegada ou saída prevista para hoje.
             </p>
           ) : (
             <div className="mt-4 space-y-3">
               {arrivalsToday.map((reservation) => (
-                <div key={`in-${reservation.id}`} className="flex items-start gap-3 rounded-xl bg-secondary/50 p-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div
+                  key={`in-${reservation.id}`}
+                  className="bg-secondary/50 flex items-start gap-3 rounded-xl p-3"
+                >
+                  <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full">
                     <LogIn className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-foreground">{reservation.guestName}</span>
-                      <span className="shrink-0 text-xs font-semibold text-primary">Chegada</span>
+                      <span className="text-foreground truncate text-sm font-semibold">
+                        {reservation.guestName}
+                      </span>
+                      <span className="text-primary shrink-0 text-xs font-semibold">Chegada</span>
                     </div>
-                    <p className="truncate text-sm text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-sm">
                       {reservation.roomName} · {reservation.nights}{' '}
                       {reservation.nights === 1 ? 'noite' : 'noites'}
                     </p>
@@ -289,16 +303,21 @@ export function OwnerDashboardView({
                 </div>
               ))}
               {departuresToday.map((reservation) => (
-                <div key={`out-${reservation.id}`} className="flex items-start gap-3 rounded-xl bg-secondary/50 p-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+                <div
+                  key={`out-${reservation.id}`}
+                  className="bg-secondary/50 flex items-start gap-3 rounded-xl p-3"
+                >
+                  <span className="bg-accent/15 text-accent flex size-9 shrink-0 items-center justify-center rounded-full">
                     <LogOut className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-foreground">{reservation.guestName}</span>
-                      <span className="shrink-0 text-xs font-semibold text-accent">Saída</span>
+                      <span className="text-foreground truncate text-sm font-semibold">
+                        {reservation.guestName}
+                      </span>
+                      <span className="text-accent shrink-0 text-xs font-semibold">Saída</span>
                     </div>
-                    <p className="truncate text-sm text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-sm">
                       {reservation.roomName}
                       {reservation.balanceDue > 0 ? ` · saldo de R$ ${reservation.balanceDue}` : ''}
                     </p>
@@ -310,21 +329,21 @@ export function OwnerDashboardView({
         </div>
 
         {/* Reviews summary */}
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-semibold text-foreground">Avaliações</h2>
+        <div className="border-border bg-card rounded-2xl border p-6">
+          <h2 className="text-foreground font-semibold">Avaliações</h2>
           {reviews.total === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-4 text-sm">
               Sua pousada ainda não recebeu avaliações. Elas aparecem aqui depois da primeira
               estadia concluída.
             </p>
           ) : (
             <>
               <div className="mt-4 flex items-center gap-4">
-                <div className="text-4xl font-semibold text-foreground">
+                <div className="text-foreground text-4xl font-semibold">
                   {reviews.average.toFixed(1)}
                 </div>
                 <div>
-                  <div className="flex text-gold">
+                  <div className="text-gold flex">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
@@ -332,7 +351,7 @@ export function OwnerDashboardView({
                       />
                     ))}
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     {reviews.total === 1 ? '1 avaliação' : `${reviews.total} avaliações`}
                   </p>
                 </div>
@@ -340,11 +359,17 @@ export function OwnerDashboardView({
               <div className="mt-5 space-y-2">
                 {reviews.distribution.map(({ rating, count, percent }) => (
                   <div key={rating} className="flex items-center gap-2 text-xs">
-                    <span className="w-3 text-muted-foreground">{rating}</span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full rounded-full bg-gold" style={{ width: `${percent}%` }} />
+                    <span className="text-muted-foreground w-3">{rating}</span>
+                    <div className="bg-secondary h-2 flex-1 overflow-hidden rounded-full">
+                      <div
+                        className="bg-gold h-full rounded-full"
+                        style={{ width: `${percent}%` }}
+                      />
                     </div>
-                    <span className="w-8 text-right text-muted-foreground" title={`${count} avaliação(ões)`}>
+                    <span
+                      className="text-muted-foreground w-8 text-right"
+                      title={`${count} avaliação(ões)`}
+                    >
                       {percent}%
                     </span>
                   </div>
@@ -360,16 +385,16 @@ export function OwnerDashboardView({
           ocupação calculada; enquanto não houver um provedor de LLM ligado, a
           tela não afirma que alguma IA analisou coisa alguma.
         */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-stone-deep p-6 text-linen">
+        <div className="border-border bg-stone-deep text-linen relative overflow-hidden rounded-2xl border p-6">
           <div className="relative z-10">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-linen/10 px-3 py-1 text-xs font-semibold text-linen">
-              <Sparkles className="size-3.5 text-gold" />
+            <span className="bg-linen/10 text-linen inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
+              <Sparkles className="text-gold size-3.5" />
               Próximos 7 dias
             </span>
             {occupancy === null || occupancy.availableNights === 0 ? (
               <>
                 <h2 className="mt-4 font-serif text-xl font-semibold">Divulgue sua pousada</h2>
-                <p className="mt-2 text-sm leading-relaxed text-linen/70">
+                <p className="text-linen/70 mt-2 text-sm leading-relaxed">
                   Materiais prontos para publicar nas suas redes e responder a quem pede orçamento.
                 </p>
               </>
@@ -378,7 +403,7 @@ export function OwnerDashboardView({
                 <h2 className="mt-4 font-serif text-xl font-semibold">
                   {freeNightsAhead === 1 ? '1 diária livre' : `${freeNightsAhead} diárias livres`}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-linen/70">
+                <p className="text-linen/70 mt-2 text-sm leading-relaxed">
                   É o que ainda dá para vender nos próximos 7 dias, considerando as reservas já
                   lançadas. Uma divulgação agora pega quem decide em cima da hora.
                 </p>
@@ -386,7 +411,7 @@ export function OwnerDashboardView({
             ) : (
               <>
                 <h2 className="mt-4 font-serif text-xl font-semibold">Semana cheia</h2>
-                <p className="mt-2 text-sm leading-relaxed text-linen/70">
+                <p className="text-linen/70 mt-2 text-sm leading-relaxed">
                   Todas as diárias dos próximos 7 dias estão ocupadas. Bom momento para trabalhar as
                   datas mais adiante.
                 </p>
@@ -394,13 +419,13 @@ export function OwnerDashboardView({
             )}
             <Link
               href="/dashboard/marketing"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-105"
+              className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105"
             >
               Abrir marketing
               <ArrowUpRight className="size-4" />
             </Link>
           </div>
-          <div className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-primary/40 blur-2xl" />
+          <div className="bg-primary/40 pointer-events-none absolute -top-10 -right-10 size-40 rounded-full blur-2xl" />
         </div>
       </div>
     </DashboardShell>

@@ -3,7 +3,8 @@
  * tabela não tinha nenhuma linha real no momento da migração, então não há
  * valor antigo (iniciada/aguardando_pagamento/...) sobrevivendo em produção.
  */
-export type BookingStatus = 'quote' | 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
+export type BookingStatus =
+  'quote' | 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
 
 export type BookingOrigin =
   | 'rota_das_pousadas'

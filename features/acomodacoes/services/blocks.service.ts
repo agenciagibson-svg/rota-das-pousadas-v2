@@ -1,6 +1,10 @@
 import 'server-only'
 import { requireCapability } from './access'
-import { listBlocksByPousada, createRoomBlock, cancelRoomBlock } from '@/repositories/room-blocks.repository'
+import {
+  listBlocksByPousada,
+  createRoomBlock,
+  cancelRoomBlock,
+} from '@/repositories/room-blocks.repository'
 import type { RoomBlock } from '@/features/acomodacoes/types'
 import type { CreateBlockInput } from '@/features/acomodacoes/schemas'
 

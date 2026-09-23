@@ -17,7 +17,20 @@ import type { BookingStatus } from '@/features/reservas/types'
 
 const DAY_MS = 86_400_000
 
-const MONTH_LABELS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] as const
+const MONTH_LABELS = [
+  'jan',
+  'fev',
+  'mar',
+  'abr',
+  'mai',
+  'jun',
+  'jul',
+  'ago',
+  'set',
+  'out',
+  'nov',
+  'dez',
+] as const
 const WEEK_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'] as const
 
 /** Subconjunto mínimo de uma reserva que as métricas precisam. */
@@ -101,10 +114,12 @@ export function calculateOccupancy(
   const rooms = Math.max(0, totalRooms)
   const availableNights = rooms * days
   const occupiedNights = bookings.reduce(
-    (sum, b) => sum + (isOccupyingStatus(b.status) ? nightsWithin(b.checkin, b.checkout, from, to) : 0),
+    (sum, b) =>
+      sum + (isOccupyingStatus(b.status) ? nightsWithin(b.checkin, b.checkout, from, to) : 0),
     0,
   )
-  const rate = availableNights > 0 ? Math.min(100, Math.round((occupiedNights / availableNights) * 100)) : 0
+  const rate =
+    availableNights > 0 ? Math.min(100, Math.round((occupiedNights / availableNights) * 100)) : 0
   return {
     totalRooms: rooms,
     occupiedNights,
@@ -122,13 +137,20 @@ export function calculateOccupancy(
  * o valor efetivamente pago vive em `bookings.amount_received` e tem outra
  * pergunta a responder.
  */
-export function monthlyRevenue(bookings: MetricBooking[], today = new Date(), months = 12): MonthlyRevenuePoint[] {
+export function monthlyRevenue(
+  bookings: MetricBooking[],
+  today = new Date(),
+  months = 12,
+): MonthlyRevenuePoint[] {
   const counted = bookings.filter((b) => isOccupyingStatus(b.status) || b.status === 'checked_out')
   const points: MonthlyRevenuePoint[] = []
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - i, 1))
     const prefix = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
-    const value = counted.reduce((sum, b) => (b.checkin.startsWith(prefix) ? sum + b.total : sum), 0)
+    const value = counted.reduce(
+      (sum, b) => (b.checkin.startsWith(prefix) ? sum + b.total : sum),
+      0,
+    )
     points.push({ label: MONTH_LABELS[d.getUTCMonth()], value })
   }
   return points
@@ -150,7 +172,8 @@ export function weeklyDailies(bookings: MetricBooking[], today = new Date()): We
 export function summarizeReviews(reviews: { rating: number }[]): ReviewSummary {
   const valid = reviews.filter((r) => Number.isFinite(r.rating) && r.rating >= 1 && r.rating <= 5)
   const total = valid.length
-  const average = total > 0 ? Math.round((valid.reduce((sum, r) => sum + r.rating, 0) / total) * 10) / 10 : 0
+  const average =
+    total > 0 ? Math.round((valid.reduce((sum, r) => sum + r.rating, 0) / total) * 10) / 10 : 0
   const distribution = [5, 4, 3, 2, 1].map((rating) => {
     const count = valid.filter((r) => Math.round(r.rating) === rating).length
     return { rating, count, percent: total > 0 ? Math.round((count / total) * 100) : 0 }
@@ -159,7 +182,10 @@ export function summarizeReviews(reviews: { rating: number }[]): ReviewSummary {
 }
 
 /** Chegadas e saídas previstas para uma data — o que a recepção precisa ver primeiro. */
-export function dayMovements<T extends MetricBooking>(bookings: T[], dayISO: string): { arrivals: T[]; departures: T[] } {
+export function dayMovements<T extends MetricBooking>(
+  bookings: T[],
+  dayISO: string,
+): { arrivals: T[]; departures: T[] } {
   const active = bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
   return {
     arrivals: active.filter((b) => b.checkin === dayISO),
