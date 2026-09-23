@@ -217,3 +217,25 @@ Rodar no Supabase (SQL Editor), em ordem:
   formulário envia, inclusive campos esvaziados de propósito.
 - Testes: `supabase/tests/priorities.sql`.
 - Rollback: `supabase/rollback/0063_rollback.sql`.
+
+## Reserva pelo site no mesmo dia e origem do link da bio (0067)
+
+- O fluxo público de `create_booking` comparava a entrada com `current_date`,
+  que no Supabase é a data de UTC. Das 21h à meia-noite em Brasília o hóspede
+  recebia "A data de entrada não pode ser no passado." ao reservar para a
+  mesma noite. Agora vale a data do fuso da pousada (`pousada_local_date`,
+  mesma regra do check-in da 0048); fuso vazio ou não reconhecido usa
+  Brasília em vez de derrubar a reserva.
+- No site, `createBookingSchema` só barra datas claramente passadas (um dia
+  de folga sobre UTC); quem decide o dia exato é o banco. As datas sugeridas
+  e o mínimo do seletor usam o dia de Brasília (`lib/dates.ts`).
+- Link da bio: `?origem=link_bio` segue da página da bio para a da pousada,
+  para a de reserva e para o login, e a reserva é gravada com
+  `origin = 'link_bio'` — o que o relatório do link (0046) conta. O banco
+  aceita no fluxo público só `rota_das_pousadas` e `link_bio`.
+- `link_bio` entrou no tipo `BookingOrigin` e no rótulo "Link da bio"; sem
+  isso, editar uma reserva vinda da bio trocaria a origem pela primeira da
+  lista.
+- Testes: `supabase/tests/priorities.sql`, `reservas.test.ts`,
+  `services/bookings.service.test.ts` e `lib/dates.test.ts`.
+- Rollback: `supabase/rollback/0067_rollback.sql`.

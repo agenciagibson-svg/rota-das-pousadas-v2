@@ -61,3 +61,16 @@ sequenceDiagram
 - Enforce de papel em `/admin` (exigir `platformRole`) via layout server + `can()`.
 - Recuperação de senha (`resetPasswordForEmail`) e login social (OAuth).
 - Onboarding: vincular `memberships` ao criar/pleitear uma pousada.
+
+## Nomes na tela de Membros (0068)
+
+- A RLS de `profiles` só deixa cada usuário ler o próprio perfil, e a tela de
+  Membros lia os nomes direto da tabela: o dono via o próprio nome e o resto
+  da equipe aparecia como "Sem nome".
+- `list_membership_names(pousada)` devolve só usuário e nome dos membros da
+  pousada, e só para quem a gerencia (`auth_can_manage_pousada`), no mesmo
+  desenho de `list_membership_emails` (0017). A tabela `profiles` segue
+  fechada.
+- Testes: `supabase/tests/priorities.sql` e
+  `repositories/memberships.repository.test.ts`.
+- Rollback: `supabase/rollback/0068_rollback.sql`.
