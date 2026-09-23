@@ -63,7 +63,8 @@ export async function saveGuest(input: SaveGuestInput): Promise<{ id: string }> 
     whatsapp: input.whatsapp ?? null,
     documentType: input.documentType ?? null,
     documentNumber: input.documentNumber ?? null,
-    birthDate: input.birthDate ?? null,
+    // `birth_date` é date: "" (campo vazio) derruba a RPC, texto vazio não.
+    birthDate: input.birthDate || null,
     nationality: input.nationality ?? null,
     country: input.country ?? 'BR',
     city: input.city ?? null,

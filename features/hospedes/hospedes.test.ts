@@ -32,6 +32,13 @@ describe('[Ciclo 4] guestFormSchema', () => {
   it('rejeita nome muito curto', () => {
     expect(guestFormSchema.safeParse({ ...base, fullName: 'A' }).success).toBe(false)
   })
+  it('aceita nascimento vazio ou no formato do campo de data (AAAA-MM-DD)', () => {
+    expect(guestFormSchema.safeParse({ ...base, birthDate: '' }).success).toBe(true)
+    expect(guestFormSchema.safeParse({ ...base, birthDate: '1980-05-20' }).success).toBe(true)
+  })
+  it('rejeita nascimento fora do formato de data', () => {
+    expect(guestFormSchema.safeParse({ ...base, birthDate: '20/05/1980' }).success).toBe(false)
+  })
   it('aceita cadastro completo', () => {
     const full = {
       ...base,
