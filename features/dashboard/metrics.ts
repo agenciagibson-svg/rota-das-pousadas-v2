@@ -39,6 +39,8 @@ export type MetricBooking = {
   checkin: string
   checkout: string
   total: number
+  /** Consumo da conta do hóspede (0069) — receita da mesma estadia. */
+  chargesAmount?: number
   status: BookingStatus
 }
 
@@ -149,7 +151,7 @@ export function monthlyRevenue(
     const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - i, 1))
     const prefix = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
     const value = counted.reduce(
-      (sum, b) => (b.checkin.startsWith(prefix) ? sum + b.total : sum),
+      (sum, b) => (b.checkin.startsWith(prefix) ? sum + b.total + (b.chargesAmount ?? 0) : sum),
       0,
     )
     points.push({ label: MONTH_LABELS[d.getUTCMonth()], value })

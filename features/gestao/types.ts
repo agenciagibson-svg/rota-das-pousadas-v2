@@ -14,6 +14,8 @@ export type OwnerReservation = {
   subtotal: number
   fee: number
   total: number
+  /** Consumo lançado na conta do hóspede (0069) — entra no saldo e na receita. */
+  chargesAmount: number
   balanceDue: number
   status: BookingStatus
   origin: BookingOrigin

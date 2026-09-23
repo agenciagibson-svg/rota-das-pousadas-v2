@@ -5,17 +5,17 @@ das reservas) e **despesas** (lançadas pelo proprietário) em resumo + extrato.
 
 ## Camadas
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Cálculo (puro) | `features/financeiro/finance.ts` | `buildSummary` (receita/despesa/saldo) — testado |
-| Types | `features/financeiro/types.ts` | `Expense`, `Transaction`, `FinanceSummary` |
-| Schemas | `features/financeiro/schemas.ts` | `createExpenseSchema` (Zod) |
-| Repository | `repositories/finance.repository.ts` | CRUD de `expenses` |
-| Service | `features/financeiro/services/finance.service.ts` | resumo (reservas + despesas), lançar despesa |
-| Server Query | `server/queries.ts` → `getFinance` | cache por request |
-| Server Action | `features/financeiro/actions.ts` | `createExpenseAction` |
-| UI | `finance-view`, `expense-form` | KPIs + extrato + form (Design System) |
-| Página | `app/dashboard/financeiro` | painel financeiro |
+| Camada         | Arquivo                                           | Papel                                            |
+| -------------- | ------------------------------------------------- | ------------------------------------------------ |
+| Cálculo (puro) | `features/financeiro/finance.ts`                  | `buildSummary` (receita/despesa/saldo) — testado |
+| Types          | `features/financeiro/types.ts`                    | `Expense`, `Transaction`, `FinanceSummary`       |
+| Schemas        | `features/financeiro/schemas.ts`                  | `createExpenseSchema` (Zod)                      |
+| Repository     | `repositories/finance.repository.ts`              | CRUD de `expenses`                               |
+| Service        | `features/financeiro/services/finance.service.ts` | resumo (reservas + despesas), lançar despesa     |
+| Server Query   | `server/queries.ts` → `getFinance`                | cache por request                                |
+| Server Action  | `features/financeiro/actions.ts`                  | `createExpenseAction`                            |
+| UI             | `finance-view`, `expense-form`                    | KPIs + extrato + form (Design System)            |
+| Página         | `app/dashboard/financeiro`                        | painel financeiro                                |
 
 ## Regras
 
@@ -24,6 +24,9 @@ das reservas) e **despesas** (lançadas pelo proprietário) em resumo + extrato.
 - Canceladas/expiradas/no-show **não** entram na receita.
 - **Saldo** = receita realizada − despesas.
 - **Despesas**: lançadas manualmente (contas a pagar), com categoria e vencimento.
+- **Consumo** lançado na conta do hóspede (0069) soma na receita da reserva;
+  pagamentos do balcão e do Mercado Pago ficam na mesma conta. Ver
+  [conta-hospede.md](conta-hospede.md).
 
 ## Segurança
 

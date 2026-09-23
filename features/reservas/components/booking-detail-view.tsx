@@ -9,6 +9,8 @@ import { OwnerReservationActions } from '@/features/gestao/components/owner-rese
 import { BOOKING_STATUS } from '../status'
 import { isFinalStatus } from '../status'
 import { BookingEditPanel, BookingCompanionsPanel } from './booking-edit-panel'
+import { BookingFolioCard } from './folio/booking-folio'
+import { formatBRL, type BookingFolio } from '../folio'
 import type { BookingDetail } from '../types'
 
 function fmtDate(iso: string): string {
@@ -16,19 +18,33 @@ function fmtDate(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
-function fmtDateTime(iso: string | null): string {
+/** No fuso da pousada: esta view renderiza no servidor, que está em UTC. */
+function fmtDateTime(iso: string | null, timeZone: string): string {
   if (!iso) return '—'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone,
+  }).format(new Date(iso))
 }
 
 export function BookingDetailView({
   displayName,
   pousadaName,
+  timeZone,
   booking,
+  folio,
 }: {
   displayName: string
   pousadaName: string
+  /** Fuso da pousada (IANA) — datas e horas da página. */
+  timeZone: string
   booking: BookingDetail
+  /** Conta do hóspede; `null` se a reserva não é da pousada ativa. */
+  folio: BookingFolio | null
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = !isFinalStatus(booking.status)
@@ -47,25 +63,42 @@ export function BookingDetailView({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Badge variant={status.variant}>{status.label}</Badge>
-              <span className="text-sm text-muted-foreground">{ORIGIN_LABEL[booking.origin]}</span>
-              {booking.externalCode && <span className="text-xs text-muted-foreground">Código externo: {booking.externalCode}</span>}
+              <span className="text-muted-foreground text-sm">{ORIGIN_LABEL[booking.origin]}</span>
+              {booking.externalCode && (
+                <span className="text-muted-foreground text-xs">
+                  Código externo: {booking.externalCode}
+                </span>
+              )}
             </div>
-            <OwnerReservationActions bookingId={booking.id} currentStatus={booking.status} paymentDueAt={booking.paymentDueAt} checkin={booking.checkin} />
+            <OwnerReservationActions
+              bookingId={booking.id}
+              currentStatus={booking.status}
+              paymentDueAt={booking.paymentDueAt}
+              checkin={booking.checkin}
+              balanceDue={booking.balanceDue}
+            />
           </div>
           {booking.status === 'cancelled' && booking.cancellationReason && (
-            <p className="mt-3 text-sm text-muted-foreground">Motivo do cancelamento: {booking.cancellationReason}</p>
+            <p className="text-muted-foreground mt-3 text-sm">
+              Motivo do cancelamento: {booking.cancellationReason}
+            </p>
           )}
           {booking.status === 'no_show' && booking.noShowReason && (
-            <p className="mt-3 text-sm text-muted-foreground">Motivo do no-show: {booking.noShowReason}</p>
+            <p className="text-muted-foreground mt-3 text-sm">
+              Motivo do no-show: {booking.noShowReason}
+            </p>
           )}
         </Card>
 
         <div className="grid gap-5 xl:grid-cols-2">
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Hóspede responsável</h2>
-            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+            <h2 className="text-foreground font-semibold">Hóspede responsável</h2>
+            <div className="text-muted-foreground mt-3 space-y-1 text-sm">
               <p className="text-foreground">
-                <Link href={`/dashboard/hospedes/${booking.responsibleGuestId}`} className="font-medium hover:underline">
+                <Link
+                  href={`/dashboard/hospedes/${booking.responsibleGuestId}`}
+                  className="font-medium hover:underline"
+                >
                   {booking.guestName}
                 </Link>
               </p>
@@ -75,58 +108,118 @@ export function BookingDetailView({
           </Card>
 
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Acomodação e período</h2>
-            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+            <h2 className="text-foreground font-semibold">Acomodação e período</h2>
+            <div className="text-muted-foreground mt-3 space-y-1 text-sm">
               <p className="text-foreground">{booking.roomName}</p>
-              <p>{fmtDate(booking.checkin)} – {fmtDate(booking.checkout)} · {booking.nights} {booking.nights === 1 ? 'noite' : 'noites'}</p>
-              <p>{booking.adults} adultos, {booking.children} crianças, {booking.infants} bebês{booking.pets ? ' · com pet' : ''}</p>
+              <p>
+                {fmtDate(booking.checkin)} – {fmtDate(booking.checkout)} · {booking.nights}{' '}
+                {booking.nights === 1 ? 'noite' : 'noites'}
+              </p>
+              <p>
+                {booking.adults} adultos, {booking.children} crianças, {booking.infants} bebês
+                {booking.pets ? ' · com pet' : ''}
+              </p>
             </div>
           </Card>
 
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Valores previstos</h2>
+            <h2 className="text-foreground font-semibold">Valores da reserva</h2>
             <div className="mt-3 space-y-1.5 text-sm">
-              <div className="flex justify-between text-muted-foreground"><span>Estadia</span><span>R$ {booking.subtotal}</span></div>
+              <div className="text-muted-foreground flex justify-between">
+                <span>Estadia</span>
+                <span>{formatBRL(booking.subtotal)}</span>
+              </div>
               {/* Reservas anteriores a 13/09/2026 guardam a taxa de serviço que foi cobrada; novas nascem com fee = 0. */}
-              {booking.fee > 0 && <div className="flex justify-between text-muted-foreground"><span>Taxa</span><span>R$ {booking.fee}</span></div>}
-              {booking.discount > 0 && <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span>−R$ {booking.discount}</span></div>}
-              {booking.surcharge > 0 && <div className="flex justify-between text-muted-foreground"><span>Acréscimo</span><span>R$ {booking.surcharge}</span></div>}
-              {booking.servicesAmount > 0 && <div className="flex justify-between text-muted-foreground"><span>Serviços</span><span>R$ {booking.servicesAmount}</span></div>}
-              <div className="flex justify-between border-t border-border pt-1.5 font-semibold text-foreground"><span>Total</span><span>R$ {booking.total}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span>Recebido</span><span>R$ {booking.amountReceived}</span></div>
-              <div className="flex justify-between font-semibold text-foreground"><span>Saldo previsto</span><span>R$ {booking.balanceDue}</span></div>
+              {booking.fee > 0 && (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Taxa</span>
+                  <span>{formatBRL(booking.fee)}</span>
+                </div>
+              )}
+              {booking.discount > 0 && (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Desconto</span>
+                  <span>−{formatBRL(booking.discount)}</span>
+                </div>
+              )}
+              {booking.surcharge > 0 && (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Acréscimo</span>
+                  <span>{formatBRL(booking.surcharge)}</span>
+                </div>
+              )}
+              {booking.servicesAmount > 0 && (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Serviços</span>
+                  <span>{formatBRL(booking.servicesAmount)}</span>
+                </div>
+              )}
+              <div className="border-border text-foreground flex justify-between border-t pt-1.5 font-semibold">
+                <span>Total da estadia</span>
+                <span>{formatBRL(booking.total)}</span>
+              </div>
+              {booking.chargesAmount > 0 && (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Consumo</span>
+                  <span>{formatBRL(booking.chargesAmount)}</span>
+                </div>
+              )}
+              <div className="text-muted-foreground flex justify-between">
+                <span>Recebido</span>
+                <span>−{formatBRL(booking.amountReceived)}</span>
+              </div>
+              <div className="text-foreground flex justify-between font-semibold">
+                <span>Saldo</span>
+                <span>{formatBRL(booking.balanceDue)}</span>
+              </div>
             </div>
             {booking.paymentDueAt && (
-              <p className="mt-3 text-xs text-muted-foreground">Prazo de pagamento: {fmtDateTime(booking.paymentDueAt)}</p>
+              <p className="text-muted-foreground mt-3 text-xs">
+                Prazo de pagamento: {fmtDateTime(booking.paymentDueAt, timeZone)}
+              </p>
             )}
           </Card>
 
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Solicitações e observações</h2>
+            <h2 className="text-foreground font-semibold">Solicitações e observações</h2>
             <div className="mt-3 space-y-3 text-sm">
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Solicitações do hóspede</p>
+                <p className="text-muted-foreground text-xs font-medium">Solicitações do hóspede</p>
                 <p className="text-foreground">{booking.specialRequests || '—'}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Observações internas (nunca visível ao hóspede)</p>
+                <p className="text-muted-foreground text-xs font-medium">
+                  Observações internas (nunca visível ao hóspede)
+                </p>
                 <p className="text-foreground">{booking.internalNotes || '—'}</p>
               </div>
             </div>
           </Card>
         </div>
 
+        {folio && (
+          <BookingFolioCard
+            bookingId={booking.id}
+            status={booking.status}
+            balanceDue={booking.balanceDue}
+            timeZone={timeZone}
+            folio={folio}
+          />
+        )}
+
         <Card className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-semibold text-foreground">Acompanhantes</h2>
-              <p className="text-sm text-muted-foreground">Responsável + acompanhantes cadastrados nesta reserva.</p>
+              <h2 className="text-foreground font-semibold">Acompanhantes</h2>
+              <p className="text-muted-foreground text-sm">
+                Responsável + acompanhantes cadastrados nesta reserva.
+              </p>
             </div>
             <Link
               href={`/dashboard/reservas/${booking.id}/fnrh`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
+              className="border-input text-foreground hover:bg-muted inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition"
             >
               <Printer className="size-3.5" />
               Imprimir ficha FNRH
@@ -139,8 +232,10 @@ export function BookingDetailView({
 
         {canEdit && (
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Editar reserva</h2>
-            <p className="text-sm text-muted-foreground">Alterar período ou acomodação revalida disponibilidade automaticamente.</p>
+            <h2 className="text-foreground font-semibold">Editar reserva</h2>
+            <p className="text-muted-foreground text-sm">
+              Alterar período ou acomodação revalida disponibilidade automaticamente.
+            </p>
             <div className="mt-4">
               <BookingEditPanel booking={booking} canEdit={canEdit} />
             </div>

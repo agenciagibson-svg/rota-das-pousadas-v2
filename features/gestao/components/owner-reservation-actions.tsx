@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import type { BookingStatus } from '@/features/reservas/types'
 import { updateReservationStatusAction, expireOwnerPendingBookingAction } from '../actions'
+import { formatBRL } from '@/features/reservas/folio'
 
 type ActionItem = {
   label: string
@@ -27,7 +28,13 @@ function getActions(status: BookingStatus, checkinISO?: string | null): ActionIt
   if (status === 'quote' || status === 'pending') {
     return [
       { label: 'Confirmar', status: 'confirmed', icon: Check },
-      { label: 'Cancelar', status: 'cancelled', icon: XCircle, variant: 'destructive', requiresReason: true },
+      {
+        label: 'Cancelar',
+        status: 'cancelled',
+        icon: XCircle,
+        variant: 'destructive',
+        requiresReason: true,
+      },
     ]
   }
   if (status === 'confirmed') {
@@ -39,10 +46,25 @@ function getActions(status: BookingStatus, checkinISO?: string | null): ActionIt
         status: 'checked_in',
         icon: LogIn,
         disabled: !canCheckInToday,
-        title: canCheckInToday || !checkinISO ? undefined : `Check-in a partir de ${fmtDate(checkinISO)}`,
+        title:
+          canCheckInToday || !checkinISO
+            ? undefined
+            : `Check-in a partir de ${fmtDate(checkinISO)}`,
       },
-      { label: 'Cancelar', status: 'cancelled', icon: XCircle, variant: 'destructive', requiresReason: true },
-      { label: 'Marcar no-show', status: 'no_show', icon: Flag, variant: 'secondary', requiresReason: true },
+      {
+        label: 'Cancelar',
+        status: 'cancelled',
+        icon: XCircle,
+        variant: 'destructive',
+        requiresReason: true,
+      },
+      {
+        label: 'Marcar no-show',
+        status: 'no_show',
+        icon: Flag,
+        variant: 'secondary',
+        requiresReason: true,
+      },
     ]
   }
   if (status === 'checked_in') {
@@ -69,20 +91,25 @@ export function OwnerReservationActions({
   currentStatus,
   paymentDueAt,
   checkin,
+  balanceDue = 0,
 }: {
   bookingId: string
   currentStatus: BookingStatus
   paymentDueAt?: string | null
   /** Data de entrada (YYYY-MM-DD) — habilita o botão de check-in só a partir dela. */
   checkin?: string | null
+  /** Saldo da conta do hóspede — com saldo em aberto, o check-out pede confirmação. */
+  balanceDue?: number
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [reasonTarget, setReasonTarget] = useState<ActionItem | null>(null)
   const [reason, setReason] = useState('')
+  const [checkoutWithBalance, setCheckoutWithBalance] = useState(false)
   const actions = getActions(currentStatus, checkin)
-  const isOverduePending = currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
+  const isOverduePending =
+    currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
 
   function run(promise: Promise<{ ok: boolean; error?: string }>) {
     setError(null)
@@ -101,7 +128,17 @@ export function OwnerReservationActions({
       setReasonTarget(action)
       return
     }
+    // Avisa, mas não impede: há casos de acerto posterior (empresa, link de pagamento).
+    if (action.status === 'checked_out' && balanceDue > 0) {
+      setCheckoutWithBalance(true)
+      return
+    }
     run(updateReservationStatusAction({ bookingId, status: action.status }))
+  }
+
+  function confirmCheckout() {
+    setCheckoutWithBalance(false)
+    run(updateReservationStatusAction({ bookingId, status: 'checked_out' }))
   }
 
   function confirmReason() {
@@ -145,8 +182,25 @@ export function OwnerReservationActions({
           Expirar (prazo vencido)
         </Button>
       )}
-      {actions.length === 0 && !isOverduePending && <span className="text-xs text-muted-foreground">Sem ações</span>}
-      {error && <span className="text-xs font-medium text-destructive">{error}</span>}
+      {actions.length === 0 && !isOverduePending && (
+        <span className="text-muted-foreground text-xs">Sem ações</span>
+      )}
+      {error && <span className="text-destructive text-xs font-medium">{error}</span>}
+
+      <Dialog
+        open={checkoutWithBalance}
+        onClose={() => setCheckoutWithBalance(false)}
+        title="Check-out com saldo em aberto"
+        description={`Esta reserva ainda tem ${formatBRL(balanceDue)} a receber. Registre o pagamento na Conta do hóspede ou confirme o check-out mesmo assim.`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCheckoutWithBalance(false)}>
+              Voltar
+            </Button>
+            <Button onClick={confirmCheckout}>Fazer check-out</Button>
+          </>
+        }
+      />
 
       <Dialog
         open={reasonTarget !== null}
@@ -173,7 +227,7 @@ export function OwnerReservationActions({
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Motivo (obrigatório)"
-          className="w-full resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
         />
       </Dialog>
     </div>

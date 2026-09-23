@@ -7,7 +7,11 @@ import type { FinanceSummary } from './types'
  * rótulos em português (`confirmada`, `aguardando_pagamento`) que nunca
  * chegavam aqui, e o Financeiro mostrava R$ 0 para sempre.
  */
-const REALIZED: ReadonlySet<BookingStatus> = new Set<BookingStatus>(['confirmed', 'checked_in', 'checked_out'])
+const REALIZED: ReadonlySet<BookingStatus> = new Set<BookingStatus>([
+  'confirmed',
+  'checked_in',
+  'checked_out',
+])
 const PENDING: BookingStatus = 'pending'
 
 /** Reserva entra no fluxo de caixa? (cotação, cancelada e no-show ficam fora.) */
@@ -15,7 +19,8 @@ export function countsAsRevenue(status: string): boolean {
   return REALIZED.has(status as BookingStatus) || status === PENDING
 }
 
-export type RevenueSource = { total: number; status: string }
+/** `chargesAmount`: consumo lançado na conta do hóspede (0069), receita da mesma reserva. */
+export type RevenueSource = { total: number; chargesAmount?: number; status: string }
 export type ExpenseSource = { amount: number; paid: boolean }
 
 /**
@@ -23,15 +28,13 @@ export type ExpenseSource = { amount: number; paid: boolean }
  * Receita realizada = reservas confirmadas/em estadia/concluídas.
  * A receber = reservas aguardando pagamento. Saldo = realizada − despesas.
  */
-export function buildSummary(
-  revenues: RevenueSource[],
-  expenses: ExpenseSource[],
-): FinanceSummary {
+export function buildSummary(revenues: RevenueSource[], expenses: ExpenseSource[]): FinanceSummary {
   let revenueConfirmed = 0
   let revenuePending = 0
   for (const r of revenues) {
-    if (REALIZED.has(r.status as BookingStatus)) revenueConfirmed += r.total
-    else if (r.status === PENDING) revenuePending += r.total
+    const amount = r.total + (r.chargesAmount ?? 0)
+    if (REALIZED.has(r.status as BookingStatus)) revenueConfirmed += amount
+    else if (r.status === PENDING) revenuePending += amount
   }
 
   let expensesTotal = 0

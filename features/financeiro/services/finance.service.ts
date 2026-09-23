@@ -3,7 +3,11 @@ import { getOwnerPousada } from '@/features/gestao/services/pms.service'
 import { getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
 import { listReservationsByPousada } from '@/repositories/management.repository'
-import { listExpensesByPousada, insertExpense, setExpensePaid } from '@/repositories/finance.repository'
+import {
+  listExpensesByPousada,
+  insertExpense,
+  setExpensePaid,
+} from '@/repositories/finance.repository'
 import { buildSummary, countsAsRevenue } from '@/features/financeiro/finance'
 import type { FinanceSummary, Transaction } from '@/features/financeiro/types'
 import type { CreateExpenseInput } from '@/features/financeiro/schemas'
@@ -56,7 +60,11 @@ export async function getFinance(): Promise<FinanceData> {
   const revenueReservations = reservations.filter((r) => countsAsRevenue(r.status))
 
   const summary = buildSummary(
-    revenueReservations.map((r) => ({ total: r.total, status: r.status })),
+    revenueReservations.map((r) => ({
+      total: r.total,
+      chargesAmount: r.chargesAmount,
+      status: r.status,
+    })),
     expenses.map((e) => ({ amount: e.amount, paid: e.paid })),
   )
 
@@ -65,7 +73,7 @@ export async function getFinance(): Promise<FinanceData> {
       id: `b-${r.id}`,
       kind: 'receita' as const,
       description: `Reserva ${r.code} · ${r.guestName}`,
-      amount: r.total,
+      amount: r.total + r.chargesAmount,
       date: r.checkin,
       status: r.status,
       bookingId: r.id,

@@ -411,3 +411,153 @@ select test_assert((select count(*) from list_membership_names('10000000-0000-00
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
 select test_assert(not has_function_privilege('anon', 'list_membership_names(uuid)', 'EXECUTE'), 'anon não lista nomes');
+
+-- Conta do hóspede (0069): consumo por pedido e pagamento no balcão. Recepção
+-- lança; só proprietário, gerente e financeiro desfazem (payment:refund).
+insert into auth.users(id, email) values
+ ('00000000-0000-0000-0000-000000000013', 'financeiro-a@example.test'),
+ ('00000000-0000-0000-0000-000000000014', 'governanca-a@example.test');
+insert into memberships(user_id, pousada_id, role, status) values
+ ('00000000-0000-0000-0000-000000000013', '10000000-0000-0000-0000-000000000001', 'financeiro_pousada', 'active'),
+ ('00000000-0000-0000-0000-000000000014', '10000000-0000-0000-0000-000000000001', 'governanca', 'active');
+insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, checkin, checkout, total, status, payment_due_at) values
+ ('30000000-0000-0000-0000-000000000021', 'CONTA-HOSPEDADA', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002',
+  '40000000-0000-0000-0000-000000000001', '2099-06-01', '2099-06-03', 1000, 'checked_in', null),
+ ('30000000-0000-0000-0000-000000000022', 'CONTA-PENDENTE', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002',
+  '40000000-0000-0000-0000-000000000001', '2099-07-01', '2099-07-02', 500, 'pending', now() + interval '1 day');
+-- Um pagamento do Mercado Pago já registrado pelo webhook (origem padrão).
+insert into payments(id, booking_id, amount, method, status, provider_ref, credited_amount) values
+ ('70000000-0000-0000-0000-000000000021', '30000000-0000-0000-0000-000000000021', 100, 'pix', 'aprovado', '9990001', 100);
+update bookings set amount_received = 100 where id = '30000000-0000-0000-0000-000000000021';
+
+set role authenticated;
+-- Recepção lança consumo e registra pagamento.
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000012', false);
+select add_booking_charge('30000000-0000-0000-0000-000000000021', '  Água mineral  ', 2, 5.50);
+select test_assert((select charges_amount = 11 and balance_due = 911 from bookings where code = 'CONTA-HOSPEDADA'),
+  'consumo entra no saldo (1000 + 11 - 100)');
+select test_assert((select description = 'Água mineral' and amount = 11 from booking_charges
+  where booking_id = '30000000-0000-0000-0000-000000000021'), 'lançamento gravado com descrição limpa');
+select test_assert((select count(*) from booking_charges where booking_id = '30000000-0000-0000-0000-000000000021') = 1,
+  'recepção vê o consumo');
+do $$ begin
+  begin
+    perform add_booking_charge('30000000-0000-0000-0000-000000000021', 'Suco', 1, 7.555);
+    raise exception 'TEST: valor com três casas aceito';
+  exception when raise_exception then if sqlerrm <> 'Valor unitário inválido.' then raise; end if; end;
+  begin
+    perform add_booking_charge('30000000-0000-0000-0000-000000000021', 'Suco', 0, 7);
+    raise exception 'TEST: quantidade zero aceita';
+  exception when raise_exception then if sqlerrm <> 'Quantidade inválida.' then raise; end if; end;
+  begin
+    perform add_booking_charge('30000000-0000-0000-0000-000000000021', '   ', 1, 7);
+    raise exception 'TEST: consumo sem descrição aceito';
+  exception when raise_exception then if sqlerrm <> 'Descreva o consumo em até 120 caracteres.' then raise; end if; end;
+  begin
+    perform add_booking_charge('30000000-0000-0000-0000-000000000022', 'Suco', 1, 7);
+    raise exception 'TEST: consumo em reserva pendente';
+  exception when raise_exception then
+    if sqlerrm <> 'Consumo só pode ser lançado em reserva confirmada, hospedada ou encerrada.' then raise; end if;
+  end;
+  begin
+    perform register_manual_payment('30000000-0000-0000-0000-000000000021', 'pix', 911.01);
+    raise exception 'TEST: pagamento maior que o saldo';
+  exception when raise_exception then if sqlerrm <> 'Valor maior que o saldo em aberto (R$ 911,00).' then raise; end if; end;
+  begin
+    perform register_manual_payment('30000000-0000-0000-0000-000000000021', 'boleto', 10);
+    raise exception 'TEST: forma de pagamento inventada';
+  exception when raise_exception then if sqlerrm <> 'Forma de pagamento inválida.' then raise; end if; end;
+end $$;
+select register_manual_payment('30000000-0000-0000-0000-000000000021', 'dinheiro', 500, 'Pago na saída');
+select test_assert((select amount_received = 600 and balance_due = 411 and status = 'checked_in' from bookings
+  where code = 'CONTA-HOSPEDADA'), 'pagamento no balcão soma no recebido');
+select test_assert((select source = 'manual' and status = 'aprovado' and method = 'dinheiro' and notes = 'Pago na saída'
+  and recorded_by = '00000000-0000-0000-0000-000000000012' and provider_ref is null
+  from payments where booking_id = '30000000-0000-0000-0000-000000000021' and source = 'manual'), 'pagamento manual registrado');
+do $$ begin
+  begin
+    perform reverse_manual_payment((select id from payments where booking_id = '30000000-0000-0000-0000-000000000021'
+      and source = 'manual'), 'digitei errado');
+    raise exception 'TEST: recepção estornou pagamento';
+  exception when raise_exception then if sqlerrm <> 'Você não tem permissão para estornar pagamentos.' then raise; end if; end;
+  begin
+    perform cancel_booking_charge((select id from booking_charges where booking_id = '30000000-0000-0000-0000-000000000021'),
+      'lançado errado');
+    raise exception 'TEST: recepção cancelou consumo';
+  exception when raise_exception then if sqlerrm <> 'Você não tem permissão para cancelar consumo.' then raise; end if; end;
+end $$;
+
+-- Governança e dono de outra pousada não lançam nem veem a conta.
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000014', false);
+select test_assert((select count(*) from booking_charges) = 0, 'governança não vê consumo');
+do $$ begin
+  perform add_booking_charge('30000000-0000-0000-0000-000000000021', 'Água', 1, 5);
+  raise exception 'TEST: governança lançou consumo';
+exception when raise_exception then
+  if sqlerrm <> 'Você não tem permissão para lançar consumo nesta reserva.' then raise; end if;
+end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select test_assert((select count(*) from booking_charges) = 0, 'outra pousada não vê consumo');
+do $$ begin
+  perform register_manual_payment('30000000-0000-0000-0000-000000000021', 'pix', 10);
+  raise exception 'TEST: dono de outra pousada registrou pagamento';
+exception when raise_exception then
+  if sqlerrm <> 'Você não tem permissão para registrar pagamento nesta reserva.' then raise; end if;
+end $$;
+
+-- Financeiro estorna e cancela, sempre com motivo; nada é apagado.
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000013', false);
+do $$ begin
+  begin
+    perform reverse_manual_payment((select id from payments where booking_id = '30000000-0000-0000-0000-000000000021'
+      and source = 'manual'), '  ');
+    raise exception 'TEST: estorno sem motivo';
+  exception when raise_exception then
+    if sqlerrm <> 'Informe o motivo do estorno (3 a 300 caracteres).' then raise; end if;
+  end;
+  begin
+    perform reverse_manual_payment('70000000-0000-0000-0000-000000000021', 'cliente desistiu');
+    raise exception 'TEST: estornou pagamento do Mercado Pago pelo painel';
+  exception when raise_exception then
+    if sqlerrm <> 'Pagamento do Mercado Pago é estornado pelo próprio Mercado Pago.' then raise; end if;
+  end;
+end $$;
+select reverse_manual_payment((select id from payments where booking_id = '30000000-0000-0000-0000-000000000021'
+  and source = 'manual'), 'Valor lançado na reserva errada');
+select test_assert((select amount_received = 100 and balance_due = 911 from bookings where code = 'CONTA-HOSPEDADA'),
+  'estorno devolve o saldo');
+select test_assert((select status = 'estornado' and credited_amount = 0 and refunded_amount = 500
+  and reversal_reason = 'Valor lançado na reserva errada' and reversed_by = '00000000-0000-0000-0000-000000000013'
+  from payments where booking_id = '30000000-0000-0000-0000-000000000021' and source = 'manual'), 'estorno fica registrado');
+do $$ begin
+  perform reverse_manual_payment((select id from payments where booking_id = '30000000-0000-0000-0000-000000000021'
+    and source = 'manual'), 'de novo');
+  raise exception 'TEST: estornou duas vezes';
+exception when raise_exception then if sqlerrm <> 'Este pagamento já foi estornado.' then raise; end if;
+end $$;
+select cancel_booking_charge((select id from booking_charges where booking_id = '30000000-0000-0000-0000-000000000021'),
+  'Hóspede não consumiu');
+select test_assert((select charges_amount = 0 and balance_due = 900 from bookings where code = 'CONTA-HOSPEDADA'),
+  'cancelamento tira o consumo do saldo');
+select test_assert((select cancelled_by = '00000000-0000-0000-0000-000000000013' and cancellation_reason = 'Hóspede não consumiu'
+  from booking_charges where booking_id = '30000000-0000-0000-0000-000000000021'), 'cancelamento fica registrado');
+
+-- Reserva pendente: sinal tira o prazo (a expiração automática não a cancela);
+-- quitar confirma, como o webhook do Mercado Pago.
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+select register_manual_payment('30000000-0000-0000-0000-000000000022', 'pix', 200);
+select test_assert((select status = 'pending' and payment_due_at is null and balance_due = 300 from bookings
+  where code = 'CONTA-PENDENTE'), 'sinal mantém pendente e tira o prazo');
+select test_assert((register_manual_payment('30000000-0000-0000-0000-000000000022', 'cartao_credito', 300)->>'confirmed')::boolean,
+  'quitar informa a confirmação');
+select test_assert((select status = 'confirmed' and balance_due = 0 from bookings where code = 'CONTA-PENDENTE'),
+  'quitar confirma a reserva pendente');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select test_assert((select count(*) from audit_log where action in ('booking.charge_added', 'booking.charge_cancelled',
+  'payment.manual_recorded', 'payment.manual_reversed')) = 6, 'lançamentos auditados');
+select test_assert(exists(select 1 from audit_log where action = 'booking.confirmed'
+  and target_id = '30000000-0000-0000-0000-000000000022' and metadata->>'source' = 'manual_payment'), 'confirmação auditada');
+select test_assert(not has_function_privilege('anon', 'register_manual_payment(uuid,text,numeric,text)', 'EXECUTE')
+  and not has_function_privilege('anon', 'add_booking_charge(uuid,text,integer,numeric)', 'EXECUTE'),
+  'anon não lança nem registra pagamento');

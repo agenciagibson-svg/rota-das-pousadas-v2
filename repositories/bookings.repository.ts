@@ -326,7 +326,7 @@ export async function getBookingDetailById(
   const { data, error } = await supabase
     .from('bookings')
     .select(
-      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, version, created_at, updated_at',
+      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, charges_amount, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, version, created_at, updated_at',
     )
     .eq('id', bookingId)
     .eq('pousada_id', pousadaId)
@@ -386,6 +386,7 @@ export async function getBookingDetailById(
     surcharge: Number(data.surcharge),
     servicesAmount: Number(data.services_amount),
     total: Number(data.total),
+    chargesAmount: Number(data.charges_amount),
     amountReceived: Number(data.amount_received),
     balanceDue: Number(data.balance_due),
     currency: data.currency,

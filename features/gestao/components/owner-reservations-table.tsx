@@ -10,6 +10,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { formatBRL } from '@/features/reservas/folio'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { BOOKING_STATUS } from '@/features/reservas'
@@ -67,7 +68,7 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href={`/dashboard/reservas/${reservation.id}`}
-                    className="font-serif text-xl font-semibold text-foreground hover:underline"
+                    className="text-foreground font-serif text-xl font-semibold hover:underline"
                   >
                     {reservation.guestName}
                   </Link>
@@ -80,43 +81,45 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                       Atenção
                     </Badge>
                   )}
-                  <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  <span className="bg-secondary text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium">
                     {reservation.code}
                   </span>
-                  <span className="text-xs text-muted-foreground">{ORIGIN_LABEL[reservation.origin]}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {ORIGIN_LABEL[reservation.origin]}
+                  </span>
                 </div>
 
-                <div className="mt-3 grid gap-3 text-sm text-muted-foreground md:grid-cols-2 xl:grid-cols-3">
+                <div className="text-muted-foreground mt-3 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
                   <span className="inline-flex items-center gap-2">
-                    <Mail className="size-4 text-primary" />
+                    <Mail className="text-primary size-4" />
                     {reservation.guestEmail}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <BedDouble className="size-4 text-primary" />
+                    <BedDouble className="text-primary size-4" />
                     {reservation.roomName}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <Users className="size-4 text-primary" />
+                    <Users className="text-primary size-4" />
                     {reservation.guests} {reservation.guests === 1 ? 'hóspede' : 'hóspedes'}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <CalendarCheck className="size-4 text-primary" />
+                    <CalendarCheck className="text-primary size-4" />
                     {fmtDate(reservation.checkin)} - {fmtDate(reservation.checkout)}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <Clock3 className="size-4 text-primary" />
+                    <Clock3 className="text-primary size-4" />
                     {reservation.nights} {reservation.nights === 1 ? 'noite' : 'noites'}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <UserRound className="size-4 text-primary" />
+                    <UserRound className="text-primary size-4" />
                     Criada em {fmtCreatedAt(reservation.createdAt)}
                   </span>
                 </div>
 
                 {reservation.status === 'pending' && (
-                  <div className="mt-4 rounded-2xl bg-gold/10 p-3 text-sm text-muted-foreground">
+                  <div className="bg-gold/10 text-muted-foreground mt-4 rounded-2xl p-3 text-sm">
                     Prazo para pagamento:{' '}
-                    <strong className="font-semibold text-foreground">
+                    <strong className="text-foreground font-semibold">
                       {dueAt ?? 'não informado'}
                     </strong>
                     .
@@ -124,27 +127,33 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                 )}
               </div>
 
-              <div className="w-full shrink-0 rounded-2xl border border-border bg-secondary/40 p-4 xl:w-64">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <ReceiptText className="size-4 text-primary" />
+              <div className="border-border bg-secondary/40 w-full shrink-0 rounded-2xl border p-4 xl:w-64">
+                <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  <ReceiptText className="text-primary size-4" />
                   Valores
                 </div>
                 <div className="mt-3 space-y-2 text-sm">
-                  <div className="flex justify-between text-muted-foreground">
+                  <div className="text-muted-foreground flex justify-between">
                     <span>Estadia</span>
-                    <span>R$ {reservation.subtotal}</span>
+                    <span>{formatBRL(reservation.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-muted-foreground">
+                  <div className="text-muted-foreground flex justify-between">
                     <span>Taxa</span>
-                    <span>R$ {reservation.fee}</span>
+                    <span>{formatBRL(reservation.fee)}</span>
                   </div>
-                  <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
+                  <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
                     <span>Total</span>
-                    <span>R$ {reservation.total}</span>
+                    <span>{formatBRL(reservation.total)}</span>
                   </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Saldo previsto</span>
-                    <span>R$ {reservation.balanceDue}</span>
+                  {reservation.chargesAmount > 0 && (
+                    <div className="text-muted-foreground flex justify-between">
+                      <span>Consumo</span>
+                      <span>{formatBRL(reservation.chargesAmount)}</span>
+                    </div>
+                  )}
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Saldo</span>
+                    <span>{formatBRL(reservation.balanceDue)}</span>
                   </div>
                 </div>
 
@@ -154,6 +163,7 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                     currentStatus={reservation.status}
                     paymentDueAt={reservation.paymentDueAt}
                     checkin={reservation.checkin}
+                    balanceDue={reservation.balanceDue}
                   />
                 </div>
               </div>

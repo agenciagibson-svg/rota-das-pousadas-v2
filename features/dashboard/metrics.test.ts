@@ -136,6 +136,16 @@ describe('monthlyRevenue', () => {
   })
 })
 
+describe('monthlyRevenue — consumo', () => {
+  it('soma o consumo lançado na conta à receita do mês da estadia', () => {
+    const series = monthlyRevenue(
+      [{ ...booking('2026-09-10', '2026-09-12', 'checked_out', 400), chargesAmount: 35.5 }],
+      TODAY,
+    )
+    expect(series.at(-1)?.value).toBe(435.5)
+  })
+})
+
 describe('weeklyDailies', () => {
   it('abre a semana na segunda-feira da data de referência', () => {
     // TODAY = quarta 16/09/2026 → semana de 14/09 (seg) a 20/09 (dom).

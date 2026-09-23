@@ -239,3 +239,9 @@ Rodar no Supabase (SQL Editor), em ordem:
 - Testes: `supabase/tests/priorities.sql`, `reservas.test.ts`,
   `services/bookings.service.test.ts` e `lib/dates.test.ts`.
 - Rollback: `supabase/rollback/0067_rollback.sql`.
+
+## Conta do hóspede (0069)
+
+- Consumo por pedido e pagamento no balcão (dinheiro, PIX, cartão) na página
+  da reserva; o saldo passa a ser total + consumo − recebido. Regras,
+  permissões e auditoria em [conta-hospede.md](conta-hospede.md).
