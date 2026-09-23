@@ -1,5 +1,6 @@
 import 'server-only'
 import { cache } from 'react'
+import { connection } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getProfileWithRoles, updateProfileName } from '@/repositories/profiles.repository'
@@ -11,7 +12,14 @@ import type { SessionUser } from '@/features/auth/types'
  * Regra de aplicação do domínio de auth vive aqui.
  */
 export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
-  if (!isSupabaseConfigured()) return null
+  if (!isSupabaseConfigured()) {
+    // Sem Supabase não há cookie para ler, mas a resposta continua sendo por
+    // requisição: `connection()` mantém a rota dinâmica, como o `cookies()`
+    // faz em produção (ver CSP em `proxy.ts`). Sem isso o build tenta
+    // pré-renderizar páginas logadas (/dashboard, /admin) e quebra.
+    await connection()
+    return null
+  }
 
   const supabase = await createSupabaseServerClient()
   const {
