@@ -34,7 +34,8 @@ export async function getHousekeepingRooms(): Promise<HousekeepingRoom[]> {
 
 async function requireRoomInActivePousada(id: string, pousadaId: string) {
   const room = await getRoomById(id)
-  if (!room || room.pousadaId !== pousadaId) throw new Error('Acomodação não encontrada nesta pousada.')
+  if (!room || room.pousadaId !== pousadaId)
+    throw new Error('Acomodação não encontrada nesta pousada.')
   return room
 }
 
@@ -132,7 +133,10 @@ export async function setRoomActive(id: string, active: boolean): Promise<void> 
 }
 
 /** Status OPERACIONAL — via RPC, único caminho aberto também à Governança. */
-export async function setOperationalStatus(id: string, status: ManagedRoom['operationalStatus']): Promise<void> {
+export async function setOperationalStatus(
+  id: string,
+  status: ManagedRoom['operationalStatus'],
+): Promise<void> {
   const { pousadaId } = await requireCapability('room:status:manage')
   await requireRoomInActivePousada(id, pousadaId)
   await updateRoomOperationalStatus(pousadaId, id, status)
