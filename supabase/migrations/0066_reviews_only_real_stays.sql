@@ -66,6 +66,7 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_guard_review_changes on reviews;
 create trigger trg_guard_review_changes
   before update on reviews
   for each row execute function guard_review_changes();

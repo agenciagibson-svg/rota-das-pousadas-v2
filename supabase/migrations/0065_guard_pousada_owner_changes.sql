@@ -50,6 +50,7 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_guard_pousada_owner_changes on pousadas;
 create trigger trg_guard_pousada_owner_changes
   before insert or update on pousadas
   for each row execute function guard_pousada_owner_changes();
