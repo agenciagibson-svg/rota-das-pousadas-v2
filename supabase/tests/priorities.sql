@@ -388,3 +388,26 @@ select test_assert(pousada_local_date('10000000-0000-0000-0000-000000000001') = 
   'fuso inválido usa a data de Brasília');
 select test_assert(not has_function_privilege('authenticated', 'pousada_local_date(uuid)', 'EXECUTE'), 'helper de data não é RPC pública');
 update pousadas set timezone = 'America/Sao_Paulo' where id = '10000000-0000-0000-0000-000000000001';
+
+-- Membros (0068): a RLS de `profiles` só mostra o próprio perfil, então a tela
+-- de Membros exibia "Sem nome" para toda a equipe. A RPC devolve só o nome dos
+-- membros da pousada, e só para quem pode ver a equipe (mesma regra dos e-mails).
+insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000012', 'recepcao-a@example.test');
+update profiles set full_name = 'Recepção da Pousada A' where id = '00000000-0000-0000-0000-000000000012';
+insert into memberships(user_id, pousada_id, role, status) values
+ ('00000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000001', 'recepcionista', 'active');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+select test_assert(not exists(select 1 from profiles where id = '00000000-0000-0000-0000-000000000012'),
+  'perfil de outro membro segue invisível pela tabela');
+select test_assert((select full_name from list_membership_names('10000000-0000-0000-0000-000000000001')
+  where user_id = '00000000-0000-0000-0000-000000000012') = 'Recepção da Pousada A', 'dono vê o nome da equipe');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000012', false);
+select test_assert((select count(*) from list_membership_names('10000000-0000-0000-0000-000000000001')) = 0,
+  'recepção não lista a equipe');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select test_assert((select count(*) from list_membership_names('10000000-0000-0000-0000-000000000001')) = 0,
+  'dono de outra pousada não lista a equipe');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select test_assert(not has_function_privilege('anon', 'list_membership_names(uuid)', 'EXECUTE'), 'anon não lista nomes');

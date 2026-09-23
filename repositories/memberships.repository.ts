@@ -28,11 +28,13 @@ export async function listMembershipsByPousada(pousadaId: string): Promise<Membe
     .order('created_at', { ascending: true })
   if (error) throw error
 
-  const userIds = [...new Set((rows ?? []).map((r) => r.user_id))]
-  const { data: profiles } = userIds.length
-    ? await supabase.from('profiles').select('id, full_name').in('id', userIds)
-    : { data: [] }
-  const nameByUser = new Map((profiles ?? []).map((p) => [p.id, p.full_name]))
+  // Nomes pela RPC (0068): a RLS de `profiles` só mostra o próprio perfil, e
+  // ler a tabela direto deixava toda a equipe como "Sem nome".
+  const { data: nameRows } = await supabase.rpc('list_membership_names', {
+    p_pousada_id: pousadaId,
+  })
+  const names = (nameRows ?? []) as { user_id: string; full_name: string | null }[]
+  const nameByUser = new Map(names.map((r) => [r.user_id, r.full_name]))
 
   const { data: emailRows } = await supabase.rpc('list_membership_emails', {
     p_pousada_id: pousadaId,

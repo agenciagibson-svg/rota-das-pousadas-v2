@@ -2343,6 +2343,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_membership_names: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       list_platform_hosts: {
         Args: never
         Returns: {
