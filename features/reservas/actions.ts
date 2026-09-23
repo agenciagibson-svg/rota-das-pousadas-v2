@@ -73,9 +73,12 @@ export const updateBookingAction = createAction(updateBookingSchema, async (inpu
   return { version: result.version }
 })
 
-export const setBookingCompanionsAction = createAction(setBookingCompanionsSchema, async (input) => {
-  await requireCapability('booking:manage')
-  const result = await setBookingCompanionsRpc(input.bookingId, input.version, input.companions)
-  revalidatePath(`/dashboard/reservas/${input.bookingId}`)
-  return { version: result.version }
-})
+export const setBookingCompanionsAction = createAction(
+  setBookingCompanionsSchema,
+  async (input) => {
+    await requireCapability('booking:manage')
+    const result = await setBookingCompanionsRpc(input.bookingId, input.version, input.companions)
+    revalidatePath(`/dashboard/reservas/${input.bookingId}`)
+    return { version: result.version }
+  },
+)

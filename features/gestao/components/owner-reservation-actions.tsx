@@ -27,7 +27,13 @@ function getActions(status: BookingStatus, checkinISO?: string | null): ActionIt
   if (status === 'quote' || status === 'pending') {
     return [
       { label: 'Confirmar', status: 'confirmed', icon: Check },
-      { label: 'Cancelar', status: 'cancelled', icon: XCircle, variant: 'destructive', requiresReason: true },
+      {
+        label: 'Cancelar',
+        status: 'cancelled',
+        icon: XCircle,
+        variant: 'destructive',
+        requiresReason: true,
+      },
     ]
   }
   if (status === 'confirmed') {
@@ -39,10 +45,25 @@ function getActions(status: BookingStatus, checkinISO?: string | null): ActionIt
         status: 'checked_in',
         icon: LogIn,
         disabled: !canCheckInToday,
-        title: canCheckInToday || !checkinISO ? undefined : `Check-in a partir de ${fmtDate(checkinISO)}`,
+        title:
+          canCheckInToday || !checkinISO
+            ? undefined
+            : `Check-in a partir de ${fmtDate(checkinISO)}`,
       },
-      { label: 'Cancelar', status: 'cancelled', icon: XCircle, variant: 'destructive', requiresReason: true },
-      { label: 'Marcar no-show', status: 'no_show', icon: Flag, variant: 'secondary', requiresReason: true },
+      {
+        label: 'Cancelar',
+        status: 'cancelled',
+        icon: XCircle,
+        variant: 'destructive',
+        requiresReason: true,
+      },
+      {
+        label: 'Marcar no-show',
+        status: 'no_show',
+        icon: Flag,
+        variant: 'secondary',
+        requiresReason: true,
+      },
     ]
   }
   if (status === 'checked_in') {
@@ -82,7 +103,8 @@ export function OwnerReservationActions({
   const [reasonTarget, setReasonTarget] = useState<ActionItem | null>(null)
   const [reason, setReason] = useState('')
   const actions = getActions(currentStatus, checkin)
-  const isOverduePending = currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
+  const isOverduePending =
+    currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
 
   function run(promise: Promise<{ ok: boolean; error?: string }>) {
     setError(null)
@@ -145,8 +167,10 @@ export function OwnerReservationActions({
           Expirar (prazo vencido)
         </Button>
       )}
-      {actions.length === 0 && !isOverduePending && <span className="text-xs text-muted-foreground">Sem ações</span>}
-      {error && <span className="text-xs font-medium text-destructive">{error}</span>}
+      {actions.length === 0 && !isOverduePending && (
+        <span className="text-muted-foreground text-xs">Sem ações</span>
+      )}
+      {error && <span className="text-destructive text-xs font-medium">{error}</span>}
 
       <Dialog
         open={reasonTarget !== null}
@@ -173,7 +197,7 @@ export function OwnerReservationActions({
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Motivo (obrigatório)"
-          className="w-full resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
         />
       </Dialog>
     </div>

@@ -3,7 +3,11 @@ import { getOwnerPousada } from '@/features/gestao/services/pms.service'
 import { getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
 import { listReservationsByPousada } from '@/repositories/management.repository'
-import { listExpensesByPousada, insertExpense, setExpensePaid } from '@/repositories/finance.repository'
+import {
+  listExpensesByPousada,
+  insertExpense,
+  setExpensePaid,
+} from '@/repositories/finance.repository'
 import { buildSummary, countsAsRevenue } from '@/features/financeiro/finance'
 import type { FinanceSummary, Transaction } from '@/features/financeiro/types'
 import type { CreateExpenseInput } from '@/features/financeiro/schemas'

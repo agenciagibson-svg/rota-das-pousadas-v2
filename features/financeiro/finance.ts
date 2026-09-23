@@ -7,7 +7,11 @@ import type { FinanceSummary } from './types'
  * rótulos em português (`confirmada`, `aguardando_pagamento`) que nunca
  * chegavam aqui, e o Financeiro mostrava R$ 0 para sempre.
  */
-const REALIZED: ReadonlySet<BookingStatus> = new Set<BookingStatus>(['confirmed', 'checked_in', 'checked_out'])
+const REALIZED: ReadonlySet<BookingStatus> = new Set<BookingStatus>([
+  'confirmed',
+  'checked_in',
+  'checked_out',
+])
 const PENDING: BookingStatus = 'pending'
 
 /** Reserva entra no fluxo de caixa? (cotação, cancelada e no-show ficam fora.) */
@@ -23,10 +27,7 @@ export type ExpenseSource = { amount: number; paid: boolean }
  * Receita realizada = reservas confirmadas/em estadia/concluídas.
  * A receber = reservas aguardando pagamento. Saldo = realizada − despesas.
  */
-export function buildSummary(
-  revenues: RevenueSource[],
-  expenses: ExpenseSource[],
-): FinanceSummary {
+export function buildSummary(revenues: RevenueSource[], expenses: ExpenseSource[]): FinanceSummary {
   let revenueConfirmed = 0
   let revenuePending = 0
   for (const r of revenues) {

@@ -14,7 +14,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   } catch {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <EmptyState icon={ShieldAlert} title="Sem permissão" description="Você não tem acesso a reservas desta pousada." />
+        <EmptyState
+          icon={ShieldAlert}
+          title="Sem permissão"
+          description="Você não tem acesso a reservas desta pousada."
+        />
       </div>
     )
   }
@@ -22,5 +26,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   const pousada = await getOwnerPousada()
   const displayName = user?.name || user?.email || 'Proprietário'
-  return <BookingDetailView displayName={displayName} pousadaName={pousada?.name ?? 'Sua pousada'} booking={booking} />
+  return (
+    <BookingDetailView
+      displayName={displayName}
+      pousadaName={pousada?.name ?? 'Sua pousada'}
+      booking={booking}
+    />
+  )
 }

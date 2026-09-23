@@ -1,10 +1,5 @@
 export type ExpenseCategory =
-  | 'manutencao'
-  | 'pessoal'
-  | 'insumos'
-  | 'marketing'
-  | 'impostos'
-  | 'outros'
+  'manutencao' | 'pessoal' | 'insumos' | 'marketing' | 'impostos' | 'outros'
 
 export type Expense = {
   id: string
