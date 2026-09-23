@@ -2508,6 +2508,10 @@ export type Database = {
         }
         Returns: Json
       }
+      set_plan_preapproval_id: {
+        Args: { p_mp_preapproval_plan_id: string; p_plan_id: string }
+        Returns: Json
+      }
       set_platform_role_by_email: {
         Args: {
           p_email: string

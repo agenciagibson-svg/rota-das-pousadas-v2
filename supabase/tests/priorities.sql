@@ -195,3 +195,34 @@ select test_assert((select address is null from guests where id = '40000000-0000
   'edição pelo perfil ainda limpa campo esvaziado');
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
+
+-- Assinatura (0064): o master liga o plano ao Mercado Pago por RPC, uma vez só.
+-- `plans` não tem policy de escrita: o UPDATE direto do app afetava 0 linhas.
+insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000009', 'master@example.test');
+update profiles set platform_role = 'master' where id = '00000000-0000-0000-0000-000000000009';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    perform set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-teste');
+    raise exception 'TEST: proprietário ligou o plano da plataforma';
+  exception when raise_exception then
+    if sqlerrm <> 'Somente master pode configurar o plano de assinatura da plataforma.' then raise; end if;
+  end;
+end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
+select test_assert(set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-teste')->>'status' = 'ok',
+  'master liga o plano ao Mercado Pago');
+select test_assert((select mp_preapproval_plan_id from plans where active limit 1) = 'mp-plano-teste', 'id do plano gravado');
+select test_assert(set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-teste')->>'status' = 'already_set',
+  'repetir o mesmo id não muda nada');
+do $$ begin
+  begin
+    perform set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-outro');
+    raise exception 'TEST: plano religado a outro id do Mercado Pago';
+  exception when raise_exception then
+    if sqlerrm not like 'Este plano já está ligado a outro plano do Mercado Pago%' then raise; end if;
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
