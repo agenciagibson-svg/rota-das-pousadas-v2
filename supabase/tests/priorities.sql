@@ -269,3 +269,66 @@ do $$ declare changed integer; begin
 end $$;
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
+
+-- Avaliações (0066): só avalia quem se hospedou naquela pousada (estadia
+-- encerrada); a pousada só responde, e o hóspede não escreve a resposta.
+insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000011', 'viajante@example.test');
+insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, guest_id, checkin, checkout, total, status) values
+ ('30000000-0000-0000-0000-000000000011', 'ESTADIA-FIM', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
+  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-03-01', '2099-03-03', 400, 'checked_out'),
+ ('30000000-0000-0000-0000-000000000012', 'ESTADIA-FUTURA', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
+  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-04-01', '2099-04-03', 400, 'confirmed');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', false);
+do $$ begin
+  begin
+    insert into reviews(pousada_id, booking_id, author_id, rating, text) values
+      ('10000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000011',
+       '00000000-0000-0000-0000-000000000011', 1, 'nunca estive aqui');
+    raise exception 'TEST: avaliação de pousada onde não se hospedou';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into reviews(pousada_id, booking_id, author_id, rating, text) values
+      ('10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',
+       '00000000-0000-0000-0000-000000000011', 5, 'antes de chegar');
+    raise exception 'TEST: avaliação antes do fim da estadia';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into reviews(pousada_id, booking_id, author_id, rating, text, response) values
+      ('10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',
+       '00000000-0000-0000-0000-000000000011', 5, 'ótimo', 'resposta forjada da pousada');
+    raise exception 'TEST: hóspede escreveu a resposta da pousada';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+insert into reviews(id, pousada_id, booking_id, author_id, rating, text) values
+ ('60000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000011', 3, 'bom, mas barulhento');
+select test_assert(exists(select 1 from reviews where id = '60000000-0000-0000-0000-000000000011'), 'hóspede avalia a estadia encerrada');
+do $$ begin
+  begin
+    update reviews set response = 'resposta forjada' where id = '60000000-0000-0000-0000-000000000011';
+    raise exception 'TEST: autor alterou a resposta da pousada';
+  exception when raise_exception then
+    if sqlerrm <> 'Só a pousada responde à avaliação.' then raise; end if;
+  end;
+end $$;
+update reviews set text = 'bom, mas um pouco barulhento' where id = '60000000-0000-0000-0000-000000000011';
+select test_assert((select text from reviews where id = '60000000-0000-0000-0000-000000000011') = 'bom, mas um pouco barulhento',
+  'autor edita o próprio comentário');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    update reviews set rating = 5 where id = '60000000-0000-0000-0000-000000000011';
+    raise exception 'TEST: dono mudou a nota do hóspede';
+  exception when raise_exception then
+    if sqlerrm <> 'A pousada só pode responder à avaliação, não alterar a nota ou o comentário do hóspede.' then raise; end if;
+  end;
+end $$;
+update reviews set response = 'Obrigado! Já trocamos a janela do quarto.' where id = '60000000-0000-0000-0000-000000000011';
+select test_assert((select rating = 3 and response like 'Obrigado!%' from reviews where id = '60000000-0000-0000-0000-000000000011'),
+  'dono responde sem mexer na nota');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);

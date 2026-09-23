@@ -2111,6 +2111,10 @@ export type Database = {
         Args: { target_pousada: string }
         Returns: boolean
       }
+      auth_can_review_booking: {
+        Args: { p_booking_id: string; p_pousada_id: string }
+        Returns: boolean
+      }
       auth_has_active_grant: {
         Args: { target_pousada: string }
         Returns: boolean

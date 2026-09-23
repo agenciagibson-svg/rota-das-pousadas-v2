@@ -56,6 +56,19 @@ on conflict (user_id, pousada_id) do nothing;
   `OwnerReviewsView`: sem a permissão, o formulário de resposta some (fica
   só um aviso, e só quando a avaliação ainda não tem resposta).
 
+## Avaliações — quem avalia e quem responde (0066)
+
+- Só avalia quem se hospedou: inserir em `reviews` exige reserva do próprio
+  autor naquela pousada, com a estadia encerrada (`checked_out`, ou
+  confirmada com a saída já passada), e sem `response`. Antes, qualquer
+  usuário logado avaliava qualquer pousada chamando a API do Supabase.
+- Na edição, o trigger `trg_guard_review_changes` separa os papéis: o autor
+  mexe na própria nota e no comentário, a pousada só na resposta (antes o
+  dono conseguia trocar a nota do hóspede), e ninguém troca pousada,
+  reserva ou autor. A equipe da plataforma (moderação) segue livre.
+- O site ainda não tem tela para o hóspede avaliar; a regra já vale para
+  quando existir.
+
 ## Próximos passos
 
 - Onboarding + aprovação da pousada pelo admin (substitui o vínculo manual).
