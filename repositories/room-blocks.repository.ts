@@ -153,7 +153,13 @@ export async function unblockCalendarDay(
     .gt('ends_at', dayStart)
   if (error) throw error
 
-  const exact = (data ?? []).find((b) => b.starts_at === dayStart && b.ends_at === dayEnd)
+  // Compara instantes, não texto: o PostgREST devolve `2026-10-05T00:00:00+00:00`
+  // e `toISOString()` gera `2026-10-05T00:00:00.000Z` — como texto nunca
+  // batiam, e todo desbloqueio caía no aviso de "bloqueio maior".
+  const sameInstant = (a: string, b: string) => new Date(a).getTime() === new Date(b).getTime()
+  const exact = (data ?? []).find(
+    (b) => sameInstant(b.starts_at, dayStart) && sameInstant(b.ends_at, dayEnd),
+  )
   if (!exact) {
     if ((data ?? []).length > 0) {
       throw new Error('Este dia faz parte de um bloqueio maior — cancele pela tela de Bloqueios.')
