@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { Building2 } from 'lucide-react'
 import { OwnerReservationsTable } from '@/features/gestao/components/owner-reservations-table'
+import { formatBRL } from '@/features/reservas/folio'
 import type { OwnerReservation } from '@/features/gestao/types'
 import type {
   MonthlyRevenuePoint,
@@ -77,7 +78,10 @@ export function OwnerDashboardView({
       reservation.status === 'checked_in' ||
       reservation.status === 'checked_out',
   )
-  const activeRevenue = activeReservations.reduce((sum, reservation) => sum + reservation.total, 0)
+  const activeRevenue = activeReservations.reduce(
+    (sum, reservation) => sum + reservation.total + reservation.chargesAmount,
+    0,
+  )
   const activeGuests = activeReservations.reduce((sum, reservation) => sum + reservation.guests, 0)
   /** Diárias que ainda dá para vender nos próximos 7 dias — capacidade menos o que já está ocupado. */
   const freeNightsAhead = occupancy
@@ -86,7 +90,7 @@ export function OwnerDashboardView({
   const stats = [
     {
       label: 'Receita ativa',
-      value: `R$ ${activeRevenue}`,
+      value: formatBRL(activeRevenue),
       delta: `${confirmedReservations.length} confirmadas`,
       up: true,
       icon: DollarSign,
@@ -186,7 +190,9 @@ export function OwnerDashboardView({
                 Últimos 12 meses, pelo mês do check-in
               </p>
             </div>
-            <span className="text-primary text-sm font-semibold">R$ {activeRevenue} ativo</span>
+            <span className="text-primary text-sm font-semibold">
+              {formatBRL(activeRevenue)} ativo
+            </span>
           </div>
           <div className="mt-6 h-48">
             {revenueSeries.some((point) => point.value > 0) ? (
@@ -322,7 +328,9 @@ export function OwnerDashboardView({
                     </div>
                     <p className="text-muted-foreground truncate text-sm">
                       {reservation.roomName}
-                      {reservation.balanceDue > 0 ? ` · saldo de R$ ${reservation.balanceDue}` : ''}
+                      {reservation.balanceDue > 0
+                        ? ` · saldo de ${formatBRL(reservation.balanceDue)}`
+                        : ''}
                     </p>
                   </div>
                 </div>

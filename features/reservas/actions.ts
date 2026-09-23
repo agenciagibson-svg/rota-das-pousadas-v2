@@ -10,6 +10,13 @@ import {
   updateBookingSchema,
 } from './schemas'
 import { cancelMyBooking, createAdminBooking, createBooking } from './services/bookings.service'
+import {
+  addChargeSchema,
+  cancelChargeSchema,
+  registerPaymentSchema,
+  reversePaymentSchema,
+} from './folio-schemas'
+import { addCharge, cancelCharge, registerPayment, reversePayment } from './services/folio.service'
 import { updateBookingRpc, setBookingCompanionsRpc } from '@/repositories/bookings.repository'
 import { requireCapability } from '@/features/acomodacoes/services/access'
 import { calculateBookingPrice } from './pricing'
@@ -82,3 +89,39 @@ export const setBookingCompanionsAction = createAction(
     return { version: result.version }
   },
 )
+
+/** Telas que mostram saldo ou receita da reserva — recalculadas a cada lançamento da conta. */
+function revalidateFolio(bookingId: string) {
+  revalidatePath(`/dashboard/reservas/${bookingId}`)
+  revalidatePath('/dashboard/reservas')
+  revalidatePath('/dashboard/financeiro')
+  revalidatePath('/dashboard')
+}
+
+/** Conta do hóspede (0069): consumo por pedido — `payment:register`. */
+export const addBookingChargeAction = createAction(addChargeSchema, async (input) => {
+  await addCharge(input)
+  revalidateFolio(input.bookingId)
+  return { ok: true as const }
+})
+
+/** Cancela consumo lançado por engano, com motivo — `payment:refund`. */
+export const cancelBookingChargeAction = createAction(cancelChargeSchema, async (input) => {
+  await cancelCharge(input)
+  revalidateFolio(input.bookingId)
+  return { ok: true as const }
+})
+
+/** Pagamento feito na pousada (dinheiro, PIX, cartão) — `payment:register`. */
+export const registerManualPaymentAction = createAction(registerPaymentSchema, async (input) => {
+  const result = await registerPayment(input)
+  revalidateFolio(input.bookingId)
+  return result
+})
+
+/** Estorna pagamento manual registrado por engano, com motivo — `payment:refund`. */
+export const reverseManualPaymentAction = createAction(reversePaymentSchema, async (input) => {
+  await reversePayment(input)
+  revalidateFolio(input.bookingId)
+  return { ok: true as const }
+})

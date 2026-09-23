@@ -153,6 +153,8 @@ export type BookingDetail = {
   surcharge: number
   servicesAmount: number
   total: number
+  /** Consumo lançado na conta do hóspede (0069), sem os cancelados. */
+  chargesAmount: number
   amountReceived: number
   balanceDue: number
   currency: string

@@ -164,7 +164,7 @@ export async function listReservationsByPousada(
   let query = supabase
     .from('bookings')
     .select(
-      'id, code, guest_name, guest_email, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at',
+      'id, code, guest_name, guest_email, room_id, checkin, checkout, guests, subtotal, fee, total, charges_amount, balance_due, status, origin, payment_due_at, created_at',
     )
     .eq('pousada_id', pousadaId)
     .order('checkin', { ascending: true })
@@ -200,6 +200,7 @@ export async function listReservationsByPousada(
     subtotal: Number(r.subtotal),
     fee: Number(r.fee),
     total: Number(r.total),
+    chargesAmount: Number(r.charges_amount),
     balanceDue: Number(r.balance_due),
     status: r.status as BookingStatus,
     origin: r.origin as OwnerReservation['origin'],

@@ -24,8 +24,12 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { ExpenseForm } from './expense-form'
 import type { FinanceSummary, Transaction } from '../types'
 
+/** Reais inteiros como antes; com consumo ou pagamento parcial, mostra os centavos. */
 function brl(n: number): string {
-  return 'R$ ' + n.toLocaleString('pt-BR')
+  const cents = Number.isInteger(n) ? 0 : 2
+  return (
+    'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: cents, maximumFractionDigits: 2 })
+  )
 }
 
 function fmtDate(iso: string): string {

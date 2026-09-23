@@ -10,6 +10,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { formatBRL } from '@/features/reservas/folio'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { BOOKING_STATUS } from '@/features/reservas'
@@ -134,19 +135,25 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                 <div className="mt-3 space-y-2 text-sm">
                   <div className="text-muted-foreground flex justify-between">
                     <span>Estadia</span>
-                    <span>R$ {reservation.subtotal}</span>
+                    <span>{formatBRL(reservation.subtotal)}</span>
                   </div>
                   <div className="text-muted-foreground flex justify-between">
                     <span>Taxa</span>
-                    <span>R$ {reservation.fee}</span>
+                    <span>{formatBRL(reservation.fee)}</span>
                   </div>
                   <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
                     <span>Total</span>
-                    <span>R$ {reservation.total}</span>
+                    <span>{formatBRL(reservation.total)}</span>
                   </div>
+                  {reservation.chargesAmount > 0 && (
+                    <div className="text-muted-foreground flex justify-between">
+                      <span>Consumo</span>
+                      <span>{formatBRL(reservation.chargesAmount)}</span>
+                    </div>
+                  )}
                   <div className="text-muted-foreground flex justify-between">
-                    <span>Saldo previsto</span>
-                    <span>R$ {reservation.balanceDue}</span>
+                    <span>Saldo</span>
+                    <span>{formatBRL(reservation.balanceDue)}</span>
                   </div>
                 </div>
 
@@ -156,6 +163,7 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                     currentStatus={reservation.status}
                     paymentDueAt={reservation.paymentDueAt}
                     checkin={reservation.checkin}
+                    balanceDue={reservation.balanceDue}
                   />
                 </div>
               </div>

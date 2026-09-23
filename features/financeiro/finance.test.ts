@@ -69,3 +69,17 @@ describe('countsAsRevenue', () => {
     expect(countsAsRevenue('no_show')).toBe(false)
   })
 })
+
+describe('buildSummary — consumo', () => {
+  it('consumo da conta do hóspede entra na receita da reserva', () => {
+    const s = buildSummary(
+      [
+        { total: 1000, chargesAmount: 45.5, status: 'checked_out' },
+        { total: 500, chargesAmount: 0, status: 'pending' },
+      ],
+      [],
+    )
+    expect(s.revenueConfirmed).toBe(1045.5)
+    expect(s.revenuePending).toBe(500)
+  })
+})

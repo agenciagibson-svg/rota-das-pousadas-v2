@@ -53,6 +53,7 @@ import {
   listQuoteRequests as quoteRequests,
 } from '@/features/bio/services/bio.service'
 import { getBookingDetailById, getBookingFnrhData } from '@/repositories/bookings.repository'
+import { getBookingFolio } from '@/features/reservas/services/folio.service'
 import { getPousadaSettings } from '@/repositories/management.repository'
 import { createCheckoutPreference } from '@/features/pagamentos/services/checkout.service'
 import { requireCapability } from '@/features/acomodacoes/services/access'
@@ -165,6 +166,8 @@ export const getOwnerReservationDetail = cache(async (bookingId: string) => {
   const { pousadaId } = await requireCapability('booking:manage')
   return getBookingDetailById(bookingId, pousadaId)
 })
+/** Conta do hóspede (consumo e pagamentos) de uma reserva da pousada ativa. */
+export const getOwnerBookingFolio = cache((bookingId: string) => getBookingFolio(bookingId))
 export const canManageBookings = cache(async () => {
   const state = await resolveTenantAccess()
   return state.status === 'ok' && can(state.membership.role, 'booking:manage')

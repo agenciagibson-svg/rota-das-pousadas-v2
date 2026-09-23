@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import type { BookingStatus } from '@/features/reservas/types'
 import { updateReservationStatusAction, expireOwnerPendingBookingAction } from '../actions'
+import { formatBRL } from '@/features/reservas/folio'
 
 type ActionItem = {
   label: string
@@ -90,18 +91,22 @@ export function OwnerReservationActions({
   currentStatus,
   paymentDueAt,
   checkin,
+  balanceDue = 0,
 }: {
   bookingId: string
   currentStatus: BookingStatus
   paymentDueAt?: string | null
   /** Data de entrada (YYYY-MM-DD) — habilita o botão de check-in só a partir dela. */
   checkin?: string | null
+  /** Saldo da conta do hóspede — com saldo em aberto, o check-out pede confirmação. */
+  balanceDue?: number
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [reasonTarget, setReasonTarget] = useState<ActionItem | null>(null)
   const [reason, setReason] = useState('')
+  const [checkoutWithBalance, setCheckoutWithBalance] = useState(false)
   const actions = getActions(currentStatus, checkin)
   const isOverduePending =
     currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
@@ -123,7 +128,17 @@ export function OwnerReservationActions({
       setReasonTarget(action)
       return
     }
+    // Avisa, mas não impede: há casos de acerto posterior (empresa, link de pagamento).
+    if (action.status === 'checked_out' && balanceDue > 0) {
+      setCheckoutWithBalance(true)
+      return
+    }
     run(updateReservationStatusAction({ bookingId, status: action.status }))
+  }
+
+  function confirmCheckout() {
+    setCheckoutWithBalance(false)
+    run(updateReservationStatusAction({ bookingId, status: 'checked_out' }))
   }
 
   function confirmReason() {
@@ -171,6 +186,21 @@ export function OwnerReservationActions({
         <span className="text-muted-foreground text-xs">Sem ações</span>
       )}
       {error && <span className="text-destructive text-xs font-medium">{error}</span>}
+
+      <Dialog
+        open={checkoutWithBalance}
+        onClose={() => setCheckoutWithBalance(false)}
+        title="Check-out com saldo em aberto"
+        description={`Esta reserva ainda tem ${formatBRL(balanceDue)} a receber. Registre o pagamento na Conta do hóspede ou confirme o check-out mesmo assim.`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCheckoutWithBalance(false)}>
+              Voltar
+            </Button>
+            <Button onClick={confirmCheckout}>Fazer check-out</Button>
+          </>
+        }
+      />
 
       <Dialog
         open={reasonTarget !== null}

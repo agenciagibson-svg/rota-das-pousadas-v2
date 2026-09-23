@@ -6,10 +6,8 @@ import {
   recordPaymentAndConfirmBookingRpc,
   type PaymentStatus,
 } from '@/repositories/payments.repository'
-import { getBookingNotificationContextRpc } from '@/repositories/bookings.repository'
-import { sendEmail } from '@/lib/email/mailer'
-import { bookingConfirmedEmail } from '@/lib/email/templates'
 import { getPaymentById, type MpPayment } from './mp-client'
+import { notifyBookingConfirmed } from './booking-confirmed-email'
 
 /**
  * Verifica o header `x-signature` do webhook do Mercado Pago.
@@ -120,20 +118,5 @@ export async function processPaymentNotification(params: {
   // o e-mail de confirmação de novo a cada reenvio (0060).
   if (result.status === 'ok') {
     await notifyBookingConfirmed(params.bookingId)
-  }
-}
-
-/**
- * Envia o e-mail de confirmação/"ticket" (0060). Fail-soft: nunca deve
- * derrubar o webhook — o pagamento já foi gravado nesse ponto.
- */
-async function notifyBookingConfirmed(bookingId: string): Promise<void> {
-  try {
-    const ctx = await getBookingNotificationContextRpc(bookingId)
-    if (!ctx || !ctx.guestEmail) return
-    const { subject, html, text } = bookingConfirmedEmail(ctx)
-    await sendEmail({ to: ctx.guestEmail, subject, html, text })
-  } catch (error) {
-    console.error(`[email] Falha ao notificar confirmação da reserva ${bookingId}:`, error)
   }
 }

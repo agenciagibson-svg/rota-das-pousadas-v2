@@ -1,5 +1,11 @@
 import { notFound } from 'next/navigation'
-import { getCurrentUser, getOwnerPousada, getOwnerReservationDetail } from '@/server/queries'
+import {
+  getCurrentUser,
+  getOwnerBookingFolio,
+  getOwnerPousada,
+  getOwnerReservationDetail,
+} from '@/server/queries'
+import { DEFAULT_TIMEZONE, isValidTimeZone } from '@/lib/dates'
 import { BookingDetailView } from '@/features/reservas/components/booking-detail-view'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ShieldAlert } from 'lucide-react'
@@ -24,13 +30,18 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   }
   if (!booking) notFound()
 
-  const pousada = await getOwnerPousada()
+  const [pousada, folio] = await Promise.all([getOwnerPousada(), getOwnerBookingFolio(id)])
   const displayName = user?.name || user?.email || 'Proprietário'
+  // Fuso gravado antes da validação das Configurações pode ser texto livre.
+  const timeZone =
+    pousada && isValidTimeZone(pousada.timezone) ? pousada.timezone : DEFAULT_TIMEZONE
   return (
     <BookingDetailView
       displayName={displayName}
       pousadaName={pousada?.name ?? 'Sua pousada'}
+      timeZone={timeZone}
       booking={booking}
+      folio={folio}
     />
   )
 }

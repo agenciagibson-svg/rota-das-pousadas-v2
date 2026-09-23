@@ -9,6 +9,8 @@ import { OwnerReservationActions } from '@/features/gestao/components/owner-rese
 import { BOOKING_STATUS } from '../status'
 import { isFinalStatus } from '../status'
 import { BookingEditPanel, BookingCompanionsPanel } from './booking-edit-panel'
+import { BookingFolioCard } from './folio/booking-folio'
+import { formatBRL, type BookingFolio } from '../folio'
 import type { BookingDetail } from '../types'
 
 function fmtDate(iso: string): string {
@@ -16,7 +18,8 @@ function fmtDate(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
-function fmtDateTime(iso: string | null): string {
+/** No fuso da pousada: esta view renderiza no servidor, que está em UTC. */
+function fmtDateTime(iso: string | null, timeZone: string): string {
   if (!iso) return '—'
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
@@ -24,17 +27,24 @@ function fmtDateTime(iso: string | null): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone,
   }).format(new Date(iso))
 }
 
 export function BookingDetailView({
   displayName,
   pousadaName,
+  timeZone,
   booking,
+  folio,
 }: {
   displayName: string
   pousadaName: string
+  /** Fuso da pousada (IANA) — datas e horas da página. */
+  timeZone: string
   booking: BookingDetail
+  /** Conta do hóspede; `null` se a reserva não é da pousada ativa. */
+  folio: BookingFolio | null
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = !isFinalStatus(booking.status)
@@ -65,6 +75,7 @@ export function BookingDetailView({
               currentStatus={booking.status}
               paymentDueAt={booking.paymentDueAt}
               checkin={booking.checkin}
+              balanceDue={booking.balanceDue}
             />
           </div>
           {booking.status === 'cancelled' && booking.cancellationReason && (
@@ -112,53 +123,59 @@ export function BookingDetailView({
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-foreground font-semibold">Valores previstos</h2>
+            <h2 className="text-foreground font-semibold">Valores da reserva</h2>
             <div className="mt-3 space-y-1.5 text-sm">
               <div className="text-muted-foreground flex justify-between">
                 <span>Estadia</span>
-                <span>R$ {booking.subtotal}</span>
+                <span>{formatBRL(booking.subtotal)}</span>
               </div>
               {/* Reservas anteriores a 13/09/2026 guardam a taxa de serviço que foi cobrada; novas nascem com fee = 0. */}
               {booking.fee > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Taxa</span>
-                  <span>R$ {booking.fee}</span>
+                  <span>{formatBRL(booking.fee)}</span>
                 </div>
               )}
               {booking.discount > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Desconto</span>
-                  <span>−R$ {booking.discount}</span>
+                  <span>−{formatBRL(booking.discount)}</span>
                 </div>
               )}
               {booking.surcharge > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Acréscimo</span>
-                  <span>R$ {booking.surcharge}</span>
+                  <span>{formatBRL(booking.surcharge)}</span>
                 </div>
               )}
               {booking.servicesAmount > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Serviços</span>
-                  <span>R$ {booking.servicesAmount}</span>
+                  <span>{formatBRL(booking.servicesAmount)}</span>
                 </div>
               )}
               <div className="border-border text-foreground flex justify-between border-t pt-1.5 font-semibold">
-                <span>Total</span>
-                <span>R$ {booking.total}</span>
+                <span>Total da estadia</span>
+                <span>{formatBRL(booking.total)}</span>
               </div>
+              {booking.chargesAmount > 0 && (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Consumo</span>
+                  <span>{formatBRL(booking.chargesAmount)}</span>
+                </div>
+              )}
               <div className="text-muted-foreground flex justify-between">
                 <span>Recebido</span>
-                <span>R$ {booking.amountReceived}</span>
+                <span>−{formatBRL(booking.amountReceived)}</span>
               </div>
               <div className="text-foreground flex justify-between font-semibold">
-                <span>Saldo previsto</span>
-                <span>R$ {booking.balanceDue}</span>
+                <span>Saldo</span>
+                <span>{formatBRL(booking.balanceDue)}</span>
               </div>
             </div>
             {booking.paymentDueAt && (
               <p className="text-muted-foreground mt-3 text-xs">
-                Prazo de pagamento: {fmtDateTime(booking.paymentDueAt)}
+                Prazo de pagamento: {fmtDateTime(booking.paymentDueAt, timeZone)}
               </p>
             )}
           </Card>
@@ -179,6 +196,16 @@ export function BookingDetailView({
             </div>
           </Card>
         </div>
+
+        {folio && (
+          <BookingFolioCard
+            bookingId={booking.id}
+            status={booking.status}
+            balanceDue={booking.balanceDue}
+            timeZone={timeZone}
+            folio={folio}
+          />
+        )}
 
         <Card className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">

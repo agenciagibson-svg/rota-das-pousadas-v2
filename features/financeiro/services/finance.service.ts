@@ -60,7 +60,11 @@ export async function getFinance(): Promise<FinanceData> {
   const revenueReservations = reservations.filter((r) => countsAsRevenue(r.status))
 
   const summary = buildSummary(
-    revenueReservations.map((r) => ({ total: r.total, status: r.status })),
+    revenueReservations.map((r) => ({
+      total: r.total,
+      chargesAmount: r.chargesAmount,
+      status: r.status,
+    })),
     expenses.map((e) => ({ amount: e.amount, paid: e.paid })),
   )
 
@@ -69,7 +73,7 @@ export async function getFinance(): Promise<FinanceData> {
       id: `b-${r.id}`,
       kind: 'receita' as const,
       description: `Reserva ${r.code} · ${r.guestName}`,
-      amount: r.total,
+      amount: r.total + r.chargesAmount,
       date: r.checkin,
       status: r.status,
       bookingId: r.id,

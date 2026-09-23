@@ -26,7 +26,7 @@ export type Transaction = {
   bookingId?: string
 }
 
-/** Resumo financeiro da pousada (valores em reais inteiros). */
+/** Resumo financeiro da pousada (reais; com consumo da conta do hóspede, pode ter centavos). */
 export type FinanceSummary = {
   revenueTotal: number
   revenueConfirmed: number
