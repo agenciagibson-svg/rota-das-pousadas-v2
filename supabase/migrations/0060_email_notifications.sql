@@ -127,4 +127,4 @@ revoke all on function list_and_mark_checkin_reminders(int) from public, anon, a
 grant execute on function list_and_mark_checkin_reminders(int) to service_role;
 
 comment on function list_and_mark_checkin_reminders(int) is
-  '0060: cron diário, service_role só — seleciona e marca (mesmo UPDATE) reservas confirmadas com check-in em N dias sem lembrete enviado.'
+  '0060: cron diário, service_role só — seleciona e marca (mesmo UPDATE) reservas confirmadas com check-in em N dias sem lembrete enviado.';
