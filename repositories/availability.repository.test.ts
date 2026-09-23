@@ -29,7 +29,13 @@ const room = {
   accommodation_categories: null,
 }
 
-function setup(rooms: unknown[], bookings: unknown[], error: Error | null = null) {
+function setup(
+  rooms: unknown[],
+  bookings: unknown[],
+  error: Error | null = null,
+  channelEvents: unknown[] = [],
+  channelError: Error | null = null,
+) {
   const roomsQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -42,9 +48,20 @@ function setup(rooms: unknown[], bookings: unknown[], error: Error | null = null
     lt: vi.fn().mockReturnThis(),
     gt: vi.fn().mockResolvedValue({ data: bookings, error }),
   }
-  mocks.from.mockImplementation((table: string) => (table === 'rooms' ? roomsQuery : bookingsQuery))
+  const channelEventsQuery = {
+    select: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockResolvedValue({ data: channelEvents, error: channelError }),
+  }
+  const byTable: Record<string, unknown> = {
+    rooms: roomsQuery,
+    bookings: bookingsQuery,
+    channel_events: channelEventsQuery,
+  }
+  mocks.from.mockImplementation((table: string) => byTable[table])
   mocks.blocks.mockResolvedValue([])
-  return bookingsQuery
+  return { bookingsQuery, channelEventsQuery }
 }
 
 describe('queryAvailability', () => {
@@ -57,16 +74,32 @@ describe('queryAvailability', () => {
   })
 
   it('considera reservas conflitantes retornadas pelo banco', async () => {
-    const bookingsQuery = setup([room], [{ room_id: room.id }])
+    const { bookingsQuery } = setup([room], [{ room_id: room.id }])
     const result = await queryAvailability(query)
     expect(result[0].available).toBe(false)
     expect(result[0].reasons).toContain('booking_conflict')
     expect(bookingsQuery.in).toHaveBeenCalledWith('status', ['pending', 'confirmed', 'checked_in'])
   })
 
-  it('não consulta reservas quando não há quartos', async () => {
+  it('considera noites já vendidas no Airbnb/Booking (iCal importado)', async () => {
+    const { channelEventsQuery } = setup([room], [], null, [{ room_id: room.id }])
+    const result = await queryAvailability(query)
+    expect(result[0].available).toBe(false)
+    expect(result[0].reasons).toContain('channel_conflict')
+    expect(channelEventsQuery.lt).toHaveBeenCalledWith('starts_on', query.checkout)
+    expect(channelEventsQuery.gt).toHaveBeenCalledWith('ends_on', query.checkin)
+  })
+
+  it('propaga falha de leitura dos canais em vez de anunciar disponibilidade', async () => {
+    const error = new Error('Falha ao consultar canais')
+    setup([room], [], null, [], error)
+    await expect(queryAvailability(query)).rejects.toThrow(error)
+  })
+
+  it('não consulta reservas nem canais quando não há quartos', async () => {
     setup([], [])
     await expect(queryAvailability(query)).resolves.toEqual([])
     expect(mocks.from).not.toHaveBeenCalledWith('bookings')
+    expect(mocks.from).not.toHaveBeenCalledWith('channel_events')
   })
 })

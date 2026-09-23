@@ -2,7 +2,10 @@ import type { RoomOperationalStatus, RoomBlockType, AvailabilityReason } from '.
 
 type BadgeVariant = 'primarySoft' | 'goldSoft' | 'destructiveSoft' | 'secondary' | 'accentSoft'
 
-export const OPERATIONAL_STATUS_LABEL: Record<RoomOperationalStatus, { label: string; variant: BadgeVariant }> = {
+export const OPERATIONAL_STATUS_LABEL: Record<
+  RoomOperationalStatus,
+  { label: string; variant: BadgeVariant }
+> = {
   available: { label: 'Disponível', variant: 'primarySoft' },
   occupied: { label: 'Ocupada', variant: 'accentSoft' },
   awaiting_cleaning: { label: 'Aguardando limpeza', variant: 'goldSoft' },
@@ -30,5 +33,6 @@ export const AVAILABILITY_REASON_LABEL: Record<AvailabilityReason, string> = {
   operational_status_blocking: 'Em manutenção/bloqueada',
   blocked_period: 'Bloqueio no período',
   booking_conflict: 'Reserva conflitante',
+  channel_conflict: 'Ocupada no Airbnb/Booking',
   invalid_dates: 'Datas inválidas',
 }

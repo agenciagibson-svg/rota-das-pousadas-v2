@@ -98,3 +98,237 @@ select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '11
 select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '112', 399.50, 'estornado', 'pix', 'BRL', '2026-09-01T12:04:00Z', 399.50);
 select test_assert((select amount_received from bookings where code = 'PAYMENT') = 0, 'estorno integral');
 reset role;
+
+-- Canais (0062): noite ocupada no Airbnb/Booking não pode ser vendida de novo
+-- pela Rota. O feed da OTA pode devolver a própria reserva da Rota (eco do iCal
+-- exportado): editar sem mudar as noites continua permitido.
+insert into channel_calendars(id, pousada_id, room_id, provider, import_url, export_token) values
+ ('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'airbnb', 'https://example.test/duplo.ics', 'teste-export-duplo'),
+ ('50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'booking', 'https://example.test/familia.ics', 'teste-export-familia');
+insert into channel_events(calendar_id, pousada_id, room_id, uid, starts_on, ends_on, summary) values
+ ('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'ota-1', '2099-09-01', '2099-09-04', 'Reserved');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    perform create_booking(
+      p_pousada_id := '10000000-0000-0000-0000-000000000001', p_room_id := '20000000-0000-0000-0000-000000000001',
+      p_responsible_guest_id := '40000000-0000-0000-0000-000000000001', p_code := 'CANAL-CONFLITO',
+      p_checkin := '2099-09-03', p_checkout := '2099-09-05', p_adults := 2, p_children := 0, p_infants := 0,
+      p_pets := false, p_subtotal := 400, p_fee := 0, p_discount := 0, p_surcharge := 0,
+      p_services_amount := 0, p_total := 400, p_status := 'confirmed', p_origin := 'balcao');
+    raise exception 'TEST: reserva de balcão aceita sobre noite vendida pela OTA';
+  exception when raise_exception then
+    if sqlerrm <> 'Esta acomodação já está ocupada no Airbnb nesse período (calendário sincronizado).' then raise; end if;
+  end;
+end $$;
+select create_booking(
+  p_pousada_id := '10000000-0000-0000-0000-000000000001', p_room_id := '20000000-0000-0000-0000-000000000001',
+  p_responsible_guest_id := '40000000-0000-0000-0000-000000000001', p_code := 'CANAL-LIVRE',
+  p_checkin := '2099-09-04', p_checkout := '2099-09-06', p_adults := 2, p_children := 0, p_infants := 0,
+  p_pets := false, p_subtotal := 400, p_fee := 0, p_discount := 0, p_surcharge := 0,
+  p_services_amount := 0, p_total := 400, p_status := 'confirmed', p_origin := 'balcao');
+select test_assert(exists(select 1 from bookings where code = 'CANAL-LIVRE'), 'saída da OTA libera a noite seguinte');
+select create_booking(
+  p_pousada_id := '10000000-0000-0000-0000-000000000001', p_room_id := '20000000-0000-0000-0000-000000000002',
+  p_responsible_guest_id := '40000000-0000-0000-0000-000000000001', p_code := 'CANAL-ECO',
+  p_checkin := '2099-09-10', p_checkout := '2099-09-12', p_adults := 2, p_children := 0, p_infants := 0,
+  p_pets := false, p_subtotal := 800, p_fee := 0, p_discount := 0, p_surcharge := 0,
+  p_services_amount := 0, p_total := 800, p_status := 'confirmed', p_origin := 'balcao');
+reset role;
+-- O feed devolve a própria reserva (10–12) emendada a uma noite fechada na OTA (12–13).
+insert into channel_events(calendar_id, pousada_id, room_id, uid, starts_on, ends_on, summary) values
+ ('50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'ota-eco', '2099-09-10', '2099-09-13', 'CLOSED - Not available');
+set role authenticated;
+select update_booking(
+  p_booking_id := (select id from bookings where code = 'CANAL-ECO'),
+  p_version := (select version from bookings where code = 'CANAL-ECO'),
+  p_room_id := '20000000-0000-0000-0000-000000000002', p_responsible_guest_id := '40000000-0000-0000-0000-000000000001',
+  p_checkin := '2099-09-10', p_checkout := '2099-09-12', p_adults := 3, p_children := 0, p_infants := 0,
+  p_pets := false, p_subtotal := 800, p_fee := 0, p_discount := 0, p_surcharge := 0,
+  p_services_amount := 0, p_total := 800, p_origin := 'balcao', p_expected_arrival_time := null,
+  p_special_requests := '', p_internal_notes := '');
+select test_assert((select adults from bookings where code = 'CANAL-ECO') = 3, 'eco da OTA não trava edição sem noites novas');
+do $$ begin
+  begin
+    perform update_booking(
+      p_booking_id := (select id from bookings where code = 'CANAL-ECO'),
+      p_version := (select version from bookings where code = 'CANAL-ECO'),
+      p_room_id := '20000000-0000-0000-0000-000000000002', p_responsible_guest_id := '40000000-0000-0000-0000-000000000001',
+      p_checkin := '2099-09-10', p_checkout := '2099-09-13', p_adults := 3, p_children := 0, p_infants := 0,
+      p_pets := false, p_subtotal := 1200, p_fee := 0, p_discount := 0, p_surcharge := 0,
+      p_services_amount := 0, p_total := 1200, p_origin := 'balcao', p_expected_arrival_time := null,
+      p_special_requests := '', p_internal_notes := '');
+    raise exception 'TEST: edição estendeu a reserva sobre noite fechada pela OTA';
+  exception when raise_exception then
+    if sqlerrm <> 'Esta acomodação já está ocupada no Booking.com nesse período (calendário sincronizado).' then raise; end if;
+  end;
+end $$;
+reset role;
+
+-- Hóspede reaproveitado (0063): a "Nova reserva" acha o cadastro pelo e-mail ou
+-- telefone e não pode apagar o que o formulário não envia.
+insert into guests(id, pousada_id, full_name, email, phone, birth_date, city, state, address,
+  internal_notes, document_type, document_number, document_number_hash, document_last4,
+  marketing_consent, preferences) values
+ ('40000000-0000-0000-0000-000000000010', '10000000-0000-0000-0000-000000000001', 'Maria Aparecida da Silva',
+  'maria@example.test', '(31) 99999-0000', '1980-05-20', 'Belo Horizonte', 'MG', 'Rua das Flores, 10',
+  'Prefere quarto térreo', 'cpf', 'documento-cifrado-sintetico', 'hash-sintetico', '0000', true, array['café sem glúten']);
+set role authenticated;
+select test_assert(
+  (upsert_guest(p_pousada_id := '10000000-0000-0000-0000-000000000001', p_full_name := 'Maria',
+    p_email := ' MARIA@example.test', p_phone := '(31) 98888-7777')->>'id') = '40000000-0000-0000-0000-000000000010',
+  'nova reserva reaproveita o hóspede pelo e-mail');
+select test_assert((select full_name = 'Maria Aparecida da Silva' and birth_date = '1980-05-20'
+    and city = 'Belo Horizonte' and state = 'MG' and address = 'Rua das Flores, 10'
+    and internal_notes = 'Prefere quarto térreo' and document_type = 'cpf'
+    and document_number = 'documento-cifrado-sintetico' and document_last4 = '0000'
+    and marketing_consent and preferences = array['café sem glúten'] and email = 'maria@example.test'
+  from guests where id = '40000000-0000-0000-0000-000000000010'), 'nova reserva não apaga a ficha do hóspede');
+select test_assert((select phone from guests where id = '40000000-0000-0000-0000-000000000010') = '(31) 98888-7777',
+  'contato informado na reserva atualiza a ficha');
+-- A edição pelo perfil (com o id) continua gravando exatamente o que o formulário envia.
+select upsert_guest(p_pousada_id := '10000000-0000-0000-0000-000000000001',
+  p_guest_id := '40000000-0000-0000-0000-000000000010', p_full_name := 'Maria Aparecida da Silva',
+  p_email := 'maria@example.test', p_phone := '(31) 98888-7777', p_address := null);
+select test_assert((select address is null from guests where id = '40000000-0000-0000-0000-000000000010'),
+  'edição pelo perfil ainda limpa campo esvaziado');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- Assinatura (0064): o master liga o plano ao Mercado Pago por RPC, uma vez só.
+-- `plans` não tem policy de escrita: o UPDATE direto do app afetava 0 linhas.
+insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000009', 'master@example.test');
+update profiles set platform_role = 'master' where id = '00000000-0000-0000-0000-000000000009';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    perform set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-teste');
+    raise exception 'TEST: proprietário ligou o plano da plataforma';
+  exception when raise_exception then
+    if sqlerrm <> 'Somente master pode configurar o plano de assinatura da plataforma.' then raise; end if;
+  end;
+end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
+select test_assert(set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-teste')->>'status' = 'ok',
+  'master liga o plano ao Mercado Pago');
+select test_assert((select mp_preapproval_plan_id from plans where active limit 1) = 'mp-plano-teste', 'id do plano gravado');
+select test_assert(set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-teste')->>'status' = 'already_set',
+  'repetir o mesmo id não muda nada');
+do $$ begin
+  begin
+    perform set_plan_preapproval_id((select id from plans where active limit 1), 'mp-plano-outro');
+    raise exception 'TEST: plano religado a outro id do Mercado Pago';
+  exception when raise_exception then
+    if sqlerrm not like 'Este plano já está ligado a outro plano do Mercado Pago%' then raise; end if;
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- Pousadas (0065): só a equipe da Rota publica pousada ou mexe em nota,
+-- situação da conta, dono e demais colunas de controle.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    update pousadas set status = 'arquivada' where id = '10000000-0000-0000-0000-000000000001';
+    raise exception 'TEST: dono mudou a publicação da própria pousada';
+  exception when raise_exception then
+    if sqlerrm not like 'Só a equipe da Rota pode alterar%' then raise; end if;
+  end;
+  begin
+    update pousadas set rating = 5, reviews = 999 where id = '10000000-0000-0000-0000-000000000001';
+    raise exception 'TEST: dono inflou a nota da própria pousada';
+  exception when raise_exception then
+    if sqlerrm not like 'Só a equipe da Rota pode alterar%' then raise; end if;
+  end;
+  begin
+    insert into pousadas(slug, name, city, state, status, owner_id)
+    values ('pousada-atalho', 'Pousada Atalho', 'Cidade', 'MG', 'publicada', '00000000-0000-0000-0000-000000000001');
+    raise exception 'TEST: dono criou pousada já publicada';
+  exception when raise_exception then
+    if sqlerrm not like 'Pousada nova começa em análise%' then raise; end if;
+  end;
+end $$;
+do $$ declare changed integer; begin
+  update pousadas set description = 'Descrição revisada pelo dono da pousada A.'
+  where id = '10000000-0000-0000-0000-000000000001';
+  get diagnostics changed = row_count;
+  perform test_assert(changed = 1, 'dono continua salvando as configurações');
+end $$;
+select test_assert(create_pousada('Pousada Nova', 'Cidade', 'MG', 'Pousada nova cadastrada pelo dono.', 150,
+  'pousada-nova-teste') = 'pousada-nova-teste', 'cadastro pelo /anunciar continua funcionando');
+select test_assert((select status from pousadas where slug = 'pousada-nova-teste') = 'em_analise', 'cadastro nasce em análise');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
+do $$ declare changed integer; begin
+  update pousadas set status = 'publicada' where slug = 'pousada-nova-teste';
+  get diagnostics changed = row_count;
+  perform test_assert(changed = 1, 'equipe da Rota publica a pousada');
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- Avaliações (0066): só avalia quem se hospedou naquela pousada (estadia
+-- encerrada); a pousada só responde, e o hóspede não escreve a resposta.
+insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000011', 'viajante@example.test');
+insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, guest_id, checkin, checkout, total, status) values
+ ('30000000-0000-0000-0000-000000000011', 'ESTADIA-FIM', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
+  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-03-01', '2099-03-03', 400, 'checked_out'),
+ ('30000000-0000-0000-0000-000000000012', 'ESTADIA-FUTURA', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
+  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-04-01', '2099-04-03', 400, 'confirmed');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', false);
+do $$ begin
+  begin
+    insert into reviews(pousada_id, booking_id, author_id, rating, text) values
+      ('10000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000011',
+       '00000000-0000-0000-0000-000000000011', 1, 'nunca estive aqui');
+    raise exception 'TEST: avaliação de pousada onde não se hospedou';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into reviews(pousada_id, booking_id, author_id, rating, text) values
+      ('10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',
+       '00000000-0000-0000-0000-000000000011', 5, 'antes de chegar');
+    raise exception 'TEST: avaliação antes do fim da estadia';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into reviews(pousada_id, booking_id, author_id, rating, text, response) values
+      ('10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',
+       '00000000-0000-0000-0000-000000000011', 5, 'ótimo', 'resposta forjada da pousada');
+    raise exception 'TEST: hóspede escreveu a resposta da pousada';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+insert into reviews(id, pousada_id, booking_id, author_id, rating, text) values
+ ('60000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000011', 3, 'bom, mas barulhento');
+select test_assert(exists(select 1 from reviews where id = '60000000-0000-0000-0000-000000000011'), 'hóspede avalia a estadia encerrada');
+do $$ begin
+  begin
+    update reviews set response = 'resposta forjada' where id = '60000000-0000-0000-0000-000000000011';
+    raise exception 'TEST: autor alterou a resposta da pousada';
+  exception when raise_exception then
+    if sqlerrm <> 'Só a pousada responde à avaliação.' then raise; end if;
+  end;
+end $$;
+update reviews set text = 'bom, mas um pouco barulhento' where id = '60000000-0000-0000-0000-000000000011';
+select test_assert((select text from reviews where id = '60000000-0000-0000-0000-000000000011') = 'bom, mas um pouco barulhento',
+  'autor edita o próprio comentário');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    update reviews set rating = 5 where id = '60000000-0000-0000-0000-000000000011';
+    raise exception 'TEST: dono mudou a nota do hóspede';
+  exception when raise_exception then
+    if sqlerrm <> 'A pousada só pode responder à avaliação, não alterar a nota ou o comentário do hóspede.' then raise; end if;
+  end;
+end $$;
+update reviews set response = 'Obrigado! Já trocamos a janela do quarto.' where id = '60000000-0000-0000-0000-000000000011';
+select test_assert((select rating = 3 and response like 'Obrigado!%' from reviews where id = '60000000-0000-0000-0000-000000000011'),
+  'dono responde sem mexer na nota');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);

@@ -24,6 +24,8 @@ export type AvailabilityInput = {
   requestedPets: boolean
   hasBlockConflict: boolean
   hasBookingConflict: boolean
+  /** Noite já vendida no Airbnb/Booking (iCal importado, `channel_events`). */
+  hasChannelConflict: boolean
 }
 
 /** Retorna os motivos de indisponibilidade — lista vazia = disponível. */
@@ -42,6 +44,7 @@ export function evaluateRoomAvailability(input: AvailabilityInput): Availability
   }
   if (input.hasBlockConflict) reasons.push('blocked_period')
   if (input.hasBookingConflict) reasons.push('booking_conflict')
+  if (input.hasChannelConflict) reasons.push('channel_conflict')
 
   return reasons
 }

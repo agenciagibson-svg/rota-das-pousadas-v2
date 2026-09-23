@@ -34,7 +34,8 @@ export async function getHousekeepingRooms(): Promise<HousekeepingRoom[]> {
 
 async function requireRoomInActivePousada(id: string, pousadaId: string) {
   const room = await getRoomById(id)
-  if (!room || room.pousadaId !== pousadaId) throw new Error('Acomodação não encontrada nesta pousada.')
+  if (!room || room.pousadaId !== pousadaId)
+    throw new Error('Acomodação não encontrada nesta pousada.')
   return room
 }
 
@@ -132,9 +133,13 @@ export async function setRoomActive(id: string, active: boolean): Promise<void> 
 }
 
 /** Status OPERACIONAL — via RPC, único caminho aberto também à Governança. */
-export async function setOperationalStatus(id: string, status: ManagedRoom['operationalStatus']): Promise<void> {
+export async function setOperationalStatus(
+  id: string,
+  status: ManagedRoom['operationalStatus'],
+): Promise<void> {
   const { pousadaId } = await requireCapability('room:status:manage')
-  await requireRoomInActivePousada(id, pousadaId)
+  // Sem pré-leitura de `rooms`: a Governança não tem leitura direta (rooms_read)
+  // e a RPC já confere que a acomodação existe e é desta pousada.
   await updateRoomOperationalStatus(pousadaId, id, status)
   // Auditoria gravada atomicamente pela RPC — não duplicar aqui.
 }

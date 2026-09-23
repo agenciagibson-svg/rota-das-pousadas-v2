@@ -11,7 +11,11 @@ export const guestFormSchema = z.object({
   whatsapp: phoneSchema.or(z.literal('')),
   documentType: z.string().trim().max(30),
   documentNumber: z.string().trim().max(50),
-  birthDate: z.string().trim().max(10),
+  birthDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de nascimento inválida.')
+    .or(z.literal('')),
   nationality: z.string().trim().max(60),
   country: z.string().trim().max(2),
   city: z.string().trim().max(100),

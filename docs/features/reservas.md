@@ -7,17 +7,17 @@ ocorrerá após o pagamento (feature futura), então a reserva nasce como
 
 ## Camadas (ordem da arquitetura)
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Schemas | `features/reservas/schemas.ts` | `createBookingSchema` (Zod: datas, hóspedes) |
-| Types | `features/reservas/types.ts` | `Booking`, `BookingStatus`, `PriceBreakdown` |
-| Pricing | `features/reservas/pricing.ts` | cálculo puro (diária × noites + 8% taxa) — testável |
-| Repository | `repositories/rooms.repository.ts`, `repositories/bookings.repository.ts` | única porta ao banco |
-| Service | `features/reservas/services/bookings.service.ts` | regras: auth, capacidade, período, código, persistência |
-| Server Query | `server/queries.ts` → `getMyBookings`, `getBookableRoom` | wrappers com cache |
-| Server Action | `features/reservas/actions.ts` | `createBookingAction` (Zod → ActionResult) |
-| Components | `features/reservas/components/booking-form.tsx` | formulário RHF + Zod + Design System |
-| Páginas | `app/pousada/[slug]/reservar`, `app/minhas-reservas` | fluxo de reserva + lista |
+| Camada        | Arquivo                                                                   | Papel                                                   |
+| ------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Schemas       | `features/reservas/schemas.ts`                                            | `createBookingSchema` (Zod: datas, hóspedes)            |
+| Types         | `features/reservas/types.ts`                                              | `Booking`, `BookingStatus`, `PriceBreakdown`            |
+| Pricing       | `features/reservas/pricing.ts`                                            | cálculo puro (diária × noites + 8% taxa) — testável     |
+| Repository    | `repositories/rooms.repository.ts`, `repositories/bookings.repository.ts` | única porta ao banco                                    |
+| Service       | `features/reservas/services/bookings.service.ts`                          | regras: auth, capacidade, período, código, persistência |
+| Server Query  | `server/queries.ts` → `getMyBookings`, `getBookableRoom`                  | wrappers com cache                                      |
+| Server Action | `features/reservas/actions.ts`                                            | `createBookingAction` (Zod → ActionResult)              |
+| Components    | `features/reservas/components/booking-form.tsx`                           | formulário RHF + Zod + Design System                    |
+| Páginas       | `app/pousada/[slug]/reservar`, `app/minhas-reservas`                      | fluxo de reserva + lista                                |
 
 ## Fluxo
 
@@ -46,6 +46,7 @@ flowchart TD
 ## Setup de banco necessário
 
 Rodar no Supabase (SQL Editor), em ordem:
+
 - `supabase/migrations/0004_rooms_seed.sql` — cria 1 acomodação por pousada
   publicada (necessário para reservar).
 
@@ -178,3 +179,41 @@ Rodar no Supabase (SQL Editor), em ordem:
   do hóspede com datas, valores e status, sem mudança necessária nela.
 - Sem migration — só código novo (`server/queries.ts#getBookingCheckout` +
   a página) e a remoção da página órfã.
+
+## Noite vendida no Airbnb/Booking barra reserva na Rota (0062)
+
+- `assert_room_available_for_booking` — a checagem de `create_booking` e
+  `update_booking`, ou seja, balcão, painel e checkout do site — passa a
+  considerar `channel_events` (0044). Antes só a busca pública
+  (`list_bookable_rooms`) olhava essa tabela, e a recepção conseguia vender
+  uma noite já vendida na OTA (overbooking) sem o banco impedir.
+- Eco do iCal: a OTA pode devolver no feed dela a reserva que a Rota
+  exportou. Na edição, o trecho do evento contido nas noites que a própria
+  reserva já ocupava no mesmo quarto é ignorado; só noites novas precisam
+  estar livres no canal.
+- Painel: `queryAvailability` (telas Disponibilidade e Nova reserva) lê
+  `channel_events` e mostra o motivo `channel_conflict` ("Ocupada no
+  Airbnb/Booking"). Falha na leitura derruba a consulta em vez de anunciar
+  o quarto livre, como já acontece com reservas.
+- A importação segue diária (cron do plano Hobby): uma venda feita na OTA só
+  aparece na Rota depois do ciclo seguinte.
+- Testes: `supabase/tests/priorities.sql` (criar sobre noite da OTA, eco na
+  edição, estender sobre noite fechada), `availability-engine.test.ts` e
+  `availability.repository.test.ts`.
+- Rollback: `supabase/rollback/0062_rollback.sql`.
+
+## Nova reserva não apaga a ficha do hóspede reaproveitado (0063)
+
+- `upsert_guest` sem `p_guest_id` reaproveita o cadastro achado por e-mail,
+  telefone ou documento — é o que a Nova reserva do balcão faz. O UPDATE
+  regravava todas as colunas com o pouco que o formulário envia (nome,
+  e-mail, telefone): CPF, nascimento, endereço, observações e preferências
+  eram apagados, e o consentimento de marketing virava falso.
+- No reaproveitamento, agora nada é apagado: o nome e o que já estava
+  preenchido ficam; e-mail, telefone e WhatsApp informados e diferentes
+  atualizam a ficha; o resto só preenche campo vazio; o consentimento nunca
+  é revogado por esse caminho.
+- A edição pelo perfil (com `p_guest_id`) não muda: grava exatamente o que o
+  formulário envia, inclusive campos esvaziados de propósito.
+- Testes: `supabase/tests/priorities.sql`.
+- Rollback: `supabase/rollback/0063_rollback.sql`.

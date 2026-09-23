@@ -13,10 +13,12 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
   const [isPending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   function submit(formData: FormData) {
     setMessage(null)
     setError(null)
+    setFieldErrors({})
     const input = {
       name: String(formData.get('name') ?? ''),
       legalName: String(formData.get('legalName') ?? ''),
@@ -44,7 +46,9 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
     startTransition(async () => {
       const result = await updatePousadaSettingsAction(input)
       if (!result.ok) {
-        setError(result.error)
+        // Erro de validação vem por campo: destaca o campo em vez de só "Dados inválidos."
+        setError(result.fieldErrors ? 'Revise os campos destacados.' : result.error)
+        setFieldErrors(result.fieldErrors ?? {})
         return
       }
       setMessage('Configurações salvas.')
@@ -55,68 +59,145 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
   return (
     <form action={submit} className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
-        <Input label="Nome da pousada" name="name" defaultValue={settings.name} />
-        <Input label="Razão social" name="legalName" defaultValue={settings.legalName} />
-        <Input label="Documento fiscal (CNPJ/CPF)" name="taxId" defaultValue={settings.taxId} />
-        <Input label="Imagem principal" name="image" defaultValue={settings.image} />
-        <Input label="Cidade" name="city" defaultValue={settings.city} />
-        <Input label="Estado" name="state" defaultValue={settings.state} maxLength={2} />
-        <Input label="País" name="country" defaultValue={settings.country} />
-        <Input label="Endereço" name="address" defaultValue={settings.address} />
-        <Input label="CEP" name="cep" defaultValue={settings.cep} placeholder="00000-000" />
+        <Input
+          label="Nome da pousada"
+          name="name"
+          error={fieldErrors.name}
+          defaultValue={settings.name}
+        />
+        <Input
+          label="Razão social"
+          name="legalName"
+          error={fieldErrors.legalName}
+          defaultValue={settings.legalName}
+        />
+        <Input
+          label="Documento fiscal (CNPJ/CPF)"
+          name="taxId"
+          error={fieldErrors.taxId}
+          defaultValue={settings.taxId}
+        />
+        <Input
+          label="Imagem principal"
+          name="image"
+          error={fieldErrors.image}
+          defaultValue={settings.image}
+        />
+        <Input label="Cidade" name="city" error={fieldErrors.city} defaultValue={settings.city} />
+        <Input
+          label="Estado"
+          name="state"
+          error={fieldErrors.state}
+          defaultValue={settings.state}
+          maxLength={2}
+        />
+        <Input
+          label="País"
+          name="country"
+          error={fieldErrors.country}
+          defaultValue={settings.country}
+        />
+        <Input
+          label="Endereço"
+          name="address"
+          error={fieldErrors.address}
+          defaultValue={settings.address}
+        />
+        <Input
+          label="CEP"
+          name="cep"
+          error={fieldErrors.cep}
+          defaultValue={settings.cep}
+          placeholder="00000-000"
+        />
         <Input
           label="Telefone de contato"
           name="contactPhone"
+          error={fieldErrors.contactPhone}
           defaultValue={settings.contactPhone}
           placeholder="(00) 00000-0000"
         />
         <Input
           label="WhatsApp"
           name="whatsapp"
+          error={fieldErrors.whatsapp}
           defaultValue={settings.whatsapp}
           placeholder="(00) 00000-0000"
         />
         <Input
           label="E-mail de notificações"
           name="notificationEmail"
+          error={fieldErrors.notificationEmail}
           type="email"
           defaultValue={settings.notificationEmail}
           placeholder="reservas@pousada.com"
         />
-        <Input label="Fuso horário" name="timezone" defaultValue={settings.timezone} />
-        <Input label="Moeda (ISO)" name="currency" defaultValue={settings.currency} maxLength={3} />
-        <Input label="Idioma" name="language" defaultValue={settings.language} />
-        <Input label="Check-in" name="checkinTime" type="time" defaultValue={settings.checkinTime} />
-        <Input label="Check-out" name="checkoutTime" type="time" defaultValue={settings.checkoutTime} />
+        <Input
+          label="Fuso horário"
+          name="timezone"
+          error={fieldErrors.timezone}
+          defaultValue={settings.timezone}
+        />
+        <Input
+          label="Moeda (ISO)"
+          name="currency"
+          error={fieldErrors.currency}
+          defaultValue={settings.currency}
+          maxLength={3}
+        />
+        <Input
+          label="Idioma"
+          name="language"
+          error={fieldErrors.language}
+          defaultValue={settings.language}
+        />
+        <Input
+          label="Check-in"
+          name="checkinTime"
+          error={fieldErrors.checkinTime}
+          type="time"
+          defaultValue={settings.checkinTime}
+        />
+        <Input
+          label="Check-out"
+          name="checkoutTime"
+          error={fieldErrors.checkoutTime}
+          type="time"
+          defaultValue={settings.checkoutTime}
+        />
       </div>
 
       <div className="grid gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
             Tags
           </span>
           <input
             name="tags"
             defaultValue={settings.tags.join(', ')}
             placeholder="romântico, vista, pet friendly"
-            className="rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+            className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
           />
+          {fieldErrors.tags && <span className="text-destructive text-xs">{fieldErrors.tags}</span>}
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
             Descrição pública
           </span>
           <textarea
             name="description"
             defaultValue={settings.description}
             rows={5}
-            className="resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+            className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
           />
+          {fieldErrors.description && (
+            <span className="text-destructive text-xs">{fieldErrors.description}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
             Regras da casa
           </span>
           <textarea
@@ -124,12 +205,15 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
             defaultValue={settings.houseRules}
             rows={4}
             placeholder="Ex.: silêncio após 22h, pets sob consulta..."
-            className="resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+            className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
           />
+          {fieldErrors.houseRules && (
+            <span className="text-destructive text-xs">{fieldErrors.houseRules}</span>
+          )}
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
             Política de cancelamento
           </span>
           <textarea
@@ -137,15 +221,18 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
             defaultValue={settings.cancellationPolicy}
             rows={4}
             placeholder="Ex.: cancelamento grátis até 7 dias antes do check-in."
-            className="resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+            className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
           />
+          {fieldErrors.cancellationPolicy && (
+            <span className="text-destructive text-xs">{fieldErrors.cancellationPolicy}</span>
+          )}
         </label>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-          {message && <p className="text-sm font-medium text-primary">{message}</p>}
+          {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+          {message && <p className="text-primary text-sm font-medium">{message}</p>}
         </div>
         <Button type="submit" size="lg" disabled={isPending}>
           <Save className="size-4" />

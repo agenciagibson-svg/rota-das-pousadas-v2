@@ -1,4 +1,5 @@
-export type BedType = 'casal' | 'queen' | 'king' | 'solteiro' | 'beliche' | 'sofa_cama' | 'berco' | 'outro'
+export type BedType =
+  'casal' | 'queen' | 'king' | 'solteiro' | 'beliche' | 'sofa_cama' | 'berco' | 'outro'
 export type BedConfigItem = { type: BedType; quantity: number }
 
 export type AccommodationStatus = 'active' | 'inactive'
@@ -111,6 +112,7 @@ export type AvailabilityReason =
   | 'operational_status_blocking'
   | 'blocked_period'
   | 'booking_conflict'
+  | 'channel_conflict'
   | 'invalid_dates'
 
 export type AvailabilityResult = {

@@ -6,17 +6,17 @@ datas). Base para os próximos módulos (financeiro, RH, etc.).
 
 ## Camadas (ordem da arquitetura)
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Calendário (puro) | `features/gestao/calendar.ts` | grade do mês + status por dia (testado) |
-| Types | `features/gestao/types.ts` | `OwnerReservation`, `ManagedPousada` |
-| Schemas | `features/gestao/schemas.ts` | `dateActionSchema` (bloqueio) |
-| Repository | `repositories/management.repository.ts` | pousada gerida, reservas por pousada, availability (block/unblock) |
-| Service | `features/gestao/services/pms.service.ts` | resolve pousada do dono (membership), reservas, calendário, bloqueio |
-| Server Query | `server/queries.ts` → `getOwnerPousada`, `getOwnerReservations`, `getOwnerCalendar` | cache por request |
-| Server Action | `features/gestao/actions.ts` | `blockDateAction`, `unblockDateAction` |
-| Components | `reservations-calendar`, `owner-reservations-table`, `owner-reservations-view` | calendário interativo + tabela + shell |
-| Páginas | `app/dashboard` (visão geral) e `app/dashboard/reservas` | dashboard real + gestão |
+| Camada            | Arquivo                                                                             | Papel                                                                |
+| ----------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Calendário (puro) | `features/gestao/calendar.ts`                                                       | grade do mês + status por dia (testado)                              |
+| Types             | `features/gestao/types.ts`                                                          | `OwnerReservation`, `ManagedPousada`                                 |
+| Schemas           | `features/gestao/schemas.ts`                                                        | `dateActionSchema` (bloqueio)                                        |
+| Repository        | `repositories/management.repository.ts`                                             | pousada gerida, reservas por pousada, availability (block/unblock)   |
+| Service           | `features/gestao/services/pms.service.ts`                                           | resolve pousada do dono (membership), reservas, calendário, bloqueio |
+| Server Query      | `server/queries.ts` → `getOwnerPousada`, `getOwnerReservations`, `getOwnerCalendar` | cache por request                                                    |
+| Server Action     | `features/gestao/actions.ts`                                                        | `blockDateAction`, `unblockDateAction`                               |
+| Components        | `reservations-calendar`, `owner-reservations-table`, `owner-reservations-view`      | calendário interativo + tabela + shell                               |
+| Páginas           | `app/dashboard` (visão geral) e `app/dashboard/reservas`                            | dashboard real + gestão                                              |
 
 ## Como funciona
 
@@ -55,6 +55,19 @@ on conflict (user_id, pousada_id) do nothing;
 - `server/queries.ts#canRespondReviews` + prop `canRespond` em
   `OwnerReviewsView`: sem a permissão, o formulário de resposta some (fica
   só um aviso, e só quando a avaliação ainda não tem resposta).
+
+## Avaliações — quem avalia e quem responde (0066)
+
+- Só avalia quem se hospedou: inserir em `reviews` exige reserva do próprio
+  autor naquela pousada, com a estadia encerrada (`checked_out`, ou
+  confirmada com a saída já passada), e sem `response`. Antes, qualquer
+  usuário logado avaliava qualquer pousada chamando a API do Supabase.
+- Na edição, o trigger `trg_guard_review_changes` separa os papéis: o autor
+  mexe na própria nota e no comentário, a pousada só na resposta (antes o
+  dono conseguia trocar a nota do hóspede), e ninguém troca pousada,
+  reserva ou autor. A equipe da plataforma (moderação) segue livre.
+- O site ainda não tem tela para o hóspede avaliar; a regra já vale para
+  quando existir.
 
 ## Próximos passos
 

@@ -44,12 +44,14 @@ export async function setPlanPreapprovalId(
   planId: string,
   mpPreapprovalPlanId: string,
 ): Promise<void> {
+  // Via RPC (0064): `plans` não tem policy de escrita, e o UPDATE direto
+  // afetava 0 linhas sem erro — o id nunca era salvo.
   const supabase = await createSupabaseServerClient()
-  const { error } = await supabase
-    .from('plans')
-    .update({ mp_preapproval_plan_id: mpPreapprovalPlanId })
-    .eq('id', planId)
-  if (error) throw error
+  const { error } = await supabase.rpc('set_plan_preapproval_id', {
+    p_plan_id: planId,
+    p_mp_preapproval_plan_id: mpPreapprovalPlanId,
+  })
+  if (error) throw new Error(error.message)
 }
 
 export async function getSubscriptionByPousada(pousadaId: string): Promise<SubscriptionRow | null> {

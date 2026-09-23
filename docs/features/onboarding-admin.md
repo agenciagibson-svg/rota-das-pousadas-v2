@@ -40,6 +40,11 @@ flowchart TD
   ainda não é membro ao criar a 1ª membership); `owner_id`/`user_id` vêm de
   `auth.uid()`, nunca do cliente.
 - Pousada nasce `em_analise` — invisível no catálogo público até aprovação (RB-01).
+- **Colunas de controle** (0065): o trigger `trg_guard_pousada_owner_changes`
+  só deixa o dono alterar as colunas das Configurações. Publicação (`status`),
+  situação da conta, dono, nota e contagem de avaliações, destino e slug ficam
+  com a equipe comercial/master, mesmo chamando a API do Supabase direto; e
+  pousada criada pelo dono precisa nascer em análise.
 
 ## Setup de banco (rodar no Supabase)
 
@@ -83,5 +88,4 @@ da 0014.
 ## Próximos passos
 
 - Motivo da rejeição (coluna + exibição) e auditoria (`audit_log`).
-- Endurecer RLS: impedir owner de setar `status='publicada'` (trigger).
 - Upload de fotos da pousada (Supabase Storage) no cadastro.

@@ -27,8 +27,9 @@ export type AvailabilityQuery = {
 }
 
 /**
- * Motor de disponibilidade — busca no banco (rooms + room_blocks + bookings)
- * e delega a decisão por acomodação ao motor puro e testável
+ * Motor de disponibilidade — busca no banco (rooms + room_blocks + bookings +
+ * channel_events, as noites vendidas no Airbnb/Booking) e delega a decisão
+ * por acomodação ao motor puro e testável
  * (features/acomodacoes/availability-engine.ts). NÃO lê a tabela
  * `availability` antiga (ver nota de arquitetura em 0022_*.sql).
  */
@@ -53,7 +54,7 @@ export async function queryAvailability(query: AvailabilityQuery): Promise<Avail
   const roomList = rooms ?? []
   const roomIds = roomList.map((r) => r.id)
 
-  const [blocks, bookingsResult] = await Promise.all([
+  const [blocks, bookingsResult, channelResult] = await Promise.all([
     listActiveBlocksOverlapping(roomIds, query.checkin, query.checkout),
     roomIds.length
       ? supabase
@@ -64,10 +65,21 @@ export async function queryAvailability(query: AvailabilityQuery): Promise<Avail
           .lt('checkin', query.checkout)
           .gt('checkout', query.checkin)
       : Promise.resolve({ data: [] as { room_id: string }[], error: null }),
+    // `ends_on` é exclusivo, como `checkout` (0044) — mesmo teste de sobreposição.
+    roomIds.length
+      ? supabase
+          .from('channel_events')
+          .select('room_id')
+          .in('room_id', roomIds)
+          .lt('starts_on', query.checkout)
+          .gt('ends_on', query.checkin)
+      : Promise.resolve({ data: [] as { room_id: string }[], error: null }),
   ])
   if (bookingsResult.error) throw bookingsResult.error
+  if (channelResult.error) throw channelResult.error
   const blockedRoomIds = new Set(blocks.map((b) => b.roomId))
   const bookedRoomIds = new Set((bookingsResult.data ?? []).map((b) => b.room_id))
+  const channelRoomIds = new Set((channelResult.data ?? []).map((e) => e.room_id))
 
   return roomList.map((r) => {
     const category = Array.isArray(r.accommodation_categories)
@@ -85,6 +97,7 @@ export async function queryAvailability(query: AvailabilityQuery): Promise<Avail
       requestedPets: query.pets,
       hasBlockConflict: blockedRoomIds.has(r.id),
       hasBookingConflict: bookedRoomIds.has(r.id),
+      hasChannelConflict: channelRoomIds.has(r.id),
     })
     return {
       roomId: r.id,
