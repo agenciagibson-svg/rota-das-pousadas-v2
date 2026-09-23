@@ -162,6 +162,80 @@ export type Database = {
           },
         ]
       }
+      booking_charges: {
+        Row: {
+          amount: number | null
+          booking_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          pousada_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          amount?: number | null
+          booking_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          pousada_id: string
+          quantity: number
+          unit_price: number
+        }
+        Update: {
+          amount?: number | null
+          booking_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          pousada_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'booking_charges_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'booking_charges_cancelled_by_fkey'
+            columns: ['cancelled_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'booking_charges_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'booking_charges_pousada_id_fkey'
+            columns: ['pousada_id']
+            isOneToOne: false
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       booking_guests: {
         Row: {
           birth_date: string | null
@@ -228,6 +302,7 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          charges_amount: number
           checked_in_at: string | null
           checked_in_by: string | null
           checked_out_at: string | null
@@ -282,6 +357,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          charges_amount?: number
           checked_in_at?: string | null
           checked_in_by?: string | null
           checked_out_at?: string | null
@@ -336,6 +412,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          charges_amount?: number
           checked_in_at?: string | null
           checked_in_by?: string | null
           checked_out_at?: string | null
@@ -1169,9 +1246,15 @@ export type Database = {
           credited_amount: number
           id: string
           method: string
+          notes: string
           provider_ref: string | null
           provider_updated_at: string | null
+          recorded_by: string | null
           refunded_amount: number
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          source: string
           status: Database['public']['Enums']['payment_status']
         }
         Insert: {
@@ -1181,9 +1264,15 @@ export type Database = {
           credited_amount?: number
           id?: string
           method: string
+          notes?: string
           provider_ref?: string | null
           provider_updated_at?: string | null
+          recorded_by?: string | null
           refunded_amount?: number
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          source?: string
           status?: Database['public']['Enums']['payment_status']
         }
         Update: {
@@ -1193,12 +1282,32 @@ export type Database = {
           credited_amount?: number
           id?: string
           method?: string
+          notes?: string
           provider_ref?: string | null
           provider_updated_at?: string | null
+          recorded_by?: string | null
           refunded_amount?: number
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          source?: string
           status?: Database['public']['Enums']['payment_status']
         }
         Relationships: [
+          {
+            foreignKeyName: 'payments_recorded_by_fkey'
+            columns: ['recorded_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'payments_reversed_by_fkey'
+            columns: ['reversed_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'payments_booking_id_fkey'
             columns: ['booking_id']
@@ -2065,6 +2174,15 @@ export type Database = {
         Args: { p_membership_id: string }
         Returns: Json
       }
+      add_booking_charge: {
+        Args: {
+          p_booking_id: string
+          p_description: string
+          p_quantity: number
+          p_unit_price: number
+        }
+        Returns: Json
+      }
       apply_document_backfill: {
         Args: {
           p_document_last4: string
@@ -2142,6 +2260,10 @@ export type Database = {
       auth_is_member_of: { Args: { target_pousada: string }; Returns: boolean }
       auth_is_platform_admin: { Args: never; Returns: boolean }
       auth_is_platform_master: { Args: never; Returns: boolean }
+      cancel_booking_charge: {
+        Args: { p_charge_id: string; p_reason: string }
+        Returns: Json
+      }
       cancel_room_block: {
         Args: {
           p_block_id: string
@@ -2464,6 +2586,19 @@ export type Database = {
           p_period_start?: string
           p_status: string
         }
+        Returns: Json
+      }
+      register_manual_payment: {
+        Args: {
+          p_amount: number
+          p_booking_id: string
+          p_method: string
+          p_notes?: string
+        }
+        Returns: Json
+      }
+      reverse_manual_payment: {
+        Args: { p_payment_id: string; p_reason: string }
         Returns: Json
       }
       revoke_member: {
