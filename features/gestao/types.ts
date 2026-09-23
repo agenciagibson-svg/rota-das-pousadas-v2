@@ -30,6 +30,8 @@ export type ManagedPousada = {
   name: string
   status: string
   roomId: string
+  /** Fuso IANA da pousada (`pousadas.timezone`) — define o "hoje" do painel. */
+  timezone: string
 }
 
 export type OwnerPousadaSettings = {

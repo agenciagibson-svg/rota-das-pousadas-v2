@@ -5,6 +5,7 @@ import {
   getOwnerCalendar,
 } from '@/server/queries'
 import { OwnerReservationsView } from '@/features/gestao'
+import { DEFAULT_TIMEZONE, isoDateInTimeZone } from '@/lib/dates'
 import type { BookingStatus } from '@/features/reservas/types'
 
 export default async function DashboardReservasPage({
@@ -44,6 +45,7 @@ export default async function DashboardReservasPage({
       occupied={calendar.occupied}
       blocked={calendar.blocked}
       filters={filters}
+      todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
     />
   )
 }

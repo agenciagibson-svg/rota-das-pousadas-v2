@@ -19,6 +19,7 @@ export function OwnerReservationsView({
   occupied,
   blocked,
   filters,
+  todayISO,
 }: {
   displayName: string
   pousadaName: string
@@ -26,6 +27,8 @@ export function OwnerReservationsView({
   occupied: DateRange[]
   blocked: string[]
   filters: GestaoReservationFilters
+  /** "Hoje" no fuso da pousada — separa dias passados de livres no calendário. */
+  todayISO: string
 }) {
   return (
     <DashboardShell
@@ -41,7 +44,7 @@ export function OwnerReservationsView({
           <h2 className="text-foreground font-semibold">Calendário &amp; disponibilidade</h2>
           <p className="text-muted-foreground text-sm">Clique em um dia livre para bloquear.</p>
           <div className="mt-5">
-            <ReservationsCalendar occupied={occupied} blocked={blocked} />
+            <ReservationsCalendar occupied={occupied} blocked={blocked} todayISO={todayISO} />
           </div>
         </Card>
 

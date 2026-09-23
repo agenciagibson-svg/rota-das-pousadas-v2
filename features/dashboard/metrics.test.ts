@@ -6,9 +6,11 @@ import {
   dayMovements,
   monthlyRevenue,
   nightsWithin,
+  pousadaToday,
   roomsOccupiedOn,
   summarizeReviews,
   toISODate,
+  upcomingReservations,
   weeklyDailies,
   type MetricBooking,
 } from './metrics'
@@ -189,5 +191,58 @@ describe('helpers de data', () => {
     expect(toISODate(TODAY)).toBe('2026-09-16')
     expect(addDays('2026-09-16', 5)).toBe('2026-09-21')
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
+  })
+})
+
+describe('pousadaToday', () => {
+  // 23/09/2026 22:30 em Brasília = 24/09/2026 01:30 UTC.
+  const NIGHT = new Date('2026-09-24T01:30:00Z')
+
+  it('depois das 21h ainda é hoje na pousada, não amanhã como em UTC', () => {
+    expect(toISODate(NIGHT)).toBe('2026-09-24')
+    const today = pousadaToday(NIGHT, 'America/Sao_Paulo')
+    expect(today.iso).toBe('2026-09-23')
+    expect(toISODate(today.date)).toBe('2026-09-23')
+  })
+
+  it('chegadas, ocupação e mês do painel usam o dia da pousada', () => {
+    const today = pousadaToday(new Date('2026-10-01T01:30:00Z'), 'America/Sao_Paulo')
+    const bookings = [booking('2026-09-30', '2026-10-02', 'confirmed', 500)]
+    expect(dayMovements(bookings, today.iso).arrivals).toHaveLength(1)
+    expect(
+      calculateOccupancy(bookings, 1, today.iso, addDays(today.iso, 7), today.date)
+        .roomsOccupiedToday,
+    ).toBe(1)
+    const revenue = monthlyRevenue(bookings, today.date)
+    expect(revenue.at(-1)).toEqual({ label: 'set', value: 500 })
+  })
+})
+
+describe('upcomingReservations', () => {
+  it('lista as próximas entradas a partir de hoje, sem canceladas nem encerradas', () => {
+    const list = [
+      booking('2026-01-10', '2026-01-12', 'checked_out'),
+      booking('2026-02-01', '2026-02-03', 'cancelled'),
+      booking('2026-09-20', '2026-09-22', 'no_show'),
+      booking('2026-10-05', '2026-10-07', 'pending'),
+      booking('2026-09-16', '2026-09-18', 'checked_in'),
+      booking('2026-09-30', '2026-10-02', 'confirmed'),
+      booking('2026-09-17', '2026-09-19', 'cancelled'),
+    ]
+    expect(upcomingReservations(list, '2026-09-16').map((b) => b.checkin)).toEqual([
+      '2026-09-16',
+      '2026-09-30',
+      '2026-10-05',
+    ])
+  })
+
+  it('respeita o limite', () => {
+    const list = ['2026-09-20', '2026-09-18', '2026-09-22', '2026-09-19'].map((d) =>
+      booking(d, addDays(d, 1)),
+    )
+    expect(upcomingReservations(list, '2026-09-16', 2).map((b) => b.checkin)).toEqual([
+      '2026-09-18',
+      '2026-09-19',
+    ])
   })
 })

@@ -26,21 +26,24 @@ const MONTHS = [
 export function ReservationsCalendar({
   occupied,
   blocked: initialBlocked,
+  todayISO,
 }: {
   occupied: DateRange[]
   blocked: string[]
+  /** Vem do servidor, no fuso da pousada: em UTC o dia de hoje virava "passado" às 21h. */
+  todayISO: string
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const now = new Date()
-  const [year, setYear] = useState(now.getUTCFullYear())
-  const [month, setMonth] = useState(now.getUTCMonth())
+  const today = useMemo(() => new Date(`${todayISO}T12:00:00Z`), [todayISO])
+  const [year, setYear] = useState(today.getUTCFullYear())
+  const [month, setMonth] = useState(today.getUTCMonth())
   const [blocked, setBlocked] = useState<Set<string>>(new Set(initialBlocked))
 
   const occupiedSet = useMemo(() => expandOccupied(occupied), [occupied])
   const grid = useMemo(
-    () => buildMonthGrid(year, month, occupiedSet, blocked),
-    [year, month, occupiedSet, blocked],
+    () => buildMonthGrid(year, month, occupiedSet, blocked, today),
+    [year, month, occupiedSet, blocked, today],
   )
 
   function move(delta: number) {

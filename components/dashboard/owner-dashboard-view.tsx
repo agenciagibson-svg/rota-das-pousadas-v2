@@ -50,6 +50,7 @@ export function OwnerDashboardView({
   reviews,
   arrivalsToday,
   departuresToday,
+  upcomingReservations,
 }: {
   displayName: string
   pousadaName: string | null
@@ -62,6 +63,8 @@ export function OwnerDashboardView({
   reviews: ReviewSummary
   arrivalsToday: OwnerReservation[]
   departuresToday: OwnerReservation[]
+  /** Entradas a partir de hoje, já ordenadas e limitadas (`upcomingReservations`). */
+  upcomingReservations: OwnerReservation[]
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -246,7 +249,7 @@ export function OwnerDashboardView({
             </Link>
           </div>
           <div className="mt-4 overflow-x-auto">
-            <OwnerReservationsTable reservations={reservations.slice(0, 5)} />
+            <OwnerReservationsTable reservations={upcomingReservations} />
           </div>
         </div>
 

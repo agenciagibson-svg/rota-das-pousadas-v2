@@ -12,6 +12,7 @@
  * são tratadas em UTC a partir de strings `YYYY-MM-DD`, sem fuso local, para
  * que servidor e banco contem a mesma noite.
  */
+import { isoDateInTimeZone } from '@/lib/dates'
 import { isOccupyingStatus } from '@/features/reservas/status'
 import type { BookingStatus } from '@/features/reservas/types'
 
@@ -191,4 +192,33 @@ export function dayMovements<T extends MetricBooking>(
     arrivals: active.filter((b) => b.checkin === dayISO),
     departures: active.filter((b) => b.checkout === dayISO),
   }
+}
+
+/**
+ * "Hoje" da pousada, no formato que as funções deste arquivo esperam. A data
+ * vem do fuso da pousada: `toISODate(new Date())` dava a data de UTC, que no
+ * Brasil vira o dia seguinte às 21h — e o painel passava a mostrar as chegadas
+ * de amanhã como se fossem de hoje. O meio-dia UTC mantém a mesma data em
+ * qualquer conta de semana ou mês feita com os getters UTC acima.
+ */
+export function pousadaToday(now: Date, timeZone: string): { iso: string; date: Date } {
+  const iso = isoDateInTimeZone(now, timeZone)
+  return { iso, date: new Date(`${iso}T12:00:00Z`) }
+}
+
+/**
+ * "Próximas reservas" do painel: entradas a partir de hoje, só nos status que
+ * ocupam inventário, da mais próxima para a mais distante. Antes o painel pegava
+ * as primeiras da lista geral — as de entrada mais antiga, inclusive canceladas
+ * e já encerradas.
+ */
+export function upcomingReservations<T extends MetricBooking>(
+  bookings: T[],
+  todayISO: string,
+  limit = 5,
+): T[] {
+  return bookings
+    .filter((b) => isOccupyingStatus(b.status) && b.checkin >= todayISO)
+    .sort((a, b) => a.checkin.localeCompare(b.checkin))
+    .slice(0, limit)
 }
