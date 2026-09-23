@@ -1,11 +1,23 @@
-import { getCurrentUser, getOwnerPousada, getOwnerReservations, getOwnerCalendar } from '@/server/queries'
+import {
+  getCurrentUser,
+  getOwnerPousada,
+  getOwnerReservations,
+  getOwnerCalendar,
+} from '@/server/queries'
 import { OwnerReservationsView } from '@/features/gestao'
+import { DEFAULT_TIMEZONE, isoDateInTimeZone } from '@/lib/dates'
 import type { BookingStatus } from '@/features/reservas/types'
 
 export default async function DashboardReservasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; origin?: string; guestName?: string; checkinFrom?: string; checkinTo?: string }>
+  searchParams: Promise<{
+    status?: string
+    origin?: string
+    guestName?: string
+    checkinFrom?: string
+    checkinTo?: string
+  }>
 }) {
   const params = await searchParams
   const filters = {
@@ -33,6 +45,7 @@ export default async function DashboardReservasPage({
       occupied={calendar.occupied}
       blocked={calendar.blocked}
       filters={filters}
+      todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
     />
   )
 }

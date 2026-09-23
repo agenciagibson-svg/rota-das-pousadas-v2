@@ -28,13 +28,17 @@ export async function listMembershipsByPousada(pousadaId: string): Promise<Membe
     .order('created_at', { ascending: true })
   if (error) throw error
 
-  const userIds = [...new Set((rows ?? []).map((r) => r.user_id))]
-  const { data: profiles } = userIds.length
-    ? await supabase.from('profiles').select('id, full_name').in('id', userIds)
-    : { data: [] }
-  const nameByUser = new Map((profiles ?? []).map((p) => [p.id, p.full_name]))
+  // Nomes pela RPC (0068): a RLS de `profiles` só mostra o próprio perfil, e
+  // ler a tabela direto deixava toda a equipe como "Sem nome".
+  const { data: nameRows } = await supabase.rpc('list_membership_names', {
+    p_pousada_id: pousadaId,
+  })
+  const names = (nameRows ?? []) as { user_id: string; full_name: string | null }[]
+  const nameByUser = new Map(names.map((r) => [r.user_id, r.full_name]))
 
-  const { data: emailRows } = await supabase.rpc('list_membership_emails', { p_pousada_id: pousadaId })
+  const { data: emailRows } = await supabase.rpc('list_membership_emails', {
+    p_pousada_id: pousadaId,
+  })
   const emails = (emailRows ?? []) as { user_id: string; email: string }[]
   const emailByUser = new Map(emails.map((r) => [r.user_id, r.email]))
 
@@ -118,7 +122,11 @@ export async function inviteMembership(input: {
  * (último proprietário ativo, autopromoção, vínculo pertence à pousada) valem
  * mesmo para quem chamar a API do Supabase direto, contornando o app.
  */
-export async function updateMembershipRole(pousadaId: string, id: string, role: Role): Promise<void> {
+export async function updateMembershipRole(
+  pousadaId: string,
+  id: string,
+  role: Role,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('update_member_role', {
     p_pousada_id: pousadaId,
@@ -128,7 +136,11 @@ export async function updateMembershipRole(pousadaId: string, id: string, role: 
   if (error) throw new Error(error.message)
 }
 
-export async function suspendMembership(pousadaId: string, id: string, reason: string): Promise<void> {
+export async function suspendMembership(
+  pousadaId: string,
+  id: string,
+  reason: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('suspend_member', {
     p_pousada_id: pousadaId,
@@ -148,7 +160,9 @@ export async function reactivateMembership(pousadaId: string, id: string): Promi
 }
 
 /** Nome/slug das pousadas de uma lista de ids — usado no seletor de pousada ativa. */
-export async function listPousadaNamesByIds(ids: string[]): Promise<{ id: string; name: string; slug: string }[]> {
+export async function listPousadaNamesByIds(
+  ids: string[],
+): Promise<{ id: string; name: string; slug: string }[]> {
   if (ids.length === 0) return []
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('pousadas').select('id, name, slug').in('id', ids)
@@ -163,7 +177,9 @@ export async function listPousadaNamesByIds(ids: string[]): Promise<{ id: string
  */
 export async function acceptInviteRpc(membershipId: string): Promise<{ pousadaId: string }> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.rpc('accept_membership_invite', { p_membership_id: membershipId })
+  const { data, error } = await supabase.rpc('accept_membership_invite', {
+    p_membership_id: membershipId,
+  })
   if (error) throw new Error(error.message)
   const pousadaId = (data as { pousadaId?: string } | null)?.pousadaId
   if (!pousadaId) throw new Error('Não foi possível aceitar o convite.')
@@ -172,7 +188,9 @@ export async function acceptInviteRpc(membershipId: string): Promise<{ pousadaId
 
 export async function declineInviteRpc(membershipId: string): Promise<void> {
   const supabase = await createSupabaseServerClient()
-  const { error } = await supabase.rpc('decline_membership_invite', { p_membership_id: membershipId })
+  const { error } = await supabase.rpc('decline_membership_invite', {
+    p_membership_id: membershipId,
+  })
   if (error) throw new Error(error.message)
 }
 

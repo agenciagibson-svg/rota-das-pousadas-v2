@@ -1,7 +1,11 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { setBookingStatusRpc } from '@/repositories/bookings.repository'
-import { blockCalendarDay, unblockCalendarDay, listBlockedCalendarDays } from '@/repositories/room-blocks.repository'
+import {
+  blockCalendarDay,
+  unblockCalendarDay,
+  listBlockedCalendarDays,
+} from '@/repositories/room-blocks.repository'
 import { nightsBetween } from '@/features/reservas/pricing'
 import type { BookingStatus } from '@/features/reservas/types'
 import type {
@@ -16,7 +20,7 @@ export async function getManagedPousada(pousadaId: string): Promise<ManagedPousa
   const supabase = await createSupabaseServerClient()
   const { data: p, error } = await supabase
     .from('pousadas')
-    .select('id, slug, name, status')
+    .select('id, slug, name, status, timezone')
     .eq('id', pousadaId)
     .maybeSingle()
   if (error) throw error
@@ -30,12 +34,17 @@ export async function getManagedPousada(pousadaId: string): Promise<ManagedPousa
     .limit(1)
     .maybeSingle()
 
-  return { id: p.id, slug: p.slug, name: p.name, status: p.status, roomId: room?.id ?? '' }
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    status: p.status,
+    roomId: room?.id ?? '',
+    timezone: p.timezone,
+  }
 }
 
-export async function getPousadaSettings(
-  pousadaId: string,
-): Promise<OwnerPousadaSettings | null> {
+export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousadaSettings | null> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('pousadas')

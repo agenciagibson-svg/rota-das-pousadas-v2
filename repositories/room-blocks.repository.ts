@@ -113,7 +113,11 @@ function nextDayIso(date: string): string {
  * de timezone diferente do resto do app) com `source='legacy_calendar'` e um
  * motivo padrão (o calendário legado não coleta motivo — UX de um clique).
  */
-export async function blockCalendarDay(pousadaId: string, roomId: string, date: string): Promise<void> {
+export async function blockCalendarDay(
+  pousadaId: string,
+  roomId: string,
+  date: string,
+): Promise<void> {
   await createRoomBlock({
     pousadaId,
     roomId,
@@ -132,7 +136,11 @@ export async function blockCalendarDay(pousadaId: string, roomId: string, date: 
  * bloqueio maior (criado na tela de Bloqueios), recusa e orienta o usuário —
  * nunca cancela um bloqueio maior por engano a partir de um clique de 1 dia.
  */
-export async function unblockCalendarDay(pousadaId: string, roomId: string, date: string): Promise<void> {
+export async function unblockCalendarDay(
+  pousadaId: string,
+  roomId: string,
+  date: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const dayStart = toDayIso(date)
   const dayEnd = nextDayIso(date)
@@ -145,7 +153,13 @@ export async function unblockCalendarDay(pousadaId: string, roomId: string, date
     .gt('ends_at', dayStart)
   if (error) throw error
 
-  const exact = (data ?? []).find((b) => b.starts_at === dayStart && b.ends_at === dayEnd)
+  // Compara instantes, não texto: o PostgREST devolve `2026-10-05T00:00:00+00:00`
+  // e `toISOString()` gera `2026-10-05T00:00:00.000Z` — como texto nunca
+  // batiam, e todo desbloqueio caía no aviso de "bloqueio maior".
+  const sameInstant = (a: string, b: string) => new Date(a).getTime() === new Date(b).getTime()
+  const exact = (data ?? []).find(
+    (b) => sameInstant(b.starts_at, dayStart) && sameInstant(b.ends_at, dayEnd),
+  )
   if (!exact) {
     if ((data ?? []).length > 0) {
       throw new Error('Este dia faz parte de um bloqueio maior — cancele pela tela de Bloqueios.')
@@ -158,7 +172,11 @@ export async function unblockCalendarDay(pousadaId: string, roomId: string, date
 /** Expande os bloqueios ATIVOS de um quarto em datas civis individuais (para o calendário legado, que trabalha com lista de dias). */
 export async function listBlockedCalendarDays(roomId: string): Promise<string[]> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from('room_blocks').select('starts_at, ends_at').eq('room_id', roomId).eq('status', 'active')
+  const { data, error } = await supabase
+    .from('room_blocks')
+    .select('starts_at, ends_at')
+    .eq('room_id', roomId)
+    .eq('status', 'active')
   if (error) throw error
 
   const days = new Set<string>()
@@ -173,7 +191,11 @@ export async function listBlockedCalendarDays(roomId: string): Promise<string[]>
   return [...days]
 }
 
-export async function cancelRoomBlock(pousadaId: string, blockId: string, cancellationReason: string): Promise<void> {
+export async function cancelRoomBlock(
+  pousadaId: string,
+  blockId: string,
+  cancellationReason: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('cancel_room_block', {
     p_pousada_id: pousadaId,

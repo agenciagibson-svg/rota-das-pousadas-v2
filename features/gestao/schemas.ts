@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { ufSchema, phoneSchema, cepSchema } from '@/lib/validation/br'
+import { isValidTimeZone } from '@/lib/dates'
 import type { BookingStatus } from '@/features/reservas/types'
 
 /** Ação sobre uma data do calendário, como bloquear ou desbloquear. */
@@ -83,7 +84,14 @@ export const pousadaSettingsSchema = z.object({
     .refine(isPousadaImage, 'Informe uma URL (https://...) ou um caminho do site (/...).'),
   description: z.string().trim().min(20, 'Descreva melhor a pousada.').max(1500),
   tags: z.string().trim().max(160, 'Use no máximo 160 caracteres.'),
-  timezone: z.string().trim().min(2, 'Informe o fuso horário.').max(60),
+  // O fuso define o "hoje" do painel, das reservas pelo site e do check-in;
+  // texto livre ("Brasília") o banco não reconhece.
+  timezone: z
+    .string()
+    .trim()
+    .min(2, 'Informe o fuso horário.')
+    .max(60)
+    .refine(isValidTimeZone, 'Fuso inválido. Use o nome oficial, como America/Sao_Paulo.'),
   currency: z
     .string()
     .trim()

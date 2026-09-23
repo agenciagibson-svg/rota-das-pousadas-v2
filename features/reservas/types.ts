@@ -3,7 +3,8 @@
  * tabela não tinha nenhuma linha real no momento da migração, então não há
  * valor antigo (iniciada/aguardando_pagamento/...) sobrevivendo em produção.
  */
-export type BookingStatus = 'quote' | 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
+export type BookingStatus =
+  'quote' | 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show'
 
 export type BookingOrigin =
   | 'rota_das_pousadas'
@@ -16,6 +17,8 @@ export type BookingOrigin =
   | 'expedia'
   | 'agencia'
   | 'outro'
+  // Reserva feita pelo site por quem chegou pelo link da bio (0045/0067).
+  | 'link_bio'
 
 /** Detalhamento de preço de uma reserva (valores em reais inteiros). */
 export type PriceBreakdown = {

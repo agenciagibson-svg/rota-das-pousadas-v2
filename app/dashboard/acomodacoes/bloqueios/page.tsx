@@ -1,5 +1,12 @@
-import { getCurrentUser, getOwnerPousada, getOwnerBlocks, getOwnerRooms, canManageBlocks } from '@/server/queries'
+import {
+  getCurrentUser,
+  getOwnerPousada,
+  getOwnerBlocks,
+  getOwnerRooms,
+  canManageBlocks,
+} from '@/server/queries'
 import { BlocksView } from '@/features/acomodacoes'
+import { DEFAULT_TIMEZONE, civilNow } from '@/lib/dates'
 
 export default async function DashboardBloqueiosPage() {
   const [user, pousada, blocks, rooms, canManage] = await Promise.all([
@@ -19,6 +26,7 @@ export default async function DashboardBloqueiosPage() {
       blocks={blocks}
       rooms={rooms}
       canManage={canManage}
+      nowCivilISO={civilNow(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE).toISOString()}
     />
   )
 }

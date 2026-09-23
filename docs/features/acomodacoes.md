@@ -5,16 +5,16 @@ com uma acomodação padrão; aqui o dono adiciona, lista e remove quartos.
 
 ## Camadas
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Types | `features/acomodacoes/types.ts` | `ManagedRoom` |
-| Schemas | `features/acomodacoes/schemas.ts` | `createRoomSchema`, `roomIdSchema` (Zod) |
-| Repository | `repositories/rooms.repository.ts` | `listRoomsByPousada`, `insertRoom`, `deleteRoom` |
-| Service | `features/acomodacoes/services/rooms.service.ts` | resolve pousada do dono; add/list/remove (guarda de FK) |
-| Server Query | `server/queries.ts` → `getOwnerRooms` | cache por request |
-| Server Actions | `features/acomodacoes/actions.ts` | `createRoomAction`, `deleteRoomAction` |
-| UI | `rooms-view`, `room-form` | lista + form + remover (Design System) |
-| Página | `app/dashboard/acomodacoes` | painel de acomodações |
+| Camada         | Arquivo                                          | Papel                                                   |
+| -------------- | ------------------------------------------------ | ------------------------------------------------------- |
+| Types          | `features/acomodacoes/types.ts`                  | `ManagedRoom`                                           |
+| Schemas        | `features/acomodacoes/schemas.ts`                | `createRoomSchema`, `roomIdSchema` (Zod)                |
+| Repository     | `repositories/rooms.repository.ts`               | `listRoomsByPousada`, `insertRoom`, `deleteRoom`        |
+| Service        | `features/acomodacoes/services/rooms.service.ts` | resolve pousada do dono; add/list/remove (guarda de FK) |
+| Server Query   | `server/queries.ts` → `getOwnerRooms`            | cache por request                                       |
+| Server Actions | `features/acomodacoes/actions.ts`                | `createRoomAction`, `deleteRoomAction`                  |
+| UI             | `rooms-view`, `room-form`                        | lista + form + remover (Design System)                  |
+| Página         | `app/dashboard/acomodacoes`                      | painel de acomodações                                   |
 
 ## Regras
 
@@ -34,3 +34,17 @@ com uma acomodação padrão; aqui o dono adiciona, lista e remove quartos.
 - Editar quarto (não só add/remove).
 - Seleção de quarto no fluxo de reserva do hóspede.
 - Fotos por acomodação (Supabase Storage) e comodidades por quarto.
+
+## Horário dos bloqueios (23/09/2026)
+
+- Bloqueios guardam a hora civil da pousada como UTC — o mesmo referencial
+  das datas de reserva, em que o dia D vale D 00:00 UTC, e que a checagem de
+  disponibilidade usa. `civilDateTimeToISO` (`lib/dates.ts`) grava assim o
+  valor do campo de data/hora, sem depender do fuso do servidor.
+- A lista formatava esse instante no fuso do navegador e somava o fuso de
+  novo: quem digitava 14:00 via 11:00. Agora `formatBlockDateTime`
+  (`features/acomodacoes/block-time.ts`) mostra a hora digitada, e
+  Futuro/Vigente/Expirado compara com o relógio da pousada no mesmo
+  referencial (`civilNow`, calculado no servidor).
+- As noites bloqueadas para venda não mudaram; o erro era só de exibição.
+- Testes: `features/acomodacoes/block-time.test.ts`.

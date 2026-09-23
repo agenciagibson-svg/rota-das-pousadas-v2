@@ -2343,6 +2343,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_membership_names: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       list_platform_hosts: {
         Args: never
         Returns: {
@@ -2395,6 +2402,10 @@ export type Database = {
           operational_note: string
           operational_status: Database['public']['Enums']['room_operational_status']
         }[]
+      }
+      pousada_local_date: {
+        Args: { p_pousada_id: string }
+        Returns: string
       }
       purge_stale_quote_requests: {
         Args: { p_retention_days?: number }

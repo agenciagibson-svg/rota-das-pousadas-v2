@@ -18,6 +18,7 @@ import {
   getBookableRoom,
 } from '@/server/queries'
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
+import { bioOriginFromParam } from '@/features/reservas'
 import { MapPin, Star } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -43,7 +44,7 @@ export default async function PousadaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string }>
+  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string; origem?: string }>
 }) {
   const { slug } = await params
   const initialBooking = await searchParams
@@ -83,6 +84,7 @@ export default async function PousadaPage({
           }}
           favorite={favorite}
           isLoggedIn={Boolean(currentUser)}
+          bookingOrigin={bioOriginFromParam(initialBooking.origem)}
         />
 
         {/* Nearby experiences */}

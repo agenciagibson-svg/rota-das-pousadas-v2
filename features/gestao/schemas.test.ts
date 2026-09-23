@@ -48,3 +48,24 @@ describe('pousadaSettingsSchema — imagem principal', () => {
     }
   })
 })
+
+describe('pousadaSettingsSchema — fuso horário', () => {
+  function timezoneResult(timezone: string) {
+    return pousadaSettingsSchema.safeParse({ ...base, timezone })
+  }
+
+  it('aceita fusos IANA do Brasil', () => {
+    expect(timezoneResult('America/Sao_Paulo').success).toBe(true)
+    expect(timezoneResult('America/Manaus').success).toBe(true)
+  })
+
+  it('recusa texto livre, que o banco não reconhece como fuso', () => {
+    const result = timezoneResult('Brasília')
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.timezone?.[0]).toBe(
+        'Fuso inválido. Use o nome oficial, como America/Sao_Paulo.',
+      )
+    }
+  })
+})

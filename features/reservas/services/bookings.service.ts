@@ -95,7 +95,7 @@ export async function createBooking(
     servicesAmount: 0,
     total: price.total,
     status: 'pending',
-    origin: 'rota_das_pousadas',
+    origin: input.origin ?? 'rota_das_pousadas',
     travelerUserId: user.id,
     paymentDueAt: paymentDueAt(),
   })

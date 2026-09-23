@@ -332,3 +332,82 @@ select test_assert((select rating = 3 and response like 'Obrigado!%' from review
   'dono responde sem mexer na nota');
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
+
+-- Reserva pelo site (0067): o "hoje" é o do fuso da pousada, não o de UTC
+-- (das 21h à meia-noite em Brasília o banco recusava a entrada no mesmo dia),
+-- e quem chega pelo link da bio fica marcado como `link_bio`.
+-- Fuso em que a data local difere da de UTC agora: a oeste (UTC-12) de manhã
+-- em UTC, a leste (UTC+14) no resto do dia — o teste vale a qualquer hora.
+update pousadas set timezone = case when extract(hour from now() at time zone 'UTC') < 11
+  then 'Etc/GMT+12' else 'Pacific/Kiritimati' end
+where id = '10000000-0000-0000-0000-000000000001';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', false);
+do $$
+declare
+  v_local date := (now() at time zone (select timezone from pousadas where id = '10000000-0000-0000-0000-000000000001'))::date;
+  v_utc date := (now() at time zone 'UTC')::date;
+  v_guest uuid := (ensure_traveler_guest('10000000-0000-0000-0000-000000000001', 'Viajante Teste', 'viajante@example.test')->>'id')::uuid;
+begin
+  perform test_assert(v_local <> v_utc, 'cenário com a data da pousada diferente da de UTC');
+  if v_local < v_utc then
+    -- Na pousada ainda é "ontem" em UTC: a entrada hoje (data local) vale.
+    perform create_booking('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', v_guest,
+      'SITE-HOJE', v_local, v_local + 1, 1, 0, 0, false, 200, 0, 0, 0, 0, 200, 'pending',
+      'rota_das_pousadas', '00000000-0000-0000-0000-000000000011');
+  else
+    -- Na pousada já é amanhã: a data de UTC virou passado.
+    begin
+      perform create_booking('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', v_guest,
+        'SITE-ONTEM', v_utc, v_utc + 1, 1, 0, 0, false, 200, 0, 0, 0, 0, 200, 'pending',
+        'rota_das_pousadas', '00000000-0000-0000-0000-000000000011');
+      raise exception 'TEST: reserva pelo site aceitou data que já passou no fuso da pousada';
+    exception when raise_exception then
+      if sqlerrm <> 'A data de entrada não pode ser no passado.' then raise; end if;
+    end;
+  end if;
+  begin
+    perform create_booking('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', v_guest,
+      'SITE-BALCAO', v_local + 20, v_local + 21, 1, 0, 0, false, 200, 0, 0, 0, 0, 200, 'pending',
+      'balcao', '00000000-0000-0000-0000-000000000011');
+    raise exception 'TEST: reserva pelo site gravou origem de balcão';
+  exception when raise_exception then
+    if sqlerrm <> 'Origem inválida para reserva pública.' then raise; end if;
+  end;
+  perform create_booking('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', v_guest,
+    'SITE-BIO', v_local + 20, v_local + 21, 1, 0, 0, false, 200, 0, 0, 0, 0, 200, 'pending',
+    'link_bio', '00000000-0000-0000-0000-000000000011');
+end $$;
+select test_assert((select count(*) from bookings where origin = 'link_bio' and guest_id = '00000000-0000-0000-0000-000000000011') = 1,
+  'reserva vinda do link da bio fica marcada como link_bio');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+-- Fuso inválido gravado nas Configurações cai em Brasília em vez de travar a reserva.
+update pousadas set timezone = 'Brasília' where id = '10000000-0000-0000-0000-000000000001';
+select test_assert(pousada_local_date('10000000-0000-0000-0000-000000000001') = (now() at time zone 'America/Sao_Paulo')::date,
+  'fuso inválido usa a data de Brasília');
+select test_assert(not has_function_privilege('authenticated', 'pousada_local_date(uuid)', 'EXECUTE'), 'helper de data não é RPC pública');
+update pousadas set timezone = 'America/Sao_Paulo' where id = '10000000-0000-0000-0000-000000000001';
+
+-- Membros (0068): a RLS de `profiles` só mostra o próprio perfil, então a tela
+-- de Membros exibia "Sem nome" para toda a equipe. A RPC devolve só o nome dos
+-- membros da pousada, e só para quem pode ver a equipe (mesma regra dos e-mails).
+insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000012', 'recepcao-a@example.test');
+update profiles set full_name = 'Recepção da Pousada A' where id = '00000000-0000-0000-0000-000000000012';
+insert into memberships(user_id, pousada_id, role, status) values
+ ('00000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000001', 'recepcionista', 'active');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+select test_assert(not exists(select 1 from profiles where id = '00000000-0000-0000-0000-000000000012'),
+  'perfil de outro membro segue invisível pela tabela');
+select test_assert((select full_name from list_membership_names('10000000-0000-0000-0000-000000000001')
+  where user_id = '00000000-0000-0000-0000-000000000012') = 'Recepção da Pousada A', 'dono vê o nome da equipe');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000012', false);
+select test_assert((select count(*) from list_membership_names('10000000-0000-0000-0000-000000000001')) = 0,
+  'recepção não lista a equipe');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select test_assert((select count(*) from list_membership_names('10000000-0000-0000-0000-000000000001')) = 0,
+  'dono de outra pousada não lista a equipe');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select test_assert(not has_function_privilege('anon', 'list_membership_names(uuid)', 'EXECUTE'), 'anon não lista nomes');

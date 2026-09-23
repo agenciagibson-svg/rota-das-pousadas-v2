@@ -11,4 +11,5 @@ export const ORIGIN_LABEL: Record<BookingOrigin, string> = {
   expedia: 'Expedia',
   agencia: 'Agência',
   outro: 'Outro',
+  link_bio: 'Link da bio',
 }

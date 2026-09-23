@@ -1,6 +1,15 @@
 import { z } from 'zod'
 
-const BED_TYPES = ['casal', 'queen', 'king', 'solteiro', 'beliche', 'sofa_cama', 'berco', 'outro'] as const
+const BED_TYPES = [
+  'casal',
+  'queen',
+  'king',
+  'solteiro',
+  'beliche',
+  'sofa_cama',
+  'berco',
+  'outro',
+] as const
 export const bedConfigItemSchema = z.object({
   type: z.enum(BED_TYPES),
   quantity: z.coerce.number().int().min(1).max(20),
@@ -66,7 +75,15 @@ export type RoomStatusInput = z.infer<typeof roomStatusSchema>
 
 export const roomOperationalStatusSchema = z.object({
   id: z.string().uuid('Identificador inválido.'),
-  status: z.enum(['available', 'occupied', 'awaiting_cleaning', 'cleaning', 'inspection_pending', 'maintenance', 'blocked']),
+  status: z.enum([
+    'available',
+    'occupied',
+    'awaiting_cleaning',
+    'cleaning',
+    'inspection_pending',
+    'maintenance',
+    'blocked',
+  ]),
 })
 export type RoomOperationalStatusInput = z.infer<typeof roomOperationalStatusSchema>
 
@@ -80,12 +97,15 @@ const BLOCK_TYPES = [
   'other',
 ] as const
 
+/** Valor de `<input type="datetime-local">`: data e hora, sem fuso (ver `civilDateTimeToISO`). */
+const LOCAL_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/
+
 export const createBlockSchema = z
   .object({
     roomId: z.string().uuid('Selecione a acomodação.'),
     blockType: z.enum(BLOCK_TYPES),
-    startsAt: z.string().min(1, 'Informe a data/hora inicial.'),
-    endsAt: z.string().min(1, 'Informe a data/hora final.'),
+    startsAt: z.string().regex(LOCAL_DATE_TIME, 'Informe a data/hora inicial.'),
+    endsAt: z.string().regex(LOCAL_DATE_TIME, 'Informe a data/hora final.'),
     reason: z.string().trim().min(3, 'Informe o motivo do bloqueio.').max(300),
     notes: z.string().trim().max(1000).optional().or(z.literal('')),
   })

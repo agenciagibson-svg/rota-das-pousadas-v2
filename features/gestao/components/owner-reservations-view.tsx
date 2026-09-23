@@ -19,6 +19,7 @@ export function OwnerReservationsView({
   occupied,
   blocked,
   filters,
+  todayISO,
 }: {
   displayName: string
   pousadaName: string
@@ -26,6 +27,8 @@ export function OwnerReservationsView({
   occupied: DateRange[]
   blocked: string[]
   filters: GestaoReservationFilters
+  /** "Hoje" no fuso da pousada — separa dias passados de livres no calendário. */
+  todayISO: string
 }) {
   return (
     <DashboardShell
@@ -38,32 +41,62 @@ export function OwnerReservationsView({
     >
       <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[0.95fr_1.35fr]">
         <Card className="p-6">
-          <h2 className="font-semibold text-foreground">Calendário &amp; disponibilidade</h2>
-          <p className="text-sm text-muted-foreground">Clique em um dia livre para bloquear.</p>
+          <h2 className="text-foreground font-semibold">Calendário &amp; disponibilidade</h2>
+          <p className="text-muted-foreground text-sm">Clique em um dia livre para bloquear.</p>
           <div className="mt-5">
-            <ReservationsCalendar occupied={occupied} blocked={blocked} />
+            <ReservationsCalendar occupied={occupied} blocked={blocked} todayISO={todayISO} />
           </div>
         </Card>
 
         <div className="space-y-5">
           <Card className="p-5">
             <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" method="get">
-              <select name="status" defaultValue={filters.status ?? ''} className="rounded-lg border border-input bg-card px-3 py-2 text-sm">
+              <select
+                name="status"
+                defaultValue={filters.status ?? ''}
+                className="border-input bg-card rounded-lg border px-3 py-2 text-sm"
+              >
                 <option value="">Status (todos)</option>
                 {Object.entries(BOOKING_STATUS).map(([value, s]) => (
-                  <option key={value} value={value}>{s.label}</option>
+                  <option key={value} value={value}>
+                    {s.label}
+                  </option>
                 ))}
               </select>
-              <select name="origin" defaultValue={filters.origin ?? ''} className="rounded-lg border border-input bg-card px-3 py-2 text-sm">
+              <select
+                name="origin"
+                defaultValue={filters.origin ?? ''}
+                className="border-input bg-card rounded-lg border px-3 py-2 text-sm"
+              >
                 <option value="">Origem (todas)</option>
                 {Object.entries(ORIGIN_LABEL).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
                 ))}
               </select>
-              <input name="guestName" defaultValue={filters.guestName ?? ''} placeholder="Hóspede" className="rounded-lg border border-input bg-card px-3 py-2 text-sm" />
-              <input name="checkinFrom" type="date" defaultValue={filters.checkinFrom ?? ''} className="rounded-lg border border-input bg-card px-3 py-2 text-sm" />
-              <input name="checkinTo" type="date" defaultValue={filters.checkinTo ?? ''} className="rounded-lg border border-input bg-card px-3 py-2 text-sm" />
-              <button type="submit" className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
+              <input
+                name="guestName"
+                defaultValue={filters.guestName ?? ''}
+                placeholder="Hóspede"
+                className="border-input bg-card rounded-lg border px-3 py-2 text-sm"
+              />
+              <input
+                name="checkinFrom"
+                type="date"
+                defaultValue={filters.checkinFrom ?? ''}
+                className="border-input bg-card rounded-lg border px-3 py-2 text-sm"
+              />
+              <input
+                name="checkinTo"
+                type="date"
+                defaultValue={filters.checkinTo ?? ''}
+                className="border-input bg-card rounded-lg border px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm font-semibold"
+              >
                 Filtrar
               </button>
             </form>
@@ -72,8 +105,8 @@ export function OwnerReservationsView({
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-semibold text-foreground">Todas as reservas</h2>
-                <p className="text-sm text-muted-foreground">{reservations.length} no total.</p>
+                <h2 className="text-foreground font-semibold">Todas as reservas</h2>
+                <p className="text-muted-foreground text-sm">{reservations.length} no total.</p>
               </div>
               <Link href="/dashboard/reservas/nova" className={buttonVariants({ size: 'sm' })}>
                 <Plus className="size-4" />

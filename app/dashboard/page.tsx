@@ -11,8 +11,9 @@ import {
   calculateOccupancy,
   dayMovements,
   monthlyRevenue,
+  pousadaToday,
   summarizeReviews,
-  toISODate,
+  upcomingReservations,
   weeklyDailies,
 } from '@/features/dashboard/metrics'
 
@@ -34,6 +35,7 @@ export default async function DashboardPage() {
         reviews={{ total: 0, average: 0, distribution: [] }}
         arrivalsToday={[]}
         departuresToday={[]}
+        upcomingReservations={[]}
       />
     )
   }
@@ -47,8 +49,9 @@ export default async function DashboardPage() {
     getOwnerReviews().catch(() => []),
   ])
 
-  const now = new Date()
-  const todayISO = toISODate(now)
+  // "Hoje" no fuso da pousada: em UTC o painel já virava o dia às 21h.
+  const today = pousadaToday(new Date(), pousada.timezone)
+  const todayISO = today.iso
 
   const sellableRooms = rooms
     ? rooms.filter(
@@ -62,7 +65,7 @@ export default async function DashboardPage() {
   const occupancy =
     sellableRooms === null
       ? null
-      : calculateOccupancy(reservations, sellableRooms, todayISO, addDays(todayISO, 7), now)
+      : calculateOccupancy(reservations, sellableRooms, todayISO, addDays(todayISO, 7), today.date)
 
   const { arrivals, departures } = dayMovements(reservations, todayISO)
 
@@ -73,11 +76,12 @@ export default async function DashboardPage() {
       pousadaStatus={pousada.status}
       reservations={reservations}
       occupancy={occupancy}
-      revenueSeries={monthlyRevenue(reservations, now)}
-      week={weeklyDailies(reservations, now)}
+      revenueSeries={monthlyRevenue(reservations, today.date)}
+      week={weeklyDailies(reservations, today.date)}
       reviews={summarizeReviews(reviews)}
       arrivalsToday={arrivals}
       departuresToday={departures}
+      upcomingReservations={upcomingReservations(reservations, todayISO)}
     />
   )
 }

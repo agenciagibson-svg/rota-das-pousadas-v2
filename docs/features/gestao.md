@@ -75,3 +75,24 @@ on conflict (user_id, pousada_id) do nothing;
 - Acomodações (múltiplos quartos) e disponibilidade por quarto.
 - Módulos financeiro e RH/funcionários.
 - Bloquear reserva em datas indisponíveis (integrar `availability` ao fluxo do hóspede).
+
+## Visão geral e agenda: "hoje" da pousada (23/09/2026)
+
+- O painel calculava "hoje" com `toISOString()`, a data de UTC: das 21h à
+  meia-noite as chegadas, saídas e a ocupação de amanhã apareciam como de
+  hoje, e na agenda o dia de hoje virava "passado". Agora o "hoje" vem do
+  fuso da pousada (`pousadas.timezone`, via `pousadaToday` em
+  `features/dashboard/metrics.ts` e `isoDateInTimeZone` em `lib/dates.ts`),
+  calculado no servidor e passado para a agenda.
+- Configurações só aceitam fuso IANA (ex.: `America/Sao_Paulo`); texto livre
+  como "Brasília" o banco não reconhece.
+- "Próximas reservas" (`upcomingReservations`): entradas a partir de hoje,
+  só pendentes, confirmadas e hospedadas, da mais próxima para a mais
+  distante. Antes eram as cinco de entrada mais antiga, inclusive canceladas.
+- Desbloquear dia pela agenda: `unblockCalendarDay` comparava as datas como
+  texto (`+00:00` do PostgREST contra `.000Z` do `toISOString()`), nunca
+  achava o bloqueio do dia e respondia "Este dia faz parte de um bloqueio
+  maior". Agora compara os instantes.
+- Testes: `features/dashboard/metrics.test.ts`,
+  `repositories/room-blocks.repository.test.ts` e
+  `features/gestao/schemas.test.ts`.

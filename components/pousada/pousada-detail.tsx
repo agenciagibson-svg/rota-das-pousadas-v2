@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Navigation,
 } from 'lucide-react'
+import { isoDateInTimeZone } from '@/lib/dates'
 import type { Pousada } from '@/lib/data'
 import { Reveal } from '@/components/reveal'
 import { Badge } from '@/components/ui/badge'
@@ -56,8 +57,9 @@ function addDays(date: string, days: number): string {
   return next.toISOString().slice(0, 10)
 }
 
+/** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
+  return isoDateInTimeZone(new Date())
 }
 
 function isIsoDate(value?: string): value is string {
@@ -83,6 +85,7 @@ export function PousadaDetail({
   initialBooking,
   favorite,
   isLoggedIn,
+  bookingOrigin,
 }: {
   pousada: Pousada
   room: BookableRoomInfo | null
@@ -90,6 +93,8 @@ export function PousadaDetail({
   initialBooking?: { checkin?: string; checkout?: string; guests?: string }
   favorite: boolean
   isLoggedIn: boolean
+  /** `link_bio` quando a visita veio do link da bio — segue para a página de reserva. */
+  bookingOrigin?: 'link_bio'
 }) {
   const [active, setActive] = useState(0)
   const [shared, setShared] = useState(false)
@@ -510,7 +515,7 @@ export function PousadaDetail({
                   <input
                     type="date"
                     value={checkin}
-                    min={new Date().toISOString().slice(0, 10)}
+                    min={todayIso()}
                     onChange={(event) => {
                       const nextCheckin = event.target.value
                       setCheckin(nextCheckin)
@@ -553,7 +558,12 @@ export function PousadaDetail({
             <Link
               href={{
                 pathname: `/pousada/${pousada.slug}/reservar`,
-                query: { checkin, checkout, guests },
+                query: {
+                  checkin,
+                  checkout,
+                  guests,
+                  ...(bookingOrigin ? { origem: bookingOrigin } : {}),
+                },
               }}
               aria-disabled={!canReserve}
               className={`mt-4 block w-full rounded-2xl py-3.5 text-center text-sm font-semibold transition-all ${
