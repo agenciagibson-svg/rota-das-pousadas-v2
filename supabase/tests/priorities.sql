@@ -165,4 +165,33 @@ do $$ begin
   end;
 end $$;
 reset role;
+
+-- Hóspede reaproveitado (0063): a "Nova reserva" acha o cadastro pelo e-mail ou
+-- telefone e não pode apagar o que o formulário não envia.
+insert into guests(id, pousada_id, full_name, email, phone, birth_date, city, state, address,
+  internal_notes, document_type, document_number, document_number_hash, document_last4,
+  marketing_consent, preferences) values
+ ('40000000-0000-0000-0000-000000000010', '10000000-0000-0000-0000-000000000001', 'Maria Aparecida da Silva',
+  'maria@example.test', '(31) 99999-0000', '1980-05-20', 'Belo Horizonte', 'MG', 'Rua das Flores, 10',
+  'Prefere quarto térreo', 'cpf', 'documento-cifrado-sintetico', 'hash-sintetico', '0000', true, array['café sem glúten']);
+set role authenticated;
+select test_assert(
+  (upsert_guest(p_pousada_id := '10000000-0000-0000-0000-000000000001', p_full_name := 'Maria',
+    p_email := ' MARIA@example.test', p_phone := '(31) 98888-7777')->>'id') = '40000000-0000-0000-0000-000000000010',
+  'nova reserva reaproveita o hóspede pelo e-mail');
+select test_assert((select full_name = 'Maria Aparecida da Silva' and birth_date = '1980-05-20'
+    and city = 'Belo Horizonte' and state = 'MG' and address = 'Rua das Flores, 10'
+    and internal_notes = 'Prefere quarto térreo' and document_type = 'cpf'
+    and document_number = 'documento-cifrado-sintetico' and document_last4 = '0000'
+    and marketing_consent and preferences = array['café sem glúten'] and email = 'maria@example.test'
+  from guests where id = '40000000-0000-0000-0000-000000000010'), 'nova reserva não apaga a ficha do hóspede');
+select test_assert((select phone from guests where id = '40000000-0000-0000-0000-000000000010') = '(31) 98888-7777',
+  'contato informado na reserva atualiza a ficha');
+-- A edição pelo perfil (com o id) continua gravando exatamente o que o formulário envia.
+select upsert_guest(p_pousada_id := '10000000-0000-0000-0000-000000000001',
+  p_guest_id := '40000000-0000-0000-0000-000000000010', p_full_name := 'Maria Aparecida da Silva',
+  p_email := 'maria@example.test', p_phone := '(31) 98888-7777', p_address := null);
+select test_assert((select address is null from guests where id = '40000000-0000-0000-0000-000000000010'),
+  'edição pelo perfil ainda limpa campo esvaziado');
+reset role;
 select set_config('request.jwt.claim.sub', '', false);

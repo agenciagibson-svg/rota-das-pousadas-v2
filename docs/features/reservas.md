@@ -201,3 +201,19 @@ Rodar no Supabase (SQL Editor), em ordem:
   edição, estender sobre noite fechada), `availability-engine.test.ts` e
   `availability.repository.test.ts`.
 - Rollback: `supabase/rollback/0062_rollback.sql`.
+
+## Nova reserva não apaga a ficha do hóspede reaproveitado (0063)
+
+- `upsert_guest` sem `p_guest_id` reaproveita o cadastro achado por e-mail,
+  telefone ou documento — é o que a Nova reserva do balcão faz. O UPDATE
+  regravava todas as colunas com o pouco que o formulário envia (nome,
+  e-mail, telefone): CPF, nascimento, endereço, observações e preferências
+  eram apagados, e o consentimento de marketing virava falso.
+- No reaproveitamento, agora nada é apagado: o nome e o que já estava
+  preenchido ficam; e-mail, telefone e WhatsApp informados e diferentes
+  atualizam a ficha; o resto só preenche campo vazio; o consentimento nunca
+  é revogado por esse caminho.
+- A edição pelo perfil (com `p_guest_id`) não muda: grava exatamente o que o
+  formulário envia, inclusive campos esvaziados de propósito.
+- Testes: `supabase/tests/priorities.sql`.
+- Rollback: `supabase/rollback/0063_rollback.sql`.
