@@ -24,6 +24,9 @@ das reservas) e **despesas** (lançadas pelo proprietário) em resumo + extrato.
 - Canceladas/expiradas/no-show **não** entram na receita.
 - **Saldo** = receita realizada − despesas.
 - **Despesas**: lançadas manualmente (contas a pagar), com categoria e vencimento.
+- **Consumo** lançado na conta do hóspede (0069) soma na receita da reserva;
+  pagamentos do balcão e do Mercado Pago ficam na mesma conta. Ver
+  [conta-hospede.md](conta-hospede.md).
 
 ## Segurança
 
