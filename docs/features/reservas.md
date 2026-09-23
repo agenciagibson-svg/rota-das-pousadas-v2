@@ -7,17 +7,17 @@ ocorrerá após o pagamento (feature futura), então a reserva nasce como
 
 ## Camadas (ordem da arquitetura)
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Schemas | `features/reservas/schemas.ts` | `createBookingSchema` (Zod: datas, hóspedes) |
-| Types | `features/reservas/types.ts` | `Booking`, `BookingStatus`, `PriceBreakdown` |
-| Pricing | `features/reservas/pricing.ts` | cálculo puro (diária × noites + 8% taxa) — testável |
-| Repository | `repositories/rooms.repository.ts`, `repositories/bookings.repository.ts` | única porta ao banco |
-| Service | `features/reservas/services/bookings.service.ts` | regras: auth, capacidade, período, código, persistência |
-| Server Query | `server/queries.ts` → `getMyBookings`, `getBookableRoom` | wrappers com cache |
-| Server Action | `features/reservas/actions.ts` | `createBookingAction` (Zod → ActionResult) |
-| Components | `features/reservas/components/booking-form.tsx` | formulário RHF + Zod + Design System |
-| Páginas | `app/pousada/[slug]/reservar`, `app/minhas-reservas` | fluxo de reserva + lista |
+| Camada        | Arquivo                                                                   | Papel                                                   |
+| ------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Schemas       | `features/reservas/schemas.ts`                                            | `createBookingSchema` (Zod: datas, hóspedes)            |
+| Types         | `features/reservas/types.ts`                                              | `Booking`, `BookingStatus`, `PriceBreakdown`            |
+| Pricing       | `features/reservas/pricing.ts`                                            | cálculo puro (diária × noites + 8% taxa) — testável     |
+| Repository    | `repositories/rooms.repository.ts`, `repositories/bookings.repository.ts` | única porta ao banco                                    |
+| Service       | `features/reservas/services/bookings.service.ts`                          | regras: auth, capacidade, período, código, persistência |
+| Server Query  | `server/queries.ts` → `getMyBookings`, `getBookableRoom`                  | wrappers com cache                                      |
+| Server Action | `features/reservas/actions.ts`                                            | `createBookingAction` (Zod → ActionResult)              |
+| Components    | `features/reservas/components/booking-form.tsx`                           | formulário RHF + Zod + Design System                    |
+| Páginas       | `app/pousada/[slug]/reservar`, `app/minhas-reservas`                      | fluxo de reserva + lista                                |
 
 ## Fluxo
 
@@ -46,6 +46,7 @@ flowchart TD
 ## Setup de banco necessário
 
 Rodar no Supabase (SQL Editor), em ordem:
+
 - `supabase/migrations/0004_rooms_seed.sql` — cria 1 acomodação por pousada
   publicada (necessário para reservar).
 

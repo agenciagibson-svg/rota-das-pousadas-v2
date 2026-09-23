@@ -24,15 +24,21 @@ describe('evaluateRoomAvailability', () => {
   })
 
   it('indisponível por acomodação inativa', () => {
-    expect(evaluateRoomAvailability(baseInput({ roomStatus: 'inactive' }))).toContain('inactive_room')
+    expect(evaluateRoomAvailability(baseInput({ roomStatus: 'inactive' }))).toContain(
+      'inactive_room',
+    )
   })
 
   it('indisponível por categoria inativa', () => {
-    expect(evaluateRoomAvailability(baseInput({ categoryStatus: 'inactive' }))).toContain('inactive_category')
+    expect(evaluateRoomAvailability(baseInput({ categoryStatus: 'inactive' }))).toContain(
+      'inactive_category',
+    )
   })
 
   it('categoria nula não gera motivo de categoria', () => {
-    expect(evaluateRoomAvailability(baseInput({ categoryStatus: null }))).not.toContain('inactive_category')
+    expect(evaluateRoomAvailability(baseInput({ categoryStatus: null }))).not.toContain(
+      'inactive_category',
+    )
   })
 
   it('indisponível por capacidade insuficiente', () => {
@@ -41,7 +47,9 @@ describe('evaluateRoomAvailability', () => {
   })
 
   it('capacidade exata no limite é válida (sem motivo)', () => {
-    const reasons = evaluateRoomAvailability(baseInput({ capacityMax: 3, requestedAdults: 2, requestedChildren: 1 }))
+    const reasons = evaluateRoomAvailability(
+      baseInput({ capacityMax: 3, requestedAdults: 2, requestedChildren: 1 }),
+    )
     expect(reasons).not.toContain('insufficient_capacity')
   })
 
@@ -51,7 +59,9 @@ describe('evaluateRoomAvailability', () => {
   })
 
   it('pet não solicitado não gera motivo mesmo se a acomodação não aceita', () => {
-    const reasons = evaluateRoomAvailability(baseInput({ petsAllowed: false, requestedPets: false }))
+    const reasons = evaluateRoomAvailability(
+      baseInput({ petsAllowed: false, requestedPets: false }),
+    )
     expect(reasons).not.toContain('pets_not_allowed')
   })
 
@@ -77,16 +87,25 @@ describe('evaluateRoomAvailability', () => {
   })
 
   it('indisponível por bloqueio no período', () => {
-    expect(evaluateRoomAvailability(baseInput({ hasBlockConflict: true }))).toContain('blocked_period')
+    expect(evaluateRoomAvailability(baseInput({ hasBlockConflict: true }))).toContain(
+      'blocked_period',
+    )
   })
 
   it('indisponível por reserva conflitante', () => {
-    expect(evaluateRoomAvailability(baseInput({ hasBookingConflict: true }))).toContain('booking_conflict')
+    expect(evaluateRoomAvailability(baseInput({ hasBookingConflict: true }))).toContain(
+      'booking_conflict',
+    )
   })
 
   it('acumula múltiplos motivos simultâneos', () => {
     const reasons = evaluateRoomAvailability(
-      baseInput({ roomStatus: 'inactive', capacityMax: 1, requestedAdults: 5, hasBlockConflict: true }),
+      baseInput({
+        roomStatus: 'inactive',
+        capacityMax: 1,
+        requestedAdults: 5,
+        hasBlockConflict: true,
+      }),
     )
     expect(reasons).toEqual(
       expect.arrayContaining(['inactive_room', 'insufficient_capacity', 'blocked_period']),

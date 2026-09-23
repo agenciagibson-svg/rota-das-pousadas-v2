@@ -2,7 +2,10 @@ import type { RoomOperationalStatus, RoomBlockType, AvailabilityReason } from '.
 
 type BadgeVariant = 'primarySoft' | 'goldSoft' | 'destructiveSoft' | 'secondary' | 'accentSoft'
 
-export const OPERATIONAL_STATUS_LABEL: Record<RoomOperationalStatus, { label: string; variant: BadgeVariant }> = {
+export const OPERATIONAL_STATUS_LABEL: Record<
+  RoomOperationalStatus,
+  { label: string; variant: BadgeVariant }
+> = {
   available: { label: 'Disponível', variant: 'primarySoft' },
   occupied: { label: 'Ocupada', variant: 'accentSoft' },
   awaiting_cleaning: { label: 'Aguardando limpeza', variant: 'goldSoft' },
