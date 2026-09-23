@@ -226,3 +226,46 @@ do $$ begin
 end $$;
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
+
+-- Pousadas (0065): só a equipe da Rota publica pousada ou mexe em nota,
+-- situação da conta, dono e demais colunas de controle.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    update pousadas set status = 'arquivada' where id = '10000000-0000-0000-0000-000000000001';
+    raise exception 'TEST: dono mudou a publicação da própria pousada';
+  exception when raise_exception then
+    if sqlerrm not like 'Só a equipe da Rota pode alterar%' then raise; end if;
+  end;
+  begin
+    update pousadas set rating = 5, reviews = 999 where id = '10000000-0000-0000-0000-000000000001';
+    raise exception 'TEST: dono inflou a nota da própria pousada';
+  exception when raise_exception then
+    if sqlerrm not like 'Só a equipe da Rota pode alterar%' then raise; end if;
+  end;
+  begin
+    insert into pousadas(slug, name, city, state, status, owner_id)
+    values ('pousada-atalho', 'Pousada Atalho', 'Cidade', 'MG', 'publicada', '00000000-0000-0000-0000-000000000001');
+    raise exception 'TEST: dono criou pousada já publicada';
+  exception when raise_exception then
+    if sqlerrm not like 'Pousada nova começa em análise%' then raise; end if;
+  end;
+end $$;
+do $$ declare changed integer; begin
+  update pousadas set description = 'Descrição revisada pelo dono da pousada A.'
+  where id = '10000000-0000-0000-0000-000000000001';
+  get diagnostics changed = row_count;
+  perform test_assert(changed = 1, 'dono continua salvando as configurações');
+end $$;
+select test_assert(create_pousada('Pousada Nova', 'Cidade', 'MG', 'Pousada nova cadastrada pelo dono.', 150,
+  'pousada-nova-teste') = 'pousada-nova-teste', 'cadastro pelo /anunciar continua funcionando');
+select test_assert((select status from pousadas where slug = 'pousada-nova-teste') = 'em_analise', 'cadastro nasce em análise');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
+do $$ declare changed integer; begin
+  update pousadas set status = 'publicada' where slug = 'pousada-nova-teste';
+  get diagnostics changed = row_count;
+  perform test_assert(changed = 1, 'equipe da Rota publica a pousada');
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
