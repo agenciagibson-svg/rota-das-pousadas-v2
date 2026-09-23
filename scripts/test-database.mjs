@@ -63,7 +63,9 @@ try {
   for (const file of readdirSync(`${root}/supabase/migrations`)
     .filter((file) => file.endsWith('.sql'))
     .sort()) {
-    sql(`BEGIN;\n${readFileSync(`${root}/supabase/migrations/${file}`, 'utf8')}\nCOMMIT;`)
+    // O `;` avulso fecha uma última instrução sem ponto e vírgula (a CLI do
+    // Supabase aceita) antes do COMMIT, que senão vira parte dela (0060).
+    sql(`BEGIN;\n${readFileSync(`${root}/supabase/migrations/${file}`, 'utf8')}\n;\nCOMMIT;`)
     console.log(`migration ${file}: OK`)
   }
   sql(readFileSync(`${root}/supabase/tests/priorities.sql`, 'utf8'))
