@@ -138,7 +138,8 @@ export async function setOperationalStatus(
   status: ManagedRoom['operationalStatus'],
 ): Promise<void> {
   const { pousadaId } = await requireCapability('room:status:manage')
-  await requireRoomInActivePousada(id, pousadaId)
+  // Sem pré-leitura de `rooms`: a Governança não tem leitura direta (rooms_read)
+  // e a RPC já confere que a acomodação existe e é desta pousada.
   await updateRoomOperationalStatus(pousadaId, id, status)
   // Auditoria gravada atomicamente pela RPC — não duplicar aqui.
 }
