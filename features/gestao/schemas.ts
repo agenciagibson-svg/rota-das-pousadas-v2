@@ -52,6 +52,21 @@ export type ReviewResponseActionInput = z.infer<typeof reviewResponseActionSchem
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
+/**
+ * Imagem da pousada: vazio, caminho do próprio site (ex.: `/placeholder.svg`,
+ * que o cadastro do /anunciar grava) ou URL http(s). Sem `//` nem `\` no
+ * início do caminho, que o navegador trataria como outro domínio.
+ */
+function isPousadaImage(value: string): boolean {
+  if (value === '' || /^\/(?![/\\])[^\s\\]*$/.test(value)) return true
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || url.protocol === 'http:'
+  } catch {
+    return false
+  }
+}
+
 export const pousadaSettingsSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome.').max(120, 'Nome muito longo.'),
   legalName: z.string().trim().max(160, 'Razão social muito longa.'),
@@ -61,7 +76,11 @@ export const pousadaSettingsSchema = z.object({
   country: z.string().trim().min(2, 'Informe o país.').max(60, 'País muito longo.'),
   address: z.string().trim().max(200, 'Endereço muito longo.'),
   cep: cepSchema.or(z.literal('')),
-  image: z.string().trim().url('Informe uma URL de imagem válida.').or(z.literal('')),
+  image: z
+    .string()
+    .trim()
+    .max(2048, 'Endereço de imagem muito longo.')
+    .refine(isPousadaImage, 'Informe uma URL (https://...) ou um caminho do site (/...).'),
   description: z.string().trim().min(20, 'Descreva melhor a pousada.').max(1500),
   tags: z.string().trim().max(160, 'Use no máximo 160 caracteres.'),
   timezone: z.string().trim().min(2, 'Informe o fuso horário.').max(60),
