@@ -9,7 +9,13 @@ export const dateActionSchema = z.object({
 export type DateActionInput = z.infer<typeof dateActionSchema>
 
 /** Status que a equipe pode aplicar pelo painel (0034 + check-in/check-out da 0048). */
-const ownerAllowedStatuses = ['confirmed', 'cancelled', 'no_show', 'checked_in', 'checked_out'] as const satisfies BookingStatus[]
+const ownerAllowedStatuses = [
+  'confirmed',
+  'cancelled',
+  'no_show',
+  'checked_in',
+  'checked_out',
+] as const satisfies BookingStatus[]
 
 /** Ação de status feita pela equipe da pousada numa reserva. Motivo obrigatório para cancelar/no-show — validado no service e de novo na RPC. */
 export const reservationStatusActionSchema = z.object({
@@ -59,17 +65,17 @@ export const pousadaSettingsSchema = z.object({
   description: z.string().trim().min(20, 'Descreva melhor a pousada.').max(1500),
   tags: z.string().trim().max(160, 'Use no máximo 160 caracteres.'),
   timezone: z.string().trim().min(2, 'Informe o fuso horário.').max(60),
-  currency: z.string().trim().length(3, 'Use o código de 3 letras (ex.: BRL).').transform((v) => v.toUpperCase()),
+  currency: z
+    .string()
+    .trim()
+    .length(3, 'Use o código de 3 letras (ex.: BRL).')
+    .transform((v) => v.toUpperCase()),
   language: z.string().trim().min(2, 'Informe o idioma.').max(10),
   checkinTime: z.string().regex(timeRegex, 'Horário inválido.'),
   checkoutTime: z.string().regex(timeRegex, 'Horário inválido.'),
   contactPhone: phoneSchema.or(z.literal('')),
   whatsapp: phoneSchema.or(z.literal('')),
-  notificationEmail: z
-    .string()
-    .trim()
-    .email('E-mail inválido.')
-    .or(z.literal('')),
+  notificationEmail: z.string().trim().email('E-mail inválido.').or(z.literal('')),
   houseRules: z.string().trim().max(1500, 'Regras muito longas.'),
   cancellationPolicy: z.string().trim().max(1500, 'Política muito longa.'),
 })
