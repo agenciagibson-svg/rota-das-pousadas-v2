@@ -179,3 +179,25 @@ Rodar no Supabase (SQL Editor), em ordem:
   do hóspede com datas, valores e status, sem mudança necessária nela.
 - Sem migration — só código novo (`server/queries.ts#getBookingCheckout` +
   a página) e a remoção da página órfã.
+
+## Noite vendida no Airbnb/Booking barra reserva na Rota (0062)
+
+- `assert_room_available_for_booking` — a checagem de `create_booking` e
+  `update_booking`, ou seja, balcão, painel e checkout do site — passa a
+  considerar `channel_events` (0044). Antes só a busca pública
+  (`list_bookable_rooms`) olhava essa tabela, e a recepção conseguia vender
+  uma noite já vendida na OTA (overbooking) sem o banco impedir.
+- Eco do iCal: a OTA pode devolver no feed dela a reserva que a Rota
+  exportou. Na edição, o trecho do evento contido nas noites que a própria
+  reserva já ocupava no mesmo quarto é ignorado; só noites novas precisam
+  estar livres no canal.
+- Painel: `queryAvailability` (telas Disponibilidade e Nova reserva) lê
+  `channel_events` e mostra o motivo `channel_conflict` ("Ocupada no
+  Airbnb/Booking"). Falha na leitura derruba a consulta em vez de anunciar
+  o quarto livre, como já acontece com reservas.
+- A importação segue diária (cron do plano Hobby): uma venda feita na OTA só
+  aparece na Rota depois do ciclo seguinte.
+- Testes: `supabase/tests/priorities.sql` (criar sobre noite da OTA, eco na
+  edição, estender sobre noite fechada), `availability-engine.test.ts` e
+  `availability.repository.test.ts`.
+- Rollback: `supabase/rollback/0062_rollback.sql`.

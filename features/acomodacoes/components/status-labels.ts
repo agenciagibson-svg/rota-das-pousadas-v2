@@ -33,5 +33,6 @@ export const AVAILABILITY_REASON_LABEL: Record<AvailabilityReason, string> = {
   operational_status_blocking: 'Em manutenção/bloqueada',
   blocked_period: 'Bloqueio no período',
   booking_conflict: 'Reserva conflitante',
+  channel_conflict: 'Ocupada no Airbnb/Booking',
   invalid_dates: 'Datas inválidas',
 }

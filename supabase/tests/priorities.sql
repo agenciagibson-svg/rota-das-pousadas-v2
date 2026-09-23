@@ -98,3 +98,71 @@ select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '11
 select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '112', 399.50, 'estornado', 'pix', 'BRL', '2026-09-01T12:04:00Z', 399.50);
 select test_assert((select amount_received from bookings where code = 'PAYMENT') = 0, 'estorno integral');
 reset role;
+
+-- Canais (0062): noite ocupada no Airbnb/Booking não pode ser vendida de novo
+-- pela Rota. O feed da OTA pode devolver a própria reserva da Rota (eco do iCal
+-- exportado): editar sem mudar as noites continua permitido.
+insert into channel_calendars(id, pousada_id, room_id, provider, import_url, export_token) values
+ ('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'airbnb', 'https://example.test/duplo.ics', 'teste-export-duplo'),
+ ('50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'booking', 'https://example.test/familia.ics', 'teste-export-familia');
+insert into channel_events(calendar_id, pousada_id, room_id, uid, starts_on, ends_on, summary) values
+ ('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'ota-1', '2099-09-01', '2099-09-04', 'Reserved');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $$ begin
+  begin
+    perform create_booking(
+      p_pousada_id := '10000000-0000-0000-0000-000000000001', p_room_id := '20000000-0000-0000-0000-000000000001',
+      p_responsible_guest_id := '40000000-0000-0000-0000-000000000001', p_code := 'CANAL-CONFLITO',
+      p_checkin := '2099-09-03', p_checkout := '2099-09-05', p_adults := 2, p_children := 0, p_infants := 0,
+      p_pets := false, p_subtotal := 400, p_fee := 0, p_discount := 0, p_surcharge := 0,
+      p_services_amount := 0, p_total := 400, p_status := 'confirmed', p_origin := 'balcao');
+    raise exception 'TEST: reserva de balcão aceita sobre noite vendida pela OTA';
+  exception when raise_exception then
+    if sqlerrm <> 'Esta acomodação já está ocupada no Airbnb nesse período (calendário sincronizado).' then raise; end if;
+  end;
+end $$;
+select create_booking(
+  p_pousada_id := '10000000-0000-0000-0000-000000000001', p_room_id := '20000000-0000-0000-0000-000000000001',
+  p_responsible_guest_id := '40000000-0000-0000-0000-000000000001', p_code := 'CANAL-LIVRE',
+  p_checkin := '2099-09-04', p_checkout := '2099-09-06', p_adults := 2, p_children := 0, p_infants := 0,
+  p_pets := false, p_subtotal := 400, p_fee := 0, p_discount := 0, p_surcharge := 0,
+  p_services_amount := 0, p_total := 400, p_status := 'confirmed', p_origin := 'balcao');
+select test_assert(exists(select 1 from bookings where code = 'CANAL-LIVRE'), 'saída da OTA libera a noite seguinte');
+select create_booking(
+  p_pousada_id := '10000000-0000-0000-0000-000000000001', p_room_id := '20000000-0000-0000-0000-000000000002',
+  p_responsible_guest_id := '40000000-0000-0000-0000-000000000001', p_code := 'CANAL-ECO',
+  p_checkin := '2099-09-10', p_checkout := '2099-09-12', p_adults := 2, p_children := 0, p_infants := 0,
+  p_pets := false, p_subtotal := 800, p_fee := 0, p_discount := 0, p_surcharge := 0,
+  p_services_amount := 0, p_total := 800, p_status := 'confirmed', p_origin := 'balcao');
+reset role;
+-- O feed devolve a própria reserva (10–12) emendada a uma noite fechada na OTA (12–13).
+insert into channel_events(calendar_id, pousada_id, room_id, uid, starts_on, ends_on, summary) values
+ ('50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'ota-eco', '2099-09-10', '2099-09-13', 'CLOSED - Not available');
+set role authenticated;
+select update_booking(
+  p_booking_id := (select id from bookings where code = 'CANAL-ECO'),
+  p_version := (select version from bookings where code = 'CANAL-ECO'),
+  p_room_id := '20000000-0000-0000-0000-000000000002', p_responsible_guest_id := '40000000-0000-0000-0000-000000000001',
+  p_checkin := '2099-09-10', p_checkout := '2099-09-12', p_adults := 3, p_children := 0, p_infants := 0,
+  p_pets := false, p_subtotal := 800, p_fee := 0, p_discount := 0, p_surcharge := 0,
+  p_services_amount := 0, p_total := 800, p_origin := 'balcao', p_expected_arrival_time := null,
+  p_special_requests := '', p_internal_notes := '');
+select test_assert((select adults from bookings where code = 'CANAL-ECO') = 3, 'eco da OTA não trava edição sem noites novas');
+do $$ begin
+  begin
+    perform update_booking(
+      p_booking_id := (select id from bookings where code = 'CANAL-ECO'),
+      p_version := (select version from bookings where code = 'CANAL-ECO'),
+      p_room_id := '20000000-0000-0000-0000-000000000002', p_responsible_guest_id := '40000000-0000-0000-0000-000000000001',
+      p_checkin := '2099-09-10', p_checkout := '2099-09-13', p_adults := 3, p_children := 0, p_infants := 0,
+      p_pets := false, p_subtotal := 1200, p_fee := 0, p_discount := 0, p_surcharge := 0,
+      p_services_amount := 0, p_total := 1200, p_origin := 'balcao', p_expected_arrival_time := null,
+      p_special_requests := '', p_internal_notes := '');
+    raise exception 'TEST: edição estendeu a reserva sobre noite fechada pela OTA';
+  exception when raise_exception then
+    if sqlerrm <> 'Esta acomodação já está ocupada no Booking.com nesse período (calendário sincronizado).' then raise; end if;
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);

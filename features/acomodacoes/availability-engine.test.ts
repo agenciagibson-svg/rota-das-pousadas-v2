@@ -14,6 +14,7 @@ function baseInput(overrides: Partial<AvailabilityInput> = {}): AvailabilityInpu
     requestedPets: false,
     hasBlockConflict: false,
     hasBookingConflict: false,
+    hasChannelConflict: false,
     ...overrides,
   }
 }
@@ -95,6 +96,12 @@ describe('evaluateRoomAvailability', () => {
   it('indisponível por reserva conflitante', () => {
     expect(evaluateRoomAvailability(baseInput({ hasBookingConflict: true }))).toContain(
       'booking_conflict',
+    )
+  })
+
+  it('indisponível por noite já vendida no Airbnb/Booking', () => {
+    expect(evaluateRoomAvailability(baseInput({ hasChannelConflict: true }))).toContain(
+      'channel_conflict',
     )
   })
 
