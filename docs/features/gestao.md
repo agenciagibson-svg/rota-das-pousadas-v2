@@ -6,17 +6,17 @@ datas). Base para os próximos módulos (financeiro, RH, etc.).
 
 ## Camadas (ordem da arquitetura)
 
-| Camada | Arquivo | Papel |
-|---|---|---|
-| Calendário (puro) | `features/gestao/calendar.ts` | grade do mês + status por dia (testado) |
-| Types | `features/gestao/types.ts` | `OwnerReservation`, `ManagedPousada` |
-| Schemas | `features/gestao/schemas.ts` | `dateActionSchema` (bloqueio) |
-| Repository | `repositories/management.repository.ts` | pousada gerida, reservas por pousada, availability (block/unblock) |
-| Service | `features/gestao/services/pms.service.ts` | resolve pousada do dono (membership), reservas, calendário, bloqueio |
-| Server Query | `server/queries.ts` → `getOwnerPousada`, `getOwnerReservations`, `getOwnerCalendar` | cache por request |
-| Server Action | `features/gestao/actions.ts` | `blockDateAction`, `unblockDateAction` |
-| Components | `reservations-calendar`, `owner-reservations-table`, `owner-reservations-view` | calendário interativo + tabela + shell |
-| Páginas | `app/dashboard` (visão geral) e `app/dashboard/reservas` | dashboard real + gestão |
+| Camada            | Arquivo                                                                             | Papel                                                                |
+| ----------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Calendário (puro) | `features/gestao/calendar.ts`                                                       | grade do mês + status por dia (testado)                              |
+| Types             | `features/gestao/types.ts`                                                          | `OwnerReservation`, `ManagedPousada`                                 |
+| Schemas           | `features/gestao/schemas.ts`                                                        | `dateActionSchema` (bloqueio)                                        |
+| Repository        | `repositories/management.repository.ts`                                             | pousada gerida, reservas por pousada, availability (block/unblock)   |
+| Service           | `features/gestao/services/pms.service.ts`                                           | resolve pousada do dono (membership), reservas, calendário, bloqueio |
+| Server Query      | `server/queries.ts` → `getOwnerPousada`, `getOwnerReservations`, `getOwnerCalendar` | cache por request                                                    |
+| Server Action     | `features/gestao/actions.ts`                                                        | `blockDateAction`, `unblockDateAction`                               |
+| Components        | `reservations-calendar`, `owner-reservations-table`, `owner-reservations-view`      | calendário interativo + tabela + shell                               |
+| Páginas           | `app/dashboard` (visão geral) e `app/dashboard/reservas`                            | dashboard real + gestão                                              |
 
 ## Como funciona
 
