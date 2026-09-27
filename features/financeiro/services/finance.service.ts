@@ -9,6 +9,11 @@ import {
   setExpensePaid,
 } from '@/repositories/finance.repository'
 import { buildSummary, countsAsRevenue } from '@/features/financeiro/finance'
+import {
+  consumptionTotalsByPousada,
+  listConsumptionPaymentsByPousada,
+} from '@/repositories/orders.repository'
+import { PAYMENT_METHOD_LABEL, type ConsumptionPayment } from '@/features/pedidos/types'
 import type { FinanceSummary, Transaction } from '@/features/financeiro/types'
 import type { CreateExpenseInput } from '@/features/financeiro/schemas'
 
@@ -51,22 +56,31 @@ export async function getFinance(): Promise<FinanceData> {
   const [pousada, allowed] = await Promise.all([getOwnerPousada(), canViewFinance()])
   if (!pousada || !allowed) return EMPTY
 
-  const [reservations, expenses] = await Promise.all([
+  const [reservations, expenses, consumption, consumptionPayments] = await Promise.all([
     listReservationsByPousada(pousada.id),
     listExpensesByPousada(pousada.id),
+    // Consumo (0078) não pode derrubar o Financeiro se algo falhar.
+    consumptionTotalsByPousada(pousada.id).catch(() => []),
+    listConsumptionPaymentsByPousada(pousada.id, 200).catch(() => []),
   ])
+  const codeById = new Map(reservations.map((r) => [r.id, r]))
 
   // Cotação, cancelada e no-show não são dinheiro — nem no resumo nem no extrato.
   const revenueReservations = reservations.filter((r) => countsAsRevenue(r.status))
 
   // Resumo pelo dinheiro que entrou (total − saldo em aberto), de todas as
   // reservas: sinal de reserva cancelada ainda está no caixa até o estorno.
+  // Conta de consumo entra como mais uma fonte: consumido = total,
+  // pagamentos do consumo = recebido.
   const summary = buildSummary(
-    reservations.map((r) => ({
-      total: r.total,
-      received: Math.max(0, r.total - r.balanceDue),
-      status: r.status,
-    })),
+    [
+      ...reservations.map((r) => ({
+        total: r.total,
+        received: Math.max(0, r.total - r.balanceDue),
+        status: r.status,
+      })),
+      ...consumption.map((c) => ({ total: c.delivered, received: c.paid, status: 'confirmed' })),
+    ],
     expenses.map((e) => ({ amount: e.amount, paid: e.paid })),
   )
 
@@ -80,6 +94,20 @@ export async function getFinance(): Promise<FinanceData> {
       status: r.status,
       bookingId: r.id,
     })),
+    ...consumptionPayments.map((p) => {
+      const r = codeById.get(p.booking_id)
+      return {
+        id: `c-${p.id}`,
+        kind: 'receita' as const,
+        description: `Consumo ${r ? `· Reserva ${r.code} · ${r.guestName}` : ''} (${
+          PAYMENT_METHOD_LABEL[p.method as ConsumptionPayment['method']] ?? p.method
+        })`,
+        amount: Number(p.amount),
+        date: p.created_at.slice(0, 10),
+        status: 'pago',
+        bookingId: p.booking_id,
+      }
+    }),
     ...expenses.map((e) => ({
       id: `e-${e.id}`,
       kind: 'despesa' as const,

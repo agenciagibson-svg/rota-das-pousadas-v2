@@ -39,6 +39,8 @@ function statusBadge(t: Transaction) {
       ? { label: 'Paga', variant: 'primarySoft' as const }
       : { label: 'A pagar', variant: 'goldSoft' as const }
   }
+  // Pagamento da conta de consumo (0078).
+  if (t.status === 'pago') return { label: 'Consumo pago', variant: 'primarySoft' as const }
   const s = BOOKING_STATUS[t.status as BookingStatus]
   return s ?? { label: t.status, variant: 'secondary' as const }
 }

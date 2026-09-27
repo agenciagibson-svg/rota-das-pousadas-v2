@@ -192,3 +192,13 @@ describe('memberInviteEmail', () => {
     expect(mail.text).toContain('/dashboard')
   })
 })
+
+describe('app da estadia nos e-mails', () => {
+  it('confirmação e lembrete levam ao app da reserva', () => {
+    const confirmed = bookingConfirmedEmail(ctx)
+    expect(confirmed.html).toContain(`/estadia/${ctx.bookingId}`)
+    expect(confirmed.text).toContain(`/estadia/${ctx.bookingId}`)
+    const reminder = checkinReminderEmail(ctx)
+    expect(reminder.html).toContain('Abrir o app da estadia')
+  })
+})

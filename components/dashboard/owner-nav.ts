@@ -2,9 +2,11 @@ import {
   BedDouble,
   Bot,
   CalendarCheck,
+  ConciergeBell,
   LayoutDashboard,
   Link2,
   Megaphone,
+  Package,
   MessageSquare,
   Settings,
   Star,
@@ -27,6 +29,8 @@ export type OwnerDashboardSection =
   | 'marketing'
   | 'assistente'
   | 'configuracoes'
+  | 'pedidos'
+  | 'estoque'
 
 export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
   return [
@@ -41,6 +45,12 @@ export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
       icon: CalendarCheck,
       href: '/dashboard/reservas',
       active: active === 'reservas',
+    },
+    {
+      label: 'Pedidos',
+      icon: ConciergeBell,
+      href: '/dashboard/pedidos',
+      active: active === 'pedidos',
     },
     {
       label: 'Hóspedes',
@@ -59,6 +69,12 @@ export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
       icon: BedDouble,
       href: '/dashboard/acomodacoes',
       active: active === 'acomodacoes',
+    },
+    {
+      label: 'Estoque',
+      icon: Package,
+      href: '/dashboard/estoque',
+      active: active === 'estoque',
     },
     {
       label: 'Link da bio',

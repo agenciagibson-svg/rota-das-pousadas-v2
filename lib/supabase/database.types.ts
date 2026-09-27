@@ -2221,11 +2221,324 @@ export type Database = {
         }
         Relationships: []
       }
+      consumption_payments: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          method: string
+          note: string
+          pousada_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method: string
+          note?: string
+          pousada_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string
+          note?: string
+          pousada_id?: string
+        }
+        Relationships: []
+      }
+      guest_order_items: {
+        Row: {
+          id: string
+          item_id: string | null
+          line_total: number
+          name: string
+          order_id: string
+          quantity: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          item_id?: string | null
+          line_total?: never
+          name: string
+          order_id: string
+          quantity: number
+          unit?: string
+          unit_price: number
+        }
+        Update: {
+          id?: string
+          item_id?: string | null
+          line_total?: never
+          name?: string
+          order_id?: string
+          quantity?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: []
+      }
+      guest_orders: {
+        Row: {
+          accepted_at: string | null
+          booking_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          delivered_at: string | null
+          delivered_by: string | null
+          id: string
+          note: string
+          pousada_id: string
+          requested_by: string | null
+          source: string
+          status: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          booking_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivered_by?: string | null
+          id?: string
+          note?: string
+          pousada_id: string
+          requested_by?: string | null
+          source?: string
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          booking_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivered_by?: string | null
+          id?: string
+          note?: string
+          pousada_id?: string
+          requested_by?: string | null
+          source?: string
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          description: string
+          id: string
+          min_quantity: number
+          name: string
+          photo_url: string | null
+          pousada_id: string
+          quantity: number
+          sale_price: number | null
+          show_in_app: boolean
+          sort_order: number
+          track_stock: boolean
+          unit: string
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          min_quantity?: number
+          name: string
+          photo_url?: string | null
+          pousada_id: string
+          quantity?: number
+          sale_price?: number | null
+          show_in_app?: boolean
+          sort_order?: number
+          track_stock?: boolean
+          unit?: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          min_quantity?: number
+          name?: string
+          photo_url?: string | null
+          pousada_id?: string
+          quantity?: number
+          sale_price?: number | null
+          show_in_app?: boolean
+          sort_order?: number
+          track_stock?: boolean
+          unit?: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          expense_id: string | null
+          id: string
+          item_id: string
+          kind: string
+          note: string
+          order_id: string | null
+          pousada_id: string
+          quantity: number
+          unit_cost: number | null
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          item_id: string
+          kind: string
+          note?: string
+          order_id?: string | null
+          pousada_id: string
+          quantity: number
+          unit_cost?: number | null
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          item_id?: string
+          kind?: string
+          note?: string
+          order_id?: string | null
+          pousada_id?: string
+          quantity?: number
+          unit_cost?: number | null
+        }
+        Relationships: []
+      }
+      pousada_guest_settings: {
+        Row: {
+          guest_info: string
+          orders_enabled: boolean
+          orders_hours: string
+          pousada_id: string
+          updated_at: string
+          wifi_name: string
+          wifi_password: string
+        }
+        Insert: {
+          guest_info?: string
+          orders_enabled?: boolean
+          orders_hours?: string
+          pousada_id: string
+          updated_at?: string
+          wifi_name?: string
+          wifi_password?: string
+        }
+        Update: {
+          guest_info?: string
+          orders_enabled?: boolean
+          orders_hours?: string
+          pousada_id?: string
+          updated_at?: string
+          wifi_name?: string
+          wifi_password?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      auth_has_pousada_role: {
+        Args: { target_pousada: string; roles: string[] }
+        Returns: boolean
+      }
+      cancel_guest_order: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
+      get_booking_consumption: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      get_guest_stay: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      place_guest_order: {
+        Args: { p_booking_id: string; p_items: Json; p_note?: string }
+        Returns: Json
+      }
+      pousada_today: {
+        Args: { p_pousada_id: string }
+        Returns: string
+      }
+      register_consumption_payment: {
+        Args: { p_booking_id: string; p_amount: number; p_method: string; p_note?: string }
+        Returns: Json
+      }
+      register_inventory_movement: {
+        Args: {
+          p_item_id: string
+          p_kind: string
+          p_quantity: number
+          p_unit_cost?: number | null
+          p_note?: string
+          p_create_expense?: boolean
+        }
+        Returns: Json
+      }
+      save_inventory_item: {
+        Args: { p_pousada_id: string; p_item_id: string | null; p_data: Json }
+        Returns: Json
+      }
+      set_guest_order_status: {
+        Args: { p_order_id: string; p_status: string; p_reason?: string | null }
+        Returns: undefined
+      }
+      set_inventory_item_active: {
+        Args: { p_item_id: string; p_active: boolean }
+        Returns: undefined
+      }
+      staff_create_order: {
+        Args: { p_booking_id: string; p_items: Json; p_note?: string }
+        Returns: Json
+      }
       accept_membership_invite: {
         Args: { p_membership_id: string }
         Returns: Json

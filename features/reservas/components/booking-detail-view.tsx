@@ -9,6 +9,8 @@ import { BOOKING_STATUS } from '../status'
 import { isFinalStatus } from '../status'
 import { BookingEditPanel, BookingCompanionsPanel } from './booking-edit-panel'
 import type { BookingDetail } from '../types'
+import { ConsumptionPanel } from '@/features/pedidos/components/consumption-panel'
+import type { BookingConsumption, SellableItem } from '@/features/pedidos/services/orders.service'
 import {
   formatBRL,
   formatDateTime,
@@ -30,11 +32,16 @@ export function BookingDetailView({
   pousadaName,
   booking,
   proofs = [],
+  consumption = null,
+  sellable = [],
 }: {
   displayName: string
   pousadaName: string
   booking: BookingDetail
   proofs?: ProofForReview[]
+  /** Conta de consumo (0078) — `null` para quem não vê valores. */
+  consumption?: BookingConsumption | null
+  sellable?: SellableItem[]
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = !isFinalStatus(booking.status)
@@ -265,6 +272,17 @@ export function BookingDetailView({
             <BookingCompanionsPanel booking={booking} canEdit={canEdit} />
           </div>
         </Card>
+
+        {consumption && (
+          <Card className="p-6">
+            <ConsumptionPanel
+              bookingId={booking.id}
+              data={consumption}
+              sellable={sellable}
+              bookingOpen={!['cancelled', 'no_show', 'quote'].includes(booking.status)}
+            />
+          </Card>
+        )}
 
         {canEdit && (
           <Card className="p-6">

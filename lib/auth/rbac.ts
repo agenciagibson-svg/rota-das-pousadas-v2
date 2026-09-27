@@ -92,6 +92,11 @@ export type Action =
   // a RLS da 0046 usa para o relatório e para os pedidos de orçamento.
   | 'link:report:view'
   | 'quote:manage'
+  // 0078 — estoque e pedidos do hóspede
+  | 'inventory:view'
+  | 'inventory:manage'
+  | 'inventory:move'
+  | 'order:manage'
 
 /** Papéis que operam no escopo de uma pousada (tenant). */
 export const TENANT_ROLES: readonly Role[] = [
@@ -159,6 +164,10 @@ const MATRIX: Record<Role, Action[]> = {
     'channel:manage',
     'link:report:view',
     'quote:manage',
+    'inventory:view',
+    'inventory:manage',
+    'inventory:move',
+    'order:manage',
   ],
   // Property manager: opera o dia a dia da pousada, mas administração de
   // equipe é sensível e fica restrita ao proprietário (decisão do Ciclo 1).
@@ -191,6 +200,10 @@ const MATRIX: Record<Role, Action[]> = {
     'channel:manage',
     'link:report:view',
     'quote:manage',
+    'inventory:view',
+    'inventory:manage',
+    'inventory:move',
+    'order:manage',
   ],
   recepcionista: [
     'catalog:view',
@@ -209,6 +222,9 @@ const MATRIX: Record<Role, Action[]> = {
     'channel:view',
     'link:report:view',
     'quote:manage',
+    'inventory:view',
+    'inventory:move',
+    'order:manage',
   ],
   financeiro_pousada: [
     'catalog:view',
@@ -216,10 +232,19 @@ const MATRIX: Record<Role, Action[]> = {
     'finance:pousada:view',
     'payment:register',
     'payment:refund',
+    'inventory:view',
   ],
   // Governança/limpeza: só status operacional da acomodação — nunca valores,
   // documentos pessoais ou dados financeiros (item 4 do escopo de negócio).
-  governanca: ['room:status:view', 'room:status:manage', 'housekeeping:manage', 'room:block:view'],
+  governanca: [
+    'room:status:view',
+    'room:status:manage',
+    'housekeeping:manage',
+    'room:block:view',
+    'inventory:view',
+    'inventory:move',
+    'order:manage',
+  ],
   suporte: [
     'catalog:view',
     'search:run',
@@ -304,6 +329,10 @@ const MATRIX: Record<Role, Action[]> = {
     'channel:manage',
     'link:report:view',
     'quote:manage',
+    'inventory:view',
+    'inventory:manage',
+    'inventory:move',
+    'order:manage',
   ],
   // A IA só triagem/sugestão; ações efetivas passam por humano (ver AIService).
   ia: ['catalog:view', 'search:run', 'content:moderate'],

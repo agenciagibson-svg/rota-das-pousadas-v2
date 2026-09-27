@@ -9,6 +9,7 @@ import {
   MapPin,
   ReceiptText,
   RotateCcw,
+  Smartphone,
   Users,
 } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
@@ -273,6 +274,17 @@ export default async function MyBookingsPage({
                               >
                                 <CreditCard className="size-3.5" />
                                 Pagar agora
+                              </Link>
+                            )}
+                            {(booking.status === 'confirmed' ||
+                              booking.status === 'checked_in' ||
+                              booking.status === 'checked_out') && (
+                              <Link
+                                href={`/estadia/${booking.id}`}
+                                className={buttonVariants({ size: 'sm' })}
+                              >
+                                <Smartphone className="size-3.5" />
+                                App da estadia
                               </Link>
                             )}
                             {canRebook && (

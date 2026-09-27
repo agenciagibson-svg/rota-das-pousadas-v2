@@ -50,11 +50,13 @@ function buildInsights({
   reviews,
   finance,
   settings,
+  alerts,
 }: {
   reservations: OwnerReservation[]
   reviews: OwnerReview[]
   finance: FinanceSummary
   settings: OwnerPousadaSettings | null
+  alerts: { newOrders: number; lowStock: string[] } | null
 }): Insight[] {
   const pendingPayments = reservations.filter((r) => r.status === 'pending')
   const nextCheckins = reservations
@@ -70,6 +72,38 @@ function buildInsights({
   ].filter(Boolean)
 
   const insights: Insight[] = []
+
+  if (alerts && alerts.newOrders > 0) {
+    insights.push({
+      title:
+        alerts.newOrders === 1
+          ? '1 pedido de hóspede esperando'
+          : `${alerts.newOrders} pedidos de hóspedes esperando`,
+      description: 'Pedidos feitos pelo app da estadia que ninguém começou a preparar.',
+      action: 'Abra Pedidos e marque como em preparo ou entregue.',
+      tone: 'alert',
+      icon: Clock3,
+      href: '/dashboard/pedidos',
+      hrefLabel: 'Ver pedidos',
+    })
+  }
+
+  if (alerts && alerts.lowStock.length > 0) {
+    const names = alerts.lowStock.slice(0, 4).join(', ')
+    const more = alerts.lowStock.length > 4 ? ` e mais ${alerts.lowStock.length - 4}` : ''
+    insights.push({
+      title:
+        alerts.lowStock.length === 1
+          ? '1 item do estoque acabando'
+          : `${alerts.lowStock.length} itens do estoque acabando`,
+      description: `${names}${more}.`,
+      action: 'Reponha antes que falte para os hóspedes.',
+      tone: 'alert',
+      icon: AlertCircle,
+      href: '/dashboard/estoque',
+      hrefLabel: 'Abrir Estoque',
+    })
+  }
 
   if (pendingPayments.length > 0) {
     insights.push({
@@ -165,6 +199,7 @@ export function OwnerAssistantView({
   reviews,
   finance,
   settings,
+  alerts = null,
 }: {
   displayName: string
   pousadaName: string
@@ -172,8 +207,9 @@ export function OwnerAssistantView({
   reviews: OwnerReview[]
   finance: FinanceSummary
   settings: OwnerPousadaSettings | null
+  alerts?: { newOrders: number; lowStock: string[] } | null
 }) {
-  const insights = buildInsights({ reservations, reviews, finance, settings })
+  const insights = buildInsights({ reservations, reviews, finance, settings, alerts })
   const activeReservations = reservations.filter((reservation) =>
     isActiveReservation(reservation.status),
   )

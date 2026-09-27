@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock3, CreditCard, Mail, Phone, QrCode, Settings, Wallet } from 'lucide-react'
+import { Clock3, CreditCard, Mail, Phone, QrCode, Settings, Smartphone, Wallet } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
@@ -10,6 +10,8 @@ import { SubscribeButton } from '@/features/pagamentos/components/subscribe-butt
 import { PixSettingsForm } from '@/features/pagamentos/components/pix-settings-form'
 import type { PixSettingsInput } from '@/features/pagamentos/pix'
 import type { OwnerPousadaSettings } from '../types'
+import { GuestSettingsForm } from '@/features/pedidos/components/guest-settings-form'
+import type { GuestSettings } from '@/features/pedidos/types'
 import { OwnerSettingsForm } from './owner-settings-form'
 
 function formatSubscriptionAmount(value: number): string {
@@ -33,7 +35,9 @@ export function OwnerSettingsView({
   paymentAccount,
   subscription,
   pix,
+  guestSettings = null,
 }: {
+  guestSettings?: GuestSettings | null
   displayName: string
   pousadaName: string
   settings: OwnerPousadaSettings | null
@@ -130,6 +134,15 @@ export function OwnerSettingsView({
                 </>
               )}
             </Card>
+            {guestSettings && (
+              <Card className="p-5">
+                <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  <Smartphone className="text-primary size-4" />
+                  App do hóspede
+                </div>
+                <GuestSettingsForm initial={guestSettings} />
+              </Card>
+            )}
             {pix && (
               <Card className="p-5">
                 <div className="text-foreground flex items-center gap-2 text-sm font-semibold">

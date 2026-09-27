@@ -412,6 +412,17 @@ export function bookingRequestReceivedEmail(
   return { subject, html, text }
 }
 
+/** Bloco do app da estadia (0078): pedir pelo celular e falar com a recepção. */
+function stayAppBlock(ctx: BookingNotificationContext): string {
+  const href = esc(`${publicEnv.siteUrl}/estadia/${ctx.bookingId}`)
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:16px;">
+<tr><td style="padding:16px 18px;">
+<p style="margin:0;font:700 14px ${SANS};color:#065f46;">App da sua estadia</p>
+<p style="margin:6px 0 12px;font:500 13px/1.55 ${SANS};color:#065f46;">Durante a hospedagem, peça água, bebidas, toalha extra e fale com a recepção pelo celular. O consumo vai para a conta e é pago no check-out. Abra o link e toque em “Adicionar à tela inicial”.</p>
+<a href="${href}" style="display:inline-block;background:#047857;color:#ffffff;font:700 13px ${SANS};text-decoration:none;padding:10px 16px;border-radius:10px;">Abrir o app da estadia</a>
+</td></tr></table>`
+}
+
 export function bookingConfirmedEmail(ctx: BookingNotificationContext): Email {
   const link = `${publicEnv.siteUrl}/minhas-reservas`
   const subject = `Reserva confirmada — ${ctx.pousada.name} (${ctx.code})`
@@ -447,11 +458,11 @@ export function bookingConfirmedEmail(ctx: BookingNotificationContext): Email {
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `Pagamento recebido. Guarde este e-mail: ele é o seu comprovante da reserva ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>.`,
     ticketHtml: ticket(ctx, rows),
-    extraHtml: arrivalNotice(ctx) + policiesHtml,
+    extraHtml: arrivalNotice(ctx) + stayAppBlock(ctx) + policiesHtml,
     cta: { href: link, label: 'Ver minha reserva' },
   })
   const address = addressLine(ctx)
-  const text = `Sua reserva ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está confirmada.\nCódigo: ${ctx.code}\nAcomodação: ${ctx.roomName}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\nCheck-out: ${formatDateBR(ctx.checkout)} (até ${ctx.pousada.checkoutTime})\nTotal pago: ${formatCurrencyBRL(ctx.total)}\n${address ? `Endereço: ${address}\n` : ''}\nVeja os detalhes em: ${link}`
+  const text = `Sua reserva ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está confirmada.\nCódigo: ${ctx.code}\nAcomodação: ${ctx.roomName}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\nCheck-out: ${formatDateBR(ctx.checkout)} (até ${ctx.pousada.checkoutTime})\nTotal pago: ${formatCurrencyBRL(ctx.total)}\n${address ? `Endereço: ${address}\n` : ''}\nVeja os detalhes em: ${link}\nApp da estadia (pedidos e recepção): ${publicEnv.siteUrl}/estadia/${ctx.bookingId}`
   return { subject, html, text }
 }
 
@@ -479,11 +490,11 @@ export function checkinReminderEmail(ctx: BookingNotificationContext, now = new 
     subtitle: `${ctx.pousada.name} · check-in em ${formatDayMonth(ctx.checkin)}`,
     intro: `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>. Aqui vai o essencial para a chegada.`,
     ticketHtml: ticket(ctx, rows),
-    extraHtml: arrivalNotice(ctx),
+    extraHtml: arrivalNotice(ctx) + stayAppBlock(ctx),
     cta: { href: link, label: 'Ver detalhes da reserva' },
   })
   const address = addressLine(ctx)
-  const text = `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}`
+  const text = `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}\nApp da estadia (pedidos e recepção): ${publicEnv.siteUrl}/estadia/${ctx.bookingId}`
   return { subject, html, text }
 }
 

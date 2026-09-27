@@ -91,10 +91,12 @@ const PROTECTED: { prefix: string; loginPath: string }[] = [
   { prefix: '/minhas-reservas', loginPath: '/login' },
   { prefix: '/conta', loginPath: '/login' },
   { prefix: '/anunciar', loginPath: '/login' },
+  { prefix: '/estadia', loginPath: '/login' },
 ]
 
 /** Páginas de login dedicadas — sempre públicas, mesmo vivendo sob um prefixo protegido. */
-const PUBLIC_AUTH_PAGES = ['/admin/login']
+// O manifesto do app da estadia é buscado pelo navegador sem cookie de login.
+const PUBLIC_AUTH_PAGES = ['/admin/login', '/estadia/manifest.webmanifest']
 
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname

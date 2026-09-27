@@ -23,6 +23,8 @@ export type DashboardSection =
   | 'marketing'
   | 'assistente'
   | 'configuracoes'
+  | 'pedidos'
+  | 'estoque'
 
 export const SECTION_ACCESS: Record<DashboardSection, Action[] | null> = {
   overview: null,
@@ -42,6 +44,8 @@ export const SECTION_ACCESS: Record<DashboardSection, Action[] | null> = {
   marketing: ['pousada:edit'],
   assistente: ['pousada:edit'],
   configuracoes: ['pousada:edit'],
+  pedidos: ['order:manage'],
+  estoque: ['inventory:view'],
 }
 
 export function canAccessSection(

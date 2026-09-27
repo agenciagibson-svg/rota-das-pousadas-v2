@@ -19,6 +19,14 @@ describe('canAccessSection', () => {
     expect(canAccessSection('recepcionista', 'configuracoes')).toBe(false)
   })
 
+  it('estoque e pedidos por papel', () => {
+    expect(canAccessSection('governanca', 'estoque')).toBe(true)
+    expect(canAccessSection('governanca', 'pedidos')).toBe(true)
+    expect(canAccessSection('financeiro_pousada', 'pedidos')).toBe(false)
+    expect(canAccessSection('financeiro_pousada', 'estoque')).toBe(true)
+    expect(canAccessSection('recepcionista', 'pedidos')).toBe(true)
+  })
+
   it('financeiro da pousada vê o financeiro', () => {
     expect(canAccessSection('financeiro_pousada', 'financeiro')).toBe(true)
   })
