@@ -2439,6 +2439,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      claim_password_reset_slot: {
+        Args: { p_email: string; p_ip: string }
+        Returns: boolean
+      }
       record_login_attempt: {
         Args: { p_email: string; p_ip: string; p_success: boolean }
         Returns: undefined

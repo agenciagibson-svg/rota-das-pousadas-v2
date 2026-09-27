@@ -10,6 +10,8 @@ import type { BookingNotificationContext } from '@/repositories/bookings.reposit
  * 2. Reserva confirmada / comprovante — webhook do Mercado Pago
  *    (features/pagamentos/services/webhook.service.ts).
  * 3. Lembrete de check-in — cron diário (app/api/cron/expiracao).
+ * 4. Nova senha (link) e 5. Senha alterada — "Esqueci minha senha"
+ *    (features/auth/services/password-reset.service.ts).
  *
  * Regras de e-mail: só tabelas e estilo inline (Gmail/Outlook ignoram <style>
  * e SVG); fontes do site com fallback (Gmail cai em Georgia/Arial); logo é PNG
@@ -286,6 +288,10 @@ type LayoutParams = {
   ticketHtml: string
   extraHtml?: string
   cta: { href: string; label: string }
+  /** Linha sob o botão (HTML). Padrão: atalho para Minhas reservas. */
+  ctaHint?: string
+  /** Rodapé (HTML). Padrão: "Você recebeu este e-mail porque fez uma reserva…". */
+  footerNote?: string
 }
 
 function wrapLayout(p: LayoutParams): string {
@@ -321,7 +327,7 @@ function wrapLayout(p: LayoutParams): string {
   </td></tr>
   <tr><td align="center" style="background:#ffffff;padding:18px 36px 34px;border:1px solid ${C.border};border-top:0;border-radius:0 0 22px 22px;">
     <a href="${p.cta.href}" style="display:inline-block;background:${C.accent};color:#ffffff;font:700 15px ${SANS};text-decoration:none;padding:15px 34px;border-radius:999px;">${esc(p.cta.label)} &rarr;</a>
-    <p style="margin:14px 0 0;font:500 12px ${SANS};color:${C.muted};">Ou acesse <a href="${p.cta.href}" style="color:${C.forest};font-weight:700;">Minhas reservas</a> em rotadaspousadas.com.br</p>
+    <p style="margin:14px 0 0;font:500 12px ${SANS};color:${C.muted};">${p.ctaHint ?? `Ou acesse <a href="${p.cta.href}" style="color:${C.forest};font-weight:700;">Minhas reservas</a> em rotadaspousadas.com.br`}</p>
   </td></tr>
   <tr><td style="padding:22px 12px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.ink};border-radius:18px;"><tr><td style="padding:22px 26px;">
@@ -331,7 +337,7 @@ function wrapLayout(p: LayoutParams): string {
           <div style="font:500 12px/1.5 ${SANS};color:${C.footerText};margin-top:2px;">Reserva direto com a pousada, sem intermediário na hospedagem.</div></td>
       </tr></table>
     </td></tr></table>
-    <p style="margin:14px 0 0;text-align:center;font:500 11px/1.6 ${SANS};color:${C.muted};">Você recebeu este e-mail porque fez uma reserva em rotadaspousadas.com.br.<br>Dúvidas sobre a estadia? Fale direto com a pousada.</p>
+    <p style="margin:14px 0 0;text-align:center;font:500 11px/1.6 ${SANS};color:${C.muted};">${p.footerNote ?? 'Você recebeu este e-mail porque fez uma reserva em rotadaspousadas.com.br.<br>Dúvidas sobre a estadia? Fale direto com a pousada.'}</p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -478,5 +484,76 @@ export function checkinReminderEmail(ctx: BookingNotificationContext, now = new 
   })
   const address = addressLine(ctx)
   const text = `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}`
+  return { subject, html, text }
+}
+
+// ---------------------------------------------------------------------------
+// Conta: nova senha
+// ---------------------------------------------------------------------------
+
+function helloName(name: string | null): string {
+  const first = firstName(name)
+  return first ? `Olá, <strong>${esc(first)}</strong>!` : 'Olá!'
+}
+
+/** Link para criar nova senha ("Esqueci minha senha"). Vale 1h, uso único. */
+export function passwordResetEmail(p: { name: string | null; email: string; link: string }): Email {
+  const subject = 'Crie sua nova senha — Rota das Pousadas'
+  const safeLink = esc(p.link)
+  const html = wrapLayout({
+    preheader: 'Use o botão para criar sua nova senha. O link vale por 1 hora.',
+    pill: { label: 'Nova senha', bg: '#fef3c7', fg: '#92400e' },
+    title: 'Vamos criar sua nova senha',
+    subtitle: 'O link vale por 1 hora e funciona uma única vez.',
+    intro: `${helloName(p.name)} Recebemos um pedido para redefinir a senha da conta <strong>${esc(p.email)}</strong> na Rota das Pousadas. Toque no botão abaixo para escolher a nova senha.`,
+    ticketHtml: '',
+    extraHtml:
+      notice(
+        '<strong>Não foi você?</strong> Pode ignorar este e-mail. Sua senha atual continua valendo e ninguém consegue trocá-la sem este link.',
+        'warn',
+      ) +
+      `<p style="margin:18px 0 0;font:500 12px/1.6 ${SANS};color:${C.muted};">Se o botão não abrir, copie e cole este endereço no navegador:<br><a href="${safeLink}" style="color:${C.forest};word-break:break-all;">${safeLink}</a></p>`,
+    cta: { href: safeLink, label: 'Criar nova senha' },
+    ctaHint: 'Por segurança, não encaminhe este e-mail para ninguém.',
+    footerNote:
+      'Você recebeu este e-mail porque alguém pediu uma nova senha para esta conta em rotadaspousadas.com.br.',
+  })
+  const text = `Crie sua nova senha na Rota das Pousadas.\n\nConta: ${p.email}\nAbra o link (vale por 1 hora, uso único):\n${p.link}\n\nNão foi você? Ignore este e-mail — sua senha atual continua valendo.`
+  return { subject, html, text }
+}
+
+/** Aviso de segurança depois que a senha foi trocada. */
+export function passwordChangedEmail(p: {
+  name: string | null
+  loginUrl: string
+  resetUrl: string
+  now?: Date
+}): Email {
+  const when = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: DEFAULT_TZ,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(p.now ?? new Date())
+  const subject = 'Sua senha foi alterada — Rota das Pousadas'
+  const html = wrapLayout({
+    preheader: `A senha da sua conta foi alterada em ${when}.`,
+    pill: { label: 'Segurança', bg: '#d1fae5', fg: '#065f46' },
+    title: 'Sua senha foi alterada',
+    subtitle: `Em ${when} (horário de Brasília)`,
+    intro: `${helloName(p.name)} A senha da sua conta na Rota das Pousadas acabou de ser alterada. Por segurança, desconectamos os outros aparelhos em que a conta estava aberta.`,
+    ticketHtml: '',
+    extraHtml: notice(
+      `<strong>Não foi você?</strong> Crie uma nova senha agora em <a href="${esc(p.resetUrl)}" style="color:#7c2d12;font-weight:700;">Esqueci minha senha</a> e confira suas reservas.`,
+      'warn',
+    ),
+    cta: { href: esc(p.loginUrl), label: 'Entrar na minha conta' },
+    ctaHint: 'Guarde sua senha em um lugar seguro.',
+    footerNote:
+      'Você recebeu este aviso de segurança porque a senha desta conta em rotadaspousadas.com.br foi alterada.',
+  })
+  const text = `A senha da sua conta na Rota das Pousadas foi alterada em ${when} (horário de Brasília).\nNão foi você? Crie uma nova senha agora: ${p.resetUrl}`
   return { subject, html, text }
 }

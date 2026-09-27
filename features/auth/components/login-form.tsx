@@ -33,6 +33,10 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
   const safeNext = getSafeNext(next)
   const signupHref = safeNext ? `/cadastro?next=${encodeURIComponent(safeNext)}` : '/cadastro'
   const [formError, setFormError] = useState<string | null>(null)
+  const forgotHref =
+    variant === 'guest'
+      ? '/esqueci-senha'
+      : `/esqueci-senha?para=${variant === 'partner' ? 'parceiro' : 'admin'}`
   const {
     register,
     handleSubmit,
@@ -47,7 +51,8 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
     // Admin precisa confirmar platformRole no servidor DEPOIS da senha bater
     // (e desloga se não for staff) — hóspede/parceiro reaproveitam a mesma
     // action, só muda o destino do redirect no cliente.
-    const result = variant === 'admin' ? await signInAdminAction(values) : await signInAction(values)
+    const result =
+      variant === 'admin' ? await signInAdminAction(values) : await signInAction(values)
     if (!result.ok) {
       setFormError(result.error)
       return
@@ -74,16 +79,22 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
         error={errors.password?.message}
         {...register('password')}
       />
-      {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
+      <Link
+        href={forgotHref}
+        className="text-primary -mt-1 w-fit self-end text-sm font-semibold hover:underline"
+      >
+        Esqueci minha senha
+      </Link>
+      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Entrando…' : 'Entrar'}
       </Button>
       {variant !== 'admin' && (
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-center text-sm">
           Não tem conta?{' '}
           <Link
             href={variant === 'partner' ? '/cadastro?next=/anunciar' : signupHref}
-            className="font-semibold text-primary hover:underline"
+            className="text-primary font-semibold hover:underline"
           >
             {variant === 'partner' ? 'Cadastrar minha pousada' : 'Criar conta'}
           </Link>

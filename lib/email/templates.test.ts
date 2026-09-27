@@ -10,6 +10,8 @@ import {
   esc,
   formatDeadline,
   formatStayRange,
+  passwordChangedEmail,
+  passwordResetEmail,
 } from './templates'
 import type { BookingNotificationContext } from '@/repositories/bookings.repository'
 
@@ -114,5 +116,38 @@ describe('emPousada', () => {
   it('o e-mail de confirmação diz "no Refúgio"', () => {
     const { html } = bookingConfirmedEmail(ctx)
     expect(html).toContain('no <strong>Refúgio das Nuvens</strong>')
+  })
+})
+
+describe('e-mails de senha', () => {
+  it('link de nova senha traz botão, endereço de fallback e o e-mail da conta', () => {
+    const link = 'https://rotadaspousadas.com.br/redefinir-senha?token=abc123'
+    const { subject, html, text } = passwordResetEmail({
+      name: 'Ana Souza',
+      email: 'ana@ex.com',
+      link,
+    })
+    expect(subject).toContain('nova senha')
+    expect(html).toContain('Olá, <strong>Ana</strong>!')
+    expect(html).toContain('Criar nova senha')
+    expect(html.split(link).length - 1).toBeGreaterThanOrEqual(2)
+    expect(html).toContain('ana@ex.com')
+    expect(html).not.toContain('porque fez uma reserva')
+    expect(text).toContain(link)
+  })
+  it('escapa nome vindo do cadastro', () => {
+    const { html } = passwordResetEmail({ name: '<b>x</b>', email: 'a@b.co', link: 'https://x.co' })
+    expect(html).not.toContain('<b>x</b>')
+  })
+  it('aviso de senha alterada mostra data e caminho para recuperar', () => {
+    const { html } = passwordChangedEmail({
+      name: null,
+      loginUrl: 'https://rotadaspousadas.com.br/login',
+      resetUrl: 'https://rotadaspousadas.com.br/esqueci-senha',
+      now: new Date('2026-09-27T18:30:00Z'),
+    })
+    expect(html).toContain('27/09/2026')
+    expect(html).toContain('15:30')
+    expect(html).toContain('/esqueci-senha')
   })
 })

@@ -6,7 +6,14 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createAction } from '@/actions/create-action'
 import { assertLoginNotLocked, recordLoginAttempt } from '@/repositories/auth-rate-limit.repository'
 import { getCurrentUser, updateMyName } from './services/auth.service'
-import { loginSchema, signupSchema, updateNameSchema } from './schemas'
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  resetPasswordSchema,
+  signupSchema,
+  updateNameSchema,
+} from './schemas'
+import { requestPasswordReset, resetPassword } from './services/password-reset.service'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -95,3 +102,24 @@ export async function signOutAction() {
   await supabase.auth.signOut()
   revalidatePath('/', 'layout')
 }
+
+/**
+ * "Esqueci minha senha". Resposta idêntica exista ou não a conta (ver
+ * `requestPasswordReset`) — a UI sempre mostra "se houver conta, enviamos".
+ */
+export const requestPasswordResetAction = createAction(forgotPasswordSchema, async (input) => {
+  const ip = await clientIp()
+  await requestPasswordReset({ email: input.email, ip, audience: input.audience })
+  return { sent: true as const }
+})
+
+/** Nova senha a partir do link do e-mail; já deixa a pessoa logada. */
+export const resetPasswordAction = createAction(resetPasswordSchema, async (input) => {
+  const result = await resetPassword({
+    token: input.token,
+    password: input.password,
+    audience: input.audience,
+  })
+  revalidatePath('/', 'layout')
+  return result
+})
