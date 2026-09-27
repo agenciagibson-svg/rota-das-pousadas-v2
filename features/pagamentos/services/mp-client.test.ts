@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  buildPayer,
   createCheckoutPreference,
   getPaymentById,
   mapAuthorizedPaymentStatus,
@@ -113,5 +114,20 @@ describe('preferência do Checkout Pro (0070)', () => {
     const body = sentBody(fetch)
     expect(body).not.toHaveProperty('expires')
     expect(body).not.toHaveProperty('expiration_date_to')
+  })
+})
+
+describe('buildPayer (e-mail do hóspede no checkout)', () => {
+  it('preenche e-mail, nome e sobrenome', () => {
+    expect(buildPayer({ email: ' ana@ex.com ', name: 'Ana Maria Souza' })).toEqual({
+      email: 'ana@ex.com',
+      name: 'Ana',
+      surname: 'Maria Souza',
+    })
+  })
+  it('omite quando o e-mail é inválido ou vazio', () => {
+    expect(buildPayer({ email: 'nao-e-email', name: 'Ana' })).toBeUndefined()
+    expect(buildPayer({ email: null })).toBeUndefined()
+    expect(buildPayer(undefined)).toBeUndefined()
   })
 })

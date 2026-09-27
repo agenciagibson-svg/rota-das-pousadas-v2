@@ -49,6 +49,7 @@ export async function createCheckoutPreference(bookingId: string): Promise<{ ini
     notificationUrl,
     backUrls: { success: returnUrl, pending: returnUrl, failure: returnUrl },
     expiresAt: booking.paymentDueAt,
+    payer: { email: booking.guestEmail ?? user.email, name: booking.guestName },
   })
 
   return { initPoint: preference.init_point }

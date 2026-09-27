@@ -102,6 +102,23 @@ export type CreatePreferenceParams = {
    * junto, para o hóspede não pagar uma reserva já cancelada por prazo (0070).
    */
   expiresAt?: string | null
+  /**
+   * Dados do hóspede já logado. Vão em `payer` para o Checkout Pro já abrir
+   * com o e-mail preenchido — o hóspede não precisa digitar de novo.
+   */
+  payer?: { email?: string | null; name?: string | null }
+}
+
+/** Monta o `payer` só com campos válidos (e-mail inválido é omitido, nunca quebra o checkout). */
+export function buildPayer(payer: CreatePreferenceParams['payer']) {
+  const email = payer?.email?.trim()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return undefined
+  const [first, ...rest] = (payer?.name ?? '').trim().split(/\s+/).filter(Boolean)
+  return {
+    email,
+    ...(first ? { name: first } : {}),
+    ...(rest.length ? { surname: rest.join(' ') } : {}),
+  }
 }
 
 /**
@@ -133,6 +150,7 @@ export async function createCheckoutPreference(
         },
       ],
       external_reference: params.externalReference,
+      ...(buildPayer(params.payer) ? { payer: buildPayer(params.payer) } : {}),
       notification_url: params.notificationUrl,
       back_urls: params.backUrls,
       auto_return: 'approved',
