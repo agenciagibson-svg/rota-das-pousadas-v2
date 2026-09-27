@@ -47,6 +47,51 @@ const MONTHS = [
   'dezembro',
 ]
 
+/** Palavras iniciais masculinas comuns em nomes de hospedagem ("no Refúgio…"). */
+const MASCULINE_FIRST_WORDS = new Set([
+  'refúgio',
+  'refugio',
+  'recanto',
+  'hotel',
+  'chalé',
+  'chale',
+  'sítio',
+  'sitio',
+  'rancho',
+  'canto',
+  'cantinho',
+  'vale',
+  'paraíso',
+  'paraiso',
+  'espaço',
+  'espaco',
+  'solar',
+  'morro',
+  'mirante',
+  'hostel',
+  'lodge',
+  'retiro',
+  'casarão',
+  'casarao',
+  'porto',
+  'jardim',
+  'bosque',
+  'resort',
+  'hotelzinho',
+  'ninho',
+  'abrigo',
+  'rincão',
+  'rincao',
+  'engenho',
+  'alto',
+])
+
+/** "no" ou "na" antes do nome da pousada: "no Refúgio das Nuvens", "na Pousada Sol". */
+export function emPousada(name: string): 'no' | 'na' {
+  const first = name.trim().split(/\s+/)[0]?.toLocaleLowerCase('pt-BR') ?? ''
+  return MASCULINE_FIRST_WORDS.has(first) ? 'no' : 'na'
+}
+
 export function esc(value: string | null | undefined): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -340,13 +385,13 @@ export function bookingRequestReceivedEmail(
     pill: { label: 'Aguardando pagamento', bg: C.accent, fg: '#ffffff' },
     title: 'Seu refúgio está quase garantido',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
-    intro: `${greeting(ctx)} Recebemos seu pedido de reserva na <strong>${esc(ctx.pousada.name)}</strong>. Só falta o pagamento para confirmar.`,
+    intro: `${greeting(ctx)} Recebemos seu pedido de reserva ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>. Só falta o pagamento para confirmar.`,
     ticketHtml: ticket(ctx, rows),
     extraHtml: deadlineHtml,
     cta: { href: link, label: 'Concluir pagamento' },
   })
   const text = [
-    `Recebemos seu pedido de reserva na ${ctx.pousada.name}.`,
+    `Recebemos seu pedido de reserva ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.`,
     `Código: ${ctx.code}`,
     `Acomodação: ${ctx.roomName}`,
     `Check-in: ${formatDateBR(ctx.checkin)}`,
@@ -394,19 +439,19 @@ export function bookingConfirmedEmail(ctx: BookingNotificationContext): Email {
     pill: { label: 'Confirmada', bg: '#d1fae5', fg: '#065f46' },
     title: 'Tudo certo, sua estadia está confirmada',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
-    intro: `Pagamento recebido. Guarde este e-mail: ele é o seu comprovante da reserva na <strong>${esc(ctx.pousada.name)}</strong>.`,
+    intro: `Pagamento recebido. Guarde este e-mail: ele é o seu comprovante da reserva ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>.`,
     ticketHtml: ticket(ctx, rows),
     extraHtml: arrivalNotice(ctx) + policiesHtml,
     cta: { href: link, label: 'Ver minha reserva' },
   })
   const address = addressLine(ctx)
-  const text = `Sua reserva na ${ctx.pousada.name} está confirmada.\nCódigo: ${ctx.code}\nAcomodação: ${ctx.roomName}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\nCheck-out: ${formatDateBR(ctx.checkout)} (até ${ctx.pousada.checkoutTime})\nTotal pago: ${formatCurrencyBRL(ctx.total)}\n${address ? `Endereço: ${address}\n` : ''}\nVeja os detalhes em: ${link}`
+  const text = `Sua reserva ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está confirmada.\nCódigo: ${ctx.code}\nAcomodação: ${ctx.roomName}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\nCheck-out: ${formatDateBR(ctx.checkout)} (até ${ctx.pousada.checkoutTime})\nTotal pago: ${formatCurrencyBRL(ctx.total)}\n${address ? `Endereço: ${address}\n` : ''}\nVeja os detalhes em: ${link}`
   return { subject, html, text }
 }
 
 export function checkinReminderEmail(ctx: BookingNotificationContext, now = new Date()): Email {
   const link = `${publicEnv.siteUrl}/minhas-reservas`
-  const subject = `Sua estadia na ${ctx.pousada.name} está chegando — check-in ${formatDateBR(ctx.checkin)}`
+  const subject = `Sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está chegando — check-in ${formatDateBR(ctx.checkin)}`
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: safeTimeZone(ctx.pousada.timezone),
     year: 'numeric',
@@ -422,16 +467,16 @@ export function checkinReminderEmail(ctx: BookingNotificationContext, now = new 
     ['Hóspedes', guestsLine(ctx)],
   ])
   const html = wrapLayout({
-    preheader: `Check-in ${formatDayShort(ctx.checkin)} na ${ctx.pousada.name}.`,
+    preheader: `Check-in ${formatDayShort(ctx.checkin)} ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.`,
     pill: { label: pillLabel, bg: C.linen, fg: C.forest },
     title: 'Arrume as malas: sua viagem está chegando',
     subtitle: `${ctx.pousada.name} · check-in em ${formatDayMonth(ctx.checkin)}`,
-    intro: `Faltam poucos dias para sua estadia na <strong>${esc(ctx.pousada.name)}</strong>. Aqui vai o essencial para a chegada.`,
+    intro: `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>. Aqui vai o essencial para a chegada.`,
     ticketHtml: ticket(ctx, rows),
     extraHtml: arrivalNotice(ctx),
     cta: { href: link, label: 'Ver detalhes da reserva' },
   })
   const address = addressLine(ctx)
-  const text = `Faltam poucos dias para sua estadia na ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}`
+  const text = `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}`
   return { subject, html, text }
 }

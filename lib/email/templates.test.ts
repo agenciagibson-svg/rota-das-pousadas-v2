@@ -6,6 +6,7 @@ import {
   bookingConfirmedEmail,
   bookingRequestReceivedEmail,
   checkinReminderEmail,
+  emPousada,
   esc,
   formatDeadline,
   formatStayRange,
@@ -100,5 +101,18 @@ describe('helpers', () => {
   })
   it('esc neutraliza HTML', () => {
     expect(esc('<b>"x"</b>')).toBe('&lt;b&gt;&quot;x&quot;&lt;/b&gt;')
+  })
+})
+
+describe('emPousada', () => {
+  it('usa "no" para nomes masculinos e "na" para o resto', () => {
+    expect(emPousada('Refúgio das Nuvens')).toBe('no')
+    expect(emPousada('Vale Esmeralda Boutique')).toBe('no')
+    expect(emPousada('Pousada Sol')).toBe('na')
+    expect(emPousada('Casa da Serra')).toBe('na')
+  })
+  it('o e-mail de confirmação diz "no Refúgio"', () => {
+    const { html } = bookingConfirmedEmail(ctx)
+    expect(html).toContain('no <strong>Refúgio das Nuvens</strong>')
   })
 })

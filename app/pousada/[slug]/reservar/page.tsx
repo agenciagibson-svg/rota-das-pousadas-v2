@@ -8,7 +8,7 @@ import { SiteHeader } from '@/components/site-header'
 import { Container } from '@/components/ui/container'
 import { Card } from '@/components/ui/card'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { BookingForm, bioOriginFromParam } from '@/features/reservas'
+import { BookingForm, StaleDatesNotice, bioOriginFromParam } from '@/features/reservas'
 import { getPousada, getCurrentUser, getBookableRoom } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -140,15 +140,18 @@ export default async function ReservarPage({
                 Escolha as datas e a quantidade de hóspedes.
               </p>
               {problem && (
-                <div
-                  role="alert"
-                  className="mt-4 flex gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900"
-                >
-                  <CalendarX2 className="mt-0.5 size-5 shrink-0 text-orange-600" />
-                  <p>
-                    <strong>{problemMessage[problem].title}</strong> {problemMessage[problem].body}
-                  </p>
-                </div>
+                <StaleDatesNotice>
+                  <div
+                    role="alert"
+                    className="mt-4 flex gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900"
+                  >
+                    <CalendarX2 className="mt-0.5 size-5 shrink-0 text-orange-600" />
+                    <p>
+                      <strong>{problemMessage[problem].title}</strong>{' '}
+                      {problemMessage[problem].body}
+                    </p>
+                  </div>
+                </StaleDatesNotice>
               )}
               {offer ? (
                 <div className="mt-5">

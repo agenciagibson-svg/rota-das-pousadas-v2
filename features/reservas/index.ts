@@ -4,6 +4,7 @@
  */
 export { BookingForm } from './components/booking-form'
 export { CancelBookingButton } from './components/cancel-booking-button'
+export { StaleDatesNotice } from './components/stale-dates-notice'
 export { calculateBookingPrice, nightsBetween, SERVICE_FEE_RATE } from './pricing'
 export { BOOKING_STATUS } from './status'
 export { bioOriginFromParam, createBookingSchema, type CreateBookingInput } from './schemas'
