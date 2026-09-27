@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import { getCurrentUser, getOwnerPousada, getOwnerSettings } from '@/server/queries'
 import { OwnerSettingsView } from '@/features/gestao/components/owner-settings-view'
 import { getOwnerPaymentAccountStatus } from '@/features/pagamentos/services/oauth.service'
@@ -5,6 +7,9 @@ import { getOwnerSubscriptionStatus } from '@/features/pagamentos/services/subsc
 import { getOwnerPixSettings } from '@/features/pagamentos/services/pix.service'
 
 export default async function DashboardConfiguracoesPage() {
+  if (await sectionDenied('configuracoes'))
+    return <NoSectionAccess section="configuracoes" title="Configurações" />
+
   const [user, pousada, settings, paymentAccount, subscription, pix] = await Promise.all([
     getCurrentUser(),
     getOwnerPousada(),

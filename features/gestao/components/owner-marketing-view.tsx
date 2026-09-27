@@ -51,7 +51,9 @@ function buildCampaigns({
   const active = activeReservations(reservations)
   const pending = reservations.filter((reservation) => reservation.status === 'pending')
   const averageRating =
-    reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0
 
   return [
     {
@@ -90,7 +92,7 @@ function buildCampaigns({
       title: 'Receita pendente',
       description:
         finance.revenuePending > 0
-          ? `R$ ${finance.revenuePending} ainda estão pendentes. Comunicação rápida pode proteger essa receita.`
+          ? `${finance.revenuePending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ainda estão pendentes. Comunicação rápida pode proteger essa receita.`
           : 'Sem receita pendente no momento. Foque em novas reservas.',
       action: 'Crie lembrete amigável para finalizar reserva.',
       icon: TrendingUp,
@@ -118,7 +120,10 @@ export function OwnerMarketingView({
   const socialText = buildSocialText(settings)
   const profileChecks = [
     { label: 'Imagem principal cadastrada', done: Boolean(settings?.image) },
-    { label: 'Descrição pública completa', done: Boolean(settings?.description && settings.description.length >= 80) },
+    {
+      label: 'Descrição pública completa',
+      done: Boolean(settings?.description && settings.description.length >= 80),
+    },
     { label: 'Tags de destaque', done: Boolean(settings?.tags?.length) },
     { label: 'Telefone de contato', done: Boolean(settings?.contactPhone) },
     { label: 'Política de cancelamento', done: Boolean(settings?.cancellationPolicy) },
@@ -136,32 +141,32 @@ export function OwnerMarketingView({
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Perfil completo</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">
+          <div className="text-muted-foreground text-sm">Perfil completo</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">
             {completedChecks}/{profileChecks.length}
           </div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Reservas ativas</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">
+          <div className="text-muted-foreground text-sm">Reservas ativas</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">
             {activeReservations(reservations).length}
           </div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Avaliações</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{reviews.length}</div>
+          <div className="text-muted-foreground text-sm">Avaliações</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{reviews.length}</div>
         </Card>
       </div>
 
       <div className="mt-5 grid gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-2xl">
               <Megaphone className="size-5" />
             </span>
             <div>
-              <h2 className="font-semibold text-foreground">Campanhas sugeridas</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-foreground font-semibold">Campanhas sugeridas</h2>
+              <p className="text-muted-foreground text-sm">
                 Ideias práticas calculadas a partir da sua operação atual.
               </p>
             </div>
@@ -171,20 +176,20 @@ export function OwnerMarketingView({
             {campaigns.map((campaign) => {
               const Icon = campaign.icon
               return (
-                <div key={campaign.title} className="rounded-2xl border border-border p-4">
+                <div key={campaign.title} className="border-border rounded-2xl border p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
                       <Icon className="size-4" />
                     </span>
                     <Badge variant="primarySoft" size="sm">
                       {campaign.badge}
                     </Badge>
                   </div>
-                  <h3 className="mt-3 font-semibold text-foreground">{campaign.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <h3 className="text-foreground mt-3 font-semibold">{campaign.title}</h3>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
                     {campaign.description}
                   </p>
-                  <p className="mt-3 text-sm font-medium text-foreground">{campaign.action}</p>
+                  <p className="text-foreground mt-3 text-sm font-medium">{campaign.action}</p>
                 </div>
               )
             })}
@@ -193,25 +198,25 @@ export function OwnerMarketingView({
 
         <div className="space-y-5">
           <Card className="p-6">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <Share2 className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 font-semibold">
+              <Share2 className="text-primary size-4" />
               Texto pronto
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-sm">
               Use como base para Instagram, WhatsApp ou anúncio local.
             </p>
-            <div className="mt-4 rounded-2xl bg-secondary p-4 text-sm leading-relaxed text-foreground">
+            <div className="bg-secondary text-foreground mt-4 rounded-2xl p-4 text-sm leading-relaxed">
               {socialText}
             </div>
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+            <div className="bg-secondary text-muted-foreground mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold">
               <Copy className="size-3.5" />
               Pronto para copiar
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <ImageIcon className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 font-semibold">
+              <ImageIcon className="text-primary size-4" />
               Checklist do perfil
             </div>
             <div className="mt-4 space-y-3">

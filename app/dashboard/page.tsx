@@ -1,3 +1,5 @@
+import { getActiveTenantRole } from '@/lib/auth/tenant-context'
+import { can } from '@/lib/auth/rbac'
 import {
   getCurrentUser,
   getOwnerPousada,
@@ -40,6 +42,8 @@ export default async function DashboardPage() {
     )
   }
 
+  const role = await getActiveTenantRole()
+  const showRevenue = Boolean(role && can(role, 'finance:pousada:view'))
   const [reservations, rooms, reviews] = await Promise.all([
     getOwnerReservations(),
     // Papéis sem `room:status:view` (financeiro, por exemplo) não leem
@@ -76,7 +80,8 @@ export default async function DashboardPage() {
       pousadaStatus={pousada.status}
       reservations={reservations}
       occupancy={occupancy}
-      revenueSeries={monthlyRevenue(reservations, today.date)}
+      revenueSeries={showRevenue ? monthlyRevenue(reservations, today.date) : []}
+      showRevenue={showRevenue}
       week={weeklyDailies(reservations, today.date)}
       reviews={summarizeReviews(reviews)}
       arrivalsToday={arrivals}

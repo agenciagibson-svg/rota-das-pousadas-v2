@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   getCurrentUser,
   getFinance,
@@ -9,6 +11,9 @@ import {
 import { OwnerAssistantView } from '@/features/gestao/components/owner-assistant-view'
 
 export default async function DashboardAssistentePage() {
+  if (await sectionDenied('assistente'))
+    return <NoSectionAccess section="assistente" title="Assistente" />
+
   const [user, pousada, reservations, reviews, finance, settings] = await Promise.all([
     getCurrentUser(),
     getOwnerPousada(),

@@ -3,12 +3,21 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Ban, RotateCcw, ShieldOff, Users2 } from 'lucide-react'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import type { ActionResult } from '@/types'
+import { can } from '@/lib/auth/rbac'
+import { useDashboardRole } from '@/components/dashboard/role-context'
 import type { TeamMember } from '../types'
 import {
   updateMemberRoleAction,
@@ -28,22 +37,39 @@ const ASSIGNABLE_ROLES: TeamRole[] = [
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '—'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
-    new Date(iso),
-  )
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(iso))
 }
 
-export function TeamTable({ members, currentUserId }: { members: TeamMember[]; currentUserId: string }) {
+export function TeamTable({
+  members,
+  currentUserId,
+}: {
+  members: TeamMember[]
+  currentUserId: string
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [suspendTarget, setSuspendTarget] = useState<TeamMember | null>(null)
   const [revokeTarget, setRevokeTarget] = useState<TeamMember | null>(null)
   const [reason, setReason] = useState('')
+  // Quem só enxerga a equipe (ex.: admin da pousada) não vê controles que o servidor recusaria.
+  const role = useDashboardRole()
+  const canChangeRole = !!role && can(role, 'member:update_role')
+  const canSuspend = !!role && can(role, 'member:suspend')
+  const canRevoke = !!role && can(role, 'member:revoke')
 
   if (members.length === 0) {
     return (
-      <EmptyState icon={Users2} title="Nenhum membro ainda" description="Convide alguém para sua equipe." />
+      <EmptyState
+        icon={Users2}
+        title="Nenhum membro ainda"
+        description="Convide alguém para sua equipe."
+      />
     )
   }
 
@@ -80,7 +106,7 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
 
   return (
     <div className="space-y-3">
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
       <Table>
         <TableHeader>
           <TableRow>
@@ -98,20 +124,20 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
             const status = MEMBERSHIP_STATUS_LABEL[member.status]
             return (
               <TableRow key={member.id}>
-                <TableCell className="font-medium text-foreground">
+                <TableCell className="text-foreground font-medium">
                   {member.fullName}
-                  {isSelf && <span className="ml-2 text-xs text-muted-foreground">(você)</span>}
+                  {isSelf && <span className="text-muted-foreground ml-2 text-xs">(você)</span>}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{member.email ?? '—'}</TableCell>
                 <TableCell>
-                  {isSelf || member.status !== 'active' ? (
+                  {isSelf || member.status !== 'active' || !canChangeRole ? (
                     roleLabel(member.role)
                   ) : (
                     <select
                       defaultValue={member.role}
                       disabled={isPending}
                       onChange={(e) => changeRole(member.id, e.target.value)}
-                      className="rounded-lg border border-input bg-card px-2 py-1 text-sm text-foreground outline-none focus:border-ring"
+                      className="border-input bg-card text-foreground focus:border-ring rounded-lg border px-2 py-1 text-sm outline-none"
                     >
                       {ASSIGNABLE_ROLES.map((role) => (
                         <option key={role} value={role}>
@@ -130,7 +156,7 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
                 <TableCell className="text-right">
                   {!isSelf && (
                     <div className="flex justify-end gap-1.5">
-                      {member.status === 'active' && (
+                      {canSuspend && member.status === 'active' && (
                         <Button
                           variant="destructive"
                           size="icon-sm"
@@ -141,7 +167,7 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
                           <Ban />
                         </Button>
                       )}
-                      {member.status === 'suspended' && (
+                      {canSuspend && member.status === 'suspended' && (
                         <Button
                           variant="outline"
                           size="icon-sm"
@@ -152,7 +178,7 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
                           <RotateCcw />
                         </Button>
                       )}
-                      {member.status !== 'revoked' && (
+                      {canRevoke && member.status !== 'revoked' && (
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -182,7 +208,11 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
             <Button variant="ghost" onClick={() => setSuspendTarget(null)}>
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={confirmSuspend} disabled={reason.trim().length < 5}>
+            <Button
+              variant="destructive"
+              onClick={confirmSuspend}
+              disabled={reason.trim().length < 5}
+            >
               Suspender
             </Button>
           </>
@@ -193,7 +223,7 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Motivo da suspensão (obrigatório, fica registrado na auditoria)"
-          className="w-full resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
         />
       </Dialog>
 

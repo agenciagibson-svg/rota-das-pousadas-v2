@@ -76,10 +76,37 @@ export function FinanceView({
   }
 
   const cards = [
-    { label: 'Receita realizada', value: brl(summary.revenueConfirmed), icon: TrendingUp, tone: 'primary' as const },
-    { label: 'A receber', value: brl(summary.revenuePending), icon: Clock, tone: 'ocean' as const },
-    { label: 'Despesas', value: brl(summary.expensesTotal), icon: ArrowDownCircle, tone: 'accent' as const },
-    { label: 'Saldo', value: brl(summary.balance), icon: Scale, tone: 'primary' as const },
+    {
+      label: 'Recebido',
+      hint: 'Pagamentos que já entraram',
+      value: brl(summary.revenueConfirmed),
+      icon: TrendingUp,
+      tone: 'primary' as const,
+    },
+    {
+      label: 'A receber',
+      hint: 'Saldo em aberto das reservas ativas',
+      value: brl(summary.revenuePending),
+      icon: Clock,
+      tone: 'ocean' as const,
+    },
+    {
+      label: 'Despesas',
+      hint:
+        summary.expensesPending > 0
+          ? `${brl(summary.expensesPending)} ainda a pagar`
+          : 'Todas pagas',
+      value: brl(summary.expensesTotal),
+      icon: ArrowDownCircle,
+      tone: 'accent' as const,
+    },
+    {
+      label: 'Saldo em caixa',
+      hint: 'Recebido − despesas pagas',
+      value: brl(summary.balance),
+      icon: Scale,
+      tone: 'primary' as const,
+    },
   ]
 
   return (
@@ -96,22 +123,28 @@ export function FinanceView({
           <Card key={c.label} className="p-5">
             <span
               className={`flex size-10 items-center justify-center rounded-xl ${
-                c.tone === 'ocean' ? 'bg-ocean/10 text-ocean' : c.tone === 'accent' ? 'bg-accent/15 text-accent' : 'bg-primary/10 text-primary'
+                c.tone === 'ocean'
+                  ? 'bg-ocean/10 text-ocean'
+                  : c.tone === 'accent'
+                    ? 'bg-accent/15 text-accent'
+                    : 'bg-primary/10 text-primary'
               }`}
             >
               <c.icon className="size-5" />
             </span>
-            <div className="mt-4 text-2xl font-semibold text-foreground">{c.value}</div>
-            <div className="text-sm text-muted-foreground">{c.label}</div>
+            <div className="text-foreground mt-4 text-2xl font-semibold">{c.value}</div>
+            <div className="text-muted-foreground text-sm">{c.label}</div>
+            <div className="text-muted-foreground/80 mt-0.5 text-xs">{c.hint}</div>
           </Card>
         ))}
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.6fr_1fr]">
         <Card className="p-6">
-          <h2 className="font-semibold text-foreground">Extrato</h2>
-          <p className="text-sm text-muted-foreground">
-            Receitas de reservas (confirmadas, em estadia, concluídas e aguardando pagamento) e despesas lançadas.
+          <h2 className="text-foreground font-semibold">Extrato</h2>
+          <p className="text-muted-foreground text-sm">
+            Receitas de reservas (confirmadas, em estadia, concluídas e aguardando pagamento) e
+            despesas lançadas.
           </p>
           <div className="mt-4 overflow-x-auto">
             {transactions.length === 0 ? (
@@ -139,9 +172,12 @@ export function FinanceView({
                     return (
                       <TableRow key={t.id}>
                         <TableCell className="text-muted-foreground">{fmtDate(t.date)}</TableCell>
-                        <TableCell className="font-medium text-foreground">
+                        <TableCell className="text-foreground font-medium">
                           {t.bookingId ? (
-                            <Link href={`/dashboard/reservas/${t.bookingId}`} className="hover:underline">
+                            <Link
+                              href={`/dashboard/reservas/${t.bookingId}`}
+                              className="hover:underline"
+                            >
                               {t.description}
                             </Link>
                           ) : (
@@ -149,7 +185,10 @@ export function FinanceView({
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={t.kind === 'receita' ? 'primarySoft' : 'accentSoft'} size="sm">
+                          <Badge
+                            variant={t.kind === 'receita' ? 'primarySoft' : 'accentSoft'}
+                            size="sm"
+                          >
                             {t.kind === 'receita' ? 'Receita' : 'Despesa'}
                           </Badge>
                         </TableCell>
@@ -171,10 +210,16 @@ export function FinanceView({
                                 size="xs"
                                 variant={t.status === 'pago' ? 'ghost' : 'secondary'}
                                 disabled={isPending}
-                                onClick={() => t.expenseId && togglePaid(t.expenseId, t.status !== 'pago')}
+                                onClick={() =>
+                                  t.expenseId && togglePaid(t.expenseId, t.status !== 'pago')
+                                }
                                 title={t.status === 'pago' ? 'Reabrir despesa' : 'Marcar como paga'}
                               >
-                                {t.status === 'pago' ? <RotateCcw className="size-3" /> : <Check className="size-3" />}
+                                {t.status === 'pago' ? (
+                                  <RotateCcw className="size-3" />
+                                ) : (
+                                  <Check className="size-3" />
+                                )}
                                 {busy ? '…' : t.status === 'pago' ? 'Reabrir' : 'Paga'}
                               </Button>
                             )}
@@ -186,22 +231,22 @@ export function FinanceView({
                 </TableBody>
               </Table>
             )}
-            {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+            {error && <p className="text-destructive mt-3 text-sm font-medium">{error}</p>}
           </div>
         </Card>
 
         {canManageExpenses ? (
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Lançar despesa</h2>
-            <p className="text-sm text-muted-foreground">Registre uma conta a pagar.</p>
+            <h2 className="text-foreground font-semibold">Lançar despesa</h2>
+            <p className="text-muted-foreground text-sm">Registre uma conta a pagar.</p>
             <div className="mt-4">
               <ExpenseForm />
             </div>
           </Card>
         ) : (
           <Card className="p-6">
-            <h2 className="font-semibold text-foreground">Lançar despesa</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-foreground font-semibold">Lançar despesa</h2>
+            <p className="text-muted-foreground text-sm">
               Só o proprietário e o gestor da pousada lançam e quitam despesas.
             </p>
           </Card>

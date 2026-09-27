@@ -5,6 +5,7 @@ import {
   blockCalendarDay,
   unblockCalendarDay,
   listBlockedCalendarDays,
+  listBlockedCalendarDaysByPousada,
 } from '@/repositories/room-blocks.repository'
 import { nightsBetween } from '@/features/reservas/pricing'
 import type { BookingStatus } from '@/features/reservas/types'
@@ -230,15 +231,37 @@ export async function updateReservationStatusByPousada(
 
 export async function listBookingRanges(
   pousadaId: string,
-): Promise<{ checkin: string; checkout: string }[]> {
+): Promise<{ roomId: string; checkin: string; checkout: string }[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('bookings')
-    .select('checkin, checkout')
+    .select('room_id, checkin, checkout')
     .eq('pousada_id', pousadaId)
     .in('status', OCCUPYING)
   if (error) throw error
-  return (data ?? []).map((r) => ({ checkin: r.checkin, checkout: r.checkout }))
+  return (data ?? []).map((r) => ({ roomId: r.room_id, checkin: r.checkin, checkout: r.checkout }))
+}
+
+/** Quartos ativos da pousada (calendário por quarto). */
+export async function listActiveRoomsByPousada(
+  pousadaId: string,
+): Promise<{ id: string; name: string }[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('id, name')
+    .eq('pousada_id', pousadaId)
+    .eq('status', 'active')
+    .order('name', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((r) => ({ id: r.id, name: r.name }))
+}
+
+/** Dias bloqueados (bloqueios ativos) de todos os quartos da pousada. */
+export async function listBlockedDaysByPousada(
+  pousadaId: string,
+): Promise<{ roomId: string; date: string }[]> {
+  return listBlockedCalendarDaysByPousada(pousadaId)
 }
 
 /**

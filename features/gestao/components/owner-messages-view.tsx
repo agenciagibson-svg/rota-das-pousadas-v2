@@ -50,6 +50,11 @@ function quickMessage(reservation: OwnerReservation, settings: OwnerPousadaSetti
   return `Olá, ${reservation.guestName}! Estou entrando em contato sobre sua reserva ${reservation.code}, de ${fmtDate(reservation.checkin)} a ${fmtDate(reservation.checkout)}.`
 }
 
+/** O repositório usa um texto no lugar do e-mail vazio; só abre o mailto com endereço de verdade. */
+function hasEmail(value: string | null | undefined): boolean {
+  return !!value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
 export function OwnerMessagesView({
   displayName,
   pousadaName,
@@ -64,9 +69,7 @@ export function OwnerMessagesView({
   const activeReservations = reservations.filter(
     (reservation) => !['cancelled', 'no_show'].includes(reservation.status),
   )
-  const pendingPayments = reservations.filter(
-    (reservation) => reservation.status === 'pending',
-  )
+  const pendingPayments = reservations.filter((reservation) => reservation.status === 'pending')
   const confirmed = reservations.filter((reservation) => reservation.status === 'confirmed')
 
   return (
@@ -80,30 +83,30 @@ export function OwnerMessagesView({
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Conversas de reservas</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{reservations.length}</div>
+          <div className="text-muted-foreground text-sm">Conversas de reservas</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{reservations.length}</div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Pagamentos pendentes</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{pendingPayments.length}</div>
+          <div className="text-muted-foreground text-sm">Pagamentos pendentes</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">
+            {pendingPayments.length}
+          </div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Check-ins confirmados</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{confirmed.length}</div>
+          <div className="text-muted-foreground text-sm">Check-ins confirmados</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{confirmed.length}</div>
         </Card>
       </div>
 
       <div className="mt-5 grid gap-5 2xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="p-6">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-2xl">
               <MessageSquare className="size-5" />
             </span>
             <div>
-              <h2 className="font-semibold text-foreground">Caixa de entrada</h2>
-              <p className="text-sm text-muted-foreground">
-                Contatos organizados por reserva.
-              </p>
+              <h2 className="text-foreground font-semibold">Caixa de entrada</h2>
+              <p className="text-muted-foreground text-sm">Contatos organizados por reserva.</p>
             </div>
           </div>
 
@@ -119,21 +122,21 @@ export function OwnerMessagesView({
               {reservations.map((reservation) => {
                 const status = BOOKING_STATUS[reservation.status]
                 return (
-                  <div key={reservation.id} className="rounded-2xl border border-border p-4">
+                  <div key={reservation.id} className="border-border rounded-2xl border p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-serif text-lg font-semibold text-foreground">
+                          <h3 className="text-foreground font-serif text-lg font-semibold">
                             {reservation.guestName}
                           </h3>
                           <Badge variant={status.variant} size="sm">
                             {status.label}
                           </Badge>
-                          <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          <span className="bg-secondary text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium">
                             {messageSubject(reservation)}
                           </span>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                           <span className="inline-flex items-center gap-1.5">
                             <Mail className="size-3.5" />
                             {reservation.guestEmail}
@@ -150,18 +153,22 @@ export function OwnerMessagesView({
                         </div>
                       </div>
 
-                      <a
-                        href={`mailto:${reservation.guestEmail}?subject=${encodeURIComponent(
-                          `Reserva ${reservation.code} - ${pousadaName}`,
-                        )}&body=${encodeURIComponent(quickMessage(reservation, settings))}`}
-                        className={buttonVariants({ size: 'sm' })}
-                      >
-                        <Send className="size-3.5" />
-                        Enviar e-mail
-                      </a>
+                      {hasEmail(reservation.guestEmail) ? (
+                        <a
+                          href={`mailto:${reservation.guestEmail}?subject=${encodeURIComponent(
+                            `Reserva ${reservation.code} - ${pousadaName}`,
+                          )}&body=${encodeURIComponent(quickMessage(reservation, settings))}`}
+                          className={buttonVariants({ size: 'sm' })}
+                        >
+                          <Send className="size-3.5" />
+                          Enviar e-mail
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">Sem e-mail cadastrado</span>
+                      )}
                     </div>
 
-                    <div className="mt-4 rounded-2xl bg-secondary p-3 text-sm leading-relaxed text-foreground">
+                    <div className="bg-secondary text-foreground mt-4 rounded-2xl p-3 text-sm leading-relaxed">
                       {quickMessage(reservation, settings)}
                     </div>
                   </div>
@@ -173,8 +180,8 @@ export function OwnerMessagesView({
 
         <div className="space-y-5">
           <Card className="p-6">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <MessageSquareText className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 font-semibold">
+              <MessageSquareText className="text-primary size-4" />
               Respostas rápidas
             </div>
             <div className="mt-4 space-y-3">
@@ -198,20 +205,20 @@ export function OwnerMessagesView({
                     'A política de cancelamento ainda não foi cadastrada.',
                 },
               ].map((item) => (
-                <div key={item.title} className="rounded-2xl border border-border p-3">
-                  <div className="text-sm font-semibold text-foreground">{item.title}</div>
-                  <p className="mt-1 text-sm text-muted-foreground">{item.text}</p>
+                <div key={item.title} className="border-border rounded-2xl border p-3">
+                  <div className="text-foreground text-sm font-semibold">{item.title}</div>
+                  <p className="text-muted-foreground mt-1 text-sm">{item.text}</p>
                 </div>
               ))}
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <Clock3 className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 font-semibold">
+              <Clock3 className="text-primary size-4" />
               Prioridade
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
               {pendingPayments.length > 0
                 ? 'Comece pelos hóspedes com pagamento pendente para evitar expiração automática.'
                 : activeReservations.length > 0

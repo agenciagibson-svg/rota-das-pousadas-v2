@@ -1,52 +1,40 @@
 import { describe, it, expect } from 'vitest'
 import { buildSummary, countsAsRevenue } from './finance'
 
-describe('buildSummary', () => {
-  it('separa receita realizada de a receber (status do enum do banco, em inglês)', () => {
-    const s = buildSummary(
-      [
-        { total: 1000, status: 'confirmed' },
-        { total: 500, status: 'pending' },
-        { total: 300, status: 'cancelled' },
-      ],
-      [],
-    )
-    expect(s.revenueConfirmed).toBe(1000)
+describe('buildSummary (pelo dinheiro, não pelo status)', () => {
+  it('confirmada com sinal pago: recebido é o sinal, o resto fica a receber', () => {
+    const s = buildSummary([{ total: 1000, received: 300, status: 'confirmed' }], [])
+    expect(s.revenueConfirmed).toBe(300)
+    expect(s.revenuePending).toBe(700)
+    expect(s.revenueTotal).toBe(1000)
+  })
+
+  it('pendente sem pagamento: tudo a receber', () => {
+    const s = buildSummary([{ total: 500, received: 0, status: 'pending' }], [])
+    expect(s.revenueConfirmed).toBe(0)
     expect(s.revenuePending).toBe(500)
-    expect(s.revenueTotal).toBe(1500)
   })
 
-  it('em estadia e concluída contam como realizada', () => {
+  it('cancelada: nada a receber, mas o que entrou continua no caixa', () => {
     const s = buildSummary(
       [
-        { total: 400, status: 'checked_in' },
-        { total: 600, status: 'checked_out' },
+        { total: 800, received: 0, status: 'cancelled' },
+        { total: 600, received: 200, status: 'cancelled' },
+        { total: 400, received: 0, status: 'no_show' },
       ],
       [],
     )
-    expect(s.revenueConfirmed).toBe(1000)
+    expect(s.revenuePending).toBe(0)
+    expect(s.revenueConfirmed).toBe(200)
   })
 
-  it('ignora cotação, cancelada e no-show na receita', () => {
+  it('ignora cotação', () => {
+    expect(buildSummary([{ total: 150, received: 0, status: 'quote' }], []).revenueTotal).toBe(0)
+  })
+
+  it('saldo em caixa desconta só despesas já pagas', () => {
     const s = buildSummary(
-      [
-        { total: 800, status: 'no_show' },
-        { total: 200, status: 'cancelled' },
-        { total: 150, status: 'quote' },
-      ],
-      [],
-    )
-    expect(s.revenueTotal).toBe(0)
-  })
-
-  it('não reconhece rótulos em português — a regressão que zerava o painel', () => {
-    const s = buildSummary([{ total: 1000, status: 'confirmada' }], [])
-    expect(s.revenueTotal).toBe(0)
-  })
-
-  it('soma despesas e calcula pendentes e saldo', () => {
-    const s = buildSummary(
-      [{ total: 1000, status: 'checked_out' }],
+      [{ total: 1000, received: 1000, status: 'checked_out' }],
       [
         { amount: 300, paid: true },
         { amount: 200, paid: false },
@@ -54,7 +42,7 @@ describe('buildSummary', () => {
     )
     expect(s.expensesTotal).toBe(500)
     expect(s.expensesPending).toBe(200)
-    expect(s.balance).toBe(500) // 1000 realizado - 500 despesas
+    expect(s.balance).toBe(700) // 1000 recebido - 300 pagos
   })
 })
 

@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import { notFound } from 'next/navigation'
 import { getCurrentUser, getOwnerPousada, getOwnerReservationDetail } from '@/server/queries'
 import { BookingDetailView } from '@/features/reservas/components/booking-detail-view'
@@ -6,19 +8,22 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { ShieldAlert } from 'lucide-react'
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  if (await sectionDenied('reservas')) return <NoSectionAccess section="reservas" title="Reserva" />
+
   const { id } = await params
   const user = await getCurrentUser()
 
   let booking
   try {
     booking = await getOwnerReservationDetail(id)
-  } catch {
+  } catch (error) {
+    console.error('[dashboard] falha ao carregar reserva', error)
     return (
       <div className="flex min-h-screen items-center justify-center">
         <EmptyState
           icon={ShieldAlert}
-          title="Sem permissão"
-          description="Você não tem acesso a reservas desta pousada."
+          title="Não foi possível abrir esta reserva"
+          description="Tente de novo em instantes. Se continuar, confira se a reserva é desta pousada."
         />
       </div>
     )

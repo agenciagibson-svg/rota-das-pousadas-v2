@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   canManageChannels,
   getCurrentUser,
@@ -8,6 +10,8 @@ import {
 import { ChannelsView } from '@/features/canais/components/channels-view'
 
 export default async function DashboardCanaisPage() {
+  if (await sectionDenied('canais')) return <NoSectionAccess section="acomodacoes" title="Canais" />
+
   const [user, pousada, channels, rooms, canManage] = await Promise.all([
     getCurrentUser(),
     getOwnerPousada(),

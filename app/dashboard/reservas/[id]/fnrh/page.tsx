@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import { notFound } from 'next/navigation'
 import { getBookingFnrh } from '@/server/queries'
 import { FnrhPrintView } from '@/features/reservas/components/fnrh-print-view'
@@ -10,15 +12,23 @@ import { ShieldAlert } from 'lucide-react'
  * detalhe da reserva linka aqui com `target="_blank"`.
  */
 export default async function BookingFnrhPage({ params }: { params: Promise<{ id: string }> }) {
+  if (await sectionDenied('reservas'))
+    return <NoSectionAccess section="reservas" title="Ficha FNRH" />
+
   const { id } = await params
 
   let data
   try {
     data = await getBookingFnrh(id)
-  } catch {
+  } catch (error) {
+    console.error('[dashboard] falha ao carregar reserva', error)
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <EmptyState icon={ShieldAlert} title="Sem permissão" description="Você não tem acesso a reservas desta pousada." />
+        <EmptyState
+          icon={ShieldAlert}
+          title="Não foi possível abrir esta reserva"
+          description="Tente de novo em instantes. Se continuar, confira se a reserva é desta pousada."
+        />
       </div>
     )
   }

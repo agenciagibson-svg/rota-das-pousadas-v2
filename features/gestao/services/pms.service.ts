@@ -9,7 +9,8 @@ import {
   getPousadaSettings,
   listReservationsByPousada,
   listBookingRanges,
-  listBlockedDates,
+  listActiveRoomsByPousada,
+  listBlockedDaysByPousada,
   blockDate,
   unblockDate,
   updatePousadaSettings,
@@ -109,29 +110,121 @@ export async function listOwnerReservations(
   return reservations.map((r) => (withProof.has(r.id) ? { ...r, proofPending: true } : r))
 }
 
-export async function getOwnerCalendar(): Promise<{
-  occupied: { checkin: string; checkout: string }[]
-  blocked: string[]
-}> {
-  const pousada = await resolveOwnerPousada()
-  if (!pousada) return { occupied: [], blocked: [] }
-  const [occupied, blocked] = await Promise.all([
+export type OwnerCalendar = {
+  rooms: { id: string; name: string }[]
+  bookings: { roomId: string; checkin: string; checkout: string }[]
+  blocks: { roomId: string; date: string }[]
+  /** Pode bloquear/liberar dias (`room:block:manage`). */
+  canBlock: boolean
+}
+
+/** Calendário por quarto: reservas e bloqueios de cada quarto ativo da pousada. */
+export async function getOwnerCalendar(): Promise<OwnerCalendar> {
+  const [pousada, role] = await Promise.all([resolveOwnerPousada(), getActiveTenantRole()])
+  if (!pousada) return { rooms: [], bookings: [], blocks: [], canBlock: false }
+  const [rooms, bookings, blocks] = await Promise.all([
+    listActiveRoomsByPousada(pousada.id),
     listBookingRanges(pousada.id),
-    pousada.roomId ? listBlockedDates(pousada.roomId) : Promise.resolve<string[]>([]),
+    listBlockedDaysByPousada(pousada.id),
   ])
-  return { occupied, blocked }
+  return { rooms, bookings, blocks, canBlock: Boolean(role && can(role, 'room:block:manage')) }
 }
 
-export async function blockOwnerDate(date: string): Promise<void> {
-  const pousada = await resolveOwnerPousada()
-  if (!pousada?.roomId) throw new Error('Nenhuma pousada sob sua gestão.')
-  await blockDate(pousada.id, pousada.roomId, date)
+/** Bloqueio de dia pelo calendário: exige `room:block:manage` (a RLS/RPC é a 2ª barreira). */
+async function requireCalendarPousada(): Promise<ManagedPousada> {
+  const [pousada, role] = await Promise.all([resolveOwnerPousada(), getActiveTenantRole()])
+  if (!pousada) throw new Error('Nenhuma pousada sob sua gestão.')
+  if (!role || !can(role, 'room:block:manage')) {
+    throw new Error('Você não tem permissão para bloquear datas.')
+  }
+  return pousada
 }
 
-export async function unblockOwnerDate(date: string): Promise<void> {
-  const pousada = await resolveOwnerPousada()
-  if (!pousada?.roomId) throw new Error('Nenhuma pousada sob sua gestão.')
-  await unblockDate(pousada.id, pousada.roomId, date)
+function nightsOf(checkin: string, checkout: string): string[] {
+  const out: string[] = []
+  const cursor = new Date(`${checkin}T00:00:00Z`)
+  const end = new Date(`${checkout}T00:00:00Z`)
+  while (cursor < end) {
+    out.push(cursor.toISOString().slice(0, 10))
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  }
+  return out
+}
+
+/** Quartos alvo: um quarto específico (validado) ou todos os ativos. */
+async function targetRooms(
+  pousadaId: string,
+  roomId?: string,
+): Promise<{ id: string; name: string }[]> {
+  const rooms = await listActiveRoomsByPousada(pousadaId)
+  if (!roomId) return rooms
+  const room = rooms.find((r) => r.id === roomId)
+  if (!room) throw new Error('Quarto não encontrado nesta pousada.')
+  return [room]
+}
+
+/**
+ * Bloqueia o dia num quarto ou, sem `roomId`, em todos os quartos que estão
+ * livres naquele dia (quarto reservado ou já bloqueado fica como está).
+ */
+export async function blockOwnerDate(date: string, roomId?: string): Promise<{ affected: number }> {
+  const pousada = await requireCalendarPousada()
+  const [rooms, bookings, blocks] = await Promise.all([
+    targetRooms(pousada.id, roomId),
+    listBookingRanges(pousada.id),
+    listBlockedDaysByPousada(pousada.id),
+  ])
+  const busy = new Set<string>()
+  for (const b of bookings) {
+    if (nightsOf(b.checkin, b.checkout).includes(date)) busy.add(b.roomId)
+  }
+  for (const b of blocks) if (b.date === date) busy.add(b.roomId)
+
+  const free = rooms.filter((r) => !busy.has(r.id))
+  if (free.length === 0) {
+    throw new Error(
+      roomId
+        ? 'Este quarto não está livre neste dia.'
+        : 'Nenhum quarto livre para bloquear neste dia.',
+    )
+  }
+  for (const r of free) await blockDate(pousada.id, r.id, date)
+  return { affected: free.length }
+}
+
+/**
+ * Libera o dia num quarto ou, sem `roomId`, em todos os quartos bloqueados
+ * naquele dia. Bloqueio de vários dias (tela de Bloqueios) não é desfeito por
+ * aqui — avisa em vez de cancelar um bloqueio maior por engano.
+ */
+export async function unblockOwnerDate(
+  date: string,
+  roomId?: string,
+): Promise<{ affected: number }> {
+  const pousada = await requireCalendarPousada()
+  const [rooms, blocks] = await Promise.all([
+    targetRooms(pousada.id, roomId),
+    listBlockedDaysByPousada(pousada.id),
+  ])
+  const blockedRooms = rooms.filter((r) => blocks.some((b) => b.roomId === r.id && b.date === date))
+  if (blockedRooms.length === 0) throw new Error('Não há bloqueio neste dia.')
+
+  let affected = 0
+  const skipped: string[] = []
+  for (const r of blockedRooms) {
+    try {
+      await unblockDate(pousada.id, r.id, date)
+      affected++
+    } catch {
+      skipped.push(r.name)
+    }
+  }
+  if (skipped.length > 0) {
+    throw new Error(
+      `${affected > 0 ? `Liberado em ${affected} quarto(s). ` : ''}${skipped.join(', ')}: bloqueio de vários dias — cancele em Acomodações › Bloqueios.`,
+    )
+  }
+  return { affected }
 }
 
 /**

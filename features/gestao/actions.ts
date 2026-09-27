@@ -19,15 +19,15 @@ import {
 } from './services/pms.service'
 
 export const blockDateAction = createAction(dateActionSchema, async (input) => {
-  await blockOwnerDate(input.date)
+  const { affected } = await blockOwnerDate(input.date, input.roomId)
   revalidatePath('/dashboard/reservas')
-  return { date: input.date }
+  return { date: input.date, affected }
 })
 
 export const unblockDateAction = createAction(dateActionSchema, async (input) => {
-  await unblockOwnerDate(input.date)
+  const { affected } = await unblockOwnerDate(input.date, input.roomId)
   revalidatePath('/dashboard/reservas')
-  return { date: input.date }
+  return { date: input.date, affected }
 })
 
 export const updateReservationStatusAction = createAction(
@@ -42,12 +42,15 @@ export const updateReservationStatusAction = createAction(
   },
 )
 
-export const expireOwnerPendingBookingAction = createAction(bookingIdActionSchema, async (input) => {
-  await expireOwnerPendingBooking(input.bookingId)
-  revalidatePath('/dashboard/reservas')
-  revalidatePath(`/dashboard/reservas/${input.bookingId}`)
-  return { bookingId: input.bookingId }
-})
+export const expireOwnerPendingBookingAction = createAction(
+  bookingIdActionSchema,
+  async (input) => {
+    await expireOwnerPendingBooking(input.bookingId)
+    revalidatePath('/dashboard/reservas')
+    revalidatePath(`/dashboard/reservas/${input.bookingId}`)
+    return { bookingId: input.bookingId }
+  },
+)
 
 export const respondReviewAction = createAction(reviewResponseActionSchema, async (input) => {
   await respondOwnerReview(input.reviewId, input.response)

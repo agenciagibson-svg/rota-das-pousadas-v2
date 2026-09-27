@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   getCurrentUser,
   getOwnerPousada,
@@ -7,6 +9,9 @@ import {
 import { OwnerMessagesView } from '@/features/gestao/components/owner-messages-view'
 
 export default async function DashboardMensagensPage() {
+  if (await sectionDenied('mensagens'))
+    return <NoSectionAccess section="mensagens" title="Mensagens" />
+
   const [user, pousada, reservations, settings] = await Promise.all([
     getCurrentUser(),
     getOwnerPousada(),

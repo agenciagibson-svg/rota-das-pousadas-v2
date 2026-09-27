@@ -1,10 +1,25 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import { ShieldAlert } from 'lucide-react'
-import { canManageExpenses, canViewFinance, getCurrentUser, getFinance, getOwnerPousada } from '@/server/queries'
+import {
+  canManageExpenses,
+  canViewFinance,
+  getCurrentUser,
+  getFinance,
+  getOwnerPousada,
+} from '@/server/queries'
 import { FinanceView } from '@/features/financeiro'
 import { EmptyState } from '@/components/ui/empty-state'
 
 export default async function DashboardFinanceiroPage() {
-  const [user, pousada, allowed] = await Promise.all([getCurrentUser(), getOwnerPousada(), canViewFinance()])
+  if (await sectionDenied('financeiro'))
+    return <NoSectionAccess section="financeiro" title="Financeiro" />
+
+  const [user, pousada, allowed] = await Promise.all([
+    getCurrentUser(),
+    getOwnerPousada(),
+    canViewFinance(),
+  ])
 
   if (!allowed) {
     return (

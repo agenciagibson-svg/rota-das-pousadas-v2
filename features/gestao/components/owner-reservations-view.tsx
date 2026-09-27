@@ -7,7 +7,7 @@ import { ReservationsCalendar } from './reservations-calendar'
 import { OwnerReservationsTable } from './owner-reservations-table'
 import { ORIGIN_LABEL } from './origin-labels'
 import { BOOKING_STATUS } from '@/features/reservas'
-import type { DateRange } from '../calendar'
+import type { DateRange, RoomDay } from '../calendar'
 import type { OwnerReservation } from '../types'
 import type { GestaoReservationFilters } from '../schemas'
 
@@ -15,16 +15,19 @@ export function OwnerReservationsView({
   displayName,
   pousadaName,
   reservations,
-  occupied,
-  blocked,
+  calendar,
   filters,
   todayISO,
 }: {
   displayName: string
   pousadaName: string
   reservations: OwnerReservation[]
-  occupied: DateRange[]
-  blocked: string[]
+  calendar: {
+    rooms: { id: string; name: string }[]
+    bookings: (DateRange & { roomId: string })[]
+    blocks: RoomDay[]
+    canBlock: boolean
+  }
   filters: GestaoReservationFilters
   /** "Hoje" no fuso da pousada — separa dias passados de livres no calendário. */
   todayISO: string
@@ -41,9 +44,19 @@ export function OwnerReservationsView({
       <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[0.95fr_1.35fr]">
         <Card className="p-6">
           <h2 className="text-foreground font-semibold">Calendário &amp; disponibilidade</h2>
-          <p className="text-muted-foreground text-sm">Clique em um dia livre para bloquear.</p>
+          <p className="text-muted-foreground text-sm">
+            {calendar.canBlock
+              ? 'Escolha o quarto e clique num dia livre para bloquear (ou bloqueado para liberar).'
+              : 'Ocupação e bloqueios por quarto.'}
+          </p>
           <div className="mt-5">
-            <ReservationsCalendar occupied={occupied} blocked={blocked} todayISO={todayISO} />
+            <ReservationsCalendar
+              rooms={calendar.rooms}
+              bookings={calendar.bookings}
+              blocks={calendar.blocks}
+              canBlock={calendar.canBlock}
+              todayISO={todayISO}
+            />
           </div>
         </Card>
 

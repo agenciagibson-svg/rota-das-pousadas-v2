@@ -1,9 +1,14 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import { getCurrentUser, getOwnerPousada, getOwnerRooms } from '@/server/queries'
 import { OwnerDashboardShell } from '@/components/dashboard/owner-shell'
 import { Card } from '@/components/ui/card'
 import { NewBookingForm } from '@/features/reservas/components/new-booking-form'
 
 export default async function NewBookingPage() {
+  if (await sectionDenied('nova_reserva'))
+    return <NoSectionAccess section="reservas" title="Nova reserva" />
+
   const [user, pousada, rooms] = await Promise.all([
     getCurrentUser(),
     getOwnerPousada(),

@@ -170,6 +170,35 @@ export async function unblockCalendarDay(
 }
 
 /** Expande os bloqueios ATIVOS de um quarto em datas civis individuais (para o calendário legado, que trabalha com lista de dias). */
+export async function listBlockedCalendarDaysByPousada(
+  pousadaId: string,
+): Promise<{ roomId: string; date: string }[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('room_blocks')
+    .select('room_id, starts_at, ends_at')
+    .eq('pousada_id', pousadaId)
+    .eq('status', 'active')
+  if (error) throw error
+
+  const out: { roomId: string; date: string }[] = []
+  const seen = new Set<string>()
+  for (const b of data ?? []) {
+    const cursor = new Date(b.starts_at)
+    const end = new Date(b.ends_at)
+    while (cursor.getTime() < end.getTime()) {
+      const date = cursor.toISOString().slice(0, 10)
+      const key = `${b.room_id}|${date}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        out.push({ roomId: b.room_id, date })
+      }
+      cursor.setUTCDate(cursor.getUTCDate() + 1)
+    }
+  }
+  return out
+}
+
 export async function listBlockedCalendarDays(roomId: string): Promise<string[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase

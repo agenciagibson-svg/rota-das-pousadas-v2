@@ -67,7 +67,8 @@ function buildInsights({
   if (pendingPayments.length > 0) {
     insights.push({
       title: `${pendingPayments.length} reserva(s) aguardando pagamento`,
-      description: 'Acompanhe o prazo dessas reservas para evitar bloqueio de datas sem confirmação.',
+      description:
+        'Acompanhe o prazo dessas reservas para evitar bloqueio de datas sem confirmação.',
       action: 'Priorize contato com o hóspede antes do vencimento.',
       tone: 'alert',
       icon: Clock3,
@@ -97,7 +98,7 @@ function buildInsights({
 
   if (finance.revenuePending > 0) {
     insights.push({
-      title: `R$ ${finance.revenuePending} a receber`,
+      title: `${finance.revenuePending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} a receber`,
       description: 'Há receita pendente ligada a reservas ainda não confirmadas financeiramente.',
       action: 'Mantenha o financeiro alinhado antes de confirmar estadias longas.',
       tone: 'neutral',
@@ -150,8 +151,13 @@ export function OwnerAssistantView({
   settings: OwnerPousadaSettings | null
 }) {
   const insights = buildInsights({ reservations, reviews, finance, settings })
-  const activeReservations = reservations.filter((reservation) => isActiveReservation(reservation.status))
-  const occupancyNights = activeReservations.reduce((sum, reservation) => sum + reservation.nights, 0)
+  const activeReservations = reservations.filter((reservation) =>
+    isActiveReservation(reservation.status),
+  )
+  const occupancyNights = activeReservations.reduce(
+    (sum, reservation) => sum + reservation.nights,
+    0,
+  )
 
   return (
     <DashboardShell
@@ -164,28 +170,32 @@ export function OwnerAssistantView({
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Reservas ativas</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{activeReservations.length}</div>
+          <div className="text-muted-foreground text-sm">Reservas ativas</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">
+            {activeReservations.length}
+          </div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Noites ocupadas</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{occupancyNights}</div>
+          <div className="text-muted-foreground text-sm">Noites ocupadas</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{occupancyNights}</div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Saldo financeiro</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">R$ {finance.balance}</div>
+          <div className="text-muted-foreground text-sm">Saldo financeiro</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">
+            {finance.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </div>
         </Card>
       </div>
 
       <div className="mt-5 grid gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-2xl">
               <Sparkles className="size-5" />
             </span>
             <div>
-              <h2 className="font-semibold text-foreground">Prioridades do dia</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-foreground font-semibold">Prioridades do dia</h2>
+              <p className="text-muted-foreground text-sm">
                 Recomendações calculadas com os dados atuais da pousada.
               </p>
             </div>
@@ -195,7 +205,7 @@ export function OwnerAssistantView({
             {insights.map((insight) => {
               const Icon = insight.icon
               return (
-                <div key={insight.title} className="rounded-2xl border border-border p-4">
+                <div key={insight.title} className="border-border rounded-2xl border p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex gap-3">
                       <span
@@ -210,9 +220,9 @@ export function OwnerAssistantView({
                         <Icon className="size-4" />
                       </span>
                       <div>
-                        <h3 className="font-semibold text-foreground">{insight.title}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
-                        <p className="mt-2 text-sm font-medium text-foreground">{insight.action}</p>
+                        <h3 className="text-foreground font-semibold">{insight.title}</h3>
+                        <p className="text-muted-foreground mt-1 text-sm">{insight.description}</p>
+                        <p className="text-foreground mt-2 text-sm font-medium">{insight.action}</p>
                       </div>
                     </div>
                     <Badge
@@ -230,26 +240,27 @@ export function OwnerAssistantView({
 
         <div className="space-y-5">
           <Card className="p-6">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <MessageSquareText className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 font-semibold">
+              <MessageSquareText className="text-primary size-4" />
               Resposta rápida
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-sm">
               Modelo para enviar ao hóspede após uma reserva ou dúvida.
             </p>
-            <div className="mt-4 rounded-2xl bg-secondary p-4 text-sm leading-relaxed text-foreground">
+            <div className="bg-secondary text-foreground mt-4 rounded-2xl p-4 text-sm leading-relaxed">
               {suggestedMessage(settings)}
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <Bot className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 font-semibold">
+              <Bot className="text-primary size-4" />
               Próxima etapa
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
               Quando formos integrar IA real, esta área poderá gerar respostas, campanhas e ajustes
-              de diária automaticamente. Por enquanto, ela usa regras seguras com os dados do sistema.
+              de diária automaticamente. Por enquanto, ela usa regras seguras com os dados do
+              sistema.
             </p>
           </Card>
         </div>

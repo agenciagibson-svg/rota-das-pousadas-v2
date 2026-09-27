@@ -4,13 +4,16 @@
  * bloqueado (manutenção/indisponível) ou passado.
  */
 
-export type DayStatus = 'past' | 'free' | 'booked' | 'blocked'
+export type DayStatus = 'past' | 'free' | 'booked' | 'blocked' | 'partial'
 
 export type CalendarDay = {
   date: string // YYYY-MM-DD
   day: number
   inMonth: boolean
   status: DayStatus
+  /** Visão "todos os quartos": quantos quartos estão ocupados/bloqueados no dia. */
+  busyRooms?: number
+  totalRooms?: number
 }
 
 export type DateRange = { checkin: string; checkout: string }
@@ -70,4 +73,48 @@ export function buildMonthGrid(
   }
 
   return days
+}
+
+export type RoomDay = { roomId: string; date: string }
+
+/**
+ * Situação de cada dia somando TODOS os quartos:
+ * - booked: todos os quartos ocupados (reserva e/ou bloqueio), com ao menos uma reserva;
+ * - blocked: todos bloqueados, nenhuma reserva;
+ * - partial: parte dos quartos ocupada/bloqueada;
+ * - free: nenhum quarto ocupado nem bloqueado.
+ */
+export function buildPousadaMonthGrid(
+  year: number,
+  month: number,
+  roomIds: string[],
+  bookings: (DateRange & { roomId: string })[],
+  blocks: RoomDay[],
+  today = new Date(),
+): CalendarDay[] {
+  const booked = new Map<string, Set<string>>()
+  for (const b of bookings) {
+    for (const d of expandOccupied([b])) {
+      if (!booked.has(d)) booked.set(d, new Set())
+      booked.get(d)!.add(b.roomId)
+    }
+  }
+  const blockedByDay = new Map<string, Set<string>>()
+  for (const b of blocks) {
+    if (!blockedByDay.has(b.date)) blockedByDay.set(b.date, new Set())
+    blockedByDay.get(b.date)!.add(b.roomId)
+  }
+  const total = roomIds.length
+  const base = buildMonthGrid(year, month, new Set(), new Set(), today)
+  return base.map((day) => {
+    const bookedRooms = roomIds.filter((id) => booked.get(day.date)?.has(id))
+    const blockedRooms = roomIds.filter(
+      (id) => !bookedRooms.includes(id) && blockedByDay.get(day.date)?.has(id),
+    )
+    const busy = bookedRooms.length + blockedRooms.length
+    let status: DayStatus = day.status
+    if (total > 0 && busy === total) status = bookedRooms.length > 0 ? 'booked' : 'blocked'
+    else if (busy > 0) status = day.status === 'past' ? 'past' : 'partial'
+    return { ...day, status, busyRooms: busy, totalRooms: total }
+  })
 }

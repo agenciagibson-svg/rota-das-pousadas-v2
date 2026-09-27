@@ -3,7 +3,11 @@ import { getOwnerPousada } from '@/features/gestao/services/pms.service'
 import { getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
 import { listReservationsByPousada } from '@/repositories/management.repository'
-import { listExpensesByPousada, insertExpense, setExpensePaid } from '@/repositories/finance.repository'
+import {
+  listExpensesByPousada,
+  insertExpense,
+  setExpensePaid,
+} from '@/repositories/finance.repository'
 import { buildSummary, countsAsRevenue } from '@/features/financeiro/finance'
 import type { FinanceSummary, Transaction } from '@/features/financeiro/types'
 import type { CreateExpenseInput } from '@/features/financeiro/schemas'
@@ -55,8 +59,14 @@ export async function getFinance(): Promise<FinanceData> {
   // Cotação, cancelada e no-show não são dinheiro — nem no resumo nem no extrato.
   const revenueReservations = reservations.filter((r) => countsAsRevenue(r.status))
 
+  // Resumo pelo dinheiro que entrou (total − saldo em aberto), de todas as
+  // reservas: sinal de reserva cancelada ainda está no caixa até o estorno.
   const summary = buildSummary(
-    revenueReservations.map((r) => ({ total: r.total, status: r.status })),
+    reservations.map((r) => ({
+      total: r.total,
+      received: Math.max(0, r.total - r.balanceDue),
+      status: r.status,
+    })),
     expenses.map((e) => ({ amount: e.amount, paid: e.paid })),
   )
 

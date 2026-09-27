@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   getCurrentUser,
   getOwnerPousada,
@@ -19,6 +21,9 @@ export default async function DashboardReservasPage({
     checkinTo?: string
   }>
 }) {
+  if (await sectionDenied('reservas'))
+    return <NoSectionAccess section="reservas" title="Reservas" />
+
   const params = await searchParams
   const filters = {
     status: (params.status || undefined) as BookingStatus | undefined,
@@ -42,8 +47,7 @@ export default async function DashboardReservasPage({
       displayName={displayName}
       pousadaName={pousada?.name ?? 'Sua pousada'}
       reservations={reservations}
-      occupied={calendar.occupied}
-      blocked={calendar.blocked}
+      calendar={calendar}
       filters={filters}
       todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
     />

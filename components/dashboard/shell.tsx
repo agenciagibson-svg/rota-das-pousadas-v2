@@ -1,5 +1,8 @@
 'use client'
 
+import { useDashboardRole } from './role-context'
+import { canAccessSection, sectionForHref } from '@/lib/auth/dashboard-sections'
+import { roleLabel } from '@/features/membros/components/role-labels'
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Compass, Menu, X, Search, Bell, Globe, CalendarDays, type LucideIcon } from 'lucide-react'
@@ -27,6 +30,16 @@ export function DashboardShell({
   children: ReactNode
 }) {
   const [open, setOpen] = useState(false)
+  // Dentro do painel da pousada: menu só com o que o papel pode abrir e o
+  // rótulo real do papel (antes era sempre "Proprietário").
+  const role = useDashboardRole()
+  const visibleNav = role
+    ? nav.filter((item) => {
+        const section = item.href ? sectionForHref(item.href) : null
+        return !section || canAccessSection(role, section)
+      })
+    : nav
+  const roleText = role ? roleLabel(role) : user.role
   const accentBg = accent === 'ocean' ? 'bg-ocean' : 'bg-primary'
   const accentText = accent === 'ocean' ? 'text-ocean' : 'text-primary'
   const accentSoft = accent === 'ocean' ? 'bg-ocean/10' : 'bg-primary/10'
@@ -60,7 +73,7 @@ export function DashboardShell({
           </div>
 
           <nav className="flex-1 space-y-1 px-4 py-2">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const cls = `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                 item.active
                   ? `${accentSoft} ${accentText}`
@@ -103,7 +116,7 @@ export function DashboardShell({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-foreground truncate text-sm font-semibold">{user.name}</div>
-                <div className="text-muted-foreground truncate text-xs">{user.role}</div>
+                <div className="text-muted-foreground truncate text-xs">{roleText}</div>
               </div>
               <LogoutButton className="shrink-0" />
             </div>

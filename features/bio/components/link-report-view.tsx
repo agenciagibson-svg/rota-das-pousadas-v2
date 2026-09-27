@@ -3,14 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  CalendarX2,
-  Check,
-  Copy,
-  ExternalLink,
-  MessageCircleMore,
-  TrendingUp,
-} from 'lucide-react'
+import { CalendarX2, Check, Copy, ExternalLink, MessageCircleMore, TrendingUp } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { BarChart } from '@/components/dashboard/charts'
@@ -20,7 +13,12 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatCard } from '@/components/ui/stat-card'
 import { buildHighlights, calculateRates } from '../report'
-import { QUOTE_STATUS_LABEL, type LinkReport, type QuoteRequest, type QuoteRequestStatus } from '../types'
+import {
+  QUOTE_STATUS_LABEL,
+  type LinkReport,
+  type QuoteRequest,
+  type QuoteRequestStatus,
+} from '../types'
 import { updateQuoteStatusAction } from '../actions'
 
 const PERIODS = [
@@ -39,7 +37,10 @@ function fmtDay(iso: string): string {
 
 function fmtDateTime(iso: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(new Date(iso))
 }
 
@@ -59,8 +60,8 @@ function statusVariant(status: QuoteRequestStatus) {
 function CopyLink({ url }: { url: string }) {
   const [copied, setCopied] = useState(false)
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-secondary/40 p-3">
-      <span className="min-w-0 flex-1 break-all font-mono text-xs text-foreground">{url}</span>
+    <div className="border-border bg-secondary/40 flex flex-wrap items-center gap-2 rounded-xl border p-3">
+      <span className="text-foreground min-w-0 flex-1 font-mono text-xs break-all">{url}</span>
       <button
         type="button"
         onClick={async () => {
@@ -72,16 +73,16 @@ function CopyLink({ url }: { url: string }) {
             setCopied(false)
           }
         }}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-secondary"
+        className="border-input hover:bg-secondary inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors"
       >
-        {copied ? <Check className="size-3.5 text-primary" /> : <Copy className="size-3.5" />}
+        {copied ? <Check className="text-primary size-3.5" /> : <Copy className="size-3.5" />}
         {copied ? 'Copiado' : 'Copiar'}
       </button>
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-secondary"
+        className="border-input hover:bg-secondary inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors"
       >
         <ExternalLink className="size-3.5" /> Abrir
       </a>
@@ -92,12 +93,27 @@ function CopyLink({ url }: { url: string }) {
 function QuoteCardRow({ quote, canManage }: { quote: QuoteRequest; canManage: boolean }) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function mark(status: QuoteRequestStatus) {
     setPending(true)
-    await updateQuoteStatusAction({ requestId: quote.id, status, notes: quote.internalNotes })
-    setPending(false)
-    router.refresh()
+    setError(null)
+    try {
+      const result = await updateQuoteStatusAction({
+        requestId: quote.id,
+        status,
+        notes: quote.internalNotes,
+      })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.refresh()
+    } catch {
+      setError('Não foi possível atualizar o pedido. Tente de novo.')
+    } finally {
+      setPending(false)
+    }
   }
 
   const whats = quote.phone.replace(/\D/g, '')
@@ -107,21 +123,26 @@ function QuoteCardRow({ quote, canManage }: { quote: QuoteRequest; canManage: bo
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-foreground">{quote.name}</h3>
+            <h3 className="text-foreground font-semibold">{quote.name}</h3>
             <Badge variant={statusVariant(quote.status)}>{QUOTE_STATUS_LABEL[quote.status]}</Badge>
             {quote.occasion && <Badge variant="secondary">{quote.occasion}</Badge>}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             {periodoLabel(quote)} · {quote.adults} {quote.adults === 1 ? 'adulto' : 'adultos'}
-            {quote.children > 0 && `, ${quote.children} ${quote.children === 1 ? 'criança' : 'crianças'}`}
+            {quote.children > 0 &&
+              `, ${quote.children} ${quote.children === 1 ? 'criança' : 'crianças'}`}
             {quote.pets && ' · com pet'}
           </p>
         </div>
-        <span className="shrink-0 text-xs text-muted-foreground">{fmtDateTime(quote.createdAt)}</span>
+        <span className="text-muted-foreground shrink-0 text-xs">
+          {fmtDateTime(quote.createdAt)}
+        </span>
       </div>
 
       {quote.message && (
-        <p className="mt-3 rounded-lg bg-secondary/50 p-3 text-sm text-foreground">{quote.message}</p>
+        <p className="bg-secondary/50 text-foreground mt-3 rounded-lg p-3 text-sm">
+          {quote.message}
+        </p>
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -129,14 +150,14 @@ function QuoteCardRow({ quote, canManage }: { quote: QuoteRequest; canManage: bo
           href={`https://wa.me/${whats}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-secondary"
+          className="border-input hover:bg-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
         >
           <MessageCircleMore className="size-3.5" /> {quote.phone}
         </a>
         {quote.email && (
           <a
             href={`mailto:${quote.email}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-secondary"
+            className="border-input hover:bg-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
           >
             {quote.email}
           </a>
@@ -144,7 +165,7 @@ function QuoteCardRow({ quote, canManage }: { quote: QuoteRequest; canManage: bo
       </div>
 
       {canManage && quote.status !== 'convertido' && (
-        <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
+        <div className="border-border mt-3 flex flex-wrap gap-2 border-t pt-3">
           {quote.status === 'novo' && (
             <Button size="sm" variant="ghost" disabled={pending} onClick={() => mark('respondido')}>
               Marcar como respondido
@@ -156,6 +177,11 @@ function QuoteCardRow({ quote, canManage }: { quote: QuoteRequest; canManage: bo
           <Button size="sm" variant="ghost" disabled={pending} onClick={() => mark('descartado')}>
             Descartar
           </Button>
+          {error && (
+            <p role="alert" className="text-destructive w-full text-sm font-medium">
+              {error}
+            </p>
+          )}
         </div>
       )}
     </Card>
@@ -208,14 +234,14 @@ export function LinkReportView({
                   : 'border-border bg-card'
             }`}
           >
-            <p className="font-semibold text-foreground">{h.title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{h.detail}</p>
+            <p className="text-foreground font-semibold">{h.title}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{h.detail}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-semibold text-foreground">Números do período</h2>
+        <h2 className="text-foreground font-semibold">Números do período</h2>
         <div className="flex gap-1">
           {PERIODS.map((p) => (
             <Link
@@ -234,15 +260,39 @@ export function LinkReportView({
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard label="Visitas" value={String(report.totals.views)} delta={`${rates.searchRate}% consultaram datas`} up icon={TrendingUp} />
-        <StatCard label="Consultas" value={String(report.totals.searches)} delta={`${rates.unavailableRate}% sem vaga`} up={rates.unavailableRate < 30} icon={CalendarX2} />
-        <StatCard label="Pedidos de orçamento" value={String(report.totals.quotes)} delta={novos.length > 0 ? `${novos.length} sem resposta` : 'tudo respondido'} up={novos.length === 0} icon={MessageCircleMore} />
-        <StatCard label="Reservas pelo link" value={String(report.totals.bookings)} delta={`R$ ${report.totals.revenue}`} up icon={Check} />
+        <StatCard
+          label="Visitas"
+          value={String(report.totals.views)}
+          delta={`${rates.searchRate}% consultaram datas`}
+          up
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Consultas"
+          value={String(report.totals.searches)}
+          delta={`${rates.unavailableRate}% sem vaga`}
+          up={rates.unavailableRate < 30}
+          icon={CalendarX2}
+        />
+        <StatCard
+          label="Pedidos de orçamento"
+          value={String(report.totals.quotes)}
+          delta={novos.length > 0 ? `${novos.length} sem resposta` : 'tudo respondido'}
+          up={novos.length === 0}
+          icon={MessageCircleMore}
+        />
+        <StatCard
+          label="Reservas pelo link"
+          value={String(report.totals.bookings)}
+          delta={`R$ ${report.totals.revenue}`}
+          up
+          icon={Check}
+        />
       </div>
 
       <Card className="mt-5 p-5">
-        <h2 className="font-semibold text-foreground">Últimos {recent.length} dias</h2>
-        <p className="text-sm text-muted-foreground">Consultas de disponibilidade por dia.</p>
+        <h2 className="text-foreground font-semibold">Últimos {recent.length} dias</h2>
+        <p className="text-muted-foreground text-sm">Consultas de disponibilidade por dia.</p>
         <div className="mt-5 h-40">
           {recent.some((d) => d.searches > 0 || d.views > 0) ? (
             <BarChart
@@ -251,7 +301,7 @@ export function LinkReportView({
               color="var(--ocean)"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
               Nenhum movimento ainda neste período.
             </div>
           )}
@@ -260,21 +310,24 @@ export function LinkReportView({
 
       {report.unmetDemand.length > 0 && (
         <Card className="mt-5 p-5">
-          <h2 className="font-semibold text-foreground">Procuraram e não tinha vaga</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-foreground font-semibold">Procuraram e não tinha vaga</h2>
+          <p className="text-muted-foreground text-sm">
             Cada linha é uma data que alguém tentou reservar e não encontrou acomodação.
           </p>
           <div className="mt-4 flex flex-col gap-2">
             {report.unmetDemand.map((item) => (
               <div
                 key={`${item.checkin}-${item.checkout}-${item.guests}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3.5 py-2.5"
+                className="border-border flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3.5 py-2.5"
               >
-                <span className="text-sm font-medium text-foreground">
-                  {item.checkout ? `${fmtDay(item.checkin)} a ${fmtDay(item.checkout)}` : fmtDay(item.checkin)}
+                <span className="text-foreground text-sm font-medium">
+                  {item.checkout
+                    ? `${fmtDay(item.checkin)} a ${fmtDay(item.checkout)}`
+                    : fmtDay(item.checkin)}
                   {item.guests > 0 && (
-                    <span className="font-normal text-muted-foreground">
-                      {' '}· {item.guests} {item.guests === 1 ? 'hóspede' : 'hóspedes'}
+                    <span className="text-muted-foreground font-normal">
+                      {' '}
+                      · {item.guests} {item.guests === 1 ? 'hóspede' : 'hóspedes'}
                     </span>
                   )}
                 </span>
@@ -288,7 +341,7 @@ export function LinkReportView({
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-semibold text-foreground">Pedidos de orçamento</h2>
+        <h2 className="text-foreground font-semibold">Pedidos de orçamento</h2>
         {novos.length > 0 && <Badge variant="goldSoft">{novos.length} sem resposta</Badge>}
       </div>
 

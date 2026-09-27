@@ -6,6 +6,8 @@ import type { BookingStatus } from '@/features/reservas/types'
 /** Ação sobre uma data do calendário, como bloquear ou desbloquear. */
 export const dateActionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.'),
+  /** Quarto específico; sem ele, vale para todos os quartos da pousada. */
+  roomId: z.string().uuid().optional(),
 })
 export type DateActionInput = z.infer<typeof dateActionSchema>
 

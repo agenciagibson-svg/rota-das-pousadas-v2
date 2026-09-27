@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   getCurrentUser,
   getOwnerPousada,
@@ -9,6 +11,9 @@ import { BlocksView } from '@/features/acomodacoes'
 import { DEFAULT_TIMEZONE, civilNow } from '@/lib/dates'
 
 export default async function DashboardBloqueiosPage() {
+  if (await sectionDenied('bloqueios'))
+    return <NoSectionAccess section="acomodacoes" title="Bloqueios" />
+
   const [user, pousada, blocks, rooms, canManage] = await Promise.all([
     getCurrentUser(),
     getOwnerPousada(),

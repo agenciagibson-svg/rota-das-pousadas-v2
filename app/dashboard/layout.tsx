@@ -9,6 +9,7 @@ import {
   SelectPousadaScreen,
   PendingInvitesBanner,
 } from '@/components/dashboard/tenant-gate'
+import { DashboardRoleProvider } from '@/components/dashboard/role-context'
 
 /**
  * Guarda de tenant da área de gestão (Ciclo 2 — itens 7 e 8 do escopo de
@@ -58,10 +59,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       // Já tem pousada ativa, mas pode ter sido convidado para outra.
       const invites = await getMyPendingInvites()
       return (
-        <>
+        <DashboardRoleProvider role={state.membership.role}>
           <PendingInvitesBanner invites={invites} />
           {children}
-        </>
+        </DashboardRoleProvider>
       )
     }
   }

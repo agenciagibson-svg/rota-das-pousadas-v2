@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   getCurrentUser,
   getOwnerPousada,
@@ -12,7 +14,14 @@ import {
 import { RoomsView, HousekeepingRoomsView } from '@/features/acomodacoes'
 
 export default async function DashboardAcomodacoesPage() {
-  const [user, pousada, role] = await Promise.all([getCurrentUser(), getOwnerPousada(), getActiveRole()])
+  if (await sectionDenied('acomodacoes'))
+    return <NoSectionAccess section="acomodacoes" title="Acomodações" />
+
+  const [user, pousada, role] = await Promise.all([
+    getCurrentUser(),
+    getOwnerPousada(),
+    getActiveRole(),
+  ])
   const displayName = user?.name || user?.email || 'Proprietário'
   const pousadaName = pousada?.name ?? 'Sua pousada'
 
@@ -20,7 +29,9 @@ export default async function DashboardAcomodacoesPage() {
   // RLS concederia. Usa exclusivamente a projeção operacional mínima.
   if (role === 'governanca') {
     const rooms = await getHousekeepingRooms()
-    return <HousekeepingRoomsView displayName={displayName} pousadaName={pousadaName} rooms={rooms} />
+    return (
+      <HousekeepingRoomsView displayName={displayName} pousadaName={pousadaName} rooms={rooms} />
+    )
   }
 
   const [rooms, categories, amenities, canManage, canChangeStatus] = await Promise.all([

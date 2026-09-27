@@ -39,6 +39,14 @@ import type {
  * avaliações reais da pousada. Quando um dado não existe, a tela mostra estado
  * vazio — nunca um valor de exemplo, que o cliente lê como se fosse a casa dele.
  */
+function brl(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 2,
+  })
+}
+
 export function OwnerDashboardView({
   displayName,
   pousadaName,
@@ -51,6 +59,7 @@ export function OwnerDashboardView({
   arrivalsToday,
   departuresToday,
   upcomingReservations,
+  showRevenue = true,
 }: {
   displayName: string
   pousadaName: string | null
@@ -65,6 +74,8 @@ export function OwnerDashboardView({
   departuresToday: OwnerReservation[]
   /** Entradas a partir de hoje, já ordenadas e limitadas (`upcomingReservations`). */
   upcomingReservations: OwnerReservation[]
+  /** Faturamento só para quem tem `finance:pousada:view` (recepção/governança não veem). */
+  showRevenue?: boolean
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -86,7 +97,7 @@ export function OwnerDashboardView({
   const stats = [
     {
       label: 'Receita ativa',
-      value: `R$ ${activeRevenue}`,
+      value: brl(activeRevenue),
       delta: `${confirmedReservations.length} confirmadas`,
       up: true,
       icon: DollarSign,
@@ -113,6 +124,7 @@ export function OwnerDashboardView({
       icon: Users,
     },
   ]
+  const visibleStats = showRevenue ? stats : stats.filter((s) => s.label !== 'Receita ativa')
 
   // Sem pousada gerida → onboarding.
   if (!pousadaName) {
@@ -164,7 +176,7 @@ export function OwnerDashboardView({
       )}
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
+        {visibleStats.map((s) => (
           <StatCard
             key={s.label}
             label={s.label}
@@ -186,10 +198,16 @@ export function OwnerDashboardView({
                 Últimos 12 meses, pelo mês do check-in
               </p>
             </div>
-            <span className="text-primary text-sm font-semibold">R$ {activeRevenue} ativo</span>
+            {showRevenue && (
+              <span className="text-primary text-sm font-semibold">{brl(activeRevenue)} ativo</span>
+            )}
           </div>
           <div className="mt-6 h-48">
-            {revenueSeries.some((point) => point.value > 0) ? (
+            {!showRevenue ? (
+              <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
+                Os valores de faturamento aparecem para proprietário, gestor e financeiro.
+              </div>
+            ) : revenueSeries.some((point) => point.value > 0) ? (
               <AreaChart data={revenueSeries.map((point) => point.value)} />
             ) : (
               <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
@@ -322,7 +340,9 @@ export function OwnerDashboardView({
                     </div>
                     <p className="text-muted-foreground truncate text-sm">
                       {reservation.roomName}
-                      {reservation.balanceDue > 0 ? ` · saldo de R$ ${reservation.balanceDue}` : ''}
+                      {reservation.balanceDue > 0 && showRevenue
+                        ? ` · saldo de ${brl(reservation.balanceDue)}`
+                        : ''}
                     </p>
                   </div>
                 </div>

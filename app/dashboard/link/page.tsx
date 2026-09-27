@@ -1,3 +1,5 @@
+import { sectionDenied } from '@/lib/auth/section-guard'
+import { NoSectionAccess } from '@/components/dashboard/no-section-access'
 import {
   canManageQuotes,
   getCurrentUser,
@@ -19,6 +21,8 @@ export default async function DashboardLinkPage({
 }: {
   searchParams: Promise<{ dias?: string }>
 }) {
+  if (await sectionDenied('link')) return <NoSectionAccess section="link" title="Link da bio" />
+
   const { dias } = await searchParams
   const days = parseDays(dias)
 
