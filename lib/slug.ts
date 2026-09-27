@@ -31,10 +31,33 @@ export function uniqueSlug(input: string): string {
  * acrescentados aqui no mesmo commit em que forem criados.
  */
 export const RESERVED_SLUGS: readonly string[] = [
-  'admin', 'anunciar', 'api', 'auth', 'cadastro', 'concierge', 'dashboard',
-  'destinos', 'experiencias', 'favoritos', 'login', 'logout', 'minhas-reservas',
-  'parceiros', 'pousada', 'pousadas', 'privacidade', 'sobre', 'suporte',
-  'termos', 'sitemap', 'robots', 'manifest', '_next', 'static', 'public',
+  'admin',
+  'anunciar',
+  'api',
+  'auth',
+  'cadastro',
+  'concierge',
+  'conta',
+  'dashboard',
+  'destinos',
+  'experiencias',
+  'favoritos',
+  'login',
+  'logout',
+  'minhas-reservas',
+  'parceiros',
+  'pousada',
+  'pousadas',
+  'privacidade',
+  'sobre',
+  'suporte',
+  'termos',
+  'sitemap',
+  'robots',
+  'manifest',
+  '_next',
+  'static',
+  'public',
 ] as const
 
 const RESERVED = new Set<string>(RESERVED_SLUGS)

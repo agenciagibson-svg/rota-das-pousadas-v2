@@ -89,6 +89,7 @@ const PROTECTED: { prefix: string; loginPath: string }[] = [
   { prefix: '/admin', loginPath: '/admin/login' },
   { prefix: '/dashboard', loginPath: '/parceiros/login' },
   { prefix: '/minhas-reservas', loginPath: '/login' },
+  { prefix: '/conta', loginPath: '/login' },
   { prefix: '/anunciar', loginPath: '/login' },
 ]
 

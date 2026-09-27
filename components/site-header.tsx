@@ -13,11 +13,15 @@ import {
   Wand2,
   Heart,
   CalendarDays,
-  LayoutDashboard,
   ArrowUpRight,
+  LogIn,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useScrolled } from '@/hooks/use-scrolled'
+import { useHeaderSummary } from '@/components/header/use-header-summary'
+import { TripsButton } from '@/components/header/trips-button'
+import { UserMenu, accountLinks, useSignOut } from '@/components/header/user-menu'
 
 type Tone = 'primary' | 'ocean' | 'gold' | 'accent'
 
@@ -71,13 +75,6 @@ const nav = [
     tone: 'primary' as Tone,
     section: 'Minha conta',
   },
-  {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    tone: 'ocean' as Tone,
-    section: 'Minha conta',
-  },
 ]
 
 const mobileSections = ['Explorar', 'Minha conta'] as const
@@ -86,6 +83,10 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
   const scrolled = useScrolled(24)
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const { summary } = useHeaderSummary()
+  const { signOut, pending: signingOut } = useSignOut()
+  const user = summary?.user ?? null
+  const loggedOut = summary !== null && user === null
 
   const solid = forceSolid || scrolled
 
@@ -120,30 +121,69 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
           </Link>
 
           <nav className="hidden items-center gap-6 lg:flex">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:opacity-70',
-                  solid ? 'text-foreground' : 'text-primary-foreground',
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {nav
+              .filter((item) => item.section === 'Explorar')
+              .map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'text-sm font-medium transition-colors hover:opacity-70',
+                    solid ? 'text-foreground' : 'text-primary-foreground',
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Link
-              href="/anunciar"
-              className={cn(
-                'rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105',
-                solid ? 'bg-primary text-primary-foreground' : 'bg-primary-foreground text-primary',
-              )}
-            >
-              Anuncie sua pousada
-            </Link>
+            {summary?.user ? (
+              <>
+                {!summary.user.hasPousadaAccess && (
+                  <Link
+                    href="/anunciar"
+                    className={cn(
+                      'text-sm font-semibold transition-colors hover:opacity-70',
+                      solid ? 'text-foreground' : 'text-primary-foreground',
+                    )}
+                  >
+                    Anuncie sua pousada
+                  </Link>
+                )}
+                <TripsButton
+                  pendingTrips={summary.pendingTrips}
+                  nextTrip={summary.nextTrip}
+                  solid={solid}
+                />
+                <UserMenu user={summary.user} solid={solid} />
+              </>
+            ) : (
+              <>
+                {loggedOut && (
+                  <Link
+                    href="/login"
+                    className={cn(
+                      'flex items-center gap-1.5 text-sm font-semibold transition-colors hover:opacity-70',
+                      solid ? 'text-foreground' : 'text-primary-foreground',
+                    )}
+                  >
+                    <LogIn className="size-4" /> Entrar
+                  </Link>
+                )}
+                <Link
+                  href="/anunciar"
+                  className={cn(
+                    'rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105',
+                    solid
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-primary-foreground text-primary',
+                  )}
+                >
+                  Anuncie sua pousada
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -162,6 +202,40 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
         {open && (
           <div className="border-linen/10 bg-stone-deep shadow-stone-deep/40 relative z-10 mx-4 mt-3 overflow-hidden rounded-3xl border shadow-2xl lg:hidden">
             <div className="from-primary via-gold to-accent h-1 w-full bg-gradient-to-r" />
+            {user ? (
+              <div className="border-linen/10 flex items-center gap-3 border-b px-6 py-4">
+                <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full text-sm font-bold">
+                  {user.initials}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-linen truncate text-sm font-semibold">
+                    Olá, {user.firstName}!
+                  </p>
+                  <p className="text-linen/50 truncate text-xs">{user.email}</p>
+                </div>
+                {summary?.user && summary.pendingTrips.length > 0 && (
+                  <Link
+                    href="/minhas-reservas"
+                    onClick={() => setOpen(false)}
+                    className="bg-accent text-accent-foreground rounded-full px-3 py-1 text-xs font-bold"
+                  >
+                    {summary.pendingTrips.length} a pagar
+                  </Link>
+                )}
+              </div>
+            ) : (
+              loggedOut && (
+                <div className="border-linen/10 border-b p-3">
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="bg-linen/10 text-linen flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold"
+                  >
+                    <LogIn className="size-4" /> Entrar ou criar conta
+                  </Link>
+                </div>
+              )
+            )}
             <nav className="flex flex-col p-3">
               {mobileSections.map((section, sectionIndex) => (
                 <div
@@ -171,40 +245,51 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                   <p className="text-linen/40 px-3 pt-2 pb-1 text-[11px] font-semibold tracking-[0.14em] uppercase">
                     {section}
                   </p>
-                  {nav
-                    .filter((item) => item.section === section)
-                    .map((item) => {
-                      const Icon = item.icon
-                      const active = !item.href.includes('#') && pathname === item.href
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setOpen(false)}
+                  {(section === 'Minha conta' && user
+                    ? accountLinks(user).map((l) => ({ ...l, tone: 'primary' as Tone, section }))
+                    : nav.filter((item) => item.section === section)
+                  ).map((item) => {
+                    const Icon = item.icon
+                    const active = !item.href.includes('#') && pathname === item.href
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors',
+                          active
+                            ? 'bg-linen/10 text-linen'
+                            : 'text-linen/80 hover:bg-linen/10 hover:text-linen',
+                        )}
+                      >
+                        <span
                           className={cn(
-                            'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors',
-                            active
-                              ? 'bg-linen/10 text-linen'
-                              : 'text-linen/80 hover:bg-linen/10 hover:text-linen',
+                            'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors',
+                            toneClasses[item.tone],
                           )}
                         >
-                          <span
-                            className={cn(
-                              'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors',
-                              toneClasses[item.tone],
-                            )}
-                          >
-                            <Icon className="size-4" />
-                          </span>
-                          {item.label}
-                          {active && <span className="bg-accent ml-auto size-1.5 rounded-full" />}
-                        </Link>
-                      )
-                    })}
+                          <Icon className="size-4" />
+                        </span>
+                        {item.label}
+                        {active && <span className="bg-accent ml-auto size-1.5 rounded-full" />}
+                      </Link>
+                    )
+                  })}
                 </div>
               ))}
             </nav>
-            <div className="border-linen/10 border-t p-3">
+            <div className="border-linen/10 space-y-2 border-t p-3">
+              {user && (
+                <button
+                  type="button"
+                  onClick={signOut}
+                  disabled={signingOut}
+                  className="text-linen/80 hover:bg-linen/10 flex w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
+                >
+                  <LogOut className="size-4" /> {signingOut ? 'Saindo…' : 'Sair'}
+                </button>
+              )}
               <Link
                 href="/anunciar"
                 onClick={() => setOpen(false)}

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Compass, Menu, X, Search, Bell, type LucideIcon } from 'lucide-react'
+import { Compass, Menu, X, Search, Bell, Globe, CalendarDays, type LucideIcon } from 'lucide-react'
 import { LogoutButton } from '@/features/auth/components/logout-button'
 
 export type NavItem = { label: string; icon: LucideIcon; active?: boolean; href?: string }
@@ -32,26 +32,30 @@ export function DashboardShell({
   const accentSoft = accent === 'ocean' ? 'bg-ocean/10' : 'bg-primary/10'
 
   return (
-    <div className="min-h-screen bg-secondary/40">
+    <div className="bg-secondary/40 min-h-screen">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 transform border-r border-border bg-card transition-transform duration-300 lg:translate-x-0 ${
+        className={`border-border bg-card fixed inset-y-0 left-0 z-50 w-72 transform border-r transition-transform duration-300 lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between px-6 py-5">
             <Link href="/" className="flex items-center gap-2.5">
-              <span className={`flex size-9 items-center justify-center rounded-full ${accentBg} text-primary-foreground`}>
+              <span
+                className={`flex size-9 items-center justify-center rounded-full ${accentBg} text-primary-foreground`}
+              >
                 <Compass className="size-5" />
               </span>
               <span className="flex flex-col leading-none">
-                <span className="font-serif text-base font-semibold text-foreground">{brandLabel}</span>
-                <span className="text-[11px] text-muted-foreground">{brandSub}</span>
+                <span className="text-foreground font-serif text-base font-semibold">
+                  {brandLabel}
+                </span>
+                <span className="text-muted-foreground text-[11px]">{brandSub}</span>
               </span>
             </Link>
             <button onClick={() => setOpen(false)} className="lg:hidden" aria-label="Fechar menu">
-              <X className="size-5 text-muted-foreground" />
+              <X className="text-muted-foreground size-5" />
             </button>
           </div>
 
@@ -76,14 +80,30 @@ export function DashboardShell({
             })}
           </nav>
 
-          <div className="border-t border-border p-4">
-            <div className="flex items-center gap-3 rounded-xl bg-secondary/60 p-3">
-              <span className={`flex size-10 items-center justify-center rounded-full ${accentBg} text-sm font-semibold text-primary-foreground`}>
+          <div className="border-border border-t p-4">
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <Link
+                href="/"
+                className="border-border text-muted-foreground hover:bg-secondary hover:text-foreground flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium"
+              >
+                <Globe className="size-3.5" /> Ver o site
+              </Link>
+              <Link
+                href="/minhas-reservas"
+                className="border-border text-muted-foreground hover:bg-secondary hover:text-foreground flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium"
+              >
+                <CalendarDays className="size-3.5" /> Minhas viagens
+              </Link>
+            </div>
+            <div className="bg-secondary/60 flex items-center gap-3 rounded-xl p-3">
+              <span
+                className={`flex size-10 items-center justify-center rounded-full ${accentBg} text-primary-foreground text-sm font-semibold`}
+              >
                 {user.name.charAt(0)}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-foreground">{user.name}</div>
-                <div className="truncate text-xs text-muted-foreground">{user.role}</div>
+                <div className="text-foreground truncate text-sm font-semibold">{user.name}</div>
+                <div className="text-muted-foreground truncate text-xs">{user.role}</div>
               </div>
               <LogoutButton className="shrink-0" />
             </div>
@@ -91,28 +111,48 @@ export function DashboardShell({
         </div>
       </aside>
 
-      {open && <div className="fixed inset-0 z-40 bg-stone-deep/40 lg:hidden" onClick={() => setOpen(false)} />}
+      {open && (
+        <div
+          className="bg-stone-deep/40 fixed inset-0 z-40 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
       {/* Main */}
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-card/80 px-5 py-4 backdrop-blur lg:px-8">
+        <header className="border-border bg-card/80 sticky top-0 z-30 flex items-center justify-between gap-4 border-b px-5 py-4 backdrop-blur lg:px-8">
           <div className="flex items-center gap-3">
             <button onClick={() => setOpen(true)} className="lg:hidden" aria-label="Abrir menu">
-              <Menu className="size-6 text-foreground" />
+              <Menu className="text-foreground size-6" />
             </button>
             <div>
-              <h1 className="font-serif text-xl font-semibold text-foreground lg:text-2xl">{title}</h1>
-              <p className="hidden text-sm text-muted-foreground sm:block">{subtitle}</p>
+              <h1 className="text-foreground font-serif text-xl font-semibold lg:text-2xl">
+                {title}
+              </h1>
+              <p className="text-muted-foreground hidden text-sm sm:block">{subtitle}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-full border border-border bg-secondary/60 px-4 py-2 md:flex">
-              <Search className="size-4 text-muted-foreground" />
-              <input placeholder="Buscar..." className="w-40 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+            <Link
+              href="/"
+              className="border-border bg-card text-foreground hover:bg-secondary flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+            >
+              <Globe className="size-4" />
+              <span className="hidden sm:inline">Ver o site</span>
+            </Link>
+            <div className="border-border bg-secondary/60 hidden items-center gap-2 rounded-full border px-4 py-2 md:flex">
+              <Search className="text-muted-foreground size-4" />
+              <input
+                placeholder="Buscar..."
+                className="placeholder:text-muted-foreground w-40 bg-transparent text-sm outline-none"
+              />
             </div>
-            <button className="relative flex size-10 items-center justify-center rounded-full border border-border bg-card" aria-label="Notificações">
-              <Bell className="size-5 text-foreground" />
-              <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-accent" />
+            <button
+              className="border-border bg-card relative flex size-10 items-center justify-center rounded-full border"
+              aria-label="Notificações"
+            >
+              <Bell className="text-foreground size-5" />
+              <span className="bg-accent absolute top-2.5 right-2.5 size-2 rounded-full" />
             </button>
           </div>
         </header>
