@@ -42,6 +42,15 @@ function formatDateTime(iso: string): string {
   }).format(new Date(iso))
 }
 
+/** Pendente com prazo vencido: a vaga já foi liberada (0070). */
+function isExpiredPending(booking: { status: BookingStatus; paymentDueAt: string | null }) {
+  return (
+    booking.status === 'pending' &&
+    Boolean(booking.paymentDueAt) &&
+    new Date(booking.paymentDueAt as string).getTime() <= Date.now()
+  )
+}
+
 function isActiveStatus(status: BookingStatus) {
   return !['cancelled', 'no_show'].includes(status)
 }
@@ -50,19 +59,21 @@ export default async function MyBookingsPage() {
   const bookings = await getMyBookings()
   const today = new Date().toISOString().slice(0, 10)
   const activeBookings = bookings.filter((booking) => isActiveStatus(booking.status))
-  const pendingBookings = bookings.filter((booking) => booking.status === 'pending')
+  const pendingBookings = bookings.filter(
+    (booking) => booking.status === 'pending' && !isExpiredPending(booking),
+  )
   const upcomingBookings = activeBookings.filter((booking) => booking.checkout >= today)
   const activeTotal = activeBookings.reduce((sum, booking) => sum + booking.total, 0)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pb-24 pt-28">
+      <main className="pt-28 pb-24">
         <Container className="max-w-5xl">
-          <h1 className="font-serif text-3xl font-semibold text-foreground sm:text-4xl">
+          <h1 className="text-foreground font-serif text-3xl font-semibold sm:text-4xl">
             Minhas reservas
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-2 text-sm">
             Acompanhe suas estadias, valores e próximas ações.
           </p>
 
@@ -82,29 +93,29 @@ export default async function MyBookingsPage() {
             <div className="mt-8 space-y-6">
               <div className="grid gap-3 sm:grid-cols-3">
                 <Card className="p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CalendarCheck className="size-4 text-primary" />
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <CalendarCheck className="text-primary size-4" />
                     Próximas estadias
                   </div>
-                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                  <div className="text-foreground mt-2 text-2xl font-semibold">
                     {upcomingBookings.length}
                   </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock3 className="size-4 text-primary" />
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Clock3 className="text-primary size-4" />
                     Aguardando pagamento
                   </div>
-                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                  <div className="text-foreground mt-2 text-2xl font-semibold">
                     {pendingBookings.length}
                   </div>
                 </Card>
                 <Card className="p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <ReceiptText className="size-4 text-primary" />
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <ReceiptText className="text-primary size-4" />
                     Total ativo
                   </div>
-                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                  <div className="text-foreground mt-2 text-2xl font-semibold">
                     R$ {activeTotal}
                   </div>
                 </Card>
@@ -114,13 +125,19 @@ export default async function MyBookingsPage() {
                 {bookings.map((booking) => {
                   const status = BOOKING_STATUS[booking.status]
                   const canCancel = ['quote', 'pending'].includes(booking.status)
+                  const expired = isExpiredPending(booking)
+                  const payable = booking.status === 'pending' && !expired
+                  // "Reservar novamente" com as mesmas datas só faz sentido quando
+                  // esta reserva não segura mais o quarto; senão cairia em datas ocupadas.
+                  const canRebook =
+                    expired || !isActiveStatus(booking.status) || booking.status === 'checked_out'
 
                   return (
                     <Card key={booking.id} className="overflow-hidden p-0">
                       <div className="grid md:grid-cols-[180px_1fr]">
                         <Link
                           href={`/pousada/${booking.pousadaSlug}`}
-                          className="relative h-40 overflow-hidden bg-secondary md:h-full"
+                          className="bg-secondary relative h-40 overflow-hidden md:h-full"
                         >
                           <Image
                             src={booking.pousadaImage || '/placeholder.svg'}
@@ -135,7 +152,7 @@ export default async function MyBookingsPage() {
                           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="font-serif text-xl font-semibold text-foreground">
+                                <h2 className="text-foreground font-serif text-xl font-semibold">
                                   {booking.pousadaName}
                                 </h2>
                                 <Badge variant={status.variant} size="sm">
@@ -143,7 +160,7 @@ export default async function MyBookingsPage() {
                                 </Badge>
                               </div>
 
-                              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                              <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                                 <span className="inline-flex items-center gap-1.5">
                                   <MapPin className="size-3.5" />
                                   {booking.city}, {booking.state}
@@ -155,22 +172,21 @@ export default async function MyBookingsPage() {
                                 </span>
                                 <span className="inline-flex items-center gap-1.5">
                                   <Users className="size-3.5" />
-                                  {booking.guests}{' '}
-                                  {booking.guests === 1 ? 'hóspede' : 'hóspedes'}
+                                  {booking.guests} {booking.guests === 1 ? 'hóspede' : 'hóspedes'}
                                 </span>
                               </div>
 
-                              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                              <div className="bg-secondary text-muted-foreground mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
                                 <ReceiptText className="size-3.5" />
                                 Código {booking.code}
                               </div>
                             </div>
 
                             <div className="shrink-0 text-left lg:text-right">
-                              <div className="text-2xl font-semibold text-foreground">
+                              <div className="text-foreground text-2xl font-semibold">
                                 R$ {booking.total}
                               </div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-muted-foreground text-xs">
                                 {booking.fee > 0
                                   ? `R$ ${booking.subtotal} estadia + R$ ${booking.fee} taxa`
                                   : `R$ ${booking.subtotal} estadia`}
@@ -178,12 +194,22 @@ export default async function MyBookingsPage() {
                             </div>
                           </div>
 
-                          {booking.status === 'pending' && (
-                            <div className="mt-4 flex items-start gap-2 rounded-2xl bg-gold/10 p-3 text-sm text-muted-foreground">
-                              <CreditCard className="mt-0.5 size-4 shrink-0 text-foreground" />
+                          {expired && (
+                            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
+                              <Clock3 className="mt-0.5 size-4 shrink-0 text-orange-600" />
+                              <span>
+                                O prazo de pagamento terminou e as datas foram liberadas. Se ainda
+                                quiser ir, faça uma nova reserva.
+                              </span>
+                            </div>
+                          )}
+
+                          {payable && (
+                            <div className="bg-gold/10 text-muted-foreground mt-4 flex items-start gap-2 rounded-2xl p-3 text-sm">
+                              <CreditCard className="text-foreground mt-0.5 size-4 shrink-0" />
                               <span>
                                 Sua reserva foi criada e fica garantida até{' '}
-                                <strong className="font-semibold text-foreground">
+                                <strong className="text-foreground font-semibold">
                                   {booking.paymentDueAt
                                     ? formatDateTime(booking.paymentDueAt)
                                     : 'o fim do prazo de pagamento'}
@@ -195,7 +221,7 @@ export default async function MyBookingsPage() {
                           )}
 
                           {booking.status === 'cancelled' && booking.cancellationReason && (
-                            <div className="mt-4 rounded-2xl bg-secondary p-3 text-sm text-muted-foreground">
+                            <div className="bg-secondary text-muted-foreground mt-4 rounded-2xl p-3 text-sm">
                               Reserva cancelada — {booking.cancellationReason}. Você pode reservar
                               novamente se ainda houver disponibilidade.
                             </div>
@@ -209,20 +235,31 @@ export default async function MyBookingsPage() {
                               <ExternalLink className="size-3.5" />
                               Ver pousada
                             </Link>
-                            <Link
-                              href={{
-                                pathname: `/pousada/${booking.pousadaSlug}/reservar`,
-                                query: {
-                                  checkin: booking.checkin,
-                                  checkout: booking.checkout,
-                                  guests: booking.guests,
-                                },
-                              }}
-                              className={buttonVariants({ variant: 'secondary', size: 'sm' })}
-                            >
-                              <RotateCcw className="size-3.5" />
-                              Reservar novamente
-                            </Link>
+                            {payable && (
+                              <Link
+                                href={`/pousada/${booking.pousadaSlug}/reservar/${booking.id}/pagamento`}
+                                className={buttonVariants({ size: 'sm' })}
+                              >
+                                <CreditCard className="size-3.5" />
+                                Pagar agora
+                              </Link>
+                            )}
+                            {canRebook && (
+                              <Link
+                                href={{
+                                  pathname: `/pousada/${booking.pousadaSlug}/reservar`,
+                                  query: {
+                                    checkin: booking.checkin,
+                                    checkout: booking.checkout,
+                                    guests: booking.guests,
+                                  },
+                                }}
+                                className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+                              >
+                                <RotateCcw className="size-3.5" />
+                                Reservar novamente
+                              </Link>
+                            )}
                             {canCancel && <CancelBookingButton bookingId={booking.id} />}
                           </div>
                         </div>

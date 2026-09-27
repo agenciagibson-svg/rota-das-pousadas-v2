@@ -3,7 +3,7 @@ import { catalogQuerySchema } from '@/features/pousadas/search'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Star } from 'lucide-react'
+import { CalendarX2, MapPin, Star } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { Container } from '@/components/ui/container'
 import { Card } from '@/components/ui/card'
@@ -41,7 +41,41 @@ export default async function ReservarPage({
       : Promise.resolve(null),
   ])
 
-  if (!pousada || !bookable) notFound()
+  if (!pousada) notFound()
+
+  // Nenhum parâmetro ruim pode virar "Pousada não encontrada": datas ocupadas,
+  // invertidas, inválidas ou hóspedes acima da capacidade mostram a página com
+  // um aviso claro e o formulário limpo. A oferta de referência (preço e
+  // capacidade) é buscada sem filtros quando a combinação pedida não tem vaga.
+  const askedSomething = Boolean(initial.checkin || initial.checkout || initial.guests)
+  const offer = bookable ?? (await getBookableRoom(slug, undefined, undefined, undefined))
+  const askedGuests = filters.success ? filters.data.guests : undefined
+  const problem: null | 'invalid' | 'capacity' | 'unavailable' = bookable
+    ? null
+    : !filters.success
+      ? 'invalid'
+      : offer && askedGuests && askedGuests > offer.capacity
+        ? 'capacity'
+        : askedSomething && filters.data.checkin && filters.data.checkout
+          ? 'unavailable'
+          : null
+  const problemMessage = {
+    invalid: {
+      title: 'Não entendemos as datas escolhidas.',
+      body: 'Confira se a saída é depois da entrada e escolha o período abaixo.',
+    },
+    capacity: {
+      title: `A acomodação recebe até ${offer?.capacity ?? ''} hóspedes.`,
+      body: 'Ajuste a quantidade de hóspedes ou fale com a pousada para grupos maiores.',
+    },
+    unavailable: {
+      title: 'Essas datas não estão mais disponíveis.',
+      body: 'Escolha outro período abaixo para ver a disponibilidade.',
+    },
+  }
+  const clearDates = problem === 'invalid' || problem === 'unavailable'
+  const clearGuests = problem === 'invalid' || problem === 'capacity'
+
   if (!user) {
     const bookingParams = new URLSearchParams()
     if (initial.checkin) bookingParams.set('checkin', initial.checkin)
@@ -93,7 +127,7 @@ export default async function ReservarPage({
                 </div>
                 <p className="mt-3 text-sm">
                   <span className="text-foreground text-lg font-semibold">
-                    R$ {bookable.nightly}
+                    R$ {offer?.nightly ?? pousada.pricePerNight}
                   </span>
                   <span className="text-muted-foreground"> / diária</span>
                 </p>
@@ -105,17 +139,38 @@ export default async function ReservarPage({
               <p className="text-muted-foreground mt-1 text-sm">
                 Escolha as datas e a quantidade de hóspedes.
               </p>
-              <div className="mt-5">
-                <BookingForm
-                  pousadaSlug={slug}
-                  nightly={bookable.nightly}
-                  capacity={bookable.capacity}
-                  initialCheckin={initial.checkin}
-                  initialCheckout={initial.checkout}
-                  initialGuests={initial.guests}
-                  origin={origin}
-                />
-              </div>
+              {problem && (
+                <div
+                  role="alert"
+                  className="mt-4 flex gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900"
+                >
+                  <CalendarX2 className="mt-0.5 size-5 shrink-0 text-orange-600" />
+                  <p>
+                    <strong>{problemMessage[problem].title}</strong> {problemMessage[problem].body}
+                  </p>
+                </div>
+              )}
+              {offer ? (
+                <div className="mt-5">
+                  <BookingForm
+                    pousadaSlug={slug}
+                    nightly={offer.nightly}
+                    capacity={offer.capacity}
+                    initialCheckin={clearDates ? '' : initial.checkin}
+                    initialCheckout={clearDates ? '' : initial.checkout}
+                    initialGuests={clearGuests ? undefined : initial.guests}
+                    origin={origin}
+                  />
+                </div>
+              ) : (
+                <div className="bg-secondary/60 mt-5 rounded-2xl p-5 text-sm">
+                  <p className="font-semibold">Reserva online indisponível no momento.</p>
+                  <p className="text-muted-foreground mt-1">
+                    Esta pousada ainda não tem acomodações abertas para reserva pelo site. Fale
+                    direto com ela pela página da pousada.
+                  </p>
+                </div>
+              )}
             </Card>
           </div>
 
