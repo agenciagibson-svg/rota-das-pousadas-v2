@@ -2451,27 +2451,45 @@ export type Database = {
       }
       pousada_guest_settings: {
         Row: {
+          breakfast_info: string
+          daily_agenda: Json
+          emergency: Json
+          facilities: Json
           guest_info: string
+          local_tips: Json
           orders_enabled: boolean
           orders_hours: string
+          parking_info: string
           pousada_id: string
           updated_at: string
           wifi_name: string
           wifi_password: string
         }
         Insert: {
+          breakfast_info?: string
+          daily_agenda?: Json
+          emergency?: Json
+          facilities?: Json
           guest_info?: string
+          local_tips?: Json
           orders_enabled?: boolean
           orders_hours?: string
+          parking_info?: string
           pousada_id: string
           updated_at?: string
           wifi_name?: string
           wifi_password?: string
         }
         Update: {
+          breakfast_info?: string
+          daily_agenda?: Json
+          emergency?: Json
+          facilities?: Json
           guest_info?: string
+          local_tips?: Json
           orders_enabled?: boolean
           orders_hours?: string
+          parking_info?: string
           pousada_id?: string
           updated_at?: string
           wifi_name?: string

@@ -1,109 +1,111 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  BedDouble,
-  CalendarDays,
-  Check,
-  Clock3,
-  Copy,
-  ConciergeBell,
+  ArrowLeft,
   Home,
-  MapPin,
-  MessageCircleMore,
+  KeyRound,
+  MessageCircle,
   Minus,
-  Phone,
   Plus,
   ReceiptText,
   ShoppingBag,
-  Star,
-  Wifi,
+  Trash2,
 } from 'lucide-react'
-import { formatBRL, formatDateTime, formatISODate, plural, whatsappLink } from '@/lib/format'
-import { CATEGORY_LABEL, type InventoryCategory } from '@/features/estoque/labels'
-import { ORDER_STATUS_LABEL, type GuestOrder } from '@/features/pedidos/types'
+import { formatBRL, formatISODate, whatsappLink } from '@/lib/format'
+import type { GuestOrder } from '@/features/pedidos/types'
 import { cancelGuestOrderAction, placeGuestOrderAction, submitStayReviewAction } from '../actions'
+import { nowHHMM } from '../dates'
 import type { GuestStay, StayMenuItem } from '../types'
-import { InstallPrompt } from './install-prompt'
+import type { StayCtx, StayTab } from './stay-context'
+import { StayAccount } from './stay-account'
+import { StayDetails } from './stay-details'
+import { StayHome } from './stay-home'
+import { StayMenu } from './stay-menu'
+import { StayReception } from './stay-reception'
+import { APP_BG, ItemVisual, RoundButton, Sheet, cx } from './stay-ui'
 
-type Tab = 'inicio' | 'pedir' | 'conta' | 'recepcao' | 'avaliar'
 const REFRESH_MS = 20_000
 
-function CopyText({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text)
-        } catch {
-          const a = document.createElement('textarea')
-          a.value = text
-          document.body.appendChild(a)
-          a.select()
-          document.execCommand('copy')
-          a.remove()
-        }
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      }}
-      className="border-border text-foreground inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-semibold"
-    >
-      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-      {copied ? 'Copiado!' : label}
-    </button>
-  )
-}
+const TABS: { id: StayTab; label: string; icon: typeof Home }[] = [
+  { id: 'inicio', label: 'Início', icon: Home },
+  { id: 'estadia', label: 'Estadia', icon: KeyRound },
+  { id: 'pedir', label: 'Pedir', icon: ShoppingBag },
+  { id: 'conta', label: 'Conta', icon: ReceiptText },
+  { id: 'recepcao', label: 'Recepção', icon: MessageCircle },
+]
 
-function statusColor(status: GuestOrder['status']) {
-  if (status === 'novo') return 'bg-amber-100 text-amber-900'
-  if (status === 'preparando') return 'bg-sky-100 text-sky-900'
-  if (status === 'entregue') return 'bg-emerald-100 text-emerald-900'
-  return 'bg-neutral-100 text-neutral-600'
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch {
+    const a = document.createElement('textarea')
+    a.value = text
+    document.body.appendChild(a)
+    a.select()
+    document.execCommand('copy')
+    a.remove()
+  }
 }
 
 export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestOrder[] }) {
   const router = useRouter()
-  const { booking, pousada, info } = stay
-  const [tab, setTab] = useState<Tab>('inicio')
+  const { booking, pousada } = stay
+  const [tab, setTab] = useState<StayTab>('inicio')
   const [cart, setCart] = useState<Record<string, number>>({})
   const [note, setNote] = useState('')
   const [sending, setSending] = useState(false)
   const [orderError, setOrderError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [now, setNow] = useState('')
+  const [detail, setDetail] = useState<StayMenuItem | null>(null)
+  const [detailQty, setDetailQty] = useState(1)
+  const [bagOpen, setBagOpen] = useState(false)
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSent, setReviewSent] = useState(false)
   const lastStatus = useRef<Map<string, string> | null>(null)
 
-  const wa = whatsappLink(pousada.whatsapp || pousada.phone)
-  const services = stay.menu.filter((m) => m.category === 'servicos')
-  const products = stay.menu.filter((m) => m.category !== 'servicos')
+  const services = useMemo(() => stay.menu.filter((m) => m.category === 'servicos'), [stay.menu])
+  const products = useMemo(() => stay.menu.filter((m) => m.category !== 'servicos'), [stay.menu])
   const openOrders = orders.filter((o) => o.status === 'novo' || o.status === 'preparando')
 
-  const grouped = useMemo(() => {
-    const map = new Map<InventoryCategory, StayMenuItem[]>()
-    for (const item of products) {
-      const list = map.get(item.category) ?? []
-      list.push(item)
-      map.set(item.category, list)
-    }
-    return [...map.entries()]
-  }, [products])
-
   const cartLines = Object.entries(cart).filter(([, q]) => q > 0)
+  const cartCount = cartLines.reduce((s, [, q]) => s + q, 0)
   const cartTotal = cartLines.reduce(
     (s, [id, q]) => s + (stay.menu.find((m) => m.id === id)?.price ?? 0) * q,
     0,
   )
-  const cartCount = cartLines.reduce((s, [, q]) => s + q, 0)
 
-  // Atualiza o status dos pedidos a cada 20 s e avisa quando um for entregue.
+  const wa = whatsappLink(pousada.whatsapp || pousada.phone)
+  const place = [pousada.name, pousada.address, pousada.city, pousada.state]
+    .filter(Boolean)
+    .join(', ')
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`
+  const wazeUrl = `https://waze.com/ul?q=${encodeURIComponent(place)}&navigate=yes`
+
+  const orderBlockedReason = !stay.ordersEnabled
+    ? 'A pousada não está recebendo pedidos pelo app agora. Fale com a recepção.'
+    : booking.status === 'checked_out' || booking.checkout < stay.today
+      ? 'Sua estadia terminou. Obrigado pela visita!'
+      : booking.checkin > stay.today
+        ? `Os pedidos ficam liberados a partir do check-in, em ${formatISODate(booking.checkin)}.`
+        : !stay.canOrder
+          ? 'Pedidos indisponíveis para esta reserva. Fale com a recepção.'
+          : null
+
+  // Hora local da pousada (só no navegador, para a agenda do dia).
+  useEffect(() => {
+    const tick = () => setNow(nowHHMM(pousada.timezone))
+    tick()
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [pousada.timezone])
+
+  // Atualiza os pedidos a cada 20 s e avisa quando o status mudar.
   useEffect(() => {
     const id = setInterval(() => {
       if (document.visibilityState === 'visible') router.refresh()
@@ -112,7 +114,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   }, [router])
 
   useEffect(() => {
-    const now = new Map(orders.map((o) => [o.id, o.status]))
+    const current = new Map(orders.map((o) => [o.id, o.status]))
     if (lastStatus.current) {
       for (const o of orders) {
         const before = lastStatus.current.get(o.id)
@@ -129,14 +131,25 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         }
       }
     }
-    lastStatus.current = now
+    lastStatus.current = current
   }, [orders])
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 5000)
+    const t = setTimeout(() => setToast(null), 3500)
     return () => clearTimeout(t)
   }, [toast])
+
+  const go = useCallback((next: StayTab, anchor?: string) => {
+    setDetail(null)
+    setBagOpen(false)
+    setTab(next)
+    requestAnimationFrame(() => {
+      const el = anchor ? document.getElementById(anchor) : null
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      else window.scrollTo({ top: 0 })
+    })
+  }, [])
 
   function change(item: StayMenuItem, delta: number) {
     setCart((prev) => {
@@ -145,7 +158,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
     })
   }
 
-  async function send(lines: [string, number][], orderNote: string) {
+  async function sendNow(lines: [string, number][], orderNote: string) {
     setOrderError(null)
     setSending(true)
     try {
@@ -158,7 +171,6 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         setOrderError(res.error)
         return false
       }
-      setToast('Pedido enviado! A pousada já recebeu.')
       router.refresh()
       return true
     } catch {
@@ -170,11 +182,12 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   }
 
   async function sendCart() {
-    const ok = await send(cartLines, note)
+    const ok = await sendNow(cartLines, note)
     if (ok) {
       setCart({})
       setNote('')
-      setTab('conta')
+      setToast('Pedido enviado! A pousada já recebeu.')
+      go('conta')
     }
   }
 
@@ -187,7 +200,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
     }
   }
 
-  async function sendReview() {
+  async function submitReview() {
     setReviewError(null)
     if (rating < 1) {
       setReviewError('Escolha de 1 a 5 estrelas.')
@@ -201,482 +214,60 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
     }
   }
 
-  const orderBlockedReason = !stay.ordersEnabled
-    ? 'A pousada não está recebendo pedidos pelo app agora. Fale com a recepção.'
-    : booking.status === 'checked_out' || booking.checkout < stay.today
-      ? 'Sua estadia terminou. Obrigado pela visita!'
-      : booking.checkin > stay.today
-        ? `Os pedidos ficam liberados a partir do check-in, em ${formatISODate(booking.checkin)}.`
-        : null
+  const ctx: StayCtx = {
+    stay,
+    orders,
+    products,
+    services,
+    cart,
+    cartCount,
+    orderBlockedReason,
+    now,
+    wa,
+    mapsUrl,
+    wazeUrl,
+    go,
+    openItem: (item) => {
+      setDetail(item)
+      setDetailQty(1)
+    },
+    change,
+    notify: setToast,
+    copy: (text, msg) => {
+      void copyToClipboard(text)
+      setToast(msg)
+    },
+    sendNow,
+    sending,
+    orderError,
+  }
 
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    [pousada.name, pousada.address, pousada.city, pousada.state].filter(Boolean).join(', '),
-  )}`
-
-  const tabs: { id: Tab; label: string; icon: typeof Home; badge?: number }[] = [
-    { id: 'inicio', label: 'Início', icon: Home },
-    { id: 'pedir', label: 'Pedir', icon: ShoppingBag, badge: cartCount || undefined },
-    { id: 'conta', label: 'Conta', icon: ReceiptText, badge: openOrders.length || undefined },
-    { id: 'recepcao', label: 'Recepção', icon: ConciergeBell },
-    ...(stay.canReview || stay.reviewed
-      ? [{ id: 'avaliar' as Tab, label: 'Avaliar', icon: Star }]
-      : []),
-  ]
+  const showBagBar = cartCount > 0 && (tab === 'pedir' || tab === 'inicio') && !detail && !bagOpen
+  const detailRoom = detail ? detail.maxQuantity - (cart[detail.id] ?? 0) : 0
+  const detailCanAdd = !!detail && detail.available && !orderBlockedReason && detailRoom > 0
 
   return (
-    <div className="bg-background min-h-dvh pb-24">
-      <header className="bg-primary text-primary-foreground">
-        <div className="mx-auto max-w-lg px-4 pt-5 pb-6">
-          <p className="text-xs font-semibold tracking-widest uppercase opacity-80">Sua estadia</p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold">{pousada.name}</h1>
-          <p className="mt-1 text-sm opacity-90">
-            {booking.roomName} · {formatISODate(booking.checkin)} →{' '}
-            {formatISODate(booking.checkout)}
-          </p>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-lg space-y-4 px-4 pt-4">
-        {tab === 'inicio' && (
-          <>
-            <InstallPrompt />
-            {pousada.image && (
-              <div className="relative aspect-[16/9] overflow-hidden rounded-2xl">
-                <Image
-                  src={pousada.image}
-                  alt={pousada.name}
-                  fill
-                  sizes="512px"
-                  className="object-cover"
-                />
-              </div>
-            )}
-            <section className="bg-card border-border rounded-2xl border p-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <CalendarDays className="size-3.5" /> Check-in
-                  </p>
-                  <p className="text-foreground font-semibold">
-                    {formatISODate(booking.checkin)} · {pousada.checkinTime}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <Clock3 className="size-3.5" /> Check-out
-                  </p>
-                  <p className="text-foreground font-semibold">
-                    {formatISODate(booking.checkout)} · até {pousada.checkoutTime}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                    <BedDouble className="size-3.5" /> Acomodação
-                  </p>
-                  <p className="text-foreground font-semibold">{booking.roomName}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Reserva</p>
-                  <p className="text-foreground font-semibold">
-                    {booking.code} ·{' '}
-                    {plural(booking.adults + booking.children, 'hóspede', 'hóspedes')}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {(info.wifiName || info.wifiPassword) && (
-              <section className="bg-card border-border rounded-2xl border p-4">
-                <h2 className="text-foreground flex items-center gap-2 font-semibold">
-                  <Wifi className="text-primary size-4" /> Wi-Fi
-                </h2>
-                {info.wifiName && (
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    Rede: <strong className="text-foreground">{info.wifiName}</strong>
-                  </p>
-                )}
-                {info.wifiPassword ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-muted-foreground text-sm">
-                      Senha:{' '}
-                      <strong className="text-foreground font-mono">{info.wifiPassword}</strong>
-                    </span>
-                    <CopyText text={info.wifiPassword} label="Copiar senha" />
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground mt-2 text-xs">
-                    A senha aparece aqui no dia do check-in.
-                  </p>
-                )}
-              </section>
-            )}
-
-            {info.guestInfo && (
-              <section className="bg-card border-border rounded-2xl border p-4">
-                <h2 className="text-foreground font-semibold">Recados da pousada</h2>
-                <p className="text-muted-foreground mt-2 text-sm whitespace-pre-line">
-                  {info.guestInfo}
-                </p>
-              </section>
-            )}
-
-            <section className="bg-card border-border rounded-2xl border p-4">
-              <h2 className="text-foreground flex items-center gap-2 font-semibold">
-                <MapPin className="text-primary size-4" /> Endereço
-              </h2>
-              <p className="text-muted-foreground mt-2 text-sm">
-                {[pousada.address, pousada.city && `${pousada.city}/${pousada.state}`, pousada.cep]
-                  .filter(Boolean)
-                  .join(' · ') || `${pousada.city}/${pousada.state}`}
-              </p>
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary mt-2 inline-block text-sm font-semibold"
-              >
-                Como chegar →
-              </a>
-            </section>
-
-            {pousada.houseRules && (
-              <section className="bg-card border-border rounded-2xl border p-4">
-                <h2 className="text-foreground font-semibold">Regras da casa</h2>
-                <p className="text-muted-foreground mt-2 text-sm whitespace-pre-line">
-                  {pousada.houseRules}
-                </p>
-              </section>
-            )}
-
-            {stay.menu.length > 0 && !orderBlockedReason && (
-              <button
-                type="button"
-                onClick={() => setTab('pedir')}
-                className="bg-primary text-primary-foreground flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold"
-              >
-                <ShoppingBag className="size-5" /> Fazer um pedido
-              </button>
-            )}
-          </>
-        )}
-
-        {tab === 'pedir' && (
-          <>
-            <div>
-              <h2 className="text-foreground font-serif text-xl font-semibold">
-                O que você precisa?
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Vai para a conta da estadia e é pago no check-out.
-                {info.ordersHours ? ` Pedidos ${info.ordersHours}.` : ''}
-              </p>
-            </div>
-            {orderBlockedReason ? (
-              <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
-                {orderBlockedReason}
-              </p>
-            ) : products.length === 0 ? (
-              <p className="text-muted-foreground rounded-2xl border border-dashed p-4 text-sm">
-                A pousada ainda não cadastrou itens no app. Fale com a recepção.
-              </p>
-            ) : (
-              grouped.map(([category, list]) => (
-                <section key={category}>
-                  <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-                    {CATEGORY_LABEL[category] ?? category}
-                  </h3>
-                  <ul className="space-y-2">
-                    {list.map((item) => {
-                      const q = cart[item.id] ?? 0
-                      return (
-                        <li
-                          key={item.id}
-                          className="bg-card border-border flex items-center gap-3 rounded-2xl border p-3"
-                        >
-                          {item.photoUrl ? (
-                            <div className="relative size-14 shrink-0 overflow-hidden rounded-xl">
-                              <Image
-                                src={item.photoUrl}
-                                alt=""
-                                fill
-                                sizes="56px"
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : null}
-                          <div className="min-w-0 flex-1">
-                            <p className="text-foreground font-medium">{item.name}</p>
-                            {item.description && (
-                              <p className="text-muted-foreground line-clamp-2 text-xs">
-                                {item.description}
-                              </p>
-                            )}
-                            <p className="text-foreground mt-0.5 text-sm font-semibold">
-                              {item.price === 0 ? 'Cortesia' : formatBRL(item.price)}
-                            </p>
-                          </div>
-                          {item.available ? (
-                            <div className="flex shrink-0 items-center gap-2">
-                              {q > 0 && (
-                                <>
-                                  <button
-                                    type="button"
-                                    aria-label={`Menos ${item.name}`}
-                                    onClick={() => change(item, -1)}
-                                    className="border-border flex size-9 items-center justify-center rounded-full border"
-                                  >
-                                    <Minus className="size-4" />
-                                  </button>
-                                  <span className="w-5 text-center font-semibold">{q}</span>
-                                </>
-                              )}
-                              <button
-                                type="button"
-                                aria-label={`Mais ${item.name}`}
-                                disabled={q >= item.maxQuantity}
-                                onClick={() => change(item, 1)}
-                                className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-full disabled:opacity-40"
-                              >
-                                <Plus className="size-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground shrink-0 text-xs">Esgotado</span>
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </section>
-              ))
-            )}
-
-            {cartCount > 0 && (
-              <section className="bg-card border-border space-y-3 rounded-2xl border p-4">
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  maxLength={300}
-                  rows={2}
-                  placeholder="Alguma observação? (ex.: bem gelada, deixar na porta)"
-                  aria-label="Observação do pedido"
-                  className="border-input bg-background w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none"
-                />
-                {orderError && (
-                  <p role="alert" className="text-destructive text-sm font-medium">
-                    {orderError}
-                  </p>
-                )}
-              </section>
-            )}
-          </>
-        )}
-
-        {tab === 'conta' && (
-          <>
-            <section className="bg-card border-border rounded-2xl border p-4">
-              <h2 className="text-foreground font-semibold">Sua conta de consumo</h2>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-                <div className="bg-secondary rounded-xl p-2">
-                  <p className="text-muted-foreground text-xs">Consumido</p>
-                  <p className="text-foreground font-semibold">
-                    {formatBRL(stay.consumption.delivered)}
-                  </p>
-                </div>
-                <div className="bg-secondary rounded-xl p-2">
-                  <p className="text-muted-foreground text-xs">Pago</p>
-                  <p className="text-foreground font-semibold">
-                    {formatBRL(stay.consumption.paid)}
-                  </p>
-                </div>
-                <div
-                  className={`rounded-xl p-2 ${stay.consumption.balance > 0 ? 'bg-amber-50' : 'bg-emerald-50'}`}
-                >
-                  <p className="text-muted-foreground text-xs">A pagar</p>
-                  <p className="text-foreground font-semibold">
-                    {formatBRL(stay.consumption.balance)}
-                  </p>
-                </div>
-              </div>
-              {stay.consumption.open > 0 && (
-                <p className="text-muted-foreground mt-2 text-xs">
-                  + {formatBRL(stay.consumption.open)} em pedidos ainda não entregues.
-                </p>
-              )}
-              <p className="text-muted-foreground mt-2 text-xs">
-                O consumo é pago na recepção, no check-out. A diária é cobrada à parte.
-              </p>
-            </section>
-
-            <h3 className="text-muted-foreground pt-2 text-xs font-semibold tracking-wide uppercase">
-              Seus pedidos
-            </h3>
-            {orders.length === 0 ? (
-              <p className="text-muted-foreground rounded-2xl border border-dashed p-4 text-sm">
-                Nenhum pedido ainda.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {orders.map((o) => (
-                  <li key={o.id} className="bg-card border-border rounded-2xl border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusColor(o.status)}`}
-                      >
-                        {ORDER_STATUS_LABEL[o.status]}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {formatDateTime(o.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-foreground mt-2 text-sm">
-                      {o.lines.map((l) => `${l.quantity}× ${l.name}`).join(', ')}
-                    </p>
-                    {o.status === 'cancelado' && o.cancelReason && (
-                      <p className="text-muted-foreground mt-1 text-xs">Motivo: {o.cancelReason}</p>
-                    )}
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-foreground text-sm font-semibold">
-                        {formatBRL(o.total)}
-                      </span>
-                      {o.status === 'novo' && o.source === 'hospede' && (
-                        <button
-                          type="button"
-                          onClick={() => void cancel(o)}
-                          className="text-destructive text-xs font-semibold"
-                        >
-                          Cancelar pedido
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-
+    <div className={cx('min-h-dvh text-[#1e1e1e]', APP_BG)}>
+      <main className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-44">
+        {tab === 'inicio' && <StayHome {...ctx} />}
+        {tab === 'estadia' && <StayDetails {...ctx} />}
+        {tab === 'pedir' && <StayMenu {...ctx} openBag={() => setBagOpen(true)} />}
+        {tab === 'conta' && <StayAccount {...ctx} cancel={(o) => void cancel(o)} />}
         {tab === 'recepcao' && (
-          <>
-            <section className="bg-card border-border space-y-3 rounded-2xl border p-4">
-              <h2 className="text-foreground font-semibold">Fale com a recepção</h2>
-              {wa && (
-                <a
-                  href={`${wa}?text=${encodeURIComponent(`Olá! Sou hóspede da reserva ${booking.code} (${booking.roomName}).`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white"
-                >
-                  <MessageCircleMore className="size-5" /> Chamar no WhatsApp
-                </a>
-              )}
-              {pousada.phone && (
-                <a
-                  href={`tel:${pousada.phone.replace(/[^\d+]/g, '')}`}
-                  className="border-border text-foreground flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 font-semibold"
-                >
-                  <Phone className="size-5" /> Ligar para a pousada
-                </a>
-              )}
-              {!wa && !pousada.phone && (
-                <p className="text-muted-foreground text-sm">
-                  A pousada ainda não cadastrou um telefone de contato.
-                </p>
-              )}
-            </section>
-
-            {services.length > 0 && (
-              <section className="bg-card border-border rounded-2xl border p-4">
-                <h2 className="text-foreground font-semibold">Pedidos rápidos</h2>
-                <p className="text-muted-foreground text-sm">Um toque e a equipe recebe.</p>
-                {orderBlockedReason ? (
-                  <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-                    {orderBlockedReason}
-                  </p>
-                ) : (
-                  <div className="mt-3 grid grid-cols-1 gap-2">
-                    {services.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        disabled={sending || !s.available}
-                        onClick={() => void send([[s.id, 1]], '')}
-                        className="border-border text-foreground hover:bg-secondary flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium disabled:opacity-50"
-                      >
-                        <span>{s.name}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {s.price === 0 ? 'sem custo' : formatBRL(s.price)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {orderError && tab === 'recepcao' && (
-                  <p role="alert" className="text-destructive mt-2 text-sm font-medium">
-                    {orderError}
-                  </p>
-                )}
-              </section>
-            )}
-          </>
+          <StayReception
+            {...ctx}
+            review={{
+              rating,
+              setRating,
+              text: reviewText,
+              setText: setReviewText,
+              error: reviewError,
+              sent: reviewSent,
+              submit: () => void submitReview(),
+            }}
+          />
         )}
-
-        {tab === 'avaliar' && (
-          <section className="bg-card border-border rounded-2xl border p-4">
-            {stay.reviewed || reviewSent ? (
-              <div className="text-center">
-                <Star className="mx-auto size-8 fill-amber-400 text-amber-400" />
-                <h2 className="text-foreground mt-2 font-semibold">Obrigado pela avaliação!</h2>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Ela aparece na página da pousada e ajuda outros viajantes.
-                </p>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-foreground font-semibold">Como foi a sua estadia?</h2>
-                <div className="mt-3 flex gap-2" role="radiogroup" aria-label="Nota">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      role="radio"
-                      aria-checked={rating === n}
-                      aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`}
-                      onClick={() => setRating(n)}
-                    >
-                      <Star
-                        className={`size-9 ${n <= rating ? 'fill-amber-400 text-amber-400' : 'text-neutral-300'}`}
-                      />
-                    </button>
-                  ))}
-                </div>
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  maxLength={1000}
-                  rows={4}
-                  placeholder="Conte o que você mais gostou (opcional)"
-                  aria-label="Comentário"
-                  className="border-input bg-background mt-3 w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none"
-                />
-                {reviewError && (
-                  <p role="alert" className="text-destructive mt-2 text-sm font-medium">
-                    {reviewError}
-                  </p>
-                )}
-                <button
-                  type="button"
-                  onClick={() => void sendReview()}
-                  className="bg-primary text-primary-foreground mt-3 w-full rounded-xl px-4 py-3 font-semibold"
-                >
-                  Enviar avaliação
-                </button>
-              </>
-            )}
-          </section>
-        )}
-
-        <p className="text-muted-foreground pt-4 text-center text-xs">
+        <p className="pt-8 text-center text-xs text-[#9a9a96]">
           <Link href="/minhas-reservas" className="underline">
             Minhas reservas
           </Link>{' '}
@@ -684,55 +275,260 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         </p>
       </main>
 
-      {tab === 'pedir' && cartCount > 0 && (
-        <div className="fixed inset-x-0 bottom-16 z-20 px-4 pb-2">
+      {/* Detalhe do item */}
+      <Sheet open={!!detail} label={detail ? detail.name : 'Item'}>
+        {detail && (
+          <>
+            <RoundButton label="Voltar" onClick={() => setDetail(null)}>
+              <ArrowLeft className="size-[18px]" />
+            </RoundButton>
+            <div className="mx-auto mt-2 grid h-[270px] w-[270px] place-items-center">
+              <ItemVisual
+                photoUrl={detail.photoUrl}
+                category={detail.category}
+                size={250}
+                alt={detail.name}
+              />
+            </div>
+            <div className="-mt-2 rounded-[30px] bg-white p-[18px]">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-[22px] leading-tight font-extrabold tracking-[-0.03em]">
+                  {detail.name}
+                </h2>
+                <span className="text-sunset text-[22px] font-extrabold tracking-[-0.03em] whitespace-nowrap">
+                  {detail.price === 0 ? 'Cortesia' : formatBRL(detail.price)}
+                </span>
+              </div>
+              {detail.description && (
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#9a9a96]">
+                  {detail.description}
+                </p>
+              )}
+              <div className="mt-4 flex justify-between border-y border-[#e6e6e2] py-3 text-xs text-[#4a4a48]">
+                <span>Entrega no quarto</span>
+                <span>{booking.roomName}</span>
+                <span>Vai para a conta</span>
+              </div>
+              {!detail.available && (
+                <p className="mt-3 text-sm font-bold text-[#9a9a96]">Esgotado no momento.</p>
+              )}
+              {orderBlockedReason && (
+                <p className="mt-3 rounded-[18px] bg-[#fff0e6] p-3 text-[12.5px] text-[#9a3412]">
+                  {orderBlockedReason}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </Sheet>
+      {detail && detailCanAdd && (
+        <div className="fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-[#f4f4f2] from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
+          <div className="mx-auto flex max-w-lg items-center gap-2.5">
+            <div className="flex items-center gap-1 rounded-full bg-white p-[5px]">
+              <button
+                type="button"
+                aria-label="Menos"
+                onClick={() => setDetailQty((q) => Math.max(1, q - 1))}
+                className="grid size-[38px] place-items-center rounded-full bg-[#f4f4f2]"
+              >
+                <Minus className="size-3.5" strokeWidth={2.8} />
+              </button>
+              <span className="min-w-6 text-center font-extrabold">{detailQty}</span>
+              <button
+                type="button"
+                aria-label="Mais"
+                onClick={() => setDetailQty((q) => Math.min(detailRoom, q + 1))}
+                className="grid size-[38px] place-items-center rounded-full bg-[#f4f4f2]"
+              >
+                <Plus className="size-3.5" strokeWidth={2.8} />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                change(detail, detailQty)
+                setToast(`${detailQty}× ${detail.name} na sacola`)
+                setDetail(null)
+              }}
+              className="flex h-[50px] flex-1 items-center justify-between rounded-full bg-[#1e1e1e] pr-2 pl-5 text-[14.5px] font-bold text-white"
+            >
+              Adicionar
+              <span className="bg-sunset rounded-full px-3.5 py-2 text-[13.5px]">
+                {formatBRL(detail.price * detailQty)}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sacola */}
+      <Sheet open={bagOpen} label="Sua sacola">
+        <div className="flex items-center gap-2.5">
+          <RoundButton label="Voltar" onClick={() => setBagOpen(false)}>
+            <ArrowLeft className="size-[18px]" />
+          </RoundButton>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11.5px] text-[#9a9a96]">Entrega em</p>
+            <p className="truncate text-[14.5px] font-bold">{booking.roomName}</p>
+          </div>
+        </div>
+        <h2 className="mt-5 mb-4 px-0.5 text-[28px] leading-[1.1] tracking-[-0.035em]">
+          <span className="font-extrabold">Sua</span> <span className="text-[#b3b3ae]">sacola</span>
+        </h2>
+        {cartLines.length === 0 ? (
+          <p className="rounded-[24px] bg-white p-5 text-center text-[13px] text-[#9a9a96]">
+            A sacola está vazia.
+          </p>
+        ) : (
+          <>
+            <ul className="rounded-[26px] bg-white px-3.5">
+              {cartLines.map(([id, q]) => {
+                const item = stay.menu.find((m) => m.id === id)
+                if (!item) return null
+                return (
+                  <li
+                    key={id}
+                    className="flex items-center gap-3 py-3 [&+&]:border-t [&+&]:border-[#e6e6e2]"
+                  >
+                    <ItemVisual photoUrl={item.photoUrl} category={item.category} size={52} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-bold">{item.name}</p>
+                      <p className="text-xs text-[#9a9a96]">{formatBRL(item.price * q)}</p>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-full bg-[#1e1e1e] p-[3px] text-white">
+                      <button
+                        type="button"
+                        aria-label={q === 1 ? `Remover ${item.name}` : `Menos ${item.name}`}
+                        onClick={() => change(item, -1)}
+                        className="grid size-7 place-items-center rounded-full"
+                      >
+                        {q === 1 ? (
+                          <Trash2 className="size-3.5" />
+                        ) : (
+                          <Minus className="size-3.5" strokeWidth={2.8} />
+                        )}
+                      </button>
+                      <span className="min-w-3.5 text-center text-[13px] font-extrabold">{q}</span>
+                      <button
+                        type="button"
+                        aria-label={`Mais ${item.name}`}
+                        disabled={q >= item.maxQuantity}
+                        onClick={() => change(item, 1)}
+                        className="bg-sunset grid size-7 place-items-center rounded-full disabled:opacity-40"
+                      >
+                        <Plus className="size-3.5" strokeWidth={2.8} />
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={300}
+              rows={2}
+              placeholder="Alguma observação? (ex.: bem gelada, deixar na porta)"
+              aria-label="Observação do pedido"
+              className="mt-3 w-full resize-none rounded-[20px] bg-white px-4 py-3 text-[13px] outline-none placeholder:text-[#9a9a96]"
+            />
+            <p className="mt-2 px-1 text-xs text-[#9a9a96]">
+              Vai para a conta da estadia e é pago no check-out.
+              {stay.info.ordersHours ? ` Pedidos ${stay.info.ordersHours}.` : ''}
+            </p>
+            {orderError && (
+              <p role="alert" className="mt-2 text-sm font-medium text-red-600">
+                {orderError}
+              </p>
+            )}
+            {orderBlockedReason ? (
+              <p className="mt-3 rounded-[18px] bg-[#fff0e6] p-3 text-[12.5px] text-[#9a3412]">
+                {orderBlockedReason}
+              </p>
+            ) : (
+              <button
+                type="button"
+                disabled={sending}
+                onClick={() => void sendCart()}
+                className="mt-4 flex h-14 w-full items-center justify-between rounded-full bg-[#1e1e1e] pr-2 pl-5 text-[14.5px] font-bold text-white disabled:opacity-60"
+              >
+                {sending ? 'Enviando…' : 'Enviar pedido'}
+                <span className="bg-sunset rounded-full px-4 py-2.5 text-[13.5px]">
+                  {formatBRL(cartTotal)}
+                </span>
+              </button>
+            )}
+          </>
+        )}
+      </Sheet>
+
+      {showBagBar && (
+        <div className="fixed inset-x-0 bottom-[100px] z-30 px-[18px]">
           <button
             type="button"
-            disabled={sending}
-            onClick={() => void sendCart()}
-            className="bg-primary text-primary-foreground mx-auto flex w-full max-w-lg items-center justify-between rounded-2xl px-5 py-3.5 font-semibold shadow-lg disabled:opacity-60"
+            onClick={() => setBagOpen(true)}
+            className="bg-sunset mx-auto flex w-full max-w-[calc(512px-36px)] items-center gap-2.5 rounded-full py-1.5 pr-1.5 pl-2 text-left text-white shadow-[0_14px_28px_-14px_rgba(249,115,22,0.9)]"
           >
-            <span>{sending ? 'Enviando…' : `Enviar pedido (${cartCount})`}</span>
-            <span>{formatBRL(cartTotal)}</span>
+            <span className="grid size-[38px] place-items-center rounded-full bg-white/20 font-extrabold">
+              {cartCount}
+            </span>
+            <span className="flex-1 text-xs leading-tight">
+              Sua sacola
+              <b className="block text-[15px]">{formatBRL(cartTotal)}</b>
+            </span>
+            <span className="rounded-full bg-white px-4 py-2.5 text-[13.5px] font-bold text-[#1e1e1e]">
+              Ver sacola
+            </span>
           </button>
         </div>
       )}
 
       {toast && (
-        <div role="status" className="fixed inset-x-0 top-3 z-30 px-4">
-          <p className="bg-foreground text-background mx-auto max-w-lg rounded-xl px-4 py-3 text-sm shadow-lg">
+        <div
+          role="status"
+          className="fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[60] flex justify-center px-4"
+        >
+          <p className="rounded-full bg-[#1e1e1e] px-4 py-2.5 text-[12.5px] font-semibold text-white shadow-lg">
             {toast}
           </p>
         </div>
       )}
 
-      <nav className="bg-card border-border fixed inset-x-0 bottom-0 z-20 border-t pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-lg">
-          {tabs.map((t) => {
-            const Icon = t.icon
-            const active = tab === t.id
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                aria-current={active ? 'page' : undefined}
-                className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold ${
-                  active ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <Icon className="size-5" />
-                {t.label}
-                {t.badge ? (
-                  <span className="bg-destructive absolute top-1.5 right-1/2 translate-x-4 rounded-full px-1.5 text-[10px] text-white">
-                    {t.badge}
-                  </span>
-                ) : null}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      {!detail && !bagOpen && (
+        <nav
+          aria-label="Menu do app"
+          className="fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-30 flex justify-center"
+        >
+          <div className="flex gap-1.5 rounded-full bg-[#1e1e1e] p-1.5 shadow-[0_16px_30px_-12px_rgba(0,0,0,0.5)]">
+            {TABS.map((t) => {
+              const Icon = t.icon
+              const active = tab === t.id
+              const badge = t.id === 'pedir' ? cartCount : t.id === 'conta' ? openOrders.length : 0
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => go(t.id)}
+                  aria-label={t.label}
+                  aria-current={active ? 'page' : undefined}
+                  title={t.label}
+                  className={cx(
+                    'relative grid size-[50px] place-items-center rounded-full text-white transition',
+                    active ? 'bg-sunset' : 'bg-[#2e2e2c]',
+                  )}
+                >
+                  <Icon className="size-5" />
+                  {badge > 0 && (
+                    <span className="text-sunset absolute top-0.5 right-0.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-white px-1 text-[10px] font-extrabold">
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   )
 }

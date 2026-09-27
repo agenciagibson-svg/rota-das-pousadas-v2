@@ -9,8 +9,8 @@ export function GET() {
     scope: '/estadia',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#f8f6f1',
-    theme_color: '#0F766E',
+    background_color: '#f4f4f2',
+    theme_color: '#f4f4f2',
     lang: 'pt-BR',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

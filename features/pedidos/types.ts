@@ -1,3 +1,5 @@
+import type { AgendaItem, EmergencyContact, Facility, LocalTip } from '@/features/estadia/info'
+
 export type OrderStatus = 'novo' | 'preparando' | 'entregue' | 'cancelado'
 
 export type OrderLine = {
@@ -48,6 +50,12 @@ export type GuestSettings = {
   guestInfo: string
   ordersEnabled: boolean
   ordersHours: string
+  breakfastInfo: string
+  parkingInfo: string
+  facilities: Facility[]
+  dailyAgenda: AgendaItem[]
+  localTips: LocalTip[]
+  emergency: EmergencyContact[]
 }
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {

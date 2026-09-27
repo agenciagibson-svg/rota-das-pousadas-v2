@@ -1,4 +1,11 @@
 import 'server-only'
+import {
+  readList,
+  type AgendaItem,
+  type EmergencyContact,
+  type Facility,
+  type LocalTip,
+} from '@/features/estadia/info'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/supabase/database.types'
 import {
@@ -223,7 +230,9 @@ export async function getGuestSettings(pousadaId: string): Promise<GuestSettings
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('pousada_guest_settings')
-    .select('wifi_name, wifi_password, guest_info, orders_enabled, orders_hours')
+    .select(
+      'wifi_name, wifi_password, guest_info, orders_enabled, orders_hours, breakfast_info, parking_info, facilities, daily_agenda, local_tips, emergency',
+    )
     .eq('pousada_id', pousadaId)
     .maybeSingle()
   if (error) throw new Error(error.message)
@@ -233,6 +242,12 @@ export async function getGuestSettings(pousadaId: string): Promise<GuestSettings
     guestInfo: data?.guest_info ?? '',
     ordersEnabled: data?.orders_enabled ?? true,
     ordersHours: data?.orders_hours ?? '',
+    breakfastInfo: data?.breakfast_info ?? '',
+    parkingInfo: data?.parking_info ?? '',
+    facilities: readList<Facility>(data?.facilities, ['name', 'hours']),
+    dailyAgenda: readList<AgendaItem>(data?.daily_agenda, ['time', 'title', 'note']),
+    localTips: readList<LocalTip>(data?.local_tips, ['name', 'kind', 'distance']),
+    emergency: readList<EmergencyContact>(data?.emergency, ['label', 'phone']),
   }
 }
 
@@ -245,6 +260,12 @@ export async function saveGuestSettings(pousadaId: string, s: GuestSettings): Pr
     guest_info: s.guestInfo,
     orders_enabled: s.ordersEnabled,
     orders_hours: s.ordersHours,
+    breakfast_info: s.breakfastInfo,
+    parking_info: s.parkingInfo,
+    facilities: s.facilities,
+    daily_agenda: s.dailyAgenda,
+    local_tips: s.localTips,
+    emergency: s.emergency,
     updated_at: new Date().toISOString(),
   })
   if (error) throw new Error(error.message)

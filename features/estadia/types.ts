@@ -1,4 +1,11 @@
 import type { InventoryCategory } from '@/features/estoque/labels'
+import {
+  readList,
+  type AgendaItem,
+  type EmergencyContact,
+  type Facility,
+  type LocalTip,
+} from './info'
 
 export type StayMenuItem = {
   id: string
@@ -24,6 +31,9 @@ export type GuestStay = {
     roomName: string
     total: number
     balanceDue: number
+    /** Primeiro nome do hóspede (pode vir vazio). */
+    guestName: string
+    roomAmenities: string[]
   }
   pousada: {
     id: string
@@ -40,8 +50,20 @@ export type GuestStay = {
     checkoutTime: string
     houseRules: string
     cancellationPolicy: string
+    timezone: string
   }
-  info: { wifiName: string; wifiPassword: string; guestInfo: string; ordersHours: string }
+  info: {
+    wifiName: string
+    wifiPassword: string
+    guestInfo: string
+    ordersHours: string
+    breakfastInfo: string
+    parkingInfo: string
+    facilities: Facility[]
+    dailyAgenda: AgendaItem[]
+    localTips: LocalTip[]
+    emergency: EmergencyContact[]
+  }
   today: string
   canOrder: boolean
   ordersEnabled: boolean
@@ -70,6 +92,10 @@ export function parseGuestStay(raw: unknown): GuestStay {
       roomName: s(r.booking.roomName) || 'Acomodação',
       total: n(r.booking.total),
       balanceDue: n(r.booking.balanceDue),
+      guestName: s(r.booking.guestName),
+      roomAmenities: (Array.isArray(r.booking.roomAmenities) ? r.booking.roomAmenities : [])
+        .map((a: unknown) => s(a))
+        .filter(Boolean),
     },
     pousada: {
       id: s(r.pousada.id),
@@ -86,12 +112,19 @@ export function parseGuestStay(raw: unknown): GuestStay {
       checkoutTime: s(r.pousada.checkoutTime) || '12:00',
       houseRules: s(r.pousada.houseRules),
       cancellationPolicy: s(r.pousada.cancellationPolicy),
+      timezone: s(r.pousada.timezone) || 'America/Sao_Paulo',
     },
     info: {
       wifiName: s(r.info?.wifiName),
       wifiPassword: s(r.info?.wifiPassword),
       guestInfo: s(r.info?.guestInfo),
       ordersHours: s(r.info?.ordersHours),
+      breakfastInfo: s(r.info?.breakfastInfo),
+      parkingInfo: s(r.info?.parkingInfo),
+      facilities: readList<Facility>(r.info?.facilities, ['name', 'hours']),
+      dailyAgenda: readList<AgendaItem>(r.info?.dailyAgenda, ['time', 'title', 'note']),
+      localTips: readList<LocalTip>(r.info?.localTips, ['name', 'kind', 'distance']),
+      emergency: readList<EmergencyContact>(r.info?.emergency, ['label', 'phone']),
     },
     today: s(r.today),
     canOrder: !!r.canOrder,

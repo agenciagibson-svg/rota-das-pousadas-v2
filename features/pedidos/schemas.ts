@@ -1,4 +1,10 @@
 import { z } from 'zod'
+import {
+  parseAgenda,
+  parseEmergency,
+  parseFacilities,
+  parseLocalTips,
+} from '@/features/estadia/info'
 
 export const orderLinesSchema = z
   .array(
@@ -32,12 +38,36 @@ export const consumptionPaymentSchema = z.object({
   note: z.string().trim().max(200).default(''),
 })
 
+/** Lista "uma por linha" do formulário → array validado (erro aponta a linha). */
+function listField<T>(
+  parse: (text: string) => { ok: true; items: T[] } | { ok: false; error: string },
+) {
+  return z
+    .string()
+    .max(4000, 'Texto muito longo.')
+    .default('')
+    .transform((text, ctx) => {
+      const r = parse(text)
+      if (!r.ok) {
+        ctx.addIssue({ code: 'custom', message: r.error })
+        return z.NEVER
+      }
+      return r.items
+    })
+}
+
 export const guestSettingsSchema = z.object({
   wifiName: z.string().trim().max(80, 'Nome muito longo.'),
   wifiPassword: z.string().trim().max(80, 'Senha muito longa.'),
   guestInfo: z.string().trim().max(2000, 'Use no máximo 2000 caracteres.'),
   ordersEnabled: z.boolean(),
   ordersHours: z.string().trim().max(120, 'Use no máximo 120 caracteres.'),
+  breakfastInfo: z.string().trim().max(200, 'Use no máximo 200 caracteres.').default(''),
+  parkingInfo: z.string().trim().max(200, 'Use no máximo 200 caracteres.').default(''),
+  facilities: listField(parseFacilities),
+  dailyAgenda: listField(parseAgenda),
+  localTips: listField(parseLocalTips),
+  emergency: listField(parseEmergency),
 })
 
 // App do hóspede
