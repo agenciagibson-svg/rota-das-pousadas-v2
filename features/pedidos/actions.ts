@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import type { ZodType } from 'zod'
+import type { ZodType, z } from 'zod'
 import { createAction } from '@/actions/create-action'
 import {
   chargeSchema,
@@ -46,10 +46,11 @@ export const registerConsumptionPaymentAction = createAction(
   },
 )
 
-// O schema transforma as listas (texto → JSON): valida de novo dentro do handler.
+// O schema transforma as listas (texto → JSON). createAction já valida e entrega
+// o resultado transformado — não validar de novo (as listas já viraram arrays).
 const guestSettingsInput: ZodType<unknown> = guestSettingsSchema
-export const saveGuestSettingsAction = createAction(guestSettingsInput, async (raw) => {
-  const input = guestSettingsSchema.parse(raw)
+export const saveGuestSettingsAction = createAction(guestSettingsInput, async (parsed) => {
+  const input = parsed as z.output<typeof guestSettingsSchema>
   await saveOwnerGuestSettings(input)
   revalidatePath('/dashboard/configuracoes')
   return { ok: true as const }
