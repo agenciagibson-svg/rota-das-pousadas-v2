@@ -286,6 +286,8 @@ export type BookingForCheckout = {
   fee: number
   guestName: string | null
   guestEmail: string | null
+  /** Prazo de pagamento (ISO). `null` = sem prazo. */
+  paymentDueAt: string | null
 }
 
 export async function getBookingForCheckout(
@@ -295,7 +297,9 @@ export async function getBookingForCheckout(
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, code, pousada_id, status, total, fee, guest_name, guest_email, balance_due')
+    .select(
+      'id, code, pousada_id, status, total, fee, guest_name, guest_email, balance_due, payment_due_at',
+    )
     .eq('id', bookingId)
     .eq('guest_id', guestId)
     .maybeSingle()
@@ -311,6 +315,7 @@ export async function getBookingForCheckout(
     guestName: data.guest_name,
     guestEmail: data.guest_email,
     balanceDue: Number(data.balance_due),
+    paymentDueAt: data.payment_due_at ?? null,
   }
 }
 

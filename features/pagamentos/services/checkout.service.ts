@@ -26,6 +26,9 @@ export async function createCheckoutPreference(bookingId: string): Promise<{ ini
   }
 
   if (booking.balanceDue <= 0) throw new Error('Esta reserva não possui saldo a pagar.')
+  if (booking.paymentDueAt && new Date(booking.paymentDueAt).getTime() <= Date.now()) {
+    throw new Error('O prazo de pagamento desta reserva terminou. Faça uma nova reserva.')
+  }
   // A propriedade da reserva foi conferida acima via sessão/RLS. Tokens não são
   // legíveis pelo viajante; apenas esta RPC server-only obtém o contexto mínimo.
   const account = await getPousadaPaymentContextForWebhook(booking.id)
@@ -45,6 +48,7 @@ export async function createCheckoutPreference(bookingId: string): Promise<{ ini
     externalReference: booking.id,
     notificationUrl,
     backUrls: { success: returnUrl, pending: returnUrl, failure: returnUrl },
+    expiresAt: booking.paymentDueAt,
   })
 
   return { initPoint: preference.init_point }

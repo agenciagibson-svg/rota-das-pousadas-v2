@@ -27,6 +27,11 @@ insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, checki
  ('30000000-0000-0000-0000-000000000001', 'PAYMENT', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', '2099-11-01', '2099-11-03', 1000, 'pending'),
  ('30000000-0000-0000-0000-000000000002', 'OCCUPIED', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '2099-10-10', '2099-10-12', 400, 'confirmed');
 
+-- 0070: pendência com prazo vencido não segura o quarto na busca pública.
+insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, checkin, checkout, total, status, payment_due_at) values
+ ('30000000-0000-0000-0000-000000000090', 'EXPIRED', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '2099-12-20', '2099-12-22', 400, 'pending', now() - interval '1 hour'),
+ ('30000000-0000-0000-0000-000000000091', 'HELD', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', '2099-12-20', '2099-12-22', 800, 'pending', now() + interval '1 hour');
+
 set role anon;
 select test_invisible('select count(*) from guests');
 select test_invisible('select count(*) from bookings');
@@ -39,6 +44,7 @@ select test_assert((search_public_pousadas('', 2, 1)->'items'->0->>'slug') = 'po
 select test_assert((search_public_pousadas('', 1, 24, '2099-10-10', '2099-10-12', 4)->>'total')::int = 1, 'capacidade');
 select test_assert((select count(*) from list_bookable_rooms('pousada-a', '2099-10-10', '2099-10-12', 2)) = 1, 'exclui quarto ocupado');
 select test_assert((select count(*) from list_bookable_rooms('pousada-a', '2099-10-12', '2099-10-13', 2)) = 2, 'checkout não conflita');
+select test_assert((select count(*) from list_bookable_rooms('pousada-a', '2099-12-20', '2099-12-22', 2)) = 1, 'pendência vencida libera o quarto; dentro do prazo segura (0070)');
 select test_assert(not has_function_privilege('anon', 'reconcile_marketplace_payment(uuid,text,numeric,payment_status,text,text,timestamptz,numeric)', 'EXECUTE'), 'anon não reconcilia pagamento');
 reset role;
 

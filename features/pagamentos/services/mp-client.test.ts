@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getPaymentById, mapAuthorizedPaymentStatus } from './mp-client'
+import { createCheckoutPreference, getPaymentById, mapAuthorizedPaymentStatus } from './mp-client'
 const payment = {
   id: 123,
   status: 'approved',
@@ -43,5 +43,49 @@ describe('mapAuthorizedPaymentStatus (fatura de assinatura)', () => {
     expect(mapAuthorizedPaymentStatus('cancelled')).toBe('cancelled')
     expect(mapAuthorizedPaymentStatus('refunded')).toBe('refunded')
     expect(mapAuthorizedPaymentStatus('scheduled')).toBe('pending')
+  })
+})
+
+describe('preferência do Checkout Pro (0070)', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  const base = {
+    sellerAccessToken: 'seller-token',
+    title: 'Reserva RP-TEST',
+    quantity: 1,
+    unitPrice: 1000,
+    externalReference: 'booking',
+    notificationUrl: 'https://example.test/webhook',
+    backUrls: {
+      success: 'https://example.test',
+      pending: 'https://example.test',
+      failure: 'https://example.test',
+    },
+  }
+  const sentBody = (fetch: ReturnType<typeof vi.fn>) =>
+    JSON.parse(fetch.mock.calls[0][1].body as string)
+  it('aceita só Pix e cartão e expira no prazo da reserva', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ id: 'p', init_point: 'x', sandbox_init_point: 'y' })),
+      )
+    vi.stubGlobal('fetch', fetch)
+    await createCheckoutPreference({ ...base, expiresAt: '2026-09-27T20:00:00.000Z' })
+    const body = sentBody(fetch)
+    expect(body.payment_methods.excluded_payment_types).toEqual([{ id: 'ticket' }, { id: 'atm' }])
+    expect(body.expires).toBe(true)
+    expect(body.expiration_date_to).toBe('2026-09-27T20:00:00.000Z')
+  })
+  it('sem prazo, o link não expira', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ id: 'p', init_point: 'x', sandbox_init_point: 'y' })),
+      )
+    vi.stubGlobal('fetch', fetch)
+    await createCheckoutPreference(base)
+    const body = sentBody(fetch)
+    expect(body).not.toHaveProperty('expires')
+    expect(body).not.toHaveProperty('expiration_date_to')
   })
 })

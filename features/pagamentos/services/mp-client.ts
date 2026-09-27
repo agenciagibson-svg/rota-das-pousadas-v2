@@ -97,6 +97,11 @@ export type CreatePreferenceParams = {
   externalReference: string
   notificationUrl: string
   backUrls: { success: string; pending: string; failure: string }
+  /**
+   * Fim do prazo de pagamento da reserva (ISO). O link do Checkout Pro expira
+   * junto, para o hóspede não pagar uma reserva já cancelada por prazo (0070).
+   */
+  expiresAt?: string | null
 }
 
 /**
@@ -131,6 +136,10 @@ export async function createCheckoutPreference(
       notification_url: params.notificationUrl,
       back_urls: params.backUrls,
       auto_return: 'approved',
+      // Só Pix e cartão: boleto (`ticket`) e lotérica (`atm`) compensam em dias,
+      // incompatível com o prazo de 2h da reserva on-line (0070).
+      payment_methods: { excluded_payment_types: [{ id: 'ticket' }, { id: 'atm' }] },
+      ...(params.expiresAt ? { expires: true, expiration_date_to: params.expiresAt } : {}),
     }),
   })
   if (!response.ok) {
