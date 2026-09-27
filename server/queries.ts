@@ -13,6 +13,7 @@ import { cache } from 'react'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
+import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
 import { getPousadaPaymentContextForWebhook } from '@/repositories/payments.repository'
 import {
@@ -81,6 +82,9 @@ export const getExperiences = cache(() => destinations.listExperiences())
 
 /** Usuário autenticado atual (sessão + profile + papéis), memoizado por request. */
 export const getCurrentUser = cache(() => currentUser())
+
+/** Cadastro do viajante (0073) + o que falta para reservar. `null` = sem login. */
+export const getMyProfile = cache(() => myProfile())
 
 /** Reservas do usuário autenticado, memoizadas por request. */
 export const getMyBookings = cache(() => listMyBookings())

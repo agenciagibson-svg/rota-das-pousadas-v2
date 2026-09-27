@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
   ensureTravelerGuestRpc: vi.fn(),
   getBookableRoomBySlug: vi.fn(),
   getCurrentUser: vi.fn(),
+  getMyProfile: vi.fn(),
 }))
+vi.mock('@/features/auth/services/profile.service', () => ({ getMyProfile: mocks.getMyProfile }))
 vi.mock('@/features/auth/services/auth.service', () => ({ getCurrentUser: mocks.getCurrentUser }))
 vi.mock('@/features/acomodacoes/services/access', () => ({ requireCapability: vi.fn() }))
 vi.mock('@/repositories/rooms.repository', () => ({
@@ -36,6 +38,7 @@ const input = {
 describe('createBooking (reserva pelo site)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.getMyProfile.mockResolvedValue({ missing: [] })
     mocks.getCurrentUser.mockResolvedValue({
       id: 'user-1',
       name: 'Viajante Teste',
@@ -73,5 +76,29 @@ describe('createBookingSchema — origem', () => {
     const future = { pousadaSlug: 'x', checkin: '2099-10-05', checkout: '2099-10-07', guests: 2 }
     expect(createBookingSchema.safeParse({ ...future, origin: 'link_bio' }).success).toBe(true)
     expect(createBookingSchema.safeParse({ ...future, origin: 'balcao' }).success).toBe(false)
+  })
+})
+
+describe('createBooking exige cadastro completo (0073)', () => {
+  it('recusa quando falta dado da ficha de hospedagem', async () => {
+    vi.clearAllMocks()
+    mocks.getCurrentUser.mockResolvedValue({
+      id: 'user-1',
+      email: 'ana@ex.com',
+      name: 'Ana Souza',
+      memberships: [],
+      platformRole: null,
+    })
+    mocks.getBookableRoomBySlug.mockResolvedValue({
+      pousadaId: 'p1',
+      roomId: 'r1',
+      nightly: 500,
+      capacity: 4,
+    })
+    mocks.getMyProfile.mockResolvedValue({ missing: ['CPF', 'celular'] })
+    await expect(createBooking(createBookingSchema.parse(input))).rejects.toThrow(
+      /Complete seu cadastro.*CPF, celular/,
+    )
+    expect(mocks.createBookingRpc).not.toHaveBeenCalled()
   })
 })

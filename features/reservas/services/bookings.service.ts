@@ -1,5 +1,6 @@
 import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
+import { getMyProfile } from '@/features/auth/services/profile.service'
 import { requireCapability } from '@/features/acomodacoes/services/access'
 import { getBookableRoomBySlug } from '@/repositories/rooms.repository'
 import {
@@ -70,6 +71,14 @@ export async function createBooking(
   // O nome vem do cadastro; sem ele a pousada recebe uma reserva anônima.
   if (user.name.trim().length < 2) {
     throw new Error('Complete seu nome no cadastro antes de reservar.')
+  }
+  // A pousada recebe o cadastro para a ficha de hospedagem (0073). A página de
+  // reservar já bloqueia antes; aqui é a trava de verdade, no servidor.
+  const me = await getMyProfile()
+  if (!me || me.missing.length > 0) {
+    throw new Error(
+      `Complete seu cadastro em Meu perfil antes de reservar (falta: ${me?.missing.join(', ') ?? 'cadastro'}).`,
+    )
   }
   const { id: guestId } = await ensureTravelerGuestRpc({
     pousadaId: bookable.pousadaId,

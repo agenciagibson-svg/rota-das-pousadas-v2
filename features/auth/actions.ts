@@ -14,6 +14,8 @@ import {
   updateNameSchema,
 } from './schemas'
 import { requestPasswordReset, resetPassword } from './services/password-reset.service'
+import { saveMyProfile } from './services/profile.service'
+import { safeNextPath, travelerProfileSchema } from './profile'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -122,4 +124,14 @@ export const resetPasswordAction = createAction(resetPasswordSchema, async (inpu
   })
   revalidatePath('/', 'layout')
   return result
+})
+
+/**
+ * Cadastro completo do viajante (0073). Devolve o que ainda falta para
+ * reservar e, se veio de uma reserva em andamento, para onde voltar.
+ */
+export const saveMyProfileAction = createAction(travelerProfileSchema, async (input) => {
+  const { missing } = await saveMyProfile(input)
+  revalidatePath('/', 'layout')
+  return { missing, next: missing.length === 0 ? safeNextPath(input.next) : null }
 })

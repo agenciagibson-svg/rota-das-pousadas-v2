@@ -2041,6 +2041,72 @@ export type Database = {
           },
         ]
       }
+      traveler_profiles: {
+        Row: {
+          accessibility_needs: string
+          address: string | null
+          birth_date: string | null
+          cep: string | null
+          city: string | null
+          country: string
+          created_at: string
+          dietary_restrictions: string
+          document_last4: string | null
+          document_number: string | null
+          document_number_hash: string | null
+          document_type: string | null
+          emergency_contact: Json
+          nationality: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          accessibility_needs?: string
+          address?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          dietary_restrictions?: string
+          document_last4?: string | null
+          document_number?: string | null
+          document_number_hash?: string | null
+          document_type?: string | null
+          emergency_contact?: Json
+          nationality?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          accessibility_needs?: string
+          address?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          dietary_restrictions?: string
+          document_last4?: string | null
+          document_number?: string | null
+          document_number_hash?: string | null
+          document_type?: string | null
+          emergency_contact?: Json
+          nationality?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       used_oauth_states: {
         Row: {
           created_at: string

@@ -3,13 +3,14 @@ import { catalogQuerySchema } from '@/features/pousadas/search'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarX2, MapPin, Star } from 'lucide-react'
+import { CalendarX2, IdCard, MapPin, Star } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { Container } from '@/components/ui/container'
 import { Card } from '@/components/ui/card'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { BookingForm, StaleDatesNotice, bioOriginFromParam } from '@/features/reservas'
-import { getPousada, getCurrentUser, getBookableRoom } from '@/server/queries'
+import { getPousada, getCurrentUser, getBookableRoom, getMyProfile } from '@/server/queries'
+import { buttonVariants } from '@/components/ui/button'
 
 export const metadata: Metadata = {
   title: 'Reservar',
@@ -89,6 +90,18 @@ export default async function ReservarPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`)
   }
 
+  // A pousada recebe o cadastro do hóspede (FNRH) — sem ele, não dá para reservar.
+  const me = await getMyProfile()
+  const missingProfile = me?.missing ?? []
+  const returnParams = new URLSearchParams()
+  for (const key of ['checkin', 'checkout', 'guests', 'origem'] as const) {
+    const value = initial[key]
+    if (value) returnParams.set(key, value)
+  }
+  const completeProfileHref = `/conta?next=${encodeURIComponent(
+    `/pousada/${slug}/reservar${returnParams.size > 0 ? `?${returnParams.toString()}` : ''}`,
+  )}`
+
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
@@ -153,7 +166,28 @@ export default async function ReservarPage({
                   </div>
                 </StaleDatesNotice>
               )}
-              {offer ? (
+              {offer && missingProfile.length > 0 ? (
+                <div className="border-primary/20 bg-primary/5 mt-5 rounded-2xl border p-5 text-sm">
+                  <div className="flex items-start gap-3">
+                    <IdCard className="text-primary mt-0.5 size-5 shrink-0" />
+                    <div>
+                      <p className="text-foreground font-semibold">
+                        Complete seu cadastro para reservar
+                      </p>
+                      <p className="text-muted-foreground mt-1">
+                        A pousada precisa destes dados para a ficha de hospedagem (FNRH). Falta:{' '}
+                        {missingProfile.join(', ')}. Leva 1 minuto e você volta direto para cá.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href={completeProfileHref}
+                    className={buttonVariants({ size: 'lg', className: 'mt-4 w-full' })}
+                  >
+                    Completar cadastro
+                  </Link>
+                </div>
+              ) : offer ? (
                 <div className="mt-5">
                   <BookingForm
                     pousadaSlug={slug}

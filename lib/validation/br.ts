@@ -12,9 +12,33 @@ import { z } from 'zod'
  */
 
 export const BR_UF_CODES = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO',
-  'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
-  'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+  'AC',
+  'AL',
+  'AP',
+  'AM',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MT',
+  'MS',
+  'MG',
+  'PA',
+  'PB',
+  'PR',
+  'PE',
+  'PI',
+  'RJ',
+  'RN',
+  'RS',
+  'RO',
+  'RR',
+  'SC',
+  'SP',
+  'SE',
+  'TO',
 ] as const
 
 export type BrUf = (typeof BR_UF_CODES)[number]
@@ -41,3 +65,16 @@ export const phoneSchema = z.string().trim().regex(phoneRegex, 'Telefone inváli
 export const cepRegex = /^\d{5}-?\d{3}$/
 
 export const cepSchema = z.string().trim().regex(cepRegex, 'CEP inválido (formato 00000-000).')
+
+/** Dígitos verificadores do CPF (aceita com ou sem máscara). */
+export function isValidCpf(value: string): boolean {
+  const d = value.replace(/\D/g, '')
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false
+  const calc = (len: number) => {
+    let sum = 0
+    for (let i = 0; i < len; i++) sum += Number(d[i]) * (len + 1 - i)
+    const rest = (sum * 10) % 11
+    return rest === 10 ? 0 : rest
+  }
+  return calc(9) === Number(d[9]) && calc(10) === Number(d[10])
+}
