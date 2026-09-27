@@ -78,3 +78,33 @@ export function isValidCpf(value: string): boolean {
   }
   return calc(9) === Number(d[9]) && calc(10) === Number(d[10])
 }
+
+/** DDDs em uso no Brasil (Anatel). */
+export const BR_DDDS = new Set([
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33, 34, 35, 37, 38, 41, 42, 43,
+  44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 77,
+  79, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+])
+
+/**
+ * Telefone brasileiro de verdade: DDD existente, celular com 9 dígitos
+ * começando em 9 (fixo com 8 dígitos começando em 2–5), sem sequência repetida.
+ */
+export function isValidBrPhone(value: string, opts: { mobileOnly?: boolean } = {}): boolean {
+  const d = value.replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '')
+  if (d.length !== 10 && d.length !== 11) return false
+  if (!BR_DDDS.has(Number(d.slice(0, 2)))) return false
+  const local = d.slice(2)
+  if (/^(\d)\1+$/.test(local)) return false
+  if (local.length === 9) return local.startsWith('9')
+  if (opts.mobileOnly) return false
+  return /^[2-5]/.test(local)
+}
+
+/** Número internacional no formato +<país><número> (8 a 15 dígitos, padrão E.164). */
+export function isValidIntlPhone(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed.startsWith('+')) return false
+  const d = trimmed.replace(/\D/g, '')
+  return d.length >= 8 && d.length <= 15 && !d.startsWith('0') && !/^(\d)\1+$/.test(d)
+}

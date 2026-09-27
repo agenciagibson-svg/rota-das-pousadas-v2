@@ -24,6 +24,10 @@ export type TravelerProfileRow = {
   hasDocument: boolean
   cep: string | null
   address: string | null
+  street: string | null
+  addressNumber: string | null
+  complement: string | null
+  district: string | null
   city: string | null
   state: string | null
   emergencyContact: { name?: string; phone?: string }
@@ -36,7 +40,7 @@ export async function getTravelerProfile(userId: string): Promise<TravelerProfil
   const { data, error } = await supabase
     .from('traveler_profiles')
     .select(
-      'phone, whatsapp, birth_date, nationality, country, document_type, document_last4, document_number_hash, cep, address, city, state, emergency_contact, dietary_restrictions, accessibility_needs',
+      'phone, whatsapp, birth_date, nationality, country, document_type, document_last4, document_number_hash, cep, address, street, address_number, complement, district, city, state, emergency_contact, dietary_restrictions, accessibility_needs',
     )
     .eq('user_id', userId)
     .maybeSingle()
@@ -54,6 +58,10 @@ export async function getTravelerProfile(userId: string): Promise<TravelerProfil
     hasDocument: Boolean(data.document_number_hash),
     cep: data.cep,
     address: data.address,
+    street: data.street,
+    addressNumber: data.address_number,
+    complement: data.complement,
+    district: data.district,
     city: data.city,
     state: data.state,
     emergencyContact: {
@@ -75,6 +83,10 @@ export type SaveTravelerProfileInput = {
   document: { type: 'CPF' | 'Passaporte'; number: string } | null
   cep: string | null
   address: string | null
+  street: string | null
+  addressNumber: string | null
+  complement: string | null
+  district: string | null
   city: string
   state: string | null
   emergencyContact: { name?: string; phone?: string }
@@ -105,6 +117,10 @@ export async function saveTravelerProfile(
       country: input.country,
       cep: input.cep,
       address: input.address,
+      street: input.street,
+      address_number: input.addressNumber,
+      complement: input.complement,
+      district: input.district,
       city: input.city,
       state: input.state,
       emergency_contact: input.emergencyContact,
@@ -115,5 +131,13 @@ export async function saveTravelerProfile(
     },
     { onConflict: 'user_id' },
   )
-  if (error) throw new Error('Não foi possível salvar seu cadastro. Tente de novo.')
+  if (error) {
+    // uq_traveler_profiles_document_hash (0074): documento já usado em outra conta.
+    if (error.code === '23505') {
+      throw new Error(
+        'Este documento já está cadastrado em outra conta. Se for seu, entre com a outra conta ou fale com o suporte.',
+      )
+    }
+    throw new Error('Não foi possível salvar seu cadastro. Tente de novo.')
+  }
 }

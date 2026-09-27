@@ -5,7 +5,9 @@ import {
   saveTravelerProfile,
   type TravelerProfileRow,
 } from '@/repositories/traveler-profiles.repository'
+import { lookupCep } from '@/lib/cep'
 import {
+  composeAddress,
   documentTypeFor,
   missingProfileItems,
   type Nationality,
@@ -64,9 +66,17 @@ export async function saveMyProfile(input: TravelerProfileInput): Promise<{ miss
     )
   }
 
-  if (input.fullName.trim() !== user.name.trim()) await updateMyName(input.fullName)
-
   const brazilian = input.nationality === 'brasileira'
+
+  // CEP de verdade e coerente com a UF (se os serviços de CEP estiverem fora
+  // do ar, não trava o cadastro — a validação de formato já passou).
+  if (brazilian && input.cep) {
+    const found = await lookupCep(input.cep)
+    if (found === null) throw new Error('CEP não encontrado. Confira o número.')
+    if (found !== 'unavailable' && found.state && found.state !== input.state.toUpperCase()) {
+      throw new Error(`O CEP ${input.cep} é de ${found.city}/${found.state} — confira a UF.`)
+    }
+  }
   await saveTravelerProfile(user.id, {
     phone: input.phone,
     whatsapp: input.whatsapp || null,
@@ -75,7 +85,11 @@ export async function saveMyProfile(input: TravelerProfileInput): Promise<{ miss
     country: brazilian ? 'BR' : input.country,
     document: newDocument ? { type: docType, number: newDocument } : null,
     cep: input.cep || null,
-    address: input.address || null,
+    address: brazilian ? composeAddress(input) || null : null,
+    street: brazilian ? input.street || null : null,
+    addressNumber: brazilian ? input.addressNumber || null : null,
+    complement: brazilian ? input.complement || null : null,
+    district: brazilian ? input.district || null : null,
     city: input.city,
     state: brazilian ? input.state.toUpperCase() : null,
     emergencyContact: {
@@ -85,6 +99,9 @@ export async function saveMyProfile(input: TravelerProfileInput): Promise<{ miss
     dietaryRestrictions: input.dietaryRestrictions,
     accessibilityNeeds: input.accessibilityNeeds,
   })
+
+  // Nome por último: se o cadastro falhar (ex.: documento de outra conta), nada muda.
+  if (input.fullName.trim() !== user.name.trim()) await updateMyName(input.fullName)
 
   // Recalcula com o que acabou de ser salvo (getCurrentUser é memoizado por
   // request e ainda teria o nome antigo).

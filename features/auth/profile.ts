@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { cepSchema, isValidCpf, phoneSchema, ufSchema } from '@/lib/validation/br'
+import {
+  cepSchema,
+  isValidBrPhone,
+  isValidCpf,
+  isValidIntlPhone,
+  ufSchema,
+} from '@/lib/validation/br'
 
 /**
  * Cadastro do viajante (0073) — regras puras, usadas no formulário (cliente),
@@ -27,6 +33,19 @@ const birthDate = z
   .refine((v) => v >= '1900-01-01', 'Data de nascimento inválida.')
   .refine((v) => ageOn(v) >= 18, 'O responsável pela reserva precisa ter 18 anos ou mais.')
 
+const phoneText = z.string().trim().max(25)
+
+/** Celular aceito: brasileiro válido; estrangeiro também pode usar +país. */
+export function isAcceptedPhone(
+  value: string,
+  opts: { mobileOnly: boolean; allowInternational: boolean },
+): boolean {
+  return (
+    isValidBrPhone(value, { mobileOnly: opts.mobileOnly }) ||
+    (opts.allowInternational && isValidIntlPhone(value))
+  )
+}
+
 export const travelerProfileSchema = z
   .object({
     fullName: z
@@ -34,9 +53,13 @@ export const travelerProfileSchema = z
       .trim()
       .min(3, 'Informe seu nome completo.')
       .max(150, 'Nome muito longo.')
-      .refine((v) => v.split(/\s+/).filter(Boolean).length >= 2, 'Informe nome e sobrenome.'),
-    phone: phoneSchema,
-    whatsapp: phoneSchema.or(z.literal('')),
+      .refine((v) => v.split(/\s+/).filter(Boolean).length >= 2, 'Informe nome e sobrenome.')
+      .refine(
+        (v) => !/[\d@_#$%*=+<>{}[\]\\|/]/.test(v),
+        'O nome não pode ter números ou símbolos.',
+      ),
+    phone: phoneText.min(1, 'Informe seu celular.'),
+    whatsapp: phoneText,
     birthDate,
     nationality: z.enum(['brasileira', 'estrangeira']),
     /** Vazio = manter o documento já salvo. */
@@ -44,11 +67,14 @@ export const travelerProfileSchema = z
     hasStoredDocument: z.boolean(),
     country: z.string().trim().max(60),
     cep: cepSchema.or(z.literal('')),
-    address: z.string().trim().max(200),
+    street: z.string().trim().max(150),
+    addressNumber: z.string().trim().max(20),
+    complement: z.string().trim().max(80),
+    district: z.string().trim().max(100),
     city: z.string().trim().min(2, 'Informe sua cidade.').max(100),
     state: ufSchema.or(z.literal('')),
     emergencyName: z.string().trim().max(120),
-    emergencyPhone: phoneSchema.or(z.literal('')),
+    emergencyPhone: phoneText,
     dietaryRestrictions: z.string().trim().max(300),
     accessibilityNeeds: z.string().trim().max(300),
     /** Para onde voltar depois de salvar (ex.: a reserva em andamento). */
@@ -56,6 +82,38 @@ export const travelerProfileSchema = z
   })
   .superRefine((d, ctx) => {
     const brazilian = d.nationality === 'brasileira'
+    const intl = !brazilian
+    if (d.phone && !isAcceptedPhone(d.phone, { mobileOnly: true, allowInternational: intl })) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['phone'],
+        message: intl
+          ? 'Celular inválido. Use DDD + número ou o formato internacional (+54 11 ...).'
+          : 'Celular inválido. Use DDD + 9 dígitos, ex.: (34) 91234-5678.',
+      })
+    }
+    if (
+      d.whatsapp &&
+      !isAcceptedPhone(d.whatsapp, { mobileOnly: true, allowInternational: true })
+    ) {
+      ctx.addIssue({ code: 'custom', path: ['whatsapp'], message: 'WhatsApp inválido.' })
+    }
+    if (
+      d.emergencyPhone &&
+      !isAcceptedPhone(d.emergencyPhone, { mobileOnly: false, allowInternational: true })
+    ) {
+      ctx.addIssue({ code: 'custom', path: ['emergencyPhone'], message: 'Telefone inválido.' })
+    }
+    if (brazilian && d.cep && !d.street) {
+      ctx.addIssue({ code: 'custom', path: ['street'], message: 'Informe a rua.' })
+    }
+    if (brazilian && d.street && !d.addressNumber) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['addressNumber'],
+        message: 'Informe o número (ou "s/n").',
+      })
+    }
     if (brazilian && !d.state) {
       ctx.addIssue({ code: 'custom', path: ['state'], message: 'Informe a UF.' })
     }
@@ -147,6 +205,8 @@ export function maskCpf(v: string): string {
 }
 
 export function maskPhone(v: string): string {
+  // Internacional (+54 11 ...): só limpa caracteres estranhos, sem máscara BR.
+  if (v.trim().startsWith('+')) return `+${v.replace(/[^\d\s-]/g, '').trimStart()}`.slice(0, 22)
   const d = digits(v, 11)
   if (d.length <= 2) return d.length ? `(${d}` : ''
   if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
@@ -157,4 +217,15 @@ export function maskPhone(v: string): string {
 export function maskCep(v: string): string {
   const d = digits(v, 8)
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d
+}
+
+/** Endereço em uma linha (vai para a ficha da pousada): "Rua X, 123 - Apto 4 - Bairro". */
+export function composeAddress(p: {
+  street: string
+  addressNumber: string
+  complement: string
+  district: string
+}): string {
+  const first = [p.street.trim(), p.addressNumber.trim()].filter(Boolean).join(', ')
+  return [first, p.complement.trim(), p.district.trim()].filter(Boolean).join(' - ')
 }

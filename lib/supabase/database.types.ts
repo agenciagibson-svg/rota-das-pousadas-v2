@@ -2043,6 +2043,10 @@ export type Database = {
       }
       traveler_profiles: {
         Row: {
+          address_number: string | null
+          complement: string | null
+          district: string | null
+          street: string | null
           accessibility_needs: string
           address: string | null
           birth_date: string | null
@@ -2064,6 +2068,10 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          address_number?: string | null
+          complement?: string | null
+          district?: string | null
+          street?: string | null
           accessibility_needs?: string
           address?: string | null
           birth_date?: string | null
@@ -2085,6 +2093,10 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          address_number?: string | null
+          complement?: string | null
+          district?: string | null
+          street?: string | null
           accessibility_needs?: string
           address?: string | null
           birth_date?: string | null

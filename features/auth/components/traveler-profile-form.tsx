@@ -4,7 +4,7 @@ import { useEffect, useState, type ChangeEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Lock } from 'lucide-react'
+import { CheckCircle2, Loader2, Lock } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { BR_UF_CODES } from '@/lib/validation/br'
@@ -68,6 +68,47 @@ export function TravelerProfileForm({ initial, email, storedDocumentLabel }: Pro
   const docLabelMatches =
     storedDocumentLabel !== null &&
     (brazilian ? storedDocumentLabel.startsWith('CPF') : !storedDocumentLabel.startsWith('CPF'))
+
+  const [cepStatus, setCepStatus] = useState<
+    'idle' | 'loading' | 'found' | 'not_found' | 'unavailable'
+  >('idle')
+
+  async function onCepChange(e: ChangeEvent<HTMLInputElement>) {
+    const value = maskCep(e.target.value)
+    setValue('cep', value, { shouldValidate: Boolean(errors.cep) })
+    const digitsOnly = value.replace(/\D/g, '')
+    if (digitsOnly.length !== 8) {
+      setCepStatus('idle')
+      return
+    }
+    setCepStatus('loading')
+    try {
+      const res = await fetch(`/api/cep/${digitsOnly}`)
+      if (res.status === 404) {
+        setCepStatus('not_found')
+        return
+      }
+      if (!res.ok) {
+        setCepStatus('unavailable')
+        return
+      }
+      const data = (await res.json()) as {
+        street: string
+        district: string
+        city: string
+        state: string
+      }
+      const opts = { shouldValidate: true, shouldDirty: true }
+      if (data.street) setValue('street', data.street, opts)
+      if (data.district) setValue('district', data.district, opts)
+      if (data.city) setValue('city', data.city, opts)
+      if (data.state) setValue('state', data.state, opts)
+      setCepStatus('found')
+      document.getElementById('addressNumber')?.focus()
+    } catch {
+      setCepStatus('unavailable')
+    }
+  }
 
   useEffect(() => {
     setValue('hasStoredDocument', docLabelMatches)
@@ -176,7 +217,8 @@ export function TravelerProfileForm({ initial, email, storedDocumentLabel }: Pro
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="(00) 00000-0000"
+            placeholder={brazilian ? '(00) 00000-0000' : '(00) 00000-0000 ou +54 11 1234-5678'}
+            hint="Usado pela pousada para falar com você sobre a estadia."
             error={errors.phone?.message}
             {...phoneRegister}
             onChange={masked('phone', maskPhone)}
@@ -195,24 +237,57 @@ export function TravelerProfileForm({ initial, email, storedDocumentLabel }: Pro
 
       <Section title="Onde você mora">
         {brazilian ? (
-          <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-            <Input
-              label="CEP"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              placeholder="Opcional"
-              error={errors.cep?.message}
-              {...cepRegister}
-              onChange={masked('cep', maskCep)}
-            />
-            <Input
-              label="Endereço"
-              autoComplete="street-address"
-              placeholder="Rua, número, bairro (opcional)"
-              error={errors.address?.message}
-              {...register('address')}
-            />
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+              <Input
+                label="CEP"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                placeholder="00000-000"
+                iconEnd={
+                  cepStatus === 'loading' ? <Loader2 className="size-4 animate-spin" /> : undefined
+                }
+                hint={
+                  cepStatus === 'found'
+                    ? 'Endereço encontrado — confira e complete o número.'
+                    : cepStatus === 'unavailable'
+                      ? 'Busca de CEP indisponível agora — preencha o endereço à mão.'
+                      : 'Digite o CEP e preenchemos o endereço para você.'
+                }
+                error={cepStatus === 'not_found' ? 'CEP não encontrado.' : errors.cep?.message}
+                {...cepRegister}
+                onChange={onCepChange}
+              />
+              <Input
+                label="Rua"
+                autoComplete="address-line1"
+                error={errors.street?.message}
+                {...register('street')}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-[1fr_1fr_2fr]">
+              <Input
+                id="addressNumber"
+                label="Número"
+                autoComplete="address-line2"
+                placeholder="Ex.: 123 ou s/n"
+                error={errors.addressNumber?.message}
+                {...register('addressNumber')}
+              />
+              <Input
+                label="Complemento"
+                placeholder="Opcional"
+                error={errors.complement?.message}
+                {...register('complement')}
+              />
+              <Input
+                label="Bairro"
+                autoComplete="address-level3"
+                error={errors.district?.message}
+                {...register('district')}
+              />
+            </div>
+          </>
         ) : (
           <Input
             label="País"

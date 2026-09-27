@@ -21,7 +21,10 @@ const base = {
   hasStoredDocument: false,
   country: '',
   cep: '',
-  address: '',
+  street: '',
+  addressNumber: '',
+  complement: '',
+  district: '',
   city: 'Uberlândia',
   state: 'MG',
   emergencyName: '',
@@ -122,5 +125,63 @@ describe('utilitários', () => {
     expect(safeNextPath('/pousada/x/reservar?checkin=2026-10-01')).toBe(
       '/pousada/x/reservar?checkin=2026-10-01',
     )
+  })
+})
+
+describe('validação reforçada (telefone, nome, endereço)', () => {
+  it('telefone: DDD real, celular com 9 na frente, sem número repetido', async () => {
+    const { isValidBrPhone, isValidIntlPhone } = await import('@/lib/validation/br')
+    expect(isValidBrPhone('(34) 91234-5678', { mobileOnly: true })).toBe(true)
+    expect(isValidBrPhone('+55 34 91234-5678', { mobileOnly: true })).toBe(true)
+    expect(isValidBrPhone('(20) 91234-5678', { mobileOnly: true })).toBe(false)
+    expect(isValidBrPhone('(34) 81234-5678', { mobileOnly: true })).toBe(false)
+    expect(isValidBrPhone('(34) 99999-9999', { mobileOnly: true })).toBe(false)
+    expect(isValidBrPhone('(34) 3234-5678', { mobileOnly: true })).toBe(false)
+    expect(isValidBrPhone('(34) 3234-5678')).toBe(true)
+    expect(isValidIntlPhone('+54 11 1234-5678')).toBe(true)
+    expect(isValidIntlPhone('11 1234-5678')).toBe(false)
+  })
+  it('recusa celular inválido e nome com número', () => {
+    const r = travelerProfileSchema.safeParse({
+      ...base,
+      phone: '(34) 3234-5678',
+      fullName: 'Ana Souza 2',
+    })
+    expect(r.success).toBe(false)
+    if (!r.success) {
+      expect(r.error.issues.map((i) => i.path[0])).toEqual(
+        expect.arrayContaining(['phone', 'fullName']),
+      )
+    }
+  })
+  it('estrangeiro pode usar celular internacional', () => {
+    const r = travelerProfileSchema.safeParse({
+      ...base,
+      nationality: 'estrangeira',
+      documentNumber: 'AB123456',
+      state: '',
+      country: 'Argentina',
+      phone: '+54 9 11 1234-5678',
+    })
+    expect(r.success).toBe(true)
+  })
+  it('com rua, exige número; monta o endereço em uma linha', async () => {
+    const r = travelerProfileSchema.safeParse({
+      ...base,
+      cep: '38400-000',
+      street: 'Rua A',
+      addressNumber: '',
+    })
+    expect(r.success).toBe(false)
+    const { composeAddress } = await import('./profile')
+    expect(
+      composeAddress({
+        street: 'Rua A',
+        addressNumber: '123',
+        complement: 'Apto 4',
+        district: 'Centro',
+      }),
+    ).toBe('Rua A, 123 - Apto 4 - Centro')
+    expect(maskPhone('+54 9 11 1234')).toBe('+54 9 11 1234')
   })
 })
