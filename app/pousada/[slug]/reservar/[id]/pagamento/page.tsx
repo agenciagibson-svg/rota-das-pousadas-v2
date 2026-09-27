@@ -11,6 +11,11 @@ import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS } from '@/features/reservas'
 import type { Booking } from '@/features/reservas'
 import { getMyBookingsReconciled, getCurrentUser, getCanPayOnline } from '@/server/queries'
+import {
+  getPixPaymentForBooking,
+  type PixPayment,
+} from '@/features/pagamentos/services/pix.service'
+import { PixPaymentPanel } from '@/features/pagamentos/components/pix-payment-panel'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -98,6 +103,22 @@ export default async function PagamentoReservaPage({
   }
   const payHref = `/pousada/${slug}/reservar/${booking.id}/pagar`
 
+  // Pix direto na conta da pousada (0075): QR Code + copia e cola + comprovante.
+  let pix: PixPayment | null = null
+  if (booking.status === 'pending') {
+    try {
+      pix = await getPixPaymentForBooking({
+        id: booking.id,
+        code: booking.code,
+        balanceDue: booking.balanceDue,
+      })
+    } catch {
+      pix = null
+    }
+  }
+  const awaitingApproval = booking.status === 'pending' && pix?.lastProof?.status === 'submitted'
+  const showPix = Boolean(pix && awaitingPayment && pix.available)
+
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
@@ -115,7 +136,9 @@ export default async function PagamentoReservaPage({
             <h1 className="text-foreground font-serif text-2xl font-semibold sm:text-3xl">
               Reserva {booking.code}
             </h1>
-            <Badge variant={status.variant}>{status.label}</Badge>
+            <Badge variant={awaitingApproval ? 'goldSoft' : status.variant}>
+              {awaitingApproval ? 'Aguardando aprovação' : status.label}
+            </Badge>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">{booking.pousadaName}</p>
 
@@ -164,23 +187,55 @@ export default async function PagamentoReservaPage({
                   Não conseguimos abrir o pagamento agora. Tente de novo em instantes.
                 </div>
               )}
-              {payOnline ? (
-                <>
-                  <a
-                    href={payHref}
-                    rel="nofollow"
-                    className={buttonVariants({ size: 'lg', className: 'w-full' })}
-                  >
-                    <CreditCard className="size-4" />
-                    Pagar agora com Mercado Pago
-                  </a>
-                  <p className="text-muted-foreground mt-2 text-center text-xs">
-                    Você será redirecionado para o ambiente seguro do Mercado Pago.
-                    {booking.paymentDueAt && (
-                      <> Garantido até {formatDateTime(booking.paymentDueAt)}.</>
-                    )}
-                  </p>
-                </>
+              {awaitingApproval && pix ? (
+                <PixPaymentPanel
+                  bookingId={booking.id}
+                  bookingCode={booking.code}
+                  pix={pix}
+                  canPay={awaitingPayment}
+                />
+              ) : awaitingPayment && (showPix || payOnline) ? (
+                <div className="space-y-4">
+                  {showPix && pix && (
+                    <PixPaymentPanel
+                      bookingId={booking.id}
+                      bookingCode={booking.code}
+                      pix={pix}
+                      canPay={awaitingPayment}
+                    />
+                  )}
+                  {payOnline && (
+                    <div>
+                      {showPix && (
+                        <p className="text-muted-foreground mb-2 text-center text-xs font-semibold tracking-wide uppercase">
+                          ou pague com cartão
+                        </p>
+                      )}
+                      <a
+                        href={payHref}
+                        rel="nofollow"
+                        className={buttonVariants({
+                          size: 'lg',
+                          variant: showPix ? 'outline' : 'default',
+                          className: 'w-full',
+                        })}
+                      >
+                        <CreditCard className="size-4" />
+                        {showPix
+                          ? 'Cartão de crédito (Mercado Pago)'
+                          : 'Pagar agora com Mercado Pago'}
+                      </a>
+                      <p className="text-muted-foreground mt-2 text-center text-xs">
+                        Você será redirecionado para o ambiente seguro do Mercado Pago.
+                      </p>
+                    </div>
+                  )}
+                  {booking.paymentDueAt && (
+                    <p className="text-muted-foreground text-center text-xs">
+                      Suas datas ficam guardadas até {formatDateTime(booking.paymentDueAt)}.
+                    </p>
+                  )}
+                </div>
               ) : deadlinePassed ? (
                 <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
                   <div className="flex items-start gap-2">

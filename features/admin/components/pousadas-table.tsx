@@ -80,7 +80,10 @@ export function PousadasTable({
                   <MapPin className="size-3" /> {p.city}, {p.state}
                 </span>
                 {p.ownerName ? (
-                  <span>Proprietário: {p.ownerName}</span>
+                  <span>
+                    Proprietário: {p.ownerName}
+                    {p.ownerEmail && p.ownerEmail !== p.ownerName ? ` (${p.ownerEmail})` : ''}
+                  </span>
                 ) : (
                   <span className="text-destructive">Sem proprietário vinculado</span>
                 )}

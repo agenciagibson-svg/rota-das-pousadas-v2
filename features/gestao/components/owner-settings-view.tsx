@@ -1,12 +1,14 @@
 'use client'
 
-import { Clock3, CreditCard, Mail, Phone, Settings, Wallet } from 'lucide-react'
+import { Clock3, CreditCard, Mail, Phone, QrCode, Settings, Wallet } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConnectMpButton } from '@/features/pagamentos/components/connect-mp-button'
 import { SubscribeButton } from '@/features/pagamentos/components/subscribe-button'
+import { PixSettingsForm } from '@/features/pagamentos/components/pix-settings-form'
+import type { PixSettingsInput } from '@/features/pagamentos/pix'
 import type { OwnerPousadaSettings } from '../types'
 import { OwnerSettingsForm } from './owner-settings-form'
 
@@ -30,11 +32,13 @@ export function OwnerSettingsView({
   settings,
   paymentAccount,
   subscription,
+  pix,
 }: {
   displayName: string
   pousadaName: string
   settings: OwnerPousadaSettings | null
   paymentAccount: { connected: boolean; liveMode: boolean; canConnect: boolean } | null
+  pix: { settings: PixSettingsInput | null; canEdit: boolean } | null
   subscription: {
     planName: string
     planPrice: number
@@ -126,6 +130,15 @@ export function OwnerSettingsView({
                 </>
               )}
             </Card>
+            {pix && (
+              <Card className="p-5">
+                <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  <QrCode className="text-primary size-4" />
+                  Pix direto (sem taxa)
+                </div>
+                <PixSettingsForm initial={pix.settings} canEdit={pix.canEdit} />
+              </Card>
+            )}
             {subscription && (
               <Card className="p-5">
                 <div className="text-foreground flex items-center gap-2 text-sm font-semibold">

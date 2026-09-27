@@ -11,6 +11,9 @@ import {
   formatDeadline,
   formatStayRange,
   passwordChangedEmail,
+  paymentProofAlertEmail,
+  paymentProofReceivedEmail,
+  paymentProofRejectedEmail,
   passwordResetEmail,
 } from './templates'
 import type { BookingNotificationContext } from '@/repositories/bookings.repository'
@@ -149,5 +152,24 @@ describe('e-mails de senha', () => {
     expect(html).toContain('27/09/2026')
     expect(html).toContain('15:30')
     expect(html).toContain('/esqueci-senha')
+  })
+})
+
+describe('e-mails do Pix direto', () => {
+  it('hóspede: comprovante recebido, datas guardadas', () => {
+    const { subject, html } = paymentProofReceivedEmail(ctx, 1440)
+    expect(subject).toContain('Comprovante recebido')
+    expect(html).toContain('R$')
+    expect(html).toContain('datas continuam guardadas')
+  })
+  it('pousada: link direto para a reserva no painel', () => {
+    const { subject, html } = paymentProofAlertEmail(ctx, 1440)
+    expect(subject).toContain(ctx.code)
+    expect(html).toContain(`/dashboard/reservas/${ctx.bookingId}`)
+    expect(html).toContain('equipe desta pousada')
+  })
+  it('hóspede: recusa com motivo escapado', () => {
+    const { html } = paymentProofRejectedEmail(ctx, 'Valor <b>diferente</b>')
+    expect(html).toContain('Valor &lt;b&gt;diferente&lt;/b&gt;')
   })
 })

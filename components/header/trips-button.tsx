@@ -88,17 +88,23 @@ export function TripsButton({
                     <span className="text-primary text-sm font-bold">{brl(t.total)}</span>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    {left && (
-                      <span className="flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
-                        <Clock className="size-3" /> Pague em {left}
+                    {t.awaitingApproval ? (
+                      <span className="flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                        <Clock className="size-3" /> Pix em análise
                       </span>
+                    ) : (
+                      left && (
+                        <span className="flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                          <Clock className="size-3" /> Pague em {left}
+                        </span>
+                      )
                     )}
                     <Link
                       href={`/pousada/${t.pousadaSlug}/reservar/${t.id}/pagamento`}
                       onClick={close}
                       className="bg-accent text-accent-foreground ml-auto rounded-full px-3 py-1.5 text-xs font-semibold hover:brightness-105"
                     >
-                      Pagar agora
+                      {t.awaitingApproval ? 'Ver' : 'Pagar agora'}
                     </Link>
                   </div>
                 </div>

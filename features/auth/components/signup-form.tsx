@@ -76,7 +76,7 @@ export function SignupForm({ next }: SignupFormProps) {
         {...register('password')}
       />
       {formError && (
-        <p className="text-sm font-medium text-destructive">
+        <p className="text-destructive text-sm font-medium">
           {formError}{' '}
           {formError.includes('já tem uma conta') && (
             <Link href={loginHref} className="underline underline-offset-4">
@@ -85,13 +85,24 @@ export function SignupForm({ next }: SignupFormProps) {
           )}
         </p>
       )}
-      {message && <p className="text-sm font-medium text-primary">{message}</p>}
+      {message && <p className="text-primary text-sm font-medium">{message}</p>}
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Criando conta…' : 'Criar conta'}
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-center text-xs">
+        Ao criar a conta, você concorda com os{' '}
+        <Link href="/termos" target="_blank" className="text-primary underline">
+          Termos de Uso
+        </Link>{' '}
+        e com a{' '}
+        <Link href="/privacidade" target="_blank" className="text-primary underline">
+          Política de Privacidade
+        </Link>
+        .
+      </p>
+      <p className="text-muted-foreground text-center text-sm">
         Já tem conta?{' '}
-        <Link href={loginHref} className="font-semibold text-primary hover:underline">
+        <Link href={loginHref} className="text-primary font-semibold hover:underline">
           Entrar
         </Link>
       </p>

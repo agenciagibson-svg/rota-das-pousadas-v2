@@ -1,4 +1,5 @@
 import 'server-only'
+import { listBookingIdsWithOpenProof } from '@/repositories/pix.repository'
 import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { can, type Action } from '@/lib/auth/rbac'
@@ -96,10 +97,16 @@ export async function updateOwnerSettings(input: PousadaSettingsInput): Promise<
   })
 }
 
-export async function listOwnerReservations(filters: Parameters<typeof listReservationsByPousada>[1] = {}): Promise<OwnerReservation[]> {
+export async function listOwnerReservations(
+  filters: Parameters<typeof listReservationsByPousada>[1] = {},
+): Promise<OwnerReservation[]> {
   const pousada = await resolveOwnerPousada()
   if (!pousada) return []
-  return listReservationsByPousada(pousada.id, filters)
+  const [reservations, withProof] = await Promise.all([
+    listReservationsByPousada(pousada.id, filters),
+    listBookingIdsWithOpenProof(pousada.id),
+  ])
+  return reservations.map((r) => (withProof.has(r.id) ? { ...r, proofPending: true } : r))
 }
 
 export async function getOwnerCalendar(): Promise<{
@@ -158,7 +165,8 @@ export async function updateOwnerReservationStatus(
 
 export async function expireOwnerPendingBooking(bookingId: string): Promise<void> {
   const role = await getActiveTenantRole()
-  if (!role || !can(role, 'booking:manage')) throw new Error('Você não tem permissão para esta ação.')
+  if (!role || !can(role, 'booking:manage'))
+    throw new Error('Você não tem permissão para esta ação.')
   const pousada = await resolveOwnerPousada()
   if (!pousada) throw new Error('Nenhuma pousada sob sua gestão.')
   await expirePendingBookingRpc(bookingId)
@@ -179,7 +187,8 @@ export async function listOwnerReviews(): Promise<OwnerReview[]> {
  */
 export async function respondOwnerReview(reviewId: string, response: string): Promise<void> {
   const role = await getActiveTenantRole()
-  if (!role || !can(role, 'review:respond')) throw new Error('Você não tem permissão para responder avaliações.')
+  if (!role || !can(role, 'review:respond'))
+    throw new Error('Você não tem permissão para responder avaliações.')
   const pousada = await resolveOwnerPousada()
   if (!pousada) throw new Error('Nenhuma pousada sob sua gestão.')
   await updateReviewResponseByPousada(pousada.id, reviewId, response)

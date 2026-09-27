@@ -56,6 +56,8 @@ export type Booking = {
   paymentDueAt: string | null
   cancellationReason: string | null
   createdAt: string
+  /** 0075: comprovante de Pix direto enviado, esperando a pousada aprovar. */
+  awaitingPixApproval?: boolean
 }
 
 export type BookingCompanion = {

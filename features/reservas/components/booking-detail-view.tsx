@@ -9,6 +9,10 @@ import { BOOKING_STATUS } from '../status'
 import { isFinalStatus } from '../status'
 import { BookingEditPanel, BookingCompanionsPanel } from './booking-edit-panel'
 import type { BookingDetail } from '../types'
+import {
+  ProofReviewPanel,
+  type ProofForReview,
+} from '@/features/pagamentos/components/proof-review-panel'
 
 function fmtDate(iso: string): string {
   const [y, m, d] = iso.split('-')
@@ -30,10 +34,12 @@ export function BookingDetailView({
   displayName,
   pousadaName,
   booking,
+  proofs = [],
 }: {
   displayName: string
   pousadaName: string
   booking: BookingDetail
+  proofs?: ProofForReview[]
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = !isFinalStatus(booking.status)
@@ -77,6 +83,21 @@ export function BookingDetailView({
             </p>
           )}
         </Card>
+
+        {proofs.length > 0 && (
+          <Card
+            className={`p-6 ${proofs.some((p) => p.status === 'submitted') ? 'ring-2 ring-amber-300' : ''}`}
+          >
+            <h2 className="text-foreground font-semibold">Pagamento por Pix direto</h2>
+            <p className="text-muted-foreground text-sm">
+              Comprovantes enviados pelo hóspede. Aprovar confirma a reserva e envia o comprovante
+              por e-mail ao hóspede.
+            </p>
+            <div className="mt-4">
+              <ProofReviewPanel proofs={proofs} canReview={!isFinalStatus(booking.status)} />
+            </div>
+          </Card>
+        )}
 
         <div className="grid gap-5 xl:grid-cols-2">
           <Card className="p-6">

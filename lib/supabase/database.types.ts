@@ -1161,6 +1161,57 @@ export type Database = {
           },
         ]
       }
+      payment_proofs: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string
+          pousada_id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          size_bytes: number
+          status: Database['public']['Enums']['payment_proof_status']
+          uploaded_by: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          file_name?: string
+          file_path: string
+          id?: string
+          mime_type: string
+          pousada_id: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          size_bytes: number
+          status?: Database['public']['Enums']['payment_proof_status']
+          uploaded_by: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string
+          pousada_id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          size_bytes?: number
+          status?: Database['public']['Enums']['payment_proof_status']
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -1453,6 +1504,42 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      pousada_pix_settings: {
+        Row: {
+          city: string
+          created_at: string
+          enabled: boolean
+          holder_name: string
+          key_type: string
+          pix_key: string
+          pousada_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          enabled?: boolean
+          holder_name: string
+          key_type: string
+          pix_key: string
+          pousada_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          enabled?: boolean
+          holder_name?: string
+          key_type?: string
+          pix_key?: string
+          pousada_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       pousadas: {
         Row: {
@@ -2517,6 +2604,39 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_booking_pix_instructions: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      get_pousada_alert_emails: {
+        Args: { p_booking_id: string }
+        Returns: { email: string }[]
+      }
+      review_payment_proof: {
+        Args: { p_proof_id: string; p_approve: boolean; p_reason?: string }
+        Returns: Json
+      }
+      save_pousada_pix_settings: {
+        Args: {
+          p_pousada_id: string
+          p_key_type: string
+          p_pix_key: string
+          p_holder_name: string
+          p_city: string
+          p_enabled: boolean
+        }
+        Returns: undefined
+      }
+      submit_payment_proof: {
+        Args: {
+          p_booking_id: string
+          p_file_path: string
+          p_file_name: string
+          p_mime_type: string
+          p_size_bytes: number
+        }
+        Returns: Json
+      }
       claim_password_reset_slot: {
         Args: { p_email: string; p_ip: string }
         Returns: boolean
@@ -2736,6 +2856,7 @@ export type Database = {
       }
     }
     Enums: {
+      payment_proof_status: 'submitted' | 'approved' | 'rejected'
       accommodation_status: 'active' | 'inactive'
       booking_guest_type: 'responsible' | 'adult' | 'child' | 'infant'
       booking_origin:
@@ -2946,6 +3067,7 @@ export const Constants = {
       ],
       link_event_type: ['view', 'search', 'quote_request', 'booking_started'],
       membership_status: ['invited', 'active', 'suspended', 'revoked'],
+      payment_proof_status: ['submitted', 'approved', 'rejected'],
       payment_status: ['pendente', 'aprovado', 'recusado', 'estornado'],
       platform_role: ['suporte', 'comercial', 'marketing', 'financeiro_plataforma', 'master'],
       pousada_status: [

@@ -24,6 +24,7 @@ export type AdminPousadaRow = {
   status: string
   image: string | null
   ownerName: string | null
+  ownerEmail: string | null
   createdAt: string
 }
 

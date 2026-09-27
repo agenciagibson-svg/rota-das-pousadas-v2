@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -160,6 +161,17 @@ export function BookingForm({
       </Button>
       <p className="text-muted-foreground text-center text-xs">
         Você ainda não será cobrado — o pagamento será solicitado na próxima etapa.
+      </p>
+      <p className="text-muted-foreground text-center text-xs">
+        Ao confirmar, você aceita os{' '}
+        <Link href="/termos" target="_blank" className="text-primary underline">
+          Termos de Uso
+        </Link>{' '}
+        e a pousada recebe os dados do seu cadastro para a ficha de hospedagem (
+        <Link href="/privacidade" target="_blank" className="text-primary underline">
+          Privacidade
+        </Link>
+        ).
       </p>
     </form>
   )

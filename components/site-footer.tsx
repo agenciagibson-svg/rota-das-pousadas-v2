@@ -15,12 +15,18 @@ export function SiteFooter() {
           <FooterCompanyCard />
         </div>
 
-        <div className="mt-16 flex flex-col gap-4 border-t border-linen/10 pt-8 text-sm text-linen/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-linen/10 text-linen/50 mt-16 flex flex-col gap-4 border-t pt-8 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; {new Date().getFullYear()} Rota das Pousadas. Feito no Brasil.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-linen">Termos</Link>
-            <Link href="#" className="hover:text-linen">Privacidade</Link>
-            <Link href="#" className="hover:text-linen">Cookies</Link>
+            <Link href="/termos" className="hover:text-linen">
+              Termos
+            </Link>
+            <Link href="/privacidade" className="hover:text-linen">
+              Privacidade
+            </Link>
+            <Link href="/privacidade#cookies" className="hover:text-linen">
+              Cookies
+            </Link>
           </div>
         </div>
       </div>

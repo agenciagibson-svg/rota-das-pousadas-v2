@@ -172,7 +172,7 @@ async function recordMpPayment(bookingId: string, payment: MpPayment): Promise<b
  * Envia o e-mail de confirmação/"ticket" (0060). Fail-soft: nunca deve
  * derrubar o webhook — o pagamento já foi gravado nesse ponto.
  */
-async function notifyBookingConfirmed(bookingId: string): Promise<void> {
+export async function notifyBookingConfirmed(bookingId: string): Promise<void> {
   try {
     const ctx = await getBookingNotificationContextRpc(bookingId)
     if (!ctx || !ctx.guestEmail) return

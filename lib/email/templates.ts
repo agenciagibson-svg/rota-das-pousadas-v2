@@ -557,3 +557,103 @@ export function passwordChangedEmail(p: {
   const text = `A senha da sua conta na Rota das Pousadas foi alterada em ${when} (horário de Brasília).\nNão foi você? Crie uma nova senha agora: ${p.resetUrl}`
   return { subject, html, text }
 }
+
+// ---------------------------------------------------------------------------
+// Pix direto (0075): comprovante recebido / aviso à pousada / recusado
+// ---------------------------------------------------------------------------
+
+/** Hóspede: comprovante chegou e está em análise pela pousada. */
+export function paymentProofReceivedEmail(ctx: BookingNotificationContext, amount: number): Email {
+  const link = `${publicEnv.siteUrl}/minhas-reservas`
+  const subject = `Comprovante recebido — ${ctx.pousada.name} (${ctx.code})`
+  const rows = rowsTable(
+    [
+      ['Acomodação', ctx.roomName],
+      ['Check-in', formatDayShort(ctx.checkin, true)],
+      ['Check-out', formatDayShort(ctx.checkout, true)],
+    ],
+    'Valor do Pix',
+    formatCurrencyBRL(amount),
+  )
+  const html = wrapLayout({
+    preheader: 'A pousada vai conferir o seu Pix e confirmar a reserva.',
+    pill: { label: 'Em análise', bg: '#e0f2fe', fg: '#075985' },
+    title: 'Recebemos o seu comprovante',
+    subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
+    intro: `${greeting(ctx)} O comprovante do Pix da reserva <strong>${esc(ctx.code)}</strong> chegou. Agora a pousada confere o valor na conta dela e confirma a sua reserva — você recebe outro e-mail assim que isso acontecer.`,
+    ticketHtml: ticket(ctx, rows),
+    extraHtml: notice(
+      'Enquanto a pousada confere, <strong>suas datas continuam guardadas</strong>. Não precisa pagar de novo.',
+      'ok',
+    ),
+    cta: { href: link, label: 'Acompanhar reserva' },
+  })
+  const text = `Recebemos o comprovante do Pix da reserva ${ctx.code} (${ctx.pousada.name}).\nValor: ${formatCurrencyBRL(amount)}\nA pousada vai conferir e confirmar a reserva; suas datas continuam guardadas.\nAcompanhe em: ${link}`
+  return { subject, html, text }
+}
+
+/** Pousada: novo comprovante para conferir e aprovar. */
+export function paymentProofAlertEmail(ctx: BookingNotificationContext, amount: number): Email {
+  const link = `${publicEnv.siteUrl}/dashboard/reservas/${ctx.bookingId}`
+  const subject = `Pix para conferir — ${ctx.code} (${formatCurrencyBRL(amount)})`
+  const rows = rowsTable(
+    [
+      ['Hóspede', ctx.guestName ?? 'Hóspede'],
+      ['Acomodação', ctx.roomName],
+      ['Check-in', formatDayShort(ctx.checkin, true)],
+      ['Check-out', formatDayShort(ctx.checkout, true)],
+    ],
+    'Valor esperado',
+    formatCurrencyBRL(amount),
+  )
+  const html = wrapLayout({
+    preheader: `O hóspede enviou o comprovante do Pix da reserva ${ctx.code}.`,
+    pill: { label: 'Aprovar pagamento', bg: C.accent, fg: '#ffffff' },
+    title: 'Chegou um comprovante de Pix',
+    subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
+    intro: `O hóspede da reserva <strong>${esc(ctx.code)}</strong> enviou o comprovante do Pix. Confira se o valor caiu na conta da pousada e aprove (ou recuse) no painel.`,
+    ticketHtml: ticket(ctx, rows),
+    extraHtml: notice(
+      'Enquanto você não decide, as datas ficam guardadas para esse hóspede. Aprovando, a reserva é confirmada e o hóspede recebe o comprovante por e-mail.',
+      'warn',
+    ),
+    cta: { href: link, label: 'Conferir comprovante' },
+    ctaHint: 'Abre a reserva no painel da pousada.',
+    footerNote:
+      'Você recebeu este aviso porque faz parte da equipe desta pousada na Rota das Pousadas.',
+  })
+  const text = `Novo comprovante de Pix para conferir.\nReserva: ${ctx.code}\nHóspede: ${ctx.guestName ?? '—'}\nValor esperado: ${formatCurrencyBRL(amount)}\nConfira e aprove em: ${link}`
+  return { subject, html, text }
+}
+
+/** Hóspede: pousada recusou o comprovante (motivo + novo prazo). */
+export function paymentProofRejectedEmail(
+  ctx: BookingNotificationContext,
+  reason: string,
+  now = new Date(),
+): Email {
+  const link = `${publicEnv.siteUrl}/minhas-reservas`
+  const subject = `Comprovante não aprovado — ${ctx.pousada.name} (${ctx.code})`
+  const deadline = ctx.paymentDueAt
+    ? formatDeadline(ctx.paymentDueAt, ctx.pousada.timezone, now)
+    : null
+  const html = wrapLayout({
+    preheader: 'A pousada não conseguiu confirmar o seu Pix. Veja o motivo.',
+    pill: { label: 'Ação necessária', bg: '#fee2e2', fg: '#991b1b' },
+    title: 'A pousada não confirmou o seu Pix',
+    subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
+    intro: `${greeting(ctx)} A pousada analisou o comprovante da reserva <strong>${esc(ctx.code)}</strong> e não conseguiu confirmar o pagamento.`,
+    ticketHtml: '',
+    extraHtml:
+      notice(`<strong>Motivo:</strong> ${esc(reason)}`, 'warn') +
+      notice(
+        deadline
+          ? `Você pode enviar outro comprovante ou pagar de outra forma <strong>até ${esc(deadline)}</strong>. Depois disso a reserva é cancelada.`
+          : 'Envie outro comprovante ou pague de outra forma pela página da reserva.',
+        'warn',
+      ),
+    cta: { href: link, label: 'Resolver pagamento' },
+  })
+  const text = `A pousada não confirmou o Pix da reserva ${ctx.code} (${ctx.pousada.name}).\nMotivo: ${reason}\n${deadline ? `Envie outro comprovante ou pague até ${deadline}.\n` : ''}Acesse: ${link}`
+  return { subject, html, text }
+}

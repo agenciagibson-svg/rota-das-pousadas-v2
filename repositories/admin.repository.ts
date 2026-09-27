@@ -82,15 +82,20 @@ export async function listAllPousadasForAdmin(filter?: PousadaStatus): Promise<A
   if (error) throw error
   if (!rows || rows.length === 0) return []
 
-  const pousadaIds = rows.map((r) => r.id)
-  const { data: owners } = await supabase
-    .from('memberships')
-    .select('pousada_id, user_id, profiles(full_name)')
-    .eq('role', 'proprietario')
-    .in('pousada_id', pousadaIds)
-  const ownerByPousada = new Map(
-    (owners ?? []).map((o) => [o.pousada_id, o.profiles[0]?.full_name ?? null]),
-  )
+  // Dono vem da RPC `list_platform_hosts` (0040, security definer). Antes era
+  // um join memberships→profiles direto, mas a RLS de `profiles` só deixa cada
+  // um ler o próprio perfil — o nome sempre voltava vazio e a tela dizia
+  // "Sem proprietário vinculado" mesmo com dono ativo.
+  const owners = await listPlatformHosts().catch((error: unknown) => {
+    console.error('[admin] falha ao listar proprietários', error)
+    return [] as PlatformHost[]
+  })
+  const ownerByPousada = new Map<string, { name: string; email: string }>()
+  for (const o of owners) {
+    if (!ownerByPousada.has(o.pousadaId)) {
+      ownerByPousada.set(o.pousadaId, { name: o.fullName?.trim() || o.email, email: o.email })
+    }
+  }
 
   return rows.map((r) => ({
     id: r.id,
@@ -100,7 +105,8 @@ export async function listAllPousadasForAdmin(filter?: PousadaStatus): Promise<A
     state: r.state,
     status: r.status,
     image: r.image,
-    ownerName: ownerByPousada.get(r.id) ?? null,
+    ownerName: ownerByPousada.get(r.id)?.name ?? null,
+    ownerEmail: ownerByPousada.get(r.id)?.email ?? null,
     createdAt: r.created_at,
   }))
 }

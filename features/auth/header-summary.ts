@@ -14,6 +14,8 @@ export type HeaderTrip = {
   checkout: string
   total: number
   paymentDueAt: string | null
+  /** 0075: comprovante de Pix enviado, esperando a pousada aprovar. */
+  awaitingApproval?: boolean
 }
 
 export type HeaderSummary =
@@ -48,6 +50,7 @@ function toTrip(b: Booking): HeaderTrip {
     checkout: b.checkout,
     total: b.balanceDue > 0 ? b.balanceDue : b.total,
     paymentDueAt: b.paymentDueAt,
+    ...(b.awaitingPixApproval ? { awaitingApproval: true } : {}),
   }
 }
 

@@ -1,4 +1,5 @@
 import 'server-only'
+import { listMyBookingIdsAwaitingApproval } from './pix.repository'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import { safeDecryptDocumentNumber } from '@/lib/crypto/document-cipher'
@@ -229,6 +230,8 @@ export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
   const roomIds = [...new Set(rows.map((r) => r.room_id))]
   const { data: rooms } = await supabase.from('rooms').select('id, name').in('id', roomIds)
   const roomById = new Map((rooms ?? []).map((room) => [room.id, room]))
+  const pendingIds = rows.filter((r) => r.status === 'pending').map((r) => r.id)
+  const awaitingApproval = await listMyBookingIdsAwaitingApproval(pendingIds)
 
   return rows.map((r) => {
     const p = byId.get(r.pousada_id)
@@ -253,6 +256,7 @@ export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
       balanceDue: Number(r.balance_due),
       status: r.status as BookingStatus,
       paymentDueAt: r.payment_due_at,
+      awaitingPixApproval: awaitingApproval.has(r.id),
       cancellationReason: r.cancellation_reason,
       createdAt: r.created_at,
     }

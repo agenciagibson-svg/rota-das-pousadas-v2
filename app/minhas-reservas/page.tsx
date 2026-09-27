@@ -72,7 +72,8 @@ export default async function MyBookingsPage({
   const today = new Date().toISOString().slice(0, 10)
   const activeBookings = bookings.filter((booking) => isActiveStatus(booking.status))
   const pendingBookings = bookings.filter(
-    (booking) => booking.status === 'pending' && !isExpiredPending(booking),
+    (booking) =>
+      booking.status === 'pending' && !isExpiredPending(booking) && !booking.awaitingPixApproval,
   )
   const upcomingBookings = activeBookings.filter((booking) => booking.checkout >= today)
   const activeTotal = activeBookings.reduce((sum, booking) => sum + booking.total, 0)
@@ -142,7 +143,9 @@ export default async function MyBookingsPage({
                   const status = BOOKING_STATUS[booking.status]
                   const canCancel = ['quote', 'pending'].includes(booking.status)
                   const expired = isExpiredPending(booking)
-                  const payable = booking.status === 'pending' && !expired
+                  const awaitingApproval =
+                    Boolean(booking.awaitingPixApproval) && booking.status === 'pending'
+                  const payable = booking.status === 'pending' && !expired && !awaitingApproval
                   // "Reservar novamente" com as mesmas datas só faz sentido quando
                   // esta reserva não segura mais o quarto; senão cairia em datas ocupadas.
                   const canRebook =
@@ -172,7 +175,7 @@ export default async function MyBookingsPage({
                                   {booking.pousadaName}
                                 </h2>
                                 <Badge variant={status.variant} size="sm">
-                                  {status.label}
+                                  {awaitingApproval ? 'Aguardando aprovação' : status.label}
                                 </Badge>
                               </div>
 
@@ -216,6 +219,17 @@ export default async function MyBookingsPage({
                               <span>
                                 O prazo de pagamento terminou e as datas foram liberadas. Se ainda
                                 quiser ir, faça uma nova reserva.
+                              </span>
+                            </div>
+                          )}
+
+                          {awaitingApproval && (
+                            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-950">
+                              <Clock3 className="mt-0.5 size-4 shrink-0 text-sky-600" />
+                              <span>
+                                Comprovante do Pix enviado. A pousada está conferindo o pagamento e
+                                você recebe um e-mail quando a reserva for confirmada. Suas datas
+                                continuam guardadas.
                               </span>
                             </div>
                           )}
@@ -276,7 +290,9 @@ export default async function MyBookingsPage({
                                 Reservar novamente
                               </Link>
                             )}
-                            {canCancel && <CancelBookingButton bookingId={booking.id} />}
+                            {canCancel && !awaitingApproval && (
+                              <CancelBookingButton bookingId={booking.id} />
+                            )}
                           </div>
                         </div>
                       </div>

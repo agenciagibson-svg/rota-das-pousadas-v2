@@ -21,6 +21,8 @@ export type OwnerReservation = {
   createdAt: string
   /** Pendente com prazo de pagamento vencido — nunca expira sozinha (RB seção 9); só sinaliza para ação explícita. */
   needsAttention: boolean
+  /** 0075: hóspede enviou comprovante de Pix direto — falta a equipe aprovar. */
+  proofPending?: boolean
 }
 
 /** Pousada gerida pelo usuário atual. */
