@@ -14,7 +14,8 @@ import { getPaymentById, type MpPayment } from './mp-client'
 /**
  * Verifica o header `x-signature` do webhook do Mercado Pago.
  *
- * Formato: `ts=<epoch_ms>,v1=<hmac_hex>`. O "manifest" assinado é
+ * Formato: `ts=<epoch>,v1=<hmac_hex>`. O Mercado Pago envia `ts` em SEGUNDOS
+ * (ex.: `ts=1704908010`); aceitamos também milissegundos por robustez. O "manifest" assinado é
  * `id:<data.id, minúsculo>;request-id:<x-request-id>;ts:<ts>;` — conferido
  * na documentação oficial em 2026-09. Revalidar se o Mercado Pago mudar o
  * esquema antes de operar em produção.
@@ -37,7 +38,7 @@ export function verifyWebhookSignature(params: {
 }): boolean {
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET
   if (!secret) throw new Error('MERCADO_PAGO_WEBHOOK_SECRET não configurada.')
-  if (!params.xSignatureHeader || !params.xRequestId) return false
+  if (!params.xSignatureHeader || !params.xRequestId) return reject('missing_headers')
 
   const parts = Object.fromEntries(
     params.xSignatureHeader.split(',').map((pair) => {
@@ -47,18 +48,28 @@ export function verifyWebhookSignature(params: {
   )
   const ts = parts.ts
   const v1 = parts.v1
-  if (!ts || !v1) return false
+  if (!ts || !v1) return reject('malformed_header')
 
-  const tsMs = Number(ts)
+  const tsNum = Number(ts)
+  // Segundos (10 dígitos) → ms. Antes comparávamos segundos com Date.now() em
+  // ms e TODA notificação real era recusada como "velha" (401).
+  const tsMs = tsNum < 1e12 ? tsNum * 1000 : tsNum
   if (!Number.isFinite(tsMs) || Math.abs(Date.now() - tsMs) > WEBHOOK_MAX_CLOCK_SKEW_MS)
-    return false
+    return reject('stale_ts')
 
   const manifest = `id:${params.dataId.toLowerCase()};request-id:${params.xRequestId};ts:${ts};`
   const expected = createHmac('sha256', secret).update(manifest).digest('hex')
 
   const a = Buffer.from(v1)
   const b = Buffer.from(expected)
-  return a.length === b.length && timingSafeEqual(a, b)
+  const ok = a.length === b.length && timingSafeEqual(a, b)
+  return ok || reject('hmac_mismatch')
+}
+
+/** Loga só o motivo (nunca segredo nem assinatura) para diagnosticar 401. */
+function reject(reason: string): false {
+  console.warn('[mercadopago:webhook] assinatura recusada', { reason })
+  return false
 }
 
 function mapMpStatus(status: MpPayment['status']): PaymentStatus {

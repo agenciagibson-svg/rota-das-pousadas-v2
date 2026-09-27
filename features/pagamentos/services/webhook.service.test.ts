@@ -30,6 +30,22 @@ describe('verifyWebhookSignature', () => {
     ).toBe(true)
   })
 
+  it('aceita ts em segundos, formato real do Mercado Pago', () => {
+    const ts = String(Math.floor(Date.now() / 1000))
+    const xSignatureHeader = buildSignatureHeader({ dataId: '987654321', requestId: 'req-s', ts })
+    expect(
+      verifyWebhookSignature({ xSignatureHeader, xRequestId: 'req-s', dataId: '987654321' }),
+    ).toBe(true)
+  })
+
+  it('rejeita ts em segundos antigo (replay)', () => {
+    const ts = String(Math.floor(Date.now() / 1000) - 20 * 60)
+    const xSignatureHeader = buildSignatureHeader({ dataId: '987654321', requestId: 'req-s', ts })
+    expect(
+      verifyWebhookSignature({ xSignatureHeader, xRequestId: 'req-s', dataId: '987654321' }),
+    ).toBe(false)
+  })
+
   it('rejeita quando o secret usado pra assinar é outro', () => {
     const ts = String(Date.now())
     const xSignatureHeader = buildSignatureHeader({
