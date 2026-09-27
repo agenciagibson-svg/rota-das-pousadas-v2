@@ -14,6 +14,7 @@ import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
+import { getPousadaPaymentContextForWebhook } from '@/repositories/payments.repository'
 import {
   listMyBookings,
   getBookableRoom as bookableRoom,
@@ -110,6 +111,17 @@ export const getBookableRoom = cache(
  * a página de pagamento trata isso como "a combinar", não como falha fatal.
  */
 export const getBookingCheckout = cache((bookingId: string) => createCheckoutPreference(bookingId))
+
+/**
+ * A pousada desta reserva recebe on-line (conta Mercado Pago conectada)?
+ * Só decide qual botão mostrar — o link de pagamento em si é criado apenas
+ * no clique, em `/pousada/[slug]/reservar/[id]/pagar`. Chamar só depois de
+ * conferir que a reserva é do usuário logado.
+ */
+export const getCanPayOnline = cache(async (bookingId: string) => {
+  const context = await getPousadaPaymentContextForWebhook(bookingId)
+  return Boolean(context?.accessTokenEncrypted)
+})
 
 /** Gestão (PMS): pousada gerida, reservas e calendário do proprietário. */
 export const getOwnerPousada = cache(() => ownerPousada())

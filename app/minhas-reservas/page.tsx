@@ -20,7 +20,11 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS, CancelBookingButton } from '@/features/reservas'
 import type { BookingStatus } from '@/features/reservas'
-import { getMyBookingsReconciled } from '@/server/queries'
+import { getCurrentUser, getMyBookingsReconciled } from '@/server/queries'
+import {
+  PaymentReturnBanner,
+  parseMpReturnStatus,
+} from '@/features/pagamentos/components/payment-return-banner'
 
 export const metadata: Metadata = {
   title: 'Minhas reservas',
@@ -55,8 +59,16 @@ function isActiveStatus(status: BookingStatus) {
   return !['cancelled', 'no_show'].includes(status)
 }
 
-export default async function MyBookingsPage() {
-  const bookings = await getMyBookingsReconciled()
+export default async function MyBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pago?: string; status?: string; collection_status?: string }>
+}) {
+  const query = await searchParams
+  const [bookings, user] = await Promise.all([getMyBookingsReconciled(), getCurrentUser()])
+  // Volta do Mercado Pago (`?pago=<id>&status=...`): destaque do resultado no topo.
+  const returned = query.pago ? bookings.find((b) => b.id === query.pago) : undefined
+  const mpStatus = parseMpReturnStatus(query.collection_status ?? query.status)
   const today = new Date().toISOString().slice(0, 10)
   const activeBookings = bookings.filter((booking) => isActiveStatus(booking.status))
   const pendingBookings = bookings.filter(
@@ -76,6 +88,10 @@ export default async function MyBookingsPage() {
           <p className="text-muted-foreground mt-2 text-sm">
             Acompanhe suas estadias, valores e próximas ações.
           </p>
+
+          {returned && (
+            <PaymentReturnBanner booking={returned} mpStatus={mpStatus} guestEmail={user?.email} />
+          )}
 
           {bookings.length === 0 ? (
             <EmptyState

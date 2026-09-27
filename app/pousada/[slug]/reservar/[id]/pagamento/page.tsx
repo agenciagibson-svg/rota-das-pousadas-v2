@@ -10,7 +10,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS } from '@/features/reservas'
 import type { Booking } from '@/features/reservas'
-import { getMyBookingsReconciled, getCurrentUser, getBookingCheckout } from '@/server/queries'
+import { getMyBookingsReconciled, getCurrentUser, getCanPayOnline } from '@/server/queries'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -63,10 +63,13 @@ function statusNote(booking: Booking): { title: string; body: string } {
 
 export default async function PagamentoReservaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string; id: string }>
+  searchParams: Promise<{ erro?: string }>
 }) {
   const { slug, id } = await params
+  const { erro } = await searchParams
   const user = await getCurrentUser()
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(`/pousada/${slug}/reservar/${id}/pagamento`)}`)
@@ -82,18 +85,18 @@ export default async function PagamentoReservaPage({
   const deadlinePassed = isDeadlinePassed(booking)
   const awaitingPayment = booking.status === 'pending' && booking.balanceDue > 0 && !deadlinePassed
 
-  let initPoint: string | null = null
+  // O link do Mercado Pago NÃO é gerado aqui: o botão aponta para a rota
+  // `/pagar`, que confere login + dono da reserva e só então cria o checkout.
+  let payOnline = false
   if (awaitingPayment) {
     try {
-      const preference = await getBookingCheckout(booking.id)
-      initPoint = preference.initPoint
+      payOnline = await getCanPayOnline(booking.id)
     } catch {
-      // Pousada ainda não conectou conta de recebimento, ou outra condição
-      // momentânea — tratado abaixo como "pagamento a combinar", nunca como
-      // erro fatal da página (a reserva já existe e está garantida).
-      initPoint = null
+      // Falha momentânea: tratado como "a combinar", nunca erro fatal da página.
+      payOnline = false
     }
   }
+  const payHref = `/pousada/${slug}/reservar/${booking.id}/pagar`
 
   return (
     <div className="bg-background min-h-screen">
@@ -153,10 +156,19 @@ export default async function PagamentoReservaPage({
             </div>
 
             <div className="mt-6">
-              {initPoint ? (
+              {erro === 'pagamento' && awaitingPayment && (
+                <div
+                  role="alert"
+                  className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900"
+                >
+                  Não conseguimos abrir o pagamento agora. Tente de novo em instantes.
+                </div>
+              )}
+              {payOnline ? (
                 <>
                   <a
-                    href={initPoint}
+                    href={payHref}
+                    rel="nofollow"
                     className={buttonVariants({ size: 'lg', className: 'w-full' })}
                   >
                     <CreditCard className="size-4" />

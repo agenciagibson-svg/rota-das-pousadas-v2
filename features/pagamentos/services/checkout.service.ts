@@ -38,7 +38,9 @@ export async function createCheckoutPreference(bookingId: string): Promise<{ ini
   const sellerAccessToken = decryptToken(account.accessTokenEncrypted)
 
   const notificationUrl = `${publicEnv.siteUrl}/api/pagamentos/mercadopago/webhook?bookingId=${booking.id}`
-  const returnUrl = `${publicEnv.siteUrl}/minhas-reservas`
+  // Volta para "Minhas reservas" com a reserva marcada: a página mostra na hora
+  // se o pagamento foi aprovado/confirmado, está em análise ou não foi concluído.
+  const returnUrl = `${publicEnv.siteUrl}/minhas-reservas?pago=${booking.id}`
 
   const preference = await createMpPreference({
     sellerAccessToken,
