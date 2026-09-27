@@ -71,7 +71,9 @@ export async function updateOwnerSettings(input: PousadaSettingsInput): Promise<
     country: input.country,
     address: input.address,
     cep: input.cep ?? '',
-    image: input.image,
+    // Com fotos enviadas, a capa é sempre a primeira da galeria.
+    image: input.gallery.length > 0 ? input.gallery[0]! : input.image,
+    gallery: input.gallery,
     description: input.description,
     tags: input.tags
       .split(',')

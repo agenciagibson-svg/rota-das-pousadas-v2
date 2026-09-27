@@ -25,6 +25,7 @@ import {
   PaymentReturnBanner,
   parseMpReturnStatus,
 } from '@/features/pagamentos/components/payment-return-banner'
+import { formatBRL } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Minhas reservas',
@@ -133,7 +134,7 @@ export default async function MyBookingsPage({
                     Total ativo
                   </div>
                   <div className="text-foreground mt-2 text-2xl font-semibold">
-                    R$ {activeTotal}
+                    {formatBRL(activeTotal)}
                   </div>
                 </Card>
               </div>
@@ -203,12 +204,12 @@ export default async function MyBookingsPage({
 
                             <div className="shrink-0 text-left lg:text-right">
                               <div className="text-foreground text-2xl font-semibold">
-                                R$ {booking.total}
+                                {formatBRL(booking.total)}
                               </div>
                               <div className="text-muted-foreground text-xs">
                                 {booking.fee > 0
-                                  ? `R$ ${booking.subtotal} estadia + R$ ${booking.fee} taxa`
-                                  : `R$ ${booking.subtotal} estadia`}
+                                  ? `${formatBRL(booking.subtotal)} estadia + ${formatBRL(booking.fee)} taxa`
+                                  : `${formatBRL(booking.subtotal)} estadia`}
                               </div>
                             </div>
                           </div>

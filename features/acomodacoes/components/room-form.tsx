@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { createRoomAction, updateRoomAction } from '../actions'
 import type { ManagedRoom, AccommodationCategory, BedType } from '../types'
+import { keepValuesOnSubmit } from '@/lib/forms'
 
 const BED_TYPES: { value: BedType; label: string }[] = [
   { value: 'casal', label: 'Casal' },
@@ -35,7 +36,9 @@ export function RoomForm({
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(room?.amenityIds ?? [])
 
   function toggleAmenity(id: string) {
-    setSelectedAmenities((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]))
+    setSelectedAmenities((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
+    )
   }
 
   async function onSubmit(formData: FormData) {
@@ -69,7 +72,9 @@ export function RoomForm({
       amenityIds: selectedAmenities,
     }
 
-    const result = room ? await updateRoomAction({ ...payload, id: room.id }) : await createRoomAction(payload)
+    const result = room
+      ? await updateRoomAction({ ...payload, id: room.id })
+      : await createRoomAction(payload)
     setPending(false)
     if (!result.ok) {
       setFormError(result.error)
@@ -80,16 +85,23 @@ export function RoomForm({
   }
 
   return (
-    <form action={onSubmit} className="space-y-5">
+    <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label="Nome comercial" name="name" defaultValue={room?.name} required />
-        <Input label="Código interno" name="code" defaultValue={room?.code ?? ''} placeholder="Ex.: STD-01" />
+        <Input
+          label="Código interno"
+          name="code"
+          defaultValue={room?.code ?? ''}
+          placeholder="Ex.: STD-01"
+        />
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Categoria</span>
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            Categoria
+          </span>
           <select
             name="categoryId"
             defaultValue={room?.categoryId ?? ''}
-            className="rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-ring"
+            className="border-input bg-card text-foreground focus:border-ring rounded-xl border px-3.5 py-2.5 text-sm outline-none"
           >
             <option value="">Sem categoria</option>
             {categories
@@ -101,18 +113,49 @@ export function RoomForm({
               ))}
           </select>
         </label>
-        <Input label="Localização (andar/bloco)" name="location" defaultValue={room?.location ?? ''} />
+        <Input
+          label="Localização (andar/bloco)"
+          name="location"
+          defaultValue={room?.location ?? ''}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <Input label="Capacidade padrão" name="capacity" type="number" min={1} defaultValue={room?.capacity ?? 2} required />
-        <Input label="Capacidade máxima" name="capacityMax" type="number" min={1} defaultValue={room?.capacityMax ?? ''} />
-        <Input label="Adultos máx." name="adultsMax" type="number" min={1} defaultValue={room?.adultsMax ?? ''} />
-        <Input label="Crianças máx." name="childrenMax" type="number" min={0} defaultValue={room?.childrenMax ?? 0} />
+        <Input
+          label="Capacidade padrão"
+          name="capacity"
+          type="number"
+          min={1}
+          defaultValue={room?.capacity ?? 2}
+          required
+        />
+        <Input
+          label="Capacidade máxima"
+          name="capacityMax"
+          type="number"
+          min={1}
+          defaultValue={room?.capacityMax ?? ''}
+        />
+        <Input
+          label="Adultos máx."
+          name="adultsMax"
+          type="number"
+          min={1}
+          defaultValue={room?.adultsMax ?? ''}
+        />
+        <Input
+          label="Crianças máx."
+          name="childrenMax"
+          type="number"
+          min={0}
+          defaultValue={room?.childrenMax ?? 0}
+        />
       </div>
 
       <div>
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Configuração de camas</span>
+        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          Configuração de camas
+        </span>
         <div className="mt-1.5 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {BED_TYPES.map((b) => (
             <Input
@@ -128,27 +171,45 @@ export function RoomForm({
       </div>
 
       <div className="flex flex-wrap gap-5">
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" name="infantsAllowed" defaultChecked={room?.infantsAllowed ?? true} /> Aceita bebês
+        <label className="text-foreground flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="infantsAllowed"
+            defaultChecked={room?.infantsAllowed ?? true}
+          />{' '}
+          Aceita bebês
         </label>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" name="petsAllowed" defaultChecked={room?.petsAllowed ?? false} /> Aceita pets
+        <label className="text-foreground flex items-center gap-2 text-sm">
+          <input type="checkbox" name="petsAllowed" defaultChecked={room?.petsAllowed ?? false} />{' '}
+          Aceita pets
         </label>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" name="accessible" defaultChecked={room?.accessible ?? false} /> Acessível
+        <label className="text-foreground flex items-center gap-2 text-sm">
+          <input type="checkbox" name="accessible" defaultChecked={room?.accessible ?? false} />{' '}
+          Acessível
         </label>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" name="publicVisible" defaultChecked={room?.publicVisible ?? true} /> Visível na página pública
+        <label className="text-foreground flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="publicVisible"
+            defaultChecked={room?.publicVisible ?? true}
+          />{' '}
+          Visível na página pública
         </label>
       </div>
 
       {amenities.length > 0 && (
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Comodidades</span>
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            Comodidades
+          </span>
           <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-2">
             {amenities.map((a) => (
-              <label key={a.id} className="flex items-center gap-2 text-sm text-foreground">
-                <input type="checkbox" checked={selectedAmenities.includes(a.id)} onChange={() => toggleAmenity(a.id)} />
+              <label key={a.id} className="text-foreground flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedAmenities.includes(a.id)}
+                  onChange={() => toggleAmenity(a.id)}
+                />
                 {a.name}
               </label>
             ))}
@@ -157,20 +218,43 @@ export function RoomForm({
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="Diária base (R$)" name="basePrice" type="number" min={0} defaultValue={room?.basePrice ?? 0} required />
-        <Input label="Ordem de exibição" name="displayOrder" type="number" min={0} defaultValue={room?.displayOrder ?? 0} />
+        <Input
+          label="Diária base (R$)"
+          name="basePrice"
+          type="number"
+          min={0}
+          defaultValue={room?.basePrice ?? 0}
+          required
+        />
+        <Input
+          label="Ordem de exibição"
+          name="displayOrder"
+          type="number"
+          min={0}
+          defaultValue={room?.displayOrder ?? 0}
+        />
       </div>
 
-      <Textarea label="Descrição pública" name="description" rows={3} defaultValue={room?.description ?? ''} />
+      <Textarea
+        label="Descrição pública"
+        name="description"
+        rows={3}
+        defaultValue={room?.description ?? ''}
+      />
       <Textarea
         label="Descrição operacional (interna)"
         name="operationalDescription"
         rows={2}
         defaultValue={room?.operationalDescription ?? ''}
       />
-      <Textarea label="Observações internas" name="internalNotes" rows={2} defaultValue={room?.internalNotes ?? ''} />
+      <Textarea
+        label="Observações internas"
+        name="internalNotes"
+        rows={2}
+        defaultValue={room?.internalNotes ?? ''}
+      />
 
-      {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
+      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancelar

@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { Pousada } from '@/types'
 import { prepareCatalog, recommendPousadas } from '@/features/concierge'
+import { formatPrice } from '@/lib/format'
 
 type Mood = 'romance' | 'familia' | 'aventura' | 'descanso'
 type Budget = 'economico' | 'conforto' | 'premium'
@@ -391,7 +392,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                 </div>
                 <div className="mt-5 flex items-center justify-between gap-4">
                   <p className="text-foreground text-lg font-semibold">
-                    R$ {pousada.pricePerNight}
+                    {formatPrice(pousada.pricePerNight)}
                     <span className="text-muted-foreground text-xs font-normal"> / diária</span>
                   </p>
                   <span className="bg-primary text-primary-foreground group-hover:bg-accent inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold">

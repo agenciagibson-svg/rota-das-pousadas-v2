@@ -63,5 +63,8 @@ export const updatePousadaSettingsAction = createAction(pousadaSettingsSchema, a
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/configuracoes')
+  // Vitrine da pousada (fotos, descrição, regras) nas duas rotas públicas.
+  revalidatePath('/pousada/[slug]', 'page')
+  revalidatePath('/[slug]', 'page')
   return { ok: true as const }
 })

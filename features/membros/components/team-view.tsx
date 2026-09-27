@@ -31,8 +31,8 @@ export function TeamView({
           <Card className="p-5">
             <h2 className="text-foreground font-semibold">Convidar</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              A pessoa precisa já ter uma conta na plataforma. O envio automático de e-mail ainda
-              não está integrado — avise a pessoa diretamente após convidar.
+              A pessoa recebe um e-mail com o convite e aceita ao entrar no painel. Ela precisa ter
+              uma conta na plataforma com o mesmo e-mail.
             </p>
             <div className="mt-4">
               <InviteMemberForm />

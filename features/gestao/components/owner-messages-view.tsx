@@ -1,12 +1,15 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
 import {
   CalendarCheck,
-  Clock3,
+  Check,
+  Copy,
   Mail,
+  MessageCircleMore,
   MessageSquare,
   MessageSquareText,
-  Send,
   Users,
 } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
@@ -14,63 +17,141 @@ import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
-import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS } from '@/features/reservas'
+import { formatISODate, isEmail, plural, whatsappLink } from '@/lib/format'
 import type { OwnerPousadaSettings, OwnerReservation } from '../types'
 
-function fmtDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
+const DAY_MS = 86_400_000
+
+function daysBetween(fromISO: string, toISO: string): number {
+  return Math.round(
+    (new Date(`${toISO}T00:00:00Z`).getTime() - new Date(`${fromISO}T00:00:00Z`).getTime()) /
+      DAY_MS,
+  )
 }
 
-function messageSubject(reservation: OwnerReservation) {
-  if (reservation.status === 'pending') return 'Pagamento pendente'
-  if (reservation.status === 'confirmed') return 'Check-in próximo'
-  if (reservation.status === 'checked_in') return 'Acompanhamento da estadia'
-  if (reservation.status === 'checked_out') return 'Pedir avaliação'
+/** Assunto do contato pelo momento da reserva (não só pelo status). */
+function messageSubject(r: OwnerReservation, todayISO: string): string {
+  if (r.status === 'pending' || r.status === 'quote') return 'Pagamento pendente'
+  if (r.status === 'checked_in') return 'Hospedado agora'
+  if (r.status === 'checked_out') return 'Pedir avaliação'
+  if (r.status === 'confirmed') {
+    const d = daysBetween(todayISO, r.checkin)
+    if (d <= 0) return 'Chega hoje'
+    if (d === 1) return 'Chega amanhã'
+    if (d <= 7) return `Chega em ${d} dias`
+    return 'Reserva confirmada'
+  }
   return 'Reserva'
 }
 
-function quickMessage(reservation: OwnerReservation, settings: OwnerPousadaSettings | null) {
+function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] || name
+}
+
+function quickMessage(
+  r: OwnerReservation,
+  settings: OwnerPousadaSettings | null,
+  pousadaName: string,
+): string {
   const checkin = settings?.checkinTime || '14:00'
   const checkout = settings?.checkoutTime || '12:00'
+  const name = firstName(r.guestName)
+  const period = `${formatISODate(r.checkin)} a ${formatISODate(r.checkout)}`
 
-  if (reservation.status === 'pending') {
-    return `Olá, ${reservation.guestName}! Sua reserva ${reservation.code} está aguardando pagamento. Ela fica disponível até o prazo informado no painel. Se precisar de ajuda para concluir, estou à disposição.`
+  if (r.status === 'pending' || r.status === 'quote') {
+    return `Olá, ${name}! Aqui é da ${pousadaName}. Sua reserva ${r.code} (${period}) está aguardando pagamento. Se precisar de ajuda para concluir, é só responder esta mensagem.`
   }
-
-  if (reservation.status === 'confirmed') {
-    return `Olá, ${reservation.guestName}! Sua reserva ${reservation.code} está confirmada. O check-in começa às ${checkin} e o check-out é até ${checkout}. Qual horário previsto para sua chegada?`
+  if (r.status === 'confirmed') {
+    return `Olá, ${name}! Aqui é da ${pousadaName}. Sua reserva ${r.code} está confirmada para ${period}. O check-in começa às ${checkin} e o check-out é até ${checkout}. Qual o horário previsto da sua chegada?`
   }
-
-  if (reservation.status === 'checked_out') {
-    return `Olá, ${reservation.guestName}! Esperamos que tenha aproveitado a estadia. Sua avaliação ajuda muito nossa pousada e outros viajantes.`
+  if (r.status === 'checked_in') {
+    return `Olá, ${name}! Aqui é da ${pousadaName}. Está tudo certo com a sua estadia? Se precisar de qualquer coisa, estamos à disposição. Lembrando que o check-out é até ${checkout}.`
   }
-
-  return `Olá, ${reservation.guestName}! Estou entrando em contato sobre sua reserva ${reservation.code}, de ${fmtDate(reservation.checkin)} a ${fmtDate(reservation.checkout)}.`
+  if (r.status === 'checked_out') {
+    return `Olá, ${name}! Obrigado por se hospedar na ${pousadaName}. Esperamos que tenha aproveitado! Sua avaliação ajuda muito a gente e outros viajantes.`
+  }
+  return `Olá, ${name}! Aqui é da ${pousadaName}, sobre a sua reserva ${r.code} (${period}).`
 }
 
-/** O repositório usa um texto no lugar do e-mail vazio; só abre o mailto com endereço de verdade. */
-function hasEmail(value: string | null | undefined): boolean {
-  return !!value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+function CopyButton({ text, label = 'Copiar' }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false)
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      const area = document.createElement('textarea')
+      area.value = text
+      document.body.appendChild(area)
+      area.select()
+      document.execCommand('copy')
+      area.remove()
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void copy()}
+      className="border-input text-foreground hover:bg-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+    >
+      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      {copied ? 'Copiado!' : label}
+    </button>
+  )
 }
 
+/**
+ * Contato com os hóspedes: para cada reserva em andamento, uma mensagem pronta
+ * (pelo momento da reserva) e atalhos para enviar pelo WhatsApp ou e-mail.
+ * Não é um chat — as conversas acontecem no WhatsApp/e-mail da pousada.
+ */
 export function OwnerMessagesView({
   displayName,
   pousadaName,
   reservations,
   settings,
+  todayISO,
 }: {
   displayName: string
   pousadaName: string
   reservations: OwnerReservation[]
   settings: OwnerPousadaSettings | null
+  /** "Hoje" no fuso da pousada. */
+  todayISO: string
 }) {
-  const activeReservations = reservations.filter(
-    (reservation) => !['cancelled', 'no_show'].includes(reservation.status),
+  // Só quem ainda precisa de contato: pendentes, confirmadas e hospedados, e
+  // quem saiu nos últimos 14 dias (pedir avaliação). Canceladas ficam de fora.
+  const recentLimit = new Date(new Date(`${todayISO}T00:00:00Z`).getTime() - 14 * DAY_MS)
+    .toISOString()
+    .slice(0, 10)
+  const inbox = reservations
+    .filter((r) => {
+      if (r.status === 'cancelled' || r.status === 'no_show') return false
+      if (r.status === 'checked_out') return r.checkout >= recentLimit
+      return r.checkout >= todayISO || r.status === 'checked_in'
+    })
+    .sort((a, b) => a.checkin.localeCompare(b.checkin))
+
+  const pendingPayments = inbox.filter((r) => r.status === 'pending' || r.status === 'quote')
+  const arrivingSoon = inbox.filter(
+    (r) => r.status === 'confirmed' && daysBetween(todayISO, r.checkin) <= 7,
   )
-  const pendingPayments = reservations.filter((reservation) => reservation.status === 'pending')
-  const confirmed = reservations.filter((reservation) => reservation.status === 'confirmed')
+  const inHouse = inbox.filter((r) => r.status === 'checked_in')
+
+  const quickReplies = [
+    {
+      title: 'Horário de check-in',
+      text: `O check-in começa às ${settings?.checkinTime || '14:00'}.`,
+    },
+    {
+      title: 'Horário de check-out',
+      text: `O check-out é até ${settings?.checkoutTime || '12:00'}.`,
+    },
+    { title: 'Regras da casa', text: settings?.houseRules || '' },
+    { title: 'Política de cancelamento', text: settings?.cancellationPolicy || '' },
+  ]
 
   return (
     <DashboardShell
@@ -78,14 +159,10 @@ export function OwnerMessagesView({
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
       title="Mensagens"
-      subtitle="Converse com hóspedes e acompanhe solicitações."
+      subtitle="Mensagens prontas para cada hóspede — envie pelo WhatsApp ou e-mail com um clique."
       user={{ name: displayName, role: 'Proprietário' }}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <div className="text-muted-foreground text-sm">Conversas de reservas</div>
-          <div className="text-foreground mt-2 text-3xl font-semibold">{reservations.length}</div>
-        </Card>
         <Card className="p-5">
           <div className="text-muted-foreground text-sm">Pagamentos pendentes</div>
           <div className="text-foreground mt-2 text-3xl font-semibold">
@@ -93,83 +170,110 @@ export function OwnerMessagesView({
           </div>
         </Card>
         <Card className="p-5">
-          <div className="text-muted-foreground text-sm">Check-ins confirmados</div>
-          <div className="text-foreground mt-2 text-3xl font-semibold">{confirmed.length}</div>
+          <div className="text-muted-foreground text-sm">Chegadas nos próximos 7 dias</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{arrivingSoon.length}</div>
+        </Card>
+        <Card className="p-5">
+          <div className="text-muted-foreground text-sm">Hospedados agora</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{inHouse.length}</div>
         </Card>
       </div>
 
-      <div className="mt-5 grid gap-5 2xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="p-6">
+      <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-3">
-            <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-2xl">
+            <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl">
               <MessageSquare className="size-5" />
             </span>
             <div>
-              <h2 className="text-foreground font-semibold">Caixa de entrada</h2>
-              <p className="text-muted-foreground text-sm">Contatos organizados por reserva.</p>
+              <h2 className="text-foreground font-semibold">Hóspedes para contatar</h2>
+              <p className="text-muted-foreground text-sm">
+                Reservas em andamento, da chegada mais próxima para a mais distante.
+              </p>
             </div>
           </div>
 
-          {reservations.length === 0 ? (
+          {inbox.length === 0 ? (
             <EmptyState
               className="mt-6"
               icon={MessageSquare}
-              title="Nenhuma conversa ainda"
-              description="Quando houver reservas, os contatos dos hóspedes aparecerão aqui."
+              title="Ninguém para contatar agora"
+              description="Quando houver reservas pendentes, confirmadas ou hóspedes na casa, eles aparecem aqui com a mensagem pronta."
             />
           ) : (
             <div className="mt-6 space-y-3">
-              {reservations.map((reservation) => {
-                const status = BOOKING_STATUS[reservation.status]
+              {inbox.map((r) => {
+                const status = BOOKING_STATUS[r.status]
+                const message = quickMessage(r, settings, pousadaName)
+                const wa = whatsappLink(r.guestPhone)
+                const hasEmail = isEmail(r.guestEmail)
                 return (
-                  <div key={reservation.id} className="border-border rounded-2xl border p-4">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-foreground font-serif text-lg font-semibold">
-                            {reservation.guestName}
-                          </h3>
-                          <Badge variant={status.variant} size="sm">
-                            {status.label}
-                          </Badge>
-                          <span className="bg-secondary text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium">
-                            {messageSubject(reservation)}
-                          </span>
-                        </div>
-                        <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Mail className="size-3.5" />
-                            {reservation.guestEmail}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <CalendarCheck className="size-3.5" />
-                            {fmtDate(reservation.checkin)} - {fmtDate(reservation.checkout)}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Users className="size-3.5" />
-                            {reservation.guests} hóspede(s)
-                          </span>
-                          <span>{reservation.code}</span>
-                        </div>
-                      </div>
-
-                      {hasEmail(reservation.guestEmail) ? (
-                        <a
-                          href={`mailto:${reservation.guestEmail}?subject=${encodeURIComponent(
-                            `Reserva ${reservation.code} - ${pousadaName}`,
-                          )}&body=${encodeURIComponent(quickMessage(reservation, settings))}`}
-                          className={buttonVariants({ size: 'sm' })}
-                        >
-                          <Send className="size-3.5" />
-                          Enviar e-mail
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">Sem e-mail cadastrado</span>
-                      )}
+                  <div key={r.id} className="border-border rounded-2xl border p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/dashboard/reservas/${r.id}`}
+                        className="text-foreground font-serif text-lg font-semibold hover:underline"
+                      >
+                        {r.guestName}
+                      </Link>
+                      <Badge variant={status.variant} size="sm">
+                        {status.label}
+                      </Badge>
+                      <span className="bg-secondary text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
+                        {messageSubject(r, todayISO)}
+                      </span>
+                    </div>
+                    <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                        <CalendarCheck className="size-3.5 shrink-0" />
+                        {formatISODate(r.checkin)} → {formatISODate(r.checkout)}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                        <Users className="size-3.5 shrink-0" />
+                        {plural(r.guests, 'hóspede', 'hóspedes')}
+                      </span>
+                      <span>{r.code}</span>
                     </div>
 
-                    <div className="bg-secondary text-foreground mt-4 rounded-2xl p-3 text-sm leading-relaxed">
-                      {quickMessage(reservation, settings)}
+                    <div className="bg-secondary text-foreground mt-3 rounded-2xl p-3 text-sm leading-relaxed">
+                      {message}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {wa && (
+                        <a
+                          href={`${wa}?text=${encodeURIComponent(message)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                        >
+                          <MessageCircleMore className="size-3.5" />
+                          Enviar no WhatsApp
+                        </a>
+                      )}
+                      {hasEmail && (
+                        <a
+                          href={`mailto:${r.guestEmail}?subject=${encodeURIComponent(
+                            `Reserva ${r.code} - ${pousadaName}`,
+                          )}&body=${encodeURIComponent(message)}`}
+                          className="border-input text-foreground hover:bg-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                        >
+                          <Mail className="size-3.5" />
+                          Enviar por e-mail
+                        </a>
+                      )}
+                      <CopyButton text={message} label="Copiar mensagem" />
+                      {!wa && !hasEmail && (
+                        <span className="text-muted-foreground self-center text-xs">
+                          Sem telefone nem e-mail —{' '}
+                          <Link
+                            href={`/dashboard/reservas/${r.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            ver reserva
+                          </Link>
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
@@ -178,55 +282,39 @@ export function OwnerMessagesView({
           )}
         </Card>
 
-        <div className="space-y-5">
-          <Card className="p-6">
-            <div className="text-foreground flex items-center gap-2 font-semibold">
-              <MessageSquareText className="text-primary size-4" />
-              Respostas rápidas
-            </div>
-            <div className="mt-4 space-y-3">
-              {[
-                {
-                  title: 'Check-in',
-                  text: `O check-in começa às ${settings?.checkinTime || '14:00'}.`,
-                },
-                {
-                  title: 'Check-out',
-                  text: `O check-out é até ${settings?.checkoutTime || '12:00'}.`,
-                },
-                {
-                  title: 'Regras da casa',
-                  text: settings?.houseRules || 'As regras da casa ainda não foram cadastradas.',
-                },
-                {
-                  title: 'Cancelamento',
-                  text:
-                    settings?.cancellationPolicy ||
-                    'A política de cancelamento ainda não foi cadastrada.',
-                },
-              ].map((item) => (
-                <div key={item.title} className="border-border rounded-2xl border p-3">
-                  <div className="text-foreground text-sm font-semibold">{item.title}</div>
-                  <p className="text-muted-foreground mt-1 text-sm">{item.text}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="text-foreground flex items-center gap-2 font-semibold">
-              <Clock3 className="text-primary size-4" />
-              Prioridade
-            </div>
-            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-              {pendingPayments.length > 0
-                ? 'Comece pelos hóspedes com pagamento pendente para evitar expiração automática.'
-                : activeReservations.length > 0
-                  ? 'Mantenha contato com os próximos hóspedes antes do check-in.'
-                  : 'Quando novas reservas chegarem, elas aparecerão aqui como conversas.'}
-            </p>
-          </Card>
-        </div>
+        <Card className="p-4 sm:p-6">
+          <div className="text-foreground flex items-center gap-2 font-semibold">
+            <MessageSquareText className="text-primary size-4" />
+            Respostas rápidas
+          </div>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Textos da sua pousada para copiar e colar nas conversas.
+          </p>
+          <div className="mt-4 space-y-3">
+            {quickReplies.map((item) => (
+              <div key={item.title} className="border-border rounded-2xl border p-3">
+                <div className="text-foreground text-sm font-semibold">{item.title}</div>
+                {item.text ? (
+                  <>
+                    <p className="text-muted-foreground mt-1 text-sm whitespace-pre-line">
+                      {item.text}
+                    </p>
+                    <div className="mt-2">
+                      <CopyButton text={item.text} />
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Ainda não cadastrado.{' '}
+                    <Link href="/dashboard/configuracoes" className="text-primary hover:underline">
+                      Cadastrar em Configurações
+                    </Link>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </DashboardShell>
   )

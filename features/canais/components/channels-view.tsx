@@ -15,6 +15,7 @@ import { AcomodacoesTabs } from '@/features/acomodacoes/components/acomodacoes-t
 import { removeChannelAction, saveChannelAction } from '../actions'
 import { CHANNEL_PROVIDER_LABEL, type ChannelCalendar, type ChannelProvider } from '../types'
 import type { ManagedRoom } from '@/features/acomodacoes/types'
+import { keepValuesOnSubmit } from '@/lib/forms'
 
 const PROVIDERS: ChannelProvider[] = ['airbnb', 'booking', 'outro']
 
@@ -94,7 +95,7 @@ function NewChannelForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () =>
   }
 
   return (
-    <form action={onSubmit} className="space-y-4">
+    <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
       <label className="flex flex-col gap-1.5">
         <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           Acomodação

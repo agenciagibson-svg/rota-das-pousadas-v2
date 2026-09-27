@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { DestinationForm } from './destination-form'
 import { deleteDestinationAction } from '../actions'
 import type { AdminDestinationRow } from '../types'
+import { formatPrice } from '@/lib/format'
 
 const SEASON_LABEL: Record<string, string> = {
   verao: 'Verão',
@@ -102,7 +103,7 @@ export function DestinationsManager({
                   <span className="flex items-center gap-1">
                     <Star className="fill-gold text-gold size-3" /> {d.rating.toFixed(1)}
                   </span>
-                  <span>A partir de R$ {d.priceFrom}</span>
+                  <span>A partir de {formatPrice(d.priceFrom)}</span>
                   {d.season.length > 0 && (
                     <span>{d.season.map((s) => SEASON_LABEL[s]).join(', ')}</span>
                   )}

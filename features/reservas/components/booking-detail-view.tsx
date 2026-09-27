@@ -10,25 +10,20 @@ import { isFinalStatus } from '../status'
 import { BookingEditPanel, BookingCompanionsPanel } from './booking-edit-panel'
 import type { BookingDetail } from '../types'
 import {
+  formatBRL,
+  formatDateTime,
+  formatISODate,
+  isEmail,
+  plural,
+  whatsappLink,
+} from '@/lib/format'
+import {
   ProofReviewPanel,
   type ProofForReview,
 } from '@/features/pagamentos/components/proof-review-panel'
 
-function fmtDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function fmtDateTime(iso: string | null): string {
-  if (!iso) return '—'
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
+const fmtDate = formatISODate
+const fmtDateTime = formatDateTime
 
 export function BookingDetailView({
   displayName,
@@ -99,7 +94,7 @@ export function BookingDetailView({
           </Card>
         )}
 
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
           <Card className="p-6">
             <h2 className="text-foreground font-semibold">Hóspede responsável</h2>
             <div className="text-muted-foreground mt-3 space-y-1 text-sm">
@@ -111,8 +106,44 @@ export function BookingDetailView({
                   {booking.guestName}
                 </Link>
               </p>
-              <p>{booking.guestEmail ?? 'E-mail não informado'}</p>
-              <p>{booking.guestPhone ?? 'Telefone não informado'}</p>
+              {isEmail(booking.guestEmail) ? (
+                <p className="truncate">
+                  <a
+                    href={`mailto:${booking.guestEmail}`}
+                    className="hover:text-foreground hover:underline"
+                  >
+                    {booking.guestEmail}
+                  </a>
+                </p>
+              ) : (
+                <p>E-mail não informado</p>
+              )}
+              {booking.guestPhone ? (
+                <p>
+                  {whatsappLink(booking.guestPhone) ? (
+                    <a
+                      href={whatsappLink(booking.guestPhone)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground hover:underline"
+                    >
+                      {booking.guestPhone} (WhatsApp)
+                    </a>
+                  ) : (
+                    booking.guestPhone
+                  )}
+                </p>
+              ) : (
+                <p>
+                  Telefone não informado —{' '}
+                  <Link
+                    href={`/dashboard/hospedes/${booking.responsibleGuestId}`}
+                    className="text-primary hover:underline"
+                  >
+                    completar ficha
+                  </Link>
+                </p>
+              )}
             </div>
           </Card>
 
@@ -121,11 +152,13 @@ export function BookingDetailView({
             <div className="text-muted-foreground mt-3 space-y-1 text-sm">
               <p className="text-foreground">{booking.roomName}</p>
               <p>
-                {fmtDate(booking.checkin)} – {fmtDate(booking.checkout)} · {booking.nights}{' '}
-                {booking.nights === 1 ? 'noite' : 'noites'}
+                {fmtDate(booking.checkin)} → {fmtDate(booking.checkout)} ·{' '}
+                {plural(booking.nights, 'noite', 'noites')}
               </p>
               <p>
-                {booking.adults} adultos, {booking.children} crianças, {booking.infants} bebês
+                {plural(booking.adults, 'adulto', 'adultos')}
+                {booking.children > 0 ? `, ${plural(booking.children, 'criança', 'crianças')}` : ''}
+                {booking.infants > 0 ? `, ${plural(booking.infants, 'bebê', 'bebês')}` : ''}
                 {booking.pets ? ' · com pet' : ''}
               </p>
             </div>
@@ -136,51 +169,54 @@ export function BookingDetailView({
             <div className="mt-3 space-y-1.5 text-sm">
               <div className="text-muted-foreground flex justify-between">
                 <span>Estadia</span>
-                <span>R$ {booking.subtotal}</span>
+                <span>{formatBRL(booking.subtotal)}</span>
               </div>
               {/* Reservas anteriores a 13/09/2026 guardam a taxa de serviço que foi cobrada; novas nascem com fee = 0. */}
               {booking.fee > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Taxa</span>
-                  <span>R$ {booking.fee}</span>
+                  <span>{formatBRL(booking.fee)}</span>
                 </div>
               )}
               {booking.discount > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Desconto</span>
-                  <span>−R$ {booking.discount}</span>
+                  <span>−{formatBRL(booking.discount)}</span>
                 </div>
               )}
               {booking.surcharge > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Acréscimo</span>
-                  <span>R$ {booking.surcharge}</span>
+                  <span>{formatBRL(booking.surcharge)}</span>
                 </div>
               )}
               {booking.servicesAmount > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Serviços</span>
-                  <span>R$ {booking.servicesAmount}</span>
+                  <span>{formatBRL(booking.servicesAmount)}</span>
                 </div>
               )}
               <div className="border-border text-foreground flex justify-between border-t pt-1.5 font-semibold">
                 <span>Total</span>
-                <span>R$ {booking.total}</span>
+                <span>{formatBRL(booking.total)}</span>
               </div>
               <div className="text-muted-foreground flex justify-between">
                 <span>Recebido</span>
-                <span>R$ {booking.amountReceived}</span>
+                <span>{formatBRL(booking.amountReceived)}</span>
               </div>
               <div className="text-foreground flex justify-between font-semibold">
-                <span>Saldo previsto</span>
-                <span>R$ {booking.balanceDue}</span>
+                <span>{booking.balanceDue > 0 ? 'Falta receber' : 'Saldo'}</span>
+                <span className={booking.balanceDue > 0 ? 'text-amber-700' : 'text-emerald-700'}>
+                  {booking.balanceDue > 0 ? formatBRL(booking.balanceDue) : 'Pago ✓'}
+                </span>
               </div>
             </div>
-            {booking.paymentDueAt && (
-              <p className="text-muted-foreground mt-3 text-xs">
-                Prazo de pagamento: {fmtDateTime(booking.paymentDueAt)}
-              </p>
-            )}
+            {booking.paymentDueAt &&
+              (booking.status === 'pending' || booking.status === 'quote') && (
+                <p className="text-muted-foreground mt-3 text-xs">
+                  Prazo de pagamento: {fmtDateTime(booking.paymentDueAt)}
+                </p>
+              )}
           </Card>
 
           <Card className="p-6">

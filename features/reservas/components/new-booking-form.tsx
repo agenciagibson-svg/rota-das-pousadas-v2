@@ -11,6 +11,8 @@ import { calculateBookingPrice } from '../pricing'
 import type { ManagedRoom, AvailabilityResult } from '@/features/acomodacoes/types'
 import { ORIGIN_LABEL } from '@/features/gestao/components/origin-labels'
 import type { BookingOrigin } from '../types'
+import { keepValuesOnSubmit } from '@/lib/forms'
+import { formatBRL } from '@/lib/format'
 
 const inputClass =
   'w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring'
@@ -18,7 +20,7 @@ const inputClass =
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground mb-1 block text-xs font-medium">{label}</span>
       {children}
     </label>
   )
@@ -48,9 +50,14 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
   const [surcharge, setSurcharge] = useState(0)
   const [servicesAmount, setServicesAmount] = useState(0)
 
-  const price = checkin && checkout && nightlyRate > 0
-    ? calculateBookingPrice(nightlyRate, checkin, checkout, { discount, surcharge, servicesAmount })
-    : null
+  const price =
+    checkin && checkout && nightlyRate > 0
+      ? calculateBookingPrice(nightlyRate, checkin, checkout, {
+          discount,
+          surcharge,
+          servicesAmount,
+        })
+      : null
 
   function runAvailabilityCheck() {
     setError(null)
@@ -106,7 +113,8 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
         expectedArrivalTime: String(formData.get('expectedArrivalTime') || ''),
         specialRequests: String(formData.get('specialRequests') || ''),
         internalNotes: String(formData.get('internalNotes') || ''),
-        initialStatus: String(formData.get('initialStatus') || 'quote') as 'quote' | 'pending' | 'confirmed',
+        initialStatus: String(formData.get('initialStatus') || 'quote') as
+          'quote' | 'pending' | 'confirmed',
       })
       if (!result.ok) {
         setError(result.error)
@@ -120,25 +128,53 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
   return (
     <div className="space-y-5">
       <Card className="p-5">
-        <h2 className="font-semibold text-foreground">1. Período e hóspedes</h2>
+        <h2 className="text-foreground font-semibold">1. Período e hóspedes</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-5">
           <Field label="Check-in">
-            <input type="date" value={checkin} onChange={(e) => setCheckin(e.target.value)} className={inputClass} />
+            <input
+              type="date"
+              value={checkin}
+              onChange={(e) => setCheckin(e.target.value)}
+              className={inputClass}
+            />
           </Field>
           <Field label="Check-out">
-            <input type="date" value={checkout} onChange={(e) => setCheckout(e.target.value)} className={inputClass} />
+            <input
+              type="date"
+              value={checkout}
+              onChange={(e) => setCheckout(e.target.value)}
+              className={inputClass}
+            />
           </Field>
           <Field label="Adultos">
-            <input type="number" min={1} value={adults} onChange={(e) => setAdults(Number(e.target.value))} className={inputClass} />
+            <input
+              type="number"
+              min={1}
+              value={adults}
+              onChange={(e) => setAdults(Number(e.target.value))}
+              className={inputClass}
+            />
           </Field>
           <Field label="Crianças">
-            <input type="number" min={0} value={children} onChange={(e) => setChildren(Number(e.target.value))} className={inputClass} />
+            <input
+              type="number"
+              min={0}
+              value={children}
+              onChange={(e) => setChildren(Number(e.target.value))}
+              className={inputClass}
+            />
           </Field>
           <Field label="Bebês">
-            <input type="number" min={0} value={infants} onChange={(e) => setInfants(Number(e.target.value))} className={inputClass} />
+            <input
+              type="number"
+              min={0}
+              value={infants}
+              onChange={(e) => setInfants(Number(e.target.value))}
+              className={inputClass}
+            />
           </Field>
         </div>
-        <label className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="text-muted-foreground mt-3 inline-flex items-center gap-2 text-sm">
           <input type="checkbox" checked={pets} onChange={(e) => setPets(e.target.checked)} />
           Hóspede leva pet
         </label>
@@ -152,9 +188,11 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
 
       {results && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground">2. Escolha a acomodação</h2>
+          <h2 className="text-foreground font-semibold">2. Escolha a acomodação</h2>
           <div className="mt-4 space-y-2">
-            {results.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma acomodação cadastrada.</p>}
+            {results.length === 0 && (
+              <p className="text-muted-foreground text-sm">Nenhuma acomodação cadastrada.</p>
+            )}
             {results.map((r) => (
               <button
                 key={r.roomId}
@@ -170,14 +208,16 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
                 }`}
               >
                 <span>
-                  <span className="font-medium text-foreground">{r.roomName}</span>
-                  {r.categoryName && <span className="text-muted-foreground"> · {r.categoryName}</span>}
+                  <span className="text-foreground font-medium">{r.roomName}</span>
+                  {r.categoryName && (
+                    <span className="text-muted-foreground"> · {r.categoryName}</span>
+                  )}
                   <span className="text-muted-foreground"> · até {r.capacity} hóspedes</span>
                 </span>
                 {r.available ? (
-                  <CheckCircle2 className="size-4 text-primary" />
+                  <CheckCircle2 className="text-primary size-4" />
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                  <span className="text-destructive inline-flex items-center gap-1 text-xs">
                     <XCircle className="size-3.5" />
                     Indisponível
                   </span>
@@ -189,9 +229,9 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
       )}
 
       {selectedRoom && (
-        <form action={submit} className="space-y-5">
+        <form onSubmit={keepValuesOnSubmit(submit)} className="space-y-5">
           <Card className="p-5">
-            <h2 className="font-semibold text-foreground">3. Hóspede responsável</h2>
+            <h2 className="text-foreground font-semibold">3. Hóspede responsável</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <Field label="Nome completo">
                 <input name="guestFullName" required className={inputClass} />
@@ -203,48 +243,96 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
                 <input name="guestPhone" className={inputClass} />
               </Field>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Se já existir um hóspede desta pousada com o mesmo e-mail, telefone ou documento, o cadastro é reaproveitado automaticamente.
+            <p className="text-muted-foreground mt-2 text-xs">
+              Se já existir um hóspede desta pousada com o mesmo e-mail, telefone ou documento, o
+              cadastro é reaproveitado automaticamente.
             </p>
           </Card>
 
           <Card className="p-5">
-            <h2 className="font-semibold text-foreground">4. Valores</h2>
+            <h2 className="text-foreground font-semibold">4. Valores</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-4">
               <Field label="Diária (R$)">
-                <input type="number" min={0} value={nightlyRate} onChange={(e) => setNightlyRate(Number(e.target.value))} className={inputClass} />
+                <input
+                  type="number"
+                  min={0}
+                  value={nightlyRate}
+                  onChange={(e) => setNightlyRate(Number(e.target.value))}
+                  className={inputClass}
+                />
               </Field>
               <Field label="Desconto (R$)">
-                <input type="number" min={0} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} className={inputClass} />
+                <input
+                  type="number"
+                  min={0}
+                  value={discount}
+                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  className={inputClass}
+                />
               </Field>
               <Field label="Acréscimo (R$)">
-                <input type="number" min={0} value={surcharge} onChange={(e) => setSurcharge(Number(e.target.value))} className={inputClass} />
+                <input
+                  type="number"
+                  min={0}
+                  value={surcharge}
+                  onChange={(e) => setSurcharge(Number(e.target.value))}
+                  className={inputClass}
+                />
               </Field>
               <Field label="Serviços previstos (R$)">
-                <input type="number" min={0} value={servicesAmount} onChange={(e) => setServicesAmount(Number(e.target.value))} className={inputClass} />
+                <input
+                  type="number"
+                  min={0}
+                  value={servicesAmount}
+                  onChange={(e) => setServicesAmount(Number(e.target.value))}
+                  className={inputClass}
+                />
               </Field>
             </div>
             {price && (
-              <div className="mt-4 space-y-1.5 rounded-2xl border border-border bg-secondary/40 p-4 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>R$ {nightlyRate} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}</span>
-                  <span>R$ {price.subtotal}</span>
+              <div className="border-border bg-secondary/40 mt-4 space-y-1.5 rounded-2xl border p-4 text-sm">
+                <div className="text-muted-foreground flex justify-between">
+                  <span>
+                    {formatBRL(nightlyRate)} × {price.nights}{' '}
+                    {price.nights === 1 ? 'noite' : 'noites'}
+                  </span>
+                  <span>{formatBRL(price.subtotal)}</span>
                 </div>
-                {discount > 0 && <div className="flex justify-between text-muted-foreground"><span>Desconto</span><span>−R$ {discount}</span></div>}
-                {surcharge > 0 && <div className="flex justify-between text-muted-foreground"><span>Acréscimo</span><span>R$ {surcharge}</span></div>}
-                {servicesAmount > 0 && <div className="flex justify-between text-muted-foreground"><span>Serviços</span><span>R$ {servicesAmount}</span></div>}
-                <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground"><span>Total</span><span>R$ {price.total}</span></div>
+                {discount > 0 && (
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Desconto</span>
+                    <span>−{formatBRL(discount)}</span>
+                  </div>
+                )}
+                {surcharge > 0 && (
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Acréscimo</span>
+                    <span>{formatBRL(surcharge)}</span>
+                  </div>
+                )}
+                {servicesAmount > 0 && (
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Serviços</span>
+                    <span>{formatBRL(servicesAmount)}</span>
+                  </div>
+                )}
+                <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
+                  <span>Total</span>
+                  <span>{formatBRL(price.total)}</span>
+                </div>
               </div>
             )}
           </Card>
 
           <Card className="p-5">
-            <h2 className="font-semibold text-foreground">5. Origem e observações</h2>
+            <h2 className="text-foreground font-semibold">5. Origem e observações</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <Field label="Origem">
                 <select name="origin" defaultValue="balcao" className={inputClass}>
                   {ORIGINS.map((o) => (
-                    <option key={o} value={o}>{ORIGIN_LABEL[o]}</option>
+                    <option key={o} value={o}>
+                      {ORIGIN_LABEL[o]}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -269,7 +357,7 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
           </Card>
 
           <Card className="p-5">
-            <h2 className="font-semibold text-foreground">6. Revisão e confirmação</h2>
+            <h2 className="text-foreground font-semibold">6. Revisão e confirmação</h2>
             <Field label="Salvar como">
               <select name="initialStatus" defaultValue="quote" className={inputClass}>
                 <option value="quote">Cotação</option>
@@ -277,7 +365,7 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
                 <option value="confirmed">Confirmada</option>
               </select>
             </Field>
-            {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+            {error && <p className="text-destructive mt-3 text-sm font-medium">{error}</p>}
             <div className="mt-4">
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Criando…' : 'Criar reserva'}
@@ -287,7 +375,7 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
         </form>
       )}
 
-      {!selectedRoom && error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      {!selectedRoom && error && <p className="text-destructive text-sm font-medium">{error}</p>}
     </div>
   )
 }

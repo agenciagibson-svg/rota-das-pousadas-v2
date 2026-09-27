@@ -10,15 +10,30 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { AcomodacoesTabs } from './acomodacoes-tabs'
 import { createCategoryAction, updateCategoryAction, setCategoryStatusAction } from '../actions'
 import type { AccommodationCategory } from '../types'
 import type { ActionResult } from '@/types'
+import { keepValuesOnSubmit } from '@/lib/forms'
+import { formatPrice } from '@/lib/format'
 
-function CategoryForm({ category, onDone }: { category?: AccommodationCategory; onDone: () => void }) {
+function CategoryForm({
+  category,
+  onDone,
+}: {
+  category?: AccommodationCategory
+  onDone: () => void
+}) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -33,10 +48,14 @@ function CategoryForm({ category, onDone }: { category?: AccommodationCategory; 
       defaultCapacity: Number(formData.get('defaultCapacity') ?? 2),
       maxCapacity: formData.get('maxCapacity') ? Number(formData.get('maxCapacity')) : undefined,
       defaultBedCount: Number(formData.get('defaultBedCount') ?? 1),
-      basePriceSuggestion: formData.get('basePriceSuggestion') ? Number(formData.get('basePriceSuggestion')) : undefined,
+      basePriceSuggestion: formData.get('basePriceSuggestion')
+        ? Number(formData.get('basePriceSuggestion'))
+        : undefined,
       displayOrder: Number(formData.get('displayOrder') ?? 0),
     }
-    const result = category ? await updateCategoryAction({ ...payload, id: category.id }) : await createCategoryAction(payload)
+    const result = category
+      ? await updateCategoryAction({ ...payload, id: category.id })
+      : await createCategoryAction(payload)
     setPending(false)
     if (!result.ok) {
       setError(result.error)
@@ -47,13 +66,31 @@ function CategoryForm({ category, onDone }: { category?: AccommodationCategory; 
   }
 
   return (
-    <form action={onSubmit} className="space-y-4">
+    <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label="Nome" name="name" defaultValue={category?.name} required />
         <Input label="Código" name="code" defaultValue={category?.code ?? ''} />
-        <Input label="Capacidade padrão" name="defaultCapacity" type="number" min={1} defaultValue={category?.defaultCapacity ?? 2} />
-        <Input label="Capacidade máxima" name="maxCapacity" type="number" min={1} defaultValue={category?.maxCapacity ?? ''} />
-        <Input label="Camas padrão" name="defaultBedCount" type="number" min={1} defaultValue={category?.defaultBedCount ?? 1} />
+        <Input
+          label="Capacidade padrão"
+          name="defaultCapacity"
+          type="number"
+          min={1}
+          defaultValue={category?.defaultCapacity ?? 2}
+        />
+        <Input
+          label="Capacidade máxima"
+          name="maxCapacity"
+          type="number"
+          min={1}
+          defaultValue={category?.maxCapacity ?? ''}
+        />
+        <Input
+          label="Camas padrão"
+          name="defaultBedCount"
+          type="number"
+          min={1}
+          defaultValue={category?.defaultBedCount ?? 1}
+        />
         <Input
           label="Valor-base sugerido (R$)"
           name="basePriceSuggestion"
@@ -62,8 +99,13 @@ function CategoryForm({ category, onDone }: { category?: AccommodationCategory; 
           defaultValue={category?.basePriceSuggestion ?? ''}
         />
       </div>
-      <Textarea label="Descrição" name="description" rows={2} defaultValue={category?.description ?? ''} />
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      <Textarea
+        label="Descrição"
+        name="description"
+        rows={2}
+        defaultValue={category?.description ?? ''}
+      />
+      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancelar
@@ -118,7 +160,7 @@ export function CategoriesView({
 
       <div className="mt-5 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>{error && <p className="text-sm font-medium text-destructive">{error}</p>}</div>
+          <div>{error && <p className="text-destructive text-sm font-medium">{error}</p>}</div>
           {canManage && (
             <Button onClick={() => setEditing('new')}>
               <Plus className="size-4" /> Nova categoria
@@ -128,7 +170,11 @@ export function CategoriesView({
 
         <Card className="p-4">
           {categories.length === 0 ? (
-            <EmptyState icon={Layers} title="Nenhuma categoria" description="Crie a primeira categoria de acomodação." />
+            <EmptyState
+              icon={Layers}
+              title="Nenhuma categoria"
+              description="Crie a primeira categoria de acomodação."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -145,18 +191,24 @@ export function CategoriesView({
                 {categories.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>
-                      <button onClick={() => canManage && setEditing(c)} className="text-left font-medium text-foreground hover:underline">
+                      <button
+                        onClick={() => canManage && setEditing(c)}
+                        className="text-foreground text-left font-medium hover:underline"
+                      >
                         {c.name}
                       </button>
-                      {c.code && <div className="text-xs text-muted-foreground">{c.code}</div>}
+                      {c.code && <div className="text-muted-foreground text-xs">{c.code}</div>}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{c.roomCount}</TableCell>
                     <TableCell className="text-muted-foreground">{c.defaultCapacity}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {c.basePriceSuggestion != null ? `R$ ${c.basePriceSuggestion}` : '—'}
+                      {c.basePriceSuggestion != null ? formatPrice(c.basePriceSuggestion) : '—'}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={c.status === 'active' ? 'primarySoft' : 'secondary'} size="sm">
+                      <Badge
+                        variant={c.status === 'active' ? 'primarySoft' : 'secondary'}
+                        size="sm"
+                      >
                         {c.status === 'active' ? 'Ativa' : 'Inativa'}
                       </Badge>
                     </TableCell>
@@ -166,8 +218,17 @@ export function CategoriesView({
                           variant="ghost"
                           size="icon-sm"
                           disabled={pending}
-                          aria-label={c.status === 'active' ? `Inativar ${c.name}` : `Reativar ${c.name}`}
-                          onClick={() => run(setCategoryStatusAction({ id: c.id, status: c.status === 'active' ? 'inactive' : 'active' }))}
+                          aria-label={
+                            c.status === 'active' ? `Inativar ${c.name}` : `Reativar ${c.name}`
+                          }
+                          onClick={() =>
+                            run(
+                              setCategoryStatusAction({
+                                id: c.id,
+                                status: c.status === 'active' ? 'inactive' : 'active',
+                              }),
+                            )
+                          }
                         >
                           {c.status === 'active' ? <Ban /> : <RotateCcw />}
                         </Button>
@@ -186,7 +247,12 @@ export function CategoriesView({
         onClose={() => setEditing(null)}
         title={editing === 'new' ? 'Nova categoria' : `Editar ${editing ? editing.name : ''}`}
       >
-        {editing !== null && <CategoryForm category={editing === 'new' ? undefined : editing} onDone={() => setEditing(null)} />}
+        {editing !== null && (
+          <CategoryForm
+            category={editing === 'new' ? undefined : editing}
+            onDone={() => setEditing(null)}
+          />
+        )}
       </Dialog>
     </DashboardShell>
   )

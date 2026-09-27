@@ -1,7 +1,11 @@
 import Link from 'next/link'
 import { GUEST_TYPE_LABEL } from './guest-type-labels'
 import { PrintButton } from './print-button'
-import { fnrhDate as fmtDate, fnrhDocument as fmtDoc, fnrhCountryLabel as countryLabel } from '../fnrh-format'
+import {
+  fnrhDate as fmtDate,
+  fnrhDocument as fmtDoc,
+  fnrhCountryLabel as countryLabel,
+} from '../fnrh-format'
 import type { FnrhData } from '../types'
 
 /**
@@ -18,13 +22,16 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <Link href={`/dashboard/reservas/${bookingId}`} className="text-sm text-muted-foreground hover:underline">
+        <Link
+          href={`/dashboard/reservas/${bookingId}`}
+          className="text-muted-foreground text-sm hover:underline"
+        >
           ← Voltar para a reserva
         </Link>
         <PrintButton />
       </div>
 
-      <div className="space-y-6 rounded-2xl border border-border bg-white p-8 text-neutral-900 print:rounded-none print:border-0 print:p-0">
+      <div className="border-border space-y-6 rounded-2xl border bg-white p-8 text-neutral-900 print:rounded-none print:border-0 print:p-0">
         <header className="border-b border-neutral-300 pb-4 text-center">
           <p className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
             Ficha Nacional de Registro de Hóspedes — FNRH
@@ -34,7 +41,9 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
             {[
               pousada.taxId && `CNPJ/CPF: ${pousada.taxId}`,
               pousada.address,
-              pousada.city && pousada.state ? `${pousada.city}/${pousada.state}` : pousada.city || pousada.state,
+              pousada.city && pousada.state
+                ? `${pousada.city}/${pousada.state}`
+                : pousada.city || pousada.state,
               pousada.cep,
             ]
               .filter(Boolean)
@@ -72,16 +81,22 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
           <div className="col-span-3">
             <span className="text-neutral-500">Hóspedes</span>
             <p className="font-medium">
-              {totalGuests} ({booking.adults} adultos, {booking.children} crianças, {booking.infants} bebês)
+              {totalGuests} ({booking.adults} adultos, {booking.children} crianças,{' '}
+              {booking.infants} bebês)
             </p>
           </div>
         </section>
 
         <section>
-          <h2 className="mb-2 text-sm font-semibold tracking-wide text-neutral-700 uppercase">Hóspede responsável</h2>
+          <h2 className="mb-2 text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+            Hóspede responsável
+          </h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
             <Field label="Nome completo" value={responsible.fullName} span={3} />
-            <Field label="Documento" value={fmtDoc(responsible.documentType, responsible.documentNumber)} />
+            <Field
+              label="Documento"
+              value={fmtDoc(responsible.documentType, responsible.documentNumber)}
+            />
             <Field label="Data de nascimento" value={fmtDate(responsible.birthDate)} />
             <Field label="Nacionalidade" value={responsible.nationality} />
             <Field label="Profissão" />
@@ -101,7 +116,9 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
 
         {companions.length > 0 && (
           <section>
-            <h2 className="mb-2 text-sm font-semibold tracking-wide text-neutral-700 uppercase">Acompanhantes</h2>
+            <h2 className="mb-2 text-sm font-semibold tracking-wide text-neutral-700 uppercase">
+              Acompanhantes
+            </h2>
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-neutral-300 text-left text-xs text-neutral-500">
@@ -116,7 +133,9 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
                   <tr key={i} className="border-b border-neutral-200">
                     <td className="py-1.5 pr-2">{c.fullName}</td>
                     <td className="py-1.5 pr-2">{GUEST_TYPE_LABEL[c.guestType]}</td>
-                    <td className="py-1.5 pr-2">{fmtDoc(c.documentType, c.documentNumber) || '—'}</td>
+                    <td className="py-1.5 pr-2">
+                      {fmtDoc(c.documentType, c.documentNumber) || '—'}
+                    </td>
                     <td className="py-1.5">{fmtDate(c.birthDate) || '—'}</td>
                   </tr>
                 ))}
@@ -126,10 +145,17 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
         )}
 
         <section className="pt-4 text-sm text-neutral-700">
-          <p>Declaro serem verdadeiras as informações prestadas nesta ficha, exigida pela legislação de hospedagem em vigor.</p>
+          <p>
+            Declaro serem verdadeiras as informações prestadas nesta ficha, exigida pela legislação
+            de hospedagem em vigor.
+          </p>
           <div className="mt-10 grid grid-cols-2 gap-8">
-            <div className="border-t border-neutral-400 pt-1 text-center text-xs text-neutral-500">Assinatura do hóspede</div>
-            <div className="border-t border-neutral-400 pt-1 text-center text-xs text-neutral-500">Data</div>
+            <div className="border-t border-neutral-400 pt-1 text-center text-xs text-neutral-500">
+              Assinatura do hóspede
+            </div>
+            <div className="border-t border-neutral-400 pt-1 text-center text-xs text-neutral-500">
+              Data
+            </div>
           </div>
         </section>
       </div>
@@ -137,11 +163,23 @@ export function FnrhPrintView({ data, bookingId }: { data: FnrhData; bookingId: 
   )
 }
 
-function Field({ label, value, span = 1 }: { label: string; value?: string | null; span?: 1 | 2 | 3 }) {
+function Field({
+  label,
+  value,
+  span = 1,
+}: {
+  label: string
+  value?: string | null
+  span?: 1 | 2 | 3
+}) {
   return (
-    <div className={span === 3 ? 'col-span-2 sm:col-span-3' : span === 2 ? 'col-span-2' : ''}>
+    <div
+      className={`min-w-0 ${span === 3 ? 'col-span-2 sm:col-span-3' : span === 2 ? 'col-span-2' : ''}`}
+    >
       <span className="text-neutral-500">{label}</span>
-      <p className="min-h-[1.25rem] border-b border-dotted border-neutral-300 font-medium">{value || ' '}</p>
+      <p className="min-h-[1.25rem] border-b border-dotted border-neutral-300 font-medium [overflow-wrap:anywhere]">
+        {value || ' '}
+      </p>
     </div>
   )
 }

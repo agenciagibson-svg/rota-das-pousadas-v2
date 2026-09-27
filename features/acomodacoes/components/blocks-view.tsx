@@ -23,9 +23,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { AcomodacoesTabs } from './acomodacoes-tabs'
 import { BLOCK_TYPE_LABEL } from './status-labels'
 import { createBlockAction, cancelBlockAction } from '../actions'
-import { blockTimeStatus, formatBlockDateTime } from '../block-time'
+import { blockTimeStatus, formatBlockPeriod } from '../block-time'
 import type { ManagedRoom, RoomBlock, RoomBlockType } from '../types'
 import type { ActionResult } from '@/types'
+import { keepValuesOnSubmit } from '@/lib/forms'
 
 const BLOCK_TYPES: RoomBlockType[] = [
   'maintenance',
@@ -63,7 +64,7 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
   }
 
   return (
-    <form action={onSubmit} className="space-y-4">
+    <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
       <label className="flex flex-col gap-1.5">
         <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           Acomodação
@@ -140,12 +141,23 @@ export function BlocksView({
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [roomFilter, setRoomFilter] = useState('')
-
-  const filtered = useMemo(
-    () => (roomFilter ? blocks.filter((b) => b.roomId === roomFilter) : blocks),
-    [blocks, roomFilter],
-  )
+  const [showOld, setShowOld] = useState(false)
   const nowCivilMs = new Date(nowCivilISO).getTime()
+
+  // Por padrão só o que ainda vale (vigente ou futuro); cancelados e
+  // expirados ficam atrás de uma opção, senão a lista vira histórico.
+  const filtered = useMemo(() => {
+    const isCurrent = (b: RoomBlock) =>
+      b.status === 'active' && new Date(b.endsAt).getTime() >= nowCivilMs
+    return blocks.filter(
+      (b) => (!roomFilter || b.roomId === roomFilter) && (showOld || isCurrent(b)),
+    )
+  }, [blocks, roomFilter, showOld, nowCivilMs])
+  const hiddenCount = blocks.filter(
+    (b) =>
+      (!roomFilter || b.roomId === roomFilter) &&
+      !(b.status === 'active' && new Date(b.endsAt).getTime() >= nowCivilMs),
+  ).length
 
   function run(promise: Promise<ActionResult<unknown>>) {
     setError(null)
@@ -193,8 +205,19 @@ export function BlocksView({
               </option>
             ))}
           </select>
+          {hiddenCount > 0 && (
+            <label className="text-muted-foreground flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4"
+                checked={showOld}
+                onChange={(e) => setShowOld(e.target.checked)}
+              />
+              Mostrar cancelados e encerrados ({hiddenCount})
+            </label>
+          )}
           {canManage && (
-            <Button onClick={() => setCreating(true)}>
+            <Button className="ml-auto" onClick={() => setCreating(true)}>
               <Plus className="size-4" /> Novo bloqueio
             </Button>
           )}
@@ -206,7 +229,11 @@ export function BlocksView({
             <EmptyState
               icon={CalendarClock}
               title="Nenhum bloqueio"
-              description="Não há períodos bloqueados para este filtro."
+              description={
+                hiddenCount > 0 && !showOld
+                  ? 'Nenhum bloqueio valendo agora. Marque “Mostrar cancelados e encerrados” para ver o histórico.'
+                  : 'Não há períodos bloqueados para este filtro.'
+              }
             />
           ) : (
             <Table>
@@ -230,7 +257,7 @@ export function BlocksView({
                         {BLOCK_TYPE_LABEL[b.blockType]}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatBlockDateTime(b.startsAt)} — {formatBlockDateTime(b.endsAt)}
+                        {formatBlockPeriod(b.startsAt, b.endsAt)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{b.reason}</TableCell>
                       <TableCell>

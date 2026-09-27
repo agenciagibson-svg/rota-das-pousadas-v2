@@ -50,7 +50,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
   const { data, error } = await supabase
     .from('pousadas')
     .select(
-      'id, slug, name, legal_name, tax_id, city, state, country, address, cep, image, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, notification_email, house_rules, cancellation_policy',
+      'id, slug, name, legal_name, tax_id, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, notification_email, house_rules, cancellation_policy',
     )
     .eq('id', pousadaId)
     .maybeSingle()
@@ -69,6 +69,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
     address: data.address,
     cep: data.cep,
     image: data.image,
+    gallery: data.gallery ?? [],
     description: data.description,
     tags: data.tags,
     timezone: data.timezone,
@@ -94,6 +95,7 @@ export type UpdatePousadaSettingsRow = {
   address: string
   cep: string
   image: string
+  gallery: string[]
   description: string
   tags: string[]
   timezone: string
@@ -125,6 +127,7 @@ export async function updatePousadaSettings(
       address: input.address,
       cep: input.cep,
       image: input.image,
+      gallery: input.gallery,
       description: input.description,
       tags: input.tags,
       timezone: input.timezone,
@@ -165,7 +168,7 @@ export async function listReservationsByPousada(
   let query = supabase
     .from('bookings')
     .select(
-      'id, code, guest_name, guest_email, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at',
+      'id, code, guest_name, guest_email, guest_phone, responsible_guest_id, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at',
     )
     .eq('pousada_id', pousadaId)
     .order('checkin', { ascending: true })
@@ -187,12 +190,24 @@ export async function listReservationsByPousada(
     : { data: [] }
   const roomById = new Map((rooms ?? []).map((room) => [room.id, room]))
 
+  // Telefone: o da reserva ou, se vazio, o WhatsApp/telefone da ficha do hóspede.
+  const guestIds = [
+    ...new Set((data ?? []).filter((r) => !r.guest_phone).map((r) => r.responsible_guest_id)),
+  ].filter(Boolean) as string[]
+  const { data: guestRows } = guestIds.length
+    ? await supabase.from('guests').select('id, phone, whatsapp').in('id', guestIds)
+    : { data: [] }
+  const guestPhoneById = new Map(
+    (guestRows ?? []).map((g) => [g.id, (g.whatsapp || g.phone || null) as string | null]),
+  )
+
   const now = new Date().toISOString()
   return (data ?? []).map((r) => ({
     id: r.id,
     code: r.code,
     guestName: r.guest_name ?? 'Hóspede',
     guestEmail: r.guest_email ?? 'E-mail não informado',
+    guestPhone: r.guest_phone || guestPhoneById.get(r.responsible_guest_id) || null,
     roomName: roomById.get(r.room_id)?.name ?? 'Acomodação',
     checkin: r.checkin,
     checkout: r.checkout,

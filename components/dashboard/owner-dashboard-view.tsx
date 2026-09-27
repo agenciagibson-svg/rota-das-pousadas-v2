@@ -208,7 +208,11 @@ export function OwnerDashboardView({
                 Os valores de faturamento aparecem para proprietário, gestor e financeiro.
               </div>
             ) : revenueSeries.some((point) => point.value > 0) ? (
-              <AreaChart data={revenueSeries.map((point) => point.value)} />
+              <AreaChart
+                data={revenueSeries.map((point) => point.value)}
+                labels={revenueSeries.map((point) => point.label)}
+                format={brl}
+              />
             ) : (
               <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
                 Ainda sem reservas nos últimos 12 meses. O gráfico aparece assim que a primeira

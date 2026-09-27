@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import {
   CalendarDays,
+  Check,
   CheckCircle2,
   Copy,
   Image as ImageIcon,
@@ -19,6 +21,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import type { FinanceSummary } from '@/features/financeiro/types'
+import { siteConfig } from '@/lib/seo'
+import { formatBRL } from '@/lib/format'
 import type { OwnerPousadaSettings, OwnerReservation, OwnerReview } from '../types'
 
 function activeReservations(reservations: OwnerReservation[]) {
@@ -34,7 +38,36 @@ function buildSocialText(settings: OwnerPousadaSettings | null) {
   const tags = settings?.tags?.slice(0, 3).join(', ')
   const highlight = tags ? ` com ${tags}` : ''
 
-  return `${name} em ${city}${state ? `, ${state}` : ''}: uma estadia acolhedora${highlight}. Reserve sua próxima pausa e viva dias de descanso com conforto e atendimento próximo.`
+  const link = settings?.slug ? `\n\nReserve direto: ${siteConfig.url}/${settings.slug}` : ''
+  return `${name} em ${city}${state ? `, ${state}` : ''}: uma estadia acolhedora${highlight}. Reserve sua próxima pausa e viva dias de descanso com conforto e atendimento próximo.${link}`
+}
+
+function CopyTextButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      const area = document.createElement('textarea')
+      area.value = text
+      document.body.appendChild(area)
+      area.select()
+      document.execCommand('copy')
+      area.remove()
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void copy()}
+      className={buttonVariants({ variant: 'outline', size: 'sm' })}
+    >
+      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      {copied ? 'Copiado!' : 'Copiar texto'}
+    </button>
+  )
 }
 
 function buildCampaigns({
@@ -60,7 +93,7 @@ function buildCampaigns({
       title: 'Campanha de conversão',
       description:
         pending.length > 0
-          ? `Há ${pending.length} reserva(s) aguardando pagamento. Reforce urgência e prazo para reduzir perda.`
+          ? `Há ${pending.length === 1 ? '1 reserva' : `${pending.length} reservas`} aguardando pagamento. Reforce urgência e prazo para reduzir perda.`
           : 'Use chamada direta para transformar visitas em novas reservas.',
       action: 'Mensagem curta para WhatsApp e redes sociais.',
       icon: Target,
@@ -92,7 +125,7 @@ function buildCampaigns({
       title: 'Receita pendente',
       description:
         finance.revenuePending > 0
-          ? `${finance.revenuePending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ainda estão pendentes. Comunicação rápida pode proteger essa receita.`
+          ? `${formatBRL(finance.revenuePending)} ainda estão pendentes. Comunicação rápida pode proteger essa receita.`
           : 'Sem receita pendente no momento. Foque em novas reservas.',
       action: 'Crie lembrete amigável para finalizar reserva.',
       icon: TrendingUp,
@@ -158,7 +191,7 @@ export function OwnerMarketingView({
         </Card>
       </div>
 
-      <div className="mt-5 grid gap-5 2xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <Card className="p-6">
           <div className="flex items-center gap-3">
             <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-2xl">
@@ -205,12 +238,20 @@ export function OwnerMarketingView({
             <p className="text-muted-foreground mt-2 text-sm">
               Use como base para Instagram, WhatsApp ou anúncio local.
             </p>
-            <div className="bg-secondary text-foreground mt-4 rounded-2xl p-4 text-sm leading-relaxed">
+            <div className="bg-secondary text-foreground mt-4 rounded-2xl p-4 text-sm leading-relaxed whitespace-pre-line">
               {socialText}
             </div>
-            <div className="bg-secondary text-muted-foreground mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold">
-              <Copy className="size-3.5" />
-              Pronto para copiar
+            <div className="mt-3 flex flex-wrap gap-2">
+              <CopyTextButton text={socialText} />
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(socialText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                <Share2 className="size-3.5" />
+                Compartilhar no WhatsApp
+              </a>
             </div>
           </Card>
 

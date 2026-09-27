@@ -16,6 +16,7 @@ import {
   type PixPayment,
 } from '@/features/pagamentos/services/pix.service'
 import { PixPaymentPanel } from '@/features/pagamentos/components/pix-payment-panel'
+import { formatBRL } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -158,22 +159,22 @@ export default async function PagamentoReservaPage({
             <div className="border-border mt-5 space-y-1.5 border-t pt-4 text-sm">
               <div className="text-muted-foreground flex justify-between">
                 <span>Estadia</span>
-                <span>R$ {booking.subtotal}</span>
+                <span>{formatBRL(booking.subtotal)}</span>
               </div>
               {booking.fee > 0 && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Taxa de serviço</span>
-                  <span>R$ {booking.fee}</span>
+                  <span>{formatBRL(booking.fee)}</span>
                 </div>
               )}
               <div className="border-border text-foreground flex justify-between border-t pt-1.5 text-base font-semibold">
                 <span>Total</span>
-                <span>R$ {booking.total}</span>
+                <span>{formatBRL(booking.total)}</span>
               </div>
               {booking.balanceDue !== booking.total && (
                 <div className="text-muted-foreground flex justify-between">
                   <span>Saldo a pagar</span>
-                  <span>R$ {booking.balanceDue}</span>
+                  <span>{formatBRL(booking.balanceDue)}</span>
                 </div>
               )}
             </div>

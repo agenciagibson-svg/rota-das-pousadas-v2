@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { inviteMemberAction } from '../actions'
 import { TEAM_ROLE_LABEL, type TeamRole } from './role-labels'
+import { keepValuesOnSubmit } from '@/lib/forms'
 
 const ASSIGNABLE_ROLES: TeamRole[] = [
   'admin_pousada',
@@ -22,7 +23,7 @@ export function InviteMemberForm() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
-  function submit(formData: FormData) {
+  function submit(formData: FormData, form: HTMLFormElement) {
     setError(null)
     setMessage(null)
     const email = String(formData.get('email') ?? '')
@@ -34,15 +35,21 @@ export function InviteMemberForm() {
         setError(result.error)
         return
       }
+      form.reset()
       setMessage(
-        'Se existir uma conta com esse e-mail na plataforma, o convite foi registrado. Envio automático por e-mail ainda não está disponível — avise a pessoa diretamente.',
+        result.data.emailSent
+          ? 'Convite registrado e e-mail enviado. A pessoa entra no painel com esse e-mail e aceita o convite. Se ainda não tiver conta, ela cria uma com o mesmo e-mail e você convida de novo.'
+          : 'Convite registrado, mas o e-mail não pôde ser enviado agora. Avise a pessoa para entrar no painel com esse e-mail e aceitar o convite.',
       )
       router.refresh()
     })
   }
 
   return (
-    <form action={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <form
+      onSubmit={keepValuesOnSubmit(submit)}
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+    >
       <div className="flex-1">
         <Input
           label="E-mail da pessoa"
@@ -53,13 +60,13 @@ export function InviteMemberForm() {
         />
       </div>
       <label className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           Papel
         </span>
         <select
           name="role"
           defaultValue="recepcionista"
-          className="rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
         >
           {ASSIGNABLE_ROLES.map((role) => (
             <option key={role} value={role}>
@@ -72,8 +79,8 @@ export function InviteMemberForm() {
         <UserPlus className="size-4" />
         {isPending ? 'Convidando...' : 'Convidar'}
       </Button>
-      {error && <p className="text-sm font-medium text-destructive sm:basis-full">{error}</p>}
-      {message && <p className="text-sm font-medium text-primary sm:basis-full">{message}</p>}
+      {error && <p className="text-destructive text-sm font-medium sm:basis-full">{error}</p>}
+      {message && <p className="text-primary text-sm font-medium sm:basis-full">{message}</p>}
     </form>
   )
 }

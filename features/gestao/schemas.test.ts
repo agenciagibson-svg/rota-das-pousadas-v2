@@ -11,6 +11,7 @@ const base = {
   address: '',
   cep: '',
   image: '',
+  gallery: [] as string[],
   description: 'Pousada tranquila com vista para a serra e café caseiro.',
   tags: '',
   timezone: 'America/Sao_Paulo',
@@ -67,5 +68,17 @@ describe('pousadaSettingsSchema — fuso horário', () => {
         'Fuso inválido. Use o nome oficial, como America/Sao_Paulo.',
       )
     }
+  })
+})
+
+describe('galeria de fotos', () => {
+  it('aceita fotos do storage e recusa texto solto', () => {
+    const ok = pousadaSettingsSchema.safeParse({
+      ...base,
+      gallery: ['https://x.supabase.co/storage/v1/object/public/pousadas/a/b.jpg', '/images/p.png'],
+    })
+    expect(ok.success).toBe(true)
+    const bad = pousadaSettingsSchema.safeParse({ ...base, gallery: ['foto da piscina'] })
+    expect(bad.success).toBe(false)
   })
 })

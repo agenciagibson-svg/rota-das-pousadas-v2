@@ -173,3 +173,22 @@ describe('e-mails do Pix direto', () => {
     expect(html).toContain('Valor &lt;b&gt;diferente&lt;/b&gt;')
   })
 })
+
+describe('memberInviteEmail', () => {
+  it('explica o caminho com e sem conta e escapa o nome', async () => {
+    const { memberInviteEmail } = await import('./templates')
+    const mail = memberInviteEmail({
+      pousadaName: 'Pousada <Teste>',
+      roleLabel: 'Recepção',
+      inviterName: 'Marcos',
+      email: 'a@b.com',
+      dashboardUrl: 'https://rotadaspousadas.com.br/dashboard',
+      signupUrl: 'https://rotadaspousadas.com.br/cadastro',
+    })
+    expect(mail.subject).toContain('Pousada <Teste>')
+    expect(mail.html).toContain('Pousada &lt;Teste&gt;')
+    expect(mail.html).not.toContain('<Teste>')
+    expect(mail.text).toContain('/cadastro')
+    expect(mail.text).toContain('/dashboard')
+  })
+})

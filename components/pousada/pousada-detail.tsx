@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { calculateBookingPrice } from '@/features/reservas/pricing'
 import { FavoriteButton } from './favorite-button'
+import { formatBRL, formatPrice } from '@/lib/format'
 
 /** Avaliação pública (sem nome do autor — ver `reviews.repository.ts::listPublicReviewsByPousada`). */
 type PublicReview = {
@@ -312,7 +313,7 @@ export function PousadaDetail({
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-foreground font-semibold">R$ {room.nightly}</div>
+                      <div className="text-foreground font-semibold">{formatBRL(room.nightly)}</div>
                       <div className="text-muted-foreground text-xs">/ diária</div>
                     </div>
                   </div>
@@ -496,7 +497,7 @@ export function PousadaDetail({
             <div className="flex items-end justify-between">
               <div>
                 <span className="text-foreground text-2xl font-semibold">
-                  {room ? `R$ ${nightly}` : 'Indisponível'}
+                  {room ? formatPrice(nightly) : 'Indisponível'}
                 </span>
                 {room && <span className="text-muted-foreground text-sm"> / diária</span>}
               </div>
@@ -582,13 +583,13 @@ export function PousadaDetail({
               <div className="mt-5 space-y-2 text-sm">
                 <div className="text-muted-foreground flex justify-between">
                   <span>
-                    R$ {nightly} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
+                    {formatBRL(nightly)} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
                   </span>
-                  <span>R$ {price.subtotal}</span>
+                  <span>{formatBRL(price.subtotal)}</span>
                 </div>
                 <div className="border-border text-foreground flex justify-between border-t pt-3 text-base font-semibold">
                   <span>Total</span>
-                  <span>R$ {price.total}</span>
+                  <span>{formatBRL(price.total)}</span>
                 </div>
               </div>
             )}

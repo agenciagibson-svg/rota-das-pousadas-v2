@@ -6,6 +6,8 @@ export type OwnerReservation = {
   code: string
   guestName: string
   guestEmail: string
+  /** Telefone/WhatsApp da reserva ou da ficha do hóspede. */
+  guestPhone?: string | null
   roomName: string
   checkin: string
   checkout: string
@@ -48,6 +50,8 @@ export type OwnerPousadaSettings = {
   address: string
   cep: string
   image: string
+  /** Fotos da vitrine (a capa primeiro). */
+  gallery: string[]
   description: string
   tags: string[]
   timezone: string

@@ -17,6 +17,10 @@ import {
   listPousadaNamesByIds,
 } from '@/repositories/memberships.repository'
 import { wouldLeaveNoActiveOwner, isSelfAction } from '@/features/membros/rules'
+import { sendEmail } from '@/lib/email/mailer'
+import { memberInviteEmail } from '@/lib/email/templates'
+import { publicEnv } from '@/lib/env'
+import { roleLabel } from '@/features/membros/components/role-labels'
 import type { PendingInvite, TeamMember } from '@/features/membros/types'
 
 async function requireCapability(action: Action) {
@@ -51,7 +55,7 @@ export async function listTeam(): Promise<TeamMember[]> {
  * Erros de autorização ou de vínculo já existente NA MESMA POUSADA continuam
  * explícitos — só a existência da conta em si fica neutra.
  */
-export async function inviteMember(input: { email: string; role: Role }): Promise<void> {
+export async function inviteMember(input: { email: string; role: Role }): Promise<boolean> {
   const { user, pousadaId } = await requireCapability('member:invite')
 
   await inviteMembership({ pousadaId, email: input.email, role: input.role })
@@ -69,9 +73,19 @@ export async function inviteMember(input: { email: string; role: Role }): Promis
     metadata: { role: input.role },
   })
 
-  // Envio de e-mail ainda não integrado — a UI mostra "se existir uma conta
-  // com esse e-mail, o convite foi registrado" (não simula envio nem
-  // confirma existência).
+  // E-mail de convite: vai para o endereço digitado em qualquer caso (o texto
+  // serve para quem tem e para quem não tem conta), então não revela nada.
+  // Falha de envio não desfaz o convite — sendEmail nunca lança.
+  const [pousada] = await listPousadaNamesByIds([pousadaId])
+  const mail = memberInviteEmail({
+    pousadaName: pousada?.name ?? 'sua pousada',
+    roleLabel: roleLabel(input.role),
+    inviterName: user.name || null,
+    email: input.email.trim().toLowerCase(),
+    dashboardUrl: new URL('/dashboard', publicEnv.siteUrl).toString(),
+    signupUrl: new URL('/cadastro', publicEnv.siteUrl).toString(),
+  })
+  return sendEmail({ to: input.email.trim(), ...mail })
 }
 
 /**

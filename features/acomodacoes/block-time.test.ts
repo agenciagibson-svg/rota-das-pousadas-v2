@@ -51,3 +51,18 @@ describe('horário dos bloqueios', () => {
     )
   })
 })
+
+describe('formatBlockPeriod', () => {
+  it('dia inteiro e vários dias', async () => {
+    const { formatBlockPeriod } = await import('./block-time')
+    expect(formatBlockPeriod('2026-10-30T00:00:00Z', '2026-10-31T00:00:00Z')).toBe(
+      '30/10/2026 (dia inteiro)',
+    )
+    expect(formatBlockPeriod('2026-10-30T00:00:00Z', '2026-11-03T00:00:00Z')).toBe(
+      '30/10/2026 a 02/11/2026 (4 dias)',
+    )
+    expect(formatBlockPeriod('2026-10-30T14:00:00Z', '2026-10-30T18:00:00Z')).toBe(
+      '30/10/2026, 14:00 — 30/10/2026, 18:00',
+    )
+  })
+})

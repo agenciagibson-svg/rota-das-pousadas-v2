@@ -20,6 +20,7 @@ import {
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { bioOriginFromParam } from '@/features/reservas'
 import { MapPin, Star } from 'lucide-react'
+import { formatPrice } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -129,7 +130,9 @@ export default async function PousadaPage({
                         {p.name}
                       </h3>
                       <div className="mt-3 text-sm">
-                        <span className="text-foreground font-semibold">R$ {p.pricePerNight}</span>
+                        <span className="text-foreground font-semibold">
+                          {formatPrice(p.pricePerNight)}
+                        </span>
                         <span className="text-muted-foreground"> / diária</span>
                       </div>
                     </div>

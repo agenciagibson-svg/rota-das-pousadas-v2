@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { submitQuoteRequestAction } from '../actions'
 import { TurnstileWidget } from './turnstile-widget'
+import { keepValuesOnSubmit } from '@/lib/forms'
 
 /**
  * Pedido de orçamento — a alternativa ao "manda no WhatsApp".
@@ -97,7 +98,7 @@ export function QuoteCard({
           )}
         </div>
       ) : (
-        <form action={onSubmit} className="mt-4 flex flex-col gap-3">
+        <form onSubmit={keepValuesOnSubmit(onSubmit)} className="mt-4 flex flex-col gap-3">
           <label className="flex flex-col gap-1">
             <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
               Seu nome

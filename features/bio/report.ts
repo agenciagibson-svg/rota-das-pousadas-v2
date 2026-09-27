@@ -7,6 +7,7 @@
  * acompanhada da leitura que ela permite.
  */
 import type { LinkReport, LinkReportTotals, UnmetDemand } from './types'
+import { formatBRL } from '@/lib/format'
 
 /** Percentual inteiro de 0 a 100. Divisor zero devolve 0, nunca NaN nem Infinity. */
 export function rate(part: number, whole: number): number {
@@ -79,7 +80,7 @@ export function buildHighlights(report: LinkReport): ReportHighlight[] {
     out.push({
       tone: 'bom',
       title: `${totals.bookings} ${totals.bookings === 1 ? 'reserva veio' : 'reservas vieram'} pelo link`,
-      detail: `R$ ${totals.revenue} em reservas ativas, sem comissão de canal.`,
+      detail: `${formatBRL(totals.revenue)} em reservas ativas, sem comissão de canal.`,
     })
   }
 

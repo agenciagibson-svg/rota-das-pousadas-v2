@@ -20,6 +20,7 @@ import {
   type QuoteRequestStatus,
 } from '../types'
 import { updateQuoteStatusAction } from '../actions'
+import { formatBRL } from '@/lib/format'
 
 const PERIODS = [
   { days: 7, label: '7 dias' },
@@ -284,7 +285,7 @@ export function LinkReportView({
         <StatCard
           label="Reservas pelo link"
           value={String(report.totals.bookings)}
-          delta={`R$ ${report.totals.revenue}`}
+          delta={formatBRL(report.totals.revenue)}
           up
           icon={Check}
         />

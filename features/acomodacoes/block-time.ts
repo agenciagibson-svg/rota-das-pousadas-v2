@@ -32,3 +32,30 @@ export function blockTimeStatus(
     return { label: 'Futuro', variant: 'goldSoft' }
   return { label: 'Vigente', variant: 'primarySoft' }
 }
+
+const DAY_MS = 86_400_000
+
+function civilDate(ms: number): string {
+  const d = new Date(ms)
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${dd}/${mm}/${d.getUTCFullYear()}`
+}
+
+/**
+ * Período legível. Bloqueio de dias inteiros (00:00 → 00:00, como os do
+ * calendário) vira "30/10/2026 (dia inteiro)" ou "30/10/2026 a 02/11/2026
+ * (4 dias)" — "30/10 00:00 — 31/10 00:00" confundia (parecia pegar dois dias).
+ */
+export function formatBlockPeriod(startsAt: string, endsAt: string): string {
+  const start = new Date(startsAt).getTime()
+  const end = new Date(endsAt).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return '—'
+  const wholeDays = start % DAY_MS === 0 && end % DAY_MS === 0 && end > start
+  if (wholeDays) {
+    const days = Math.round((end - start) / DAY_MS)
+    if (days === 1) return `${civilDate(start)} (dia inteiro)`
+    return `${civilDate(start)} a ${civilDate(end - DAY_MS)} (${days} dias)`
+  }
+  return `${formatBlockDateTime(startsAt)} — ${formatBlockDateTime(endsAt)}`
+}

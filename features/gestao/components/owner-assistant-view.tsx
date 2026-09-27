@@ -11,6 +11,7 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react'
+import Link from 'next/link'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
@@ -24,6 +25,9 @@ type Insight = {
   action: string
   tone: 'alert' | 'primary' | 'neutral'
   icon: typeof Bot
+  /** Onde resolver — vira um botão no cartão. */
+  href?: string
+  hrefLabel?: string
 }
 
 function isActiveReservation(status: OwnerReservation['status']) {
@@ -31,11 +35,14 @@ function isActiveReservation(status: OwnerReservation['status']) {
 }
 
 function daysUntil(date: string) {
-  const today = new Date()
-  const target = new Date(`${date}T00:00:00`)
-  today.setHours(0, 0, 0, 0)
-  target.setHours(0, 0, 0, 0)
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
+  // Data de hoje em Brasília (o servidor e o navegador podem estar em outro fuso).
+  const todayISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(
+    new Date(),
+  )
+  return Math.round(
+    (new Date(`${date}T00:00:00Z`).getTime() - new Date(`${todayISO}T00:00:00Z`).getTime()) /
+      86_400_000,
+  )
 }
 
 function buildInsights({
@@ -66,12 +73,17 @@ function buildInsights({
 
   if (pendingPayments.length > 0) {
     insights.push({
-      title: `${pendingPayments.length} reserva(s) aguardando pagamento`,
+      title:
+        pendingPayments.length === 1
+          ? '1 reserva aguardando pagamento'
+          : `${pendingPayments.length} reservas aguardando pagamento`,
       description:
         'Acompanhe o prazo dessas reservas para evitar bloqueio de datas sem confirmação.',
       action: 'Priorize contato com o hóspede antes do vencimento.',
       tone: 'alert',
       icon: Clock3,
+      href: '/dashboard/mensagens',
+      hrefLabel: 'Enviar mensagem',
     })
   }
 
@@ -79,30 +91,39 @@ function buildInsights({
     const first = nextCheckins[0]
     insights.push({
       title: `Próximo check-in: ${first.guestName}`,
-      description: `${first.roomName}, ${first.guests} hóspede(s), reserva ${first.code}.`,
+      description: `${first.roomName}, ${first.guests === 1 ? '1 hóspede' : `${first.guests} hóspedes`}, reserva ${first.code}.`,
       action: 'Envie instruções de chegada e confirme horário previsto.',
       tone: 'primary',
       icon: CalendarCheck,
+      href: '/dashboard/mensagens',
+      hrefLabel: 'Mensagem pronta',
     })
   }
 
   if (unansweredReviews.length > 0) {
     insights.push({
-      title: `${unansweredReviews.length} avaliação(ões) sem resposta`,
+      title:
+        unansweredReviews.length === 1
+          ? '1 avaliação sem resposta'
+          : `${unansweredReviews.length} avaliações sem resposta`,
       description: 'Responder avaliações melhora confiança e mostra cuidado no atendimento.',
       action: 'Abra Avaliações e responda os comentários pendentes.',
       tone: 'primary',
       icon: Star,
+      href: '/dashboard/avaliacoes',
+      hrefLabel: 'Responder',
     })
   }
 
   if (finance.revenuePending > 0) {
     insights.push({
       title: `${finance.revenuePending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} a receber`,
-      description: 'Há receita pendente ligada a reservas ainda não confirmadas financeiramente.',
-      action: 'Mantenha o financeiro alinhado antes de confirmar estadias longas.',
+      description: 'Valor das reservas ativas que ainda não foi pago.',
+      action: 'Confira no Financeiro quem ainda deve e combine o pagamento.',
       tone: 'neutral',
       icon: DollarSign,
+      href: '/dashboard/financeiro',
+      hrefLabel: 'Abrir Financeiro',
     })
   }
 
@@ -113,6 +134,8 @@ function buildInsights({
       action: 'Complete esses dados para reduzir dúvidas antes da reserva.',
       tone: 'alert',
       icon: AlertCircle,
+      href: '/dashboard/configuracoes',
+      hrefLabel: 'Completar agora',
     })
   }
 
@@ -164,7 +187,7 @@ export function OwnerAssistantView({
       nav={ownerDashboardNav('assistente')}
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
-      title="Assistente IA"
+      title="Assistente"
       subtitle="Sugestões práticas com base nas reservas, avaliações e financeiro."
       user={{ name: displayName, role: 'Proprietário' }}
     >
@@ -223,6 +246,14 @@ export function OwnerAssistantView({
                         <h3 className="text-foreground font-semibold">{insight.title}</h3>
                         <p className="text-muted-foreground mt-1 text-sm">{insight.description}</p>
                         <p className="text-foreground mt-2 text-sm font-medium">{insight.action}</p>
+                        {insight.href && (
+                          <Link
+                            href={insight.href}
+                            className="text-primary mt-2 inline-block text-sm font-semibold hover:underline"
+                          >
+                            {insight.hrefLabel ?? 'Abrir'} →
+                          </Link>
+                        )}
                       </div>
                     </div>
                     <Badge
@@ -255,12 +286,11 @@ export function OwnerAssistantView({
           <Card className="p-6">
             <div className="text-foreground flex items-center gap-2 font-semibold">
               <Bot className="text-primary size-4" />
-              Próxima etapa
+              Como funciona
             </div>
             <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-              Quando formos integrar IA real, esta área poderá gerar respostas, campanhas e ajustes
-              de diária automaticamente. Por enquanto, ela usa regras seguras com os dados do
-              sistema.
+              O assistente olha suas reservas, avaliações, financeiro e configurações todos os dias
+              e mostra o que precisa de atenção primeiro. Cada item leva direto para onde resolver.
             </p>
           </Card>
         </div>

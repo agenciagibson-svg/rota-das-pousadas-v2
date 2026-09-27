@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { getPousadas } from '@/server/queries'
 import { PaginationLinks } from '@/components/ui/pagination'
 import { catalogQuerySchema } from '@/features/pousadas/search'
+import { formatPrice } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,13 +30,29 @@ export default async function PousadasPage({
     pagina?: string
   }>
 }) {
-  const { busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina } = await searchParams
-  const parsed = catalogQuerySchema.safeParse({ search: busca, checkin, checkout, guests: hospedes, page: pagina })
-  const result = parsed.success ? await getPousadas(parsed.data)
+  const { busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina } =
+    await searchParams
+  const parsed = catalogQuerySchema.safeParse({
+    search: busca,
+    checkin,
+    checkout,
+    guests: hospedes,
+    page: pagina,
+  })
+  const result = parsed.success
+    ? await getPousadas(parsed.data)
     : { items: [], total: 0, page: 1, pageSize: 24, totalPages: 1 }
   function pageHref(page: number) {
     const params = new URLSearchParams({ pagina: String(page) })
-    for (const [key, value] of Object.entries({ busca, checkin, checkout, hospedes, temporada, surpresa, oferta })) {
+    for (const [key, value] of Object.entries({
+      busca,
+      checkin,
+      checkout,
+      hospedes,
+      temporada,
+      surpresa,
+      oferta,
+    })) {
       if (value) params.set(key, value)
     }
     return `/pousadas?${params}`
@@ -60,30 +77,30 @@ export default async function PousadasPage({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="mx-auto max-w-7xl px-5 pb-20 pt-28 lg:px-8">
-        <div className="flex flex-col justify-between gap-6 border-b border-border pb-8 md:flex-row md:items-end">
+      <main className="mx-auto max-w-7xl px-5 pt-28 pb-20 lg:px-8">
+        <div className="border-border flex flex-col justify-between gap-6 border-b pb-8 md:flex-row md:items-end">
           <div className="max-w-2xl">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            <span className="text-primary text-sm font-semibold tracking-[0.2em] uppercase">
               Todas as pousadas
             </span>
-            <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+            <h1 className="text-foreground mt-3 font-serif text-4xl leading-tight font-semibold sm:text-5xl">
               Escolha a pousada e veja os detalhes
             </h1>
-            <p className="mt-3 text-muted-foreground">
+            <p className="text-muted-foreground mt-3">
               A lista mostra as pousadas publicadas em sequência. Ao selecionar uma, você abre a
               página dela com fotos, informações e reserva.
             </p>
           </div>
 
           <form action="/pousadas" className="relative w-full md:max-w-sm">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
             <input
               name="busca"
               defaultValue={busca}
               placeholder="Buscar por nome ou cidade"
-              className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary"
+              className="border-border bg-card focus:border-primary h-12 w-full rounded-full border pr-4 pl-11 text-sm transition-colors outline-none"
             />
             {checkin ? <input type="hidden" name="checkin" value={checkin} /> : null}
             {checkout ? <input type="hidden" name="checkout" value={checkout} /> : null}
@@ -95,19 +112,20 @@ export default async function PousadasPage({
         </div>
 
         {surpresa === '1' ? (
-          <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <div className="border-primary/20 bg-primary/5 mt-8 rounded-2xl border p-5">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="font-serif text-2xl font-semibold text-foreground">
+                <h2 className="text-foreground font-serif text-2xl font-semibold">
                   Sua rota surpresa está pronta
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Escolhemos uma direção para você explorar agora. Abra uma pousada e continue a reserva com as datas preenchidas.
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Escolhemos uma direção para você explorar agora. Abra uma pousada e continue a
+                  reserva com as datas preenchidas.
                 </p>
               </div>
               <Link
                 href="/"
-                className="inline-flex w-fit rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:translate-y-0"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20 inline-flex w-fit rounded-full px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
               >
                 Sortear outra
               </Link>
@@ -116,19 +134,20 @@ export default async function PousadasPage({
         ) : null}
 
         {oferta === 'estacao' ? (
-          <div className="mt-8 rounded-2xl border border-accent/20 bg-accent/5 p-5">
+          <div className="border-accent/20 bg-accent/5 mt-8 rounded-2xl border p-5">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="font-serif text-2xl font-semibold text-foreground">
+                <h2 className="text-foreground font-serif text-2xl font-semibold">
                   Oferta da estação selecionada
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Mantivemos suas datas sugeridas e filtramos pousadas alinhadas com o clima da temporada.
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Mantivemos suas datas sugeridas e filtramos pousadas alinhadas com o clima da
+                  temporada.
                 </p>
               </div>
               <Link
                 href="/#ofertas"
-                className="inline-flex w-fit rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-all hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-lg hover:shadow-accent/20 active:translate-y-0"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 hover:shadow-accent/20 inline-flex w-fit rounded-full px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
               >
                 Trocar oferta
               </Link>
@@ -136,7 +155,7 @@ export default async function PousadasPage({
           </div>
         ) : null}
 
-        <div className="mt-8 flex flex-col gap-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <div className="text-muted-foreground mt-8 flex flex-col gap-4 text-sm md:flex-row md:items-center md:justify-between">
           <div>
             <span>
               {result.total} pousada{result.total === 1 ? '' : 's'} encontrada
@@ -147,7 +166,7 @@ export default async function PousadasPage({
                 {activeFilters.map((filter) => (
                   <span
                     key={filter}
-                    className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground"
+                    className="border-border bg-card text-foreground rounded-full border px-3 py-1 text-xs font-medium"
                   >
                     {filter}
                   </span>
@@ -156,20 +175,24 @@ export default async function PousadasPage({
             ) : null}
           </div>
           {busca ? (
-            <Link href="/pousadas" className="font-semibold text-primary hover:underline">
+            <Link href="/pousadas" className="text-primary font-semibold hover:underline">
               Limpar busca
             </Link>
           ) : null}
         </div>
 
-        {!parsed.success && <p role="alert" className="mt-6 text-destructive">Informe datas válidas de entrada e saída, quantidade de hóspedes e página.</p>}
+        {!parsed.success && (
+          <p role="alert" className="text-destructive mt-6">
+            Informe datas válidas de entrada e saída, quantidade de hóspedes e página.
+          </p>
+        )}
         {result.items.length ? (
           <div className="mt-8 grid grid-cols-1 gap-5">
             {result.items.map((pousada) => (
               <Link
                 key={pousada.slug}
                 href={pousadaHref(pousada.slug)}
-                className="group grid overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-stone-deep/10 md:grid-cols-[280px_1fr]"
+                className="group border-border bg-card hover:shadow-stone-deep/10 grid overflow-hidden rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-xl md:grid-cols-[280px_1fr]"
               >
                 <div className="relative aspect-[4/3] md:aspect-auto md:min-h-52">
                   <Image
@@ -184,32 +207,32 @@ export default async function PousadasPage({
                 <div className="flex min-w-0 flex-col gap-4 p-5 md:p-6">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
                         <span className="inline-flex items-center gap-1.5">
                           <MapPin className="size-4" />
                           {pousada.city}, {pousada.state}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
-                          <Star className="size-4 fill-gold text-gold" />
+                        <span className="text-foreground inline-flex items-center gap-1.5 font-semibold">
+                          <Star className="fill-gold text-gold size-4" />
                           {pousada.rating.toFixed(1)}
-                          <span className="font-normal text-muted-foreground">
+                          <span className="text-muted-foreground font-normal">
                             ({pousada.reviews} avaliações)
                           </span>
                         </span>
                       </div>
-                      <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground">
+                      <h2 className="text-foreground mt-2 font-serif text-2xl font-semibold">
                         {pousada.name}
                       </h2>
                     </div>
                     <div className="shrink-0 md:text-right">
-                      <div className="text-xl font-semibold text-foreground">
-                        R$ {pousada.pricePerNight}
+                      <div className="text-foreground text-xl font-semibold">
+                        {formatPrice(pousada.pricePerNight)}
                       </div>
-                      <div className="text-xs text-muted-foreground">/ diária</div>
+                      <div className="text-muted-foreground text-xs">/ diária</div>
                     </div>
                   </div>
 
-                  <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                  <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
                     {pousada.description}
                   </p>
 
@@ -221,7 +244,7 @@ export default async function PousadasPage({
                         </Badge>
                       ))}
                     </div>
-                    <span className="inline-flex w-fit rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+                    <span className="bg-primary text-primary-foreground group-hover:bg-accent group-hover:text-accent-foreground inline-flex w-fit rounded-full px-5 py-2.5 text-sm font-semibold transition-colors">
                       Ver pousada
                     </span>
                   </div>
@@ -230,16 +253,16 @@ export default async function PousadasPage({
             ))}
           </div>
         ) : (
-          <div className="mt-10 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-            <h2 className="font-serif text-2xl font-semibold text-foreground">
+          <div className="border-border bg-card mt-10 rounded-2xl border border-dashed p-10 text-center">
+            <h2 className="text-foreground font-serif text-2xl font-semibold">
               Nenhuma pousada encontrada
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-sm">
               Tente buscar por outro nome, cidade ou veja todas as pousadas novamente.
             </p>
             <Link
               href="/pousadas"
-              className="mt-5 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:translate-y-0"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20 mt-5 inline-flex rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
             >
               Ver todas
             </Link>

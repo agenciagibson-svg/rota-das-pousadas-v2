@@ -4,6 +4,7 @@ import { Star, MapPin, ArrowUpRight } from 'lucide-react'
 import type { Destination } from '@/types'
 import { Reveal } from '@/components/reveal'
 import { Section } from '@/components/ui/container'
+import { formatPrice } from '@/lib/format'
 
 export function Destinations({ destinations }: { destinations: Destination[] }) {
   return (
@@ -11,14 +12,14 @@ export function Destinations({ destinations }: { destinations: Destination[] }) 
       <Reveal>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            <span className="text-primary text-sm font-semibold tracking-[0.2em] uppercase">
               Destinos em destaque
             </span>
-            <h2 className="mt-3 text-balance font-serif text-3xl font-semibold leading-tight text-foreground sm:text-5xl">
+            <h2 className="text-foreground mt-3 font-serif text-3xl leading-tight font-semibold text-balance sm:text-5xl">
               Onde o Brasil respira mais fundo
             </h2>
           </div>
-          <p className="max-w-sm text-pretty text-sm leading-relaxed text-muted-foreground">
+          <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-pretty">
             Curadoria de lugares que valem a viagem — da serra mineira às águas de Noronha, cada
             rota é um convite à descoberta.
           </p>
@@ -47,29 +48,31 @@ export function Destinations({ destinations }: { destinations: Destination[] }) 
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-deep/85 via-stone-deep/10 to-transparent" />
+                <div className="from-stone-deep/85 via-stone-deep/10 absolute inset-0 bg-gradient-to-t to-transparent" />
 
-                <div className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-primary-foreground/15 text-primary-foreground opacity-0 backdrop-blur transition-all duration-500 group-hover:opacity-100">
+                <div className="bg-primary-foreground/15 text-primary-foreground absolute top-4 right-4 flex size-10 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-500 group-hover:opacity-100">
                   <ArrowUpRight className="size-5" />
                 </div>
 
                 <div className="absolute inset-x-0 bottom-0 p-5 lg:p-7">
-                  <div className="flex items-center gap-2 text-xs font-medium text-primary-foreground/80">
+                  <div className="text-primary-foreground/80 flex items-center gap-2 text-xs font-medium">
                     <MapPin className="size-3.5" />
                     {d.state}
                     <span className="mx-1 opacity-50">•</span>
                     {d.pousadas} pousadas
                   </div>
-                  <h3 className={`mt-2 font-serif font-semibold text-primary-foreground ${featured ? 'text-3xl lg:text-4xl' : 'text-2xl'}`}>
+                  <h3
+                    className={`text-primary-foreground mt-2 font-serif font-semibold ${featured ? 'text-3xl lg:text-4xl' : 'text-2xl'}`}
+                  >
                     {d.name}
                   </h3>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-semibold text-primary-foreground backdrop-blur">
-                      <Star className="size-3.5 fill-gold text-gold" />
+                    <span className="bg-primary-foreground/15 text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur">
+                      <Star className="fill-gold text-gold size-3.5" />
                       {d.rating.toFixed(1)}
                     </span>
-                    <span className="text-sm font-medium text-primary-foreground/90">
-                      A partir de <span className="font-semibold">R$ {d.priceFrom}</span>
+                    <span className="text-primary-foreground/90 text-sm font-medium">
+                      A partir de <span className="font-semibold">{formatPrice(d.priceFrom)}</span>
                     </span>
                   </div>
                 </div>

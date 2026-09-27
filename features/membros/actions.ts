@@ -19,9 +19,9 @@ import {
 } from './services/team.service'
 
 export const inviteMemberAction = createAction(inviteMemberSchema, async (input) => {
-  await inviteMember(input)
+  const emailSent = await inviteMember(input)
   revalidatePath('/dashboard/membros')
-  return { processed: true as const }
+  return { processed: true as const, emailSent }
 })
 
 export const updateMemberRoleAction = createAction(updateRoleSchema, async (input) => {

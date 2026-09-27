@@ -3,28 +3,12 @@ import { OwnerDashboardShell } from '@/components/dashboard/owner-shell'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table'
 import { CalendarCheck } from 'lucide-react'
 import { BOOKING_STATUS } from '@/features/reservas'
 import type { BookingStatus } from '@/features/reservas'
 import { GuestEditForm } from './guest-edit-form'
 import type { GuestDetail } from '../types'
-
-function fmtDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(iso))
-}
+import { formatBRL, formatISODate } from '@/lib/format'
 
 export function GuestProfileView({
   displayName,
@@ -44,7 +28,7 @@ export function GuestProfileView({
       subtitle="Perfil do hóspede"
       user={{ name: displayName, role: 'Proprietário' }}
     >
-      <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card className="p-6">
           <h2 className="text-foreground font-semibold">Dados do hóspede</h2>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -57,6 +41,10 @@ export function GuestProfileView({
 
         <Card className="p-6">
           <h2 className="text-foreground font-semibold">Histórico de reservas</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {guest.bookings.length === 1 ? '1 reserva' : `${guest.bookings.length} reservas`} nesta
+            pousada.
+          </p>
           <div className="mt-4">
             {guest.bookings.length === 0 ? (
               <EmptyState
@@ -65,48 +53,43 @@ export function GuestProfileView({
                 description="Este hóspede ainda não tem reservas."
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Acomodação</TableHead>
-                    <TableHead>Período</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {guest.bookings.map((b) => {
-                    const status = BOOKING_STATUS[b.status as BookingStatus]
-                    return (
-                      <TableRow key={b.id}>
-                        <TableCell>
+              // Lista em vez de tabela: a coluna é estreita e a tabela quebrava
+              // o código e o valor em duas linhas.
+              <ul className="divide-border divide-y">
+                {guest.bookings.map((b) => {
+                  const status = BOOKING_STATUS[b.status as BookingStatus]
+                  return (
+                    <li key={b.id} className="flex items-start justify-between gap-3 py-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Link
                             href={`/dashboard/reservas/${b.id}`}
-                            className="text-primary font-semibold hover:underline"
+                            className="text-primary font-semibold whitespace-nowrap hover:underline"
                           >
                             {b.code}
                           </Link>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{b.roomName}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {fmtDate(b.checkin)} – {fmtDate(b.checkout)}
-                        </TableCell>
-                        <TableCell>
                           {status ? (
                             <Badge variant={status.variant} size="sm">
                               {status.label}
                             </Badge>
                           ) : (
-                            b.status
+                            <span className="text-muted-foreground text-xs">{b.status}</span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-foreground text-right">R$ {b.total}</TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+                        </div>
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          <span className="whitespace-nowrap">
+                            {formatISODate(b.checkin)} → {formatISODate(b.checkout)}
+                          </span>
+                          <span className="block truncate text-xs">{b.roomName}</span>
+                        </p>
+                      </div>
+                      <span className="text-foreground shrink-0 text-sm font-semibold whitespace-nowrap">
+                        {formatBRL(b.total)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
             )}
           </div>
         </Card>

@@ -7,6 +7,7 @@ import {
   getOwnerSettings,
 } from '@/server/queries'
 import { OwnerMessagesView } from '@/features/gestao/components/owner-messages-view'
+import { pousadaToday } from '@/features/dashboard/metrics'
 
 export default async function DashboardMensagensPage() {
   if (await sectionDenied('mensagens'))
@@ -26,6 +27,7 @@ export default async function DashboardMensagensPage() {
       pousadaName={pousada?.name ?? 'Sua pousada'}
       reservations={reservations}
       settings={settings}
+      todayISO={pousadaToday(new Date(), pousada?.timezone || 'America/Sao_Paulo').iso}
     />
   )
 }

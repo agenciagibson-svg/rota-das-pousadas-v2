@@ -5,8 +5,73 @@ import { useRouter } from 'next/navigation'
 import { Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { ImageUpload } from '@/components/ui/image-upload'
 import type { OwnerPousadaSettings } from '../types'
 import { updatePousadaSettingsAction } from '../actions'
+import { keepValuesOnSubmit } from '@/lib/forms'
+
+/** Fusos do Brasil com nome amigável; o valor gravado é o nome IANA. */
+const TIME_ZONES: { value: string; label: string }[] = [
+  { value: 'America/Sao_Paulo', label: 'Brasília (SP, RJ, MG, Sul, GO, DF, BA…)' },
+  { value: 'America/Bahia', label: 'Bahia' },
+  { value: 'America/Fortaleza', label: 'Fortaleza (CE, RN, PB, PI, MA)' },
+  { value: 'America/Recife', label: 'Recife (PE)' },
+  { value: 'America/Maceio', label: 'Maceió (AL, SE)' },
+  { value: 'America/Belem', label: 'Belém (PA, AP)' },
+  { value: 'America/Santarem', label: 'Santarém (oeste do PA)' },
+  { value: 'America/Araguaina', label: 'Araguaína (TO)' },
+  { value: 'America/Cuiaba', label: 'Cuiabá (MT)' },
+  { value: 'America/Campo_Grande', label: 'Campo Grande (MS)' },
+  { value: 'America/Manaus', label: 'Manaus (AM)' },
+  { value: 'America/Porto_Velho', label: 'Porto Velho (RO)' },
+  { value: 'America/Boa_Vista', label: 'Boa Vista (RR)' },
+  { value: 'America/Rio_Branco', label: 'Rio Branco (AC)' },
+  { value: 'America/Noronha', label: 'Fernando de Noronha' },
+]
+
+const LANGUAGES = [
+  { value: 'pt-BR', label: 'Português (Brasil)' },
+  { value: 'en', label: 'Inglês' },
+  { value: 'es', label: 'Espanhol' },
+]
+
+const SELECT_CLASS =
+  'border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3'
+
+function SelectField({
+  label,
+  name,
+  defaultValue,
+  options,
+  error,
+}: {
+  label: string
+  name: string
+  defaultValue: string
+  options: { value: string; label: string }[]
+  error?: string
+}) {
+  // Valor antigo fora da lista continua selecionável (não some ao salvar).
+  const all =
+    options.some((o) => o.value === defaultValue) || !defaultValue
+      ? options
+      : [{ value: defaultValue, label: defaultValue }, ...options]
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+        {label}
+      </span>
+      <select name={name} defaultValue={defaultValue} className={SELECT_CLASS}>
+        {all.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {error && <span className="text-destructive text-xs">{error}</span>}
+    </label>
+  )
+}
 
 export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings }) {
   const router = useRouter()
@@ -14,6 +79,11 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [photos, setPhotos] = useState<string[]>(() => {
+    const list =
+      settings.gallery.length > 0 ? settings.gallery : settings.image ? [settings.image] : []
+    return list.filter(Boolean)
+  })
 
   function submit(formData: FormData) {
     setMessage(null)
@@ -28,7 +98,8 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
       country: String(formData.get('country') ?? ''),
       address: String(formData.get('address') ?? ''),
       cep: String(formData.get('cep') ?? ''),
-      image: String(formData.get('image') ?? ''),
+      image: photos[0] ?? '',
+      gallery: photos,
       description: String(formData.get('description') ?? ''),
       tags: String(formData.get('tags') ?? ''),
       timezone: String(formData.get('timezone') ?? ''),
@@ -57,7 +128,17 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
   }
 
   return (
-    <form action={submit} className="space-y-6">
+    <form onSubmit={keepValuesOnSubmit(submit)} className="space-y-6">
+      <ImageUpload
+        label="Fotos da pousada"
+        value={photos}
+        onChange={setPhotos}
+        folder={settings.id}
+        max={20}
+        error={fieldErrors.gallery ?? fieldErrors.image}
+        hint="A primeira é a capa. Até 20 fotos (JPG, PNG ou WEBP, até 10 MB). Depois de enviar, clique em Salvar configurações."
+      />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Input
           label="Nome da pousada"
@@ -77,12 +158,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
           error={fieldErrors.taxId}
           defaultValue={settings.taxId}
         />
-        <Input
-          label="Imagem principal"
-          name="image"
-          error={fieldErrors.image}
-          defaultValue={settings.image}
-        />
+
         <Input label="Cidade" name="city" error={fieldErrors.city} defaultValue={settings.city} />
         <Input
           label="Estado"
@@ -132,24 +208,26 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
           defaultValue={settings.notificationEmail}
           placeholder="reservas@pousada.com"
         />
-        <Input
+        <SelectField
           label="Fuso horário"
           name="timezone"
+          defaultValue={settings.timezone || 'America/Sao_Paulo'}
+          options={TIME_ZONES}
           error={fieldErrors.timezone}
-          defaultValue={settings.timezone}
         />
-        <Input
-          label="Moeda (ISO)"
+        <SelectField
+          label="Moeda"
           name="currency"
+          defaultValue={settings.currency || 'BRL'}
+          options={[{ value: 'BRL', label: 'Real (R$)' }]}
           error={fieldErrors.currency}
-          defaultValue={settings.currency}
-          maxLength={3}
         />
-        <Input
+        <SelectField
           label="Idioma"
           name="language"
+          defaultValue={settings.language || 'pt-BR'}
+          options={LANGUAGES}
           error={fieldErrors.language}
-          defaultValue={settings.language}
         />
         <Input
           label="Check-in"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Search, SearchX } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
@@ -26,8 +26,13 @@ export function AvailabilityView({
   const [results, setResults] = useState<AvailabilityResult[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [queried, setQueried] = useState<string | null>(null)
 
-  async function onSubmit(formData: FormData) {
+  // onSubmit (não `action`): com `<form action>` o React 19 limpa o formulário
+  // depois do envio e a pessoa perdia de vista quais datas consultou.
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
     setError(null)
     setPending(true)
     const result = await checkAvailabilityAction({
@@ -45,6 +50,12 @@ export function AvailabilityView({
       return
     }
     setResults(result.data)
+    const fmt = (v: FormDataEntryValue | null) =>
+      String(v ?? '')
+        .split('-')
+        .reverse()
+        .join('/')
+    setQueried(`${fmt(formData.get('checkin'))} → ${fmt(formData.get('checkout'))}`)
   }
 
   const available = results?.filter((r) => r.available) ?? []
@@ -56,27 +67,60 @@ export function AvailabilityView({
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
       title="Disponibilidade"
-      subtitle="Consulta operacional por período — o mapa completo de reservas vem no próximo ciclo."
+      subtitle="Veja quais acomodações estão livres num período antes de fechar com o hóspede."
       user={{ name: displayName, role: 'Proprietário' }}
     >
       <AcomodacoesTabs active="disponibilidade" />
 
       <div className="mt-5 space-y-5">
         <Card className="p-5">
-          <form action={onSubmit} className="grid gap-4 sm:grid-cols-6">
-            <Input label="Entrada" name="checkin" type="date" required wrapperClassName="sm:col-span-1" />
-            <Input label="Saída" name="checkout" type="date" required wrapperClassName="sm:col-span-1" />
-            <Input label="Adultos" name="adults" type="number" min={1} defaultValue={2} wrapperClassName="sm:col-span-1" />
-            <Input label="Crianças" name="children" type="number" min={0} defaultValue={0} wrapperClassName="sm:col-span-1" />
+          <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
+            <Input
+              label="Entrada"
+              name="checkin"
+              type="date"
+              required
+              wrapperClassName="sm:col-span-1"
+            />
+            <Input
+              label="Saída"
+              name="checkout"
+              type="date"
+              required
+              wrapperClassName="sm:col-span-1"
+            />
+            <Input
+              label="Adultos"
+              name="adults"
+              type="number"
+              min={1}
+              defaultValue={2}
+              wrapperClassName="sm:col-span-1"
+            />
+            <Input
+              label="Crianças"
+              name="children"
+              type="number"
+              min={0}
+              defaultValue={0}
+              wrapperClassName="sm:col-span-1"
+            />
             <label className="flex flex-col justify-end gap-1.5 sm:col-span-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Pets</span>
-              <span className="flex h-[42px] items-center gap-2 rounded-xl border border-input bg-card px-3.5 text-sm">
+              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                Pets
+              </span>
+              <span className="border-input bg-card flex h-[42px] items-center gap-2 rounded-xl border px-3.5 text-sm">
                 <input type="checkbox" name="pets" /> Com pet
               </span>
             </label>
             <label className="flex flex-col gap-1.5 sm:col-span-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Categoria</span>
-              <select name="categoryId" className="rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none">
+              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                Categoria
+              </span>
+              <select
+                name="categoryId"
+                className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+              >
                 <option value="">Todas</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -85,29 +129,43 @@ export function AvailabilityView({
                 ))}
               </select>
             </label>
-            <div className="sm:col-span-6">
+            <div className="sm:col-span-3 xl:col-span-6">
               <Button type="submit" disabled={pending}>
                 <Search className="size-4" />
                 {pending ? 'Consultando…' : 'Consultar'}
               </Button>
             </div>
           </form>
-          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+          {error && <p className="text-destructive mt-3 text-sm font-medium">{error}</p>}
         </Card>
 
+        {results !== null && queried && (
+          <p className="text-muted-foreground text-sm">
+            Resultado para <strong className="text-foreground">{queried}</strong>
+          </p>
+        )}
         {results !== null && (
           <div className="grid gap-5 lg:grid-cols-2">
             <Card className="p-5">
-              <h2 className="font-semibold text-foreground">Disponíveis ({available.length})</h2>
+              <h2 className="text-foreground font-semibold">Disponíveis ({available.length})</h2>
               {available.length === 0 ? (
-                <EmptyState icon={SearchX} title="Nenhuma disponível" description="Nenhuma acomodação livre para esses critérios." />
+                <EmptyState
+                  icon={SearchX}
+                  title="Nenhuma disponível"
+                  description="Nenhuma acomodação livre para esses critérios."
+                />
               ) : (
                 <div className="mt-3 space-y-2">
                   {available.map((r) => (
-                    <div key={r.roomId} className="flex items-center justify-between rounded-xl border border-border p-3">
+                    <div
+                      key={r.roomId}
+                      className="border-border flex items-center justify-between rounded-xl border p-3"
+                    >
                       <div>
-                        <div className="font-medium text-foreground">{r.roomName}</div>
-                        <div className="text-xs text-muted-foreground">{r.categoryName ?? 'Sem categoria'} · até {r.capacity}</div>
+                        <div className="text-foreground font-medium">{r.roomName}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {r.categoryName ?? 'Sem categoria'} · até {r.capacity}
+                        </div>
                       </div>
                       <Badge variant="primarySoft" size="sm">
                         Disponível
@@ -119,15 +177,19 @@ export function AvailabilityView({
             </Card>
 
             <Card className="p-5">
-              <h2 className="font-semibold text-foreground">Indisponíveis ({unavailable.length})</h2>
+              <h2 className="text-foreground font-semibold">
+                Indisponíveis ({unavailable.length})
+              </h2>
               {unavailable.length === 0 ? (
-                <p className="mt-3 text-sm text-muted-foreground">Nenhuma indisponibilidade encontrada.</p>
+                <p className="text-muted-foreground mt-3 text-sm">
+                  Nenhuma indisponibilidade encontrada.
+                </p>
               ) : (
                 <div className="mt-3 space-y-2">
                   {unavailable.map((r) => (
-                    <div key={r.roomId} className="rounded-xl border border-border p-3">
+                    <div key={r.roomId} className="border-border rounded-xl border p-3">
                       <div className="flex items-center justify-between">
-                        <div className="font-medium text-foreground">{r.roomName}</div>
+                        <div className="text-foreground font-medium">{r.roomName}</div>
                         <Badge variant="destructiveSoft" size="sm">
                           Indisponível
                         </Badge>

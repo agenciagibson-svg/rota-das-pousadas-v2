@@ -42,16 +42,32 @@ export function Modal({
   if (!mounted || !open) return null
 
   return createPortal(
+    // O overlay rola: janela mais alta que a tela (ex.: editar acomodação)
+    // não pode cortar o título nem o botão de salvar.
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
     >
-      <div className="absolute inset-0 bg-stone-deep/50 backdrop-blur-sm" aria-hidden="true" onClick={onClose} />
-      <div className={cn('relative z-10 w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl shadow-stone-deep/20', className)}>
-        {children}
+      <div
+        className="bg-stone-deep/50 fixed inset-0 backdrop-blur-sm"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div
+        className="relative flex min-h-full items-center justify-center p-4 sm:p-6"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div
+          className={cn(
+            'border-border bg-card shadow-stone-deep/20 relative z-10 w-full max-w-lg rounded-3xl border p-6 shadow-2xl',
+            className,
+          )}
+        >
+          {children}
+        </div>
       </div>
     </div>,
     document.body,

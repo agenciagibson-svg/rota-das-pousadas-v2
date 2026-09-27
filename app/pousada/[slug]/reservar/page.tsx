@@ -11,6 +11,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { BookingForm, StaleDatesNotice, bioOriginFromParam } from '@/features/reservas'
 import { getPousada, getCurrentUser, getBookableRoom, getMyProfile } from '@/server/queries'
 import { buttonVariants } from '@/components/ui/button'
+import { formatPrice } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Reservar',
@@ -140,7 +141,7 @@ export default async function ReservarPage({
                 </div>
                 <p className="mt-3 text-sm">
                   <span className="text-foreground text-lg font-semibold">
-                    R$ {offer?.nightly ?? pousada.pricePerNight}
+                    {formatPrice(offer?.nightly ?? pousada.pricePerNight)}
                   </span>
                   <span className="text-muted-foreground"> / diária</span>
                 </p>

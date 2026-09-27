@@ -1,47 +1,13 @@
 import Link from 'next/link'
-import {
-  AlertTriangle,
-  BedDouble,
-  CalendarCheck,
-  Clock3,
-  Mail,
-  ReceiptText,
-  UserRound,
-  Users,
-} from 'lucide-react'
+import { AlertTriangle, BedDouble, CalendarCheck, Clock3, Mail, ReceiptText } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { BOOKING_STATUS } from '@/features/reservas'
 import { ORIGIN_LABEL } from './origin-labels'
 import type { OwnerReservation } from '../types'
+import { formatBRL, formatDateTime, formatISODate, isEmail, plural } from '@/lib/format'
 import { OwnerReservationActions } from './owner-reservation-actions'
-
-function fmtDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function fmtDateTime(iso: string | null): string | null {
-  if (!iso) return null
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
-
-function fmtCreatedAt(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
 
 export function OwnerReservationsTable({ reservations }: { reservations: OwnerReservation[] }) {
   if (reservations.length === 0) {
@@ -58,16 +24,19 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
     <div className="space-y-4">
       {reservations.map((reservation) => {
         const status = BOOKING_STATUS[reservation.status]
-        const dueAt = fmtDateTime(reservation.paymentDueAt)
+        const dueAt = reservation.paymentDueAt ? formatDateTime(reservation.paymentDueAt) : null
+        const hasEmail = isEmail(reservation.guestEmail)
 
         return (
-          <Card key={reservation.id} className="p-5">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          // @container: o cartão se ajusta ao espaço que recebe (lista larga em
+          // Reservas, coluna estreita na Visão geral), não à largura da tela.
+          <Card key={reservation.id} className="@container p-4 sm:p-5">
+            <div className="flex flex-col gap-4 @2xl:flex-row @2xl:items-start @2xl:justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                   <Link
                     href={`/dashboard/reservas/${reservation.id}`}
-                    className="text-foreground font-serif text-xl font-semibold hover:underline"
+                    className="text-foreground min-w-0 truncate font-serif text-lg font-semibold hover:underline sm:text-xl"
                   >
                     {reservation.guestName}
                   </Link>
@@ -82,43 +51,62 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                   {reservation.needsAttention && (
                     <Badge variant="destructiveSoft" size="sm">
                       <AlertTriangle className="mr-1 size-3" />
-                      Atenção
+                      Prazo vencido
                     </Badge>
                   )}
-                  <span className="bg-secondary text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium">
+                </div>
+                <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                  <span className="bg-secondary rounded-full px-2.5 py-0.5 font-medium">
                     {reservation.code}
                   </span>
-                  <span className="text-muted-foreground text-xs">
-                    {ORIGIN_LABEL[reservation.origin]}
-                  </span>
+                  <span>{ORIGIN_LABEL[reservation.origin]}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>Criada em {formatDateTime(reservation.createdAt)}</span>
                 </div>
 
-                <div className="text-muted-foreground mt-3 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
-                  <span className="inline-flex items-center gap-2">
-                    <Mail className="text-primary size-4" />
-                    {reservation.guestEmail}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <BedDouble className="text-primary size-4" />
-                    {reservation.roomName}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <Users className="text-primary size-4" />
-                    {reservation.guests} {reservation.guests === 1 ? 'hóspede' : 'hóspedes'}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <CalendarCheck className="text-primary size-4" />
-                    {fmtDate(reservation.checkin)} - {fmtDate(reservation.checkout)}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <Clock3 className="text-primary size-4" />
-                    {reservation.nights} {reservation.nights === 1 ? 'noite' : 'noites'}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <UserRound className="text-primary size-4" />
-                    Criada em {fmtCreatedAt(reservation.createdAt)}
-                  </span>
-                </div>
+                <dl className="text-muted-foreground mt-3 grid gap-x-5 gap-y-2 text-sm @md:grid-cols-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CalendarCheck className="text-primary size-4 shrink-0" />
+                    <dt className="sr-only">Período</dt>
+                    <dd className="text-foreground whitespace-nowrap">
+                      {formatISODate(reservation.checkin)} → {formatISODate(reservation.checkout)}
+                    </dd>
+                  </div>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Clock3 className="text-primary size-4 shrink-0" />
+                    <dt className="sr-only">Noites e hóspedes</dt>
+                    <dd className="truncate">
+                      {plural(reservation.nights, 'noite', 'noites')} ·{' '}
+                      {plural(reservation.guests, 'hóspede', 'hóspedes')}
+                    </dd>
+                  </div>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <BedDouble className="text-primary size-4 shrink-0" />
+                    <dt className="sr-only">Acomodação</dt>
+                    <dd className="truncate" title={reservation.roomName}>
+                      {reservation.roomName}
+                    </dd>
+                  </div>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Mail className="text-primary size-4 shrink-0" />
+                    <dt className="sr-only">E-mail</dt>
+                    <dd
+                      className="min-w-0 truncate"
+                      title={hasEmail ? reservation.guestEmail : undefined}
+                    >
+                      {hasEmail ? (
+                        <a
+                          href={`mailto:${reservation.guestEmail}`}
+                          className="hover:text-foreground hover:underline"
+                        >
+                          {reservation.guestEmail}
+                        </a>
+                      ) : (
+                        'Sem e-mail'
+                      )}
+                    </dd>
+                  </div>
+                </dl>
 
                 {reservation.status === 'pending' && reservation.proofPending && (
                   <Link
@@ -139,27 +127,39 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                 )}
               </div>
 
-              <div className="border-border bg-secondary/40 w-full shrink-0 rounded-2xl border p-4 xl:w-64">
+              <div className="border-border bg-secondary/40 w-full shrink-0 rounded-2xl border p-4 @2xl:w-60">
                 <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
                   <ReceiptText className="text-primary size-4" />
                   Valores
                 </div>
-                <div className="mt-3 space-y-2 text-sm">
-                  <div className="text-muted-foreground flex justify-between">
+                <div className="mt-3 space-y-1.5 text-sm">
+                  <div className="text-muted-foreground flex justify-between gap-3">
                     <span>Estadia</span>
-                    <span>R$ {reservation.subtotal}</span>
+                    <span className="whitespace-nowrap">{formatBRL(reservation.subtotal)}</span>
                   </div>
-                  <div className="text-muted-foreground flex justify-between">
-                    <span>Taxa</span>
-                    <span>R$ {reservation.fee}</span>
-                  </div>
-                  <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
+                  {reservation.fee > 0 && (
+                    <div className="text-muted-foreground flex justify-between gap-3">
+                      <span>Taxa</span>
+                      <span className="whitespace-nowrap">{formatBRL(reservation.fee)}</span>
+                    </div>
+                  )}
+                  <div className="border-border text-foreground flex justify-between gap-3 border-t pt-2 text-base font-semibold">
                     <span>Total</span>
-                    <span>R$ {reservation.total}</span>
+                    <span className="whitespace-nowrap">{formatBRL(reservation.total)}</span>
                   </div>
-                  <div className="text-muted-foreground flex justify-between">
-                    <span>Saldo previsto</span>
-                    <span>R$ {reservation.balanceDue}</span>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-muted-foreground">
+                      {reservation.balanceDue > 0 ? 'Falta receber' : 'Pago'}
+                    </span>
+                    <span
+                      className={
+                        reservation.balanceDue > 0
+                          ? 'font-semibold whitespace-nowrap text-amber-700'
+                          : 'font-semibold whitespace-nowrap text-emerald-700'
+                      }
+                    >
+                      {reservation.balanceDue > 0 ? formatBRL(reservation.balanceDue) : '✓'}
+                    </span>
                   </div>
                 </div>
 

@@ -11,6 +11,7 @@ import { updateMyNameAction } from '@/features/auth/actions'
 import { calculateBookingPrice } from '../pricing'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { formatBRL } from '@/lib/format'
 
 /** Mesma mensagem de `bookings.service.ts` (`createBooking`) — usada para decidir
  * quando trocar o erro genérico pelo mini-formulário de completar o nome. */
@@ -121,13 +122,13 @@ export function BookingForm({
         <div className="border-border bg-secondary/40 space-y-2 rounded-2xl border p-4 text-sm">
           <div className="text-muted-foreground flex justify-between">
             <span>
-              R$ {nightly} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
+              {formatBRL(nightly)} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
             </span>
-            <span>R$ {price.subtotal}</span>
+            <span>{formatBRL(price.subtotal)}</span>
           </div>
           <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
             <span>Total</span>
-            <span>R$ {price.total}</span>
+            <span>{formatBRL(price.total)}</span>
           </div>
         </div>
       )}

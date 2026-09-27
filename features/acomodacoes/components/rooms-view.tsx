@@ -10,13 +10,21 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table'
 import { AcomodacoesTabs } from './acomodacoes-tabs'
 import { RoomForm } from './room-form'
 import { OPERATIONAL_STATUS_LABEL } from './status-labels'
 import { setRoomStatusAction, setRoomOperationalStatusAction } from '../actions'
 import type { ManagedRoom, AccommodationCategory, RoomOperationalStatus } from '../types'
 import type { ActionResult } from '@/types'
+import { formatBRL } from '@/lib/format'
 
 const OPERATIONAL_OPTIONS: RoomOperationalStatus[] = [
   'available',
@@ -52,10 +60,12 @@ export function RoomsView({
   const [editing, setEditing] = useState<ManagedRoom | 'new' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [toggling, setToggling] = useState<ManagedRoom | null>(null)
 
   const filtered = useMemo(() => {
     return rooms.filter((r) => {
-      if (search && !`${r.name} ${r.code ?? ''}`.toLowerCase().includes(search.toLowerCase())) return false
+      if (search && !`${r.name} ${r.code ?? ''}`.toLowerCase().includes(search.toLowerCase()))
+        return false
       if (categoryFilter && r.categoryId !== categoryFilter) return false
       if (statusFilter && r.status !== statusFilter) return false
       return true
@@ -89,8 +99,15 @@ export function RoomsView({
       <div className="mt-5 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-foreground">{rooms.length} acomodações no total</h2>
-            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+            <h2 className="text-foreground font-semibold">
+              {rooms.length === 1 ? '1 acomodação' : `${rooms.length} acomodações`} no total
+            </h2>
+            {canManage && rooms.length > 0 && (
+              <p className="text-muted-foreground text-sm">
+                Clique no nome para editar preço, capacidade e descrição.
+              </p>
+            )}
+            {error && <p className="text-destructive text-sm font-medium">{error}</p>}
           </div>
           {canManage && (
             <Button onClick={() => setEditing('new')}>
@@ -102,19 +119,19 @@ export function RoomsView({
 
         <Card className="p-4">
           <div className="flex flex-wrap gap-3">
-            <div className="flex min-w-48 flex-1 items-center gap-2 rounded-xl border border-input bg-card px-3 py-2">
-              <Search className="size-4 text-muted-foreground" />
+            <div className="border-input bg-card flex min-w-48 flex-1 items-center gap-2 rounded-xl border px-3 py-2">
+              <Search className="text-muted-foreground size-4" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por nome ou código"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="placeholder:text-muted-foreground w-full bg-transparent text-sm outline-none"
               />
             </div>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground outline-none"
+              className="border-input bg-card text-foreground rounded-xl border px-3 py-2 text-sm outline-none"
             >
               <option value="">Todas as categorias</option>
               {categories.map((c) => (
@@ -126,7 +143,7 @@ export function RoomsView({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground outline-none"
+              className="border-input bg-card text-foreground rounded-xl border px-3 py-2 text-sm outline-none"
             >
               <option value="">Ativas e inativas</option>
               <option value="active">Só ativas</option>
@@ -143,7 +160,11 @@ export function RoomsView({
               description="Cadastre a primeira acomodação real desta pousada."
             />
           ) : filtered.length === 0 ? (
-            <EmptyState icon={Search} title="Nenhum resultado" description="Ajuste a busca ou os filtros." />
+            <EmptyState
+              icon={Search}
+              title="Nenhum resultado"
+              description="Ajuste a busca ou os filtros."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -151,6 +172,7 @@ export function RoomsView({
                   <TableHead>Nome / código</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Capacidade</TableHead>
+                  <TableHead>Diária base</TableHead>
                   <TableHead>Status operacional</TableHead>
                   <TableHead>Situação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -164,15 +186,20 @@ export function RoomsView({
                       <TableCell>
                         <button
                           onClick={() => canManage && setEditing(r)}
-                          className="text-left font-medium text-foreground hover:underline"
+                          className="text-foreground text-left font-medium hover:underline"
                         >
                           {r.name}
                         </button>
-                        {r.code && <div className="text-xs text-muted-foreground">{r.code}</div>}
+                        {r.code && <div className="text-muted-foreground text-xs">{r.code}</div>}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{r.categoryName ?? '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {r.categoryName ?? '—'}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         até {r.capacityMax ?? r.capacity}
+                      </TableCell>
+                      <TableCell className="text-foreground whitespace-nowrap">
+                        {r.basePrice != null ? formatBRL(r.basePrice) : '—'}
                       </TableCell>
                       <TableCell>
                         {canChangeOperationalStatus ? (
@@ -180,9 +207,14 @@ export function RoomsView({
                             value={r.operationalStatus}
                             disabled={pending}
                             onChange={(e) =>
-                              run(setRoomOperationalStatusAction({ id: r.id, status: e.target.value as RoomOperationalStatus }))
+                              run(
+                                setRoomOperationalStatusAction({
+                                  id: r.id,
+                                  status: e.target.value as RoomOperationalStatus,
+                                }),
+                              )
                             }
-                            className="rounded-lg border border-input bg-card px-2 py-1 text-xs text-foreground outline-none"
+                            className="border-input bg-card text-foreground rounded-lg border px-2 py-1 text-xs outline-none"
                           >
                             {OPERATIONAL_OPTIONS.map((s) => (
                               <option key={s} value={s}>
@@ -197,7 +229,10 @@ export function RoomsView({
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={r.status === 'active' ? 'primarySoft' : 'secondary'} size="sm">
+                        <Badge
+                          variant={r.status === 'active' ? 'primarySoft' : 'secondary'}
+                          size="sm"
+                        >
                           {r.status === 'active' ? 'Ativa' : 'Inativa'}
                         </Badge>
                       </TableCell>
@@ -207,8 +242,14 @@ export function RoomsView({
                             variant="ghost"
                             size="icon-sm"
                             disabled={pending}
-                            aria-label={r.status === 'active' ? `Inativar ${r.name}` : `Reativar ${r.name}`}
-                            onClick={() => run(setRoomStatusAction({ id: r.id, status: r.status === 'active' ? 'inactive' : 'active' }))}
+                            aria-label={
+                              r.status === 'active' ? `Inativar ${r.name}` : `Reativar ${r.name}`
+                            }
+                            onClick={() =>
+                              r.status === 'active'
+                                ? setToggling(r)
+                                : run(setRoomStatusAction({ id: r.id, status: 'active' }))
+                            }
                           >
                             {r.status === 'active' ? <Ban /> : <RotateCcw />}
                           </Button>
@@ -222,6 +263,31 @@ export function RoomsView({
           )}
         </Card>
       </div>
+
+      <Dialog
+        open={toggling !== null}
+        onClose={() => setToggling(null)}
+        title={`Inativar ${toggling?.name ?? ''}?`}
+        description="A acomodação sai da venda: não aparece no site nem aceita reservas novas. As reservas já feitas continuam valendo. Dá para reativar depois."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setToggling(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                if (!toggling) return
+                run(setRoomStatusAction({ id: toggling.id, status: 'inactive' }))
+                setToggling(null)
+              }}
+            >
+              Inativar
+            </Button>
+          </>
+        }
+      />
 
       <Dialog
         open={editing !== null}

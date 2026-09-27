@@ -25,7 +25,7 @@ function fmtStay(checkin: string | null, checkout: string | null): string {
 
 function RatingStars({ rating }: { rating: number }) {
   return (
-    <span className="inline-flex text-gold">
+    <span className="text-gold inline-flex">
       {Array.from({ length: 5 }).map((_, index) => (
         <Star
           key={index}
@@ -65,25 +65,29 @@ export function OwnerReviewsView({
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Nota média</div>
+          <div className="text-muted-foreground text-sm">Nota média</div>
           <div className="mt-2 flex items-end gap-2">
-            <span className="text-3xl font-semibold text-foreground">{average.toFixed(1)}</span>
-            <RatingStars rating={Math.round(average)} />
+            <span className="text-foreground text-3xl font-semibold">
+              {reviews.length > 0 ? average.toFixed(1).replace('.', ',') : '—'}
+            </span>
+            {reviews.length > 0 && <RatingStars rating={Math.round(average)} />}
           </div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Avaliações</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{reviews.length}</div>
+          <div className="text-muted-foreground text-sm">Avaliações</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{reviews.length}</div>
         </Card>
         <Card className="p-5">
-          <div className="text-sm text-muted-foreground">Sem resposta</div>
-          <div className="mt-2 text-3xl font-semibold text-foreground">{pendingResponses}</div>
+          <div className="text-muted-foreground text-sm">Sem resposta</div>
+          <div className="text-foreground mt-2 text-3xl font-semibold">{pendingResponses}</div>
         </Card>
       </div>
 
       <Card className="mt-5 p-6">
-        <h2 className="font-semibold text-foreground">Comentários dos hóspedes</h2>
-        <p className="text-sm text-muted-foreground">Responda avaliações recebidas após estadias concluídas.</p>
+        <h2 className="text-foreground font-semibold">Comentários dos hóspedes</h2>
+        <p className="text-muted-foreground text-sm">
+          Responda avaliações recebidas após estadias concluídas.
+        </p>
 
         {reviews.length === 0 ? (
           <EmptyState
@@ -95,16 +99,16 @@ export function OwnerReviewsView({
         ) : (
           <div className="mt-5 space-y-4">
             {reviews.map((review) => (
-              <div key={review.id} className="rounded-2xl border border-border p-5">
+              <div key={review.id} className="border-border rounded-2xl border p-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-serif text-lg font-semibold text-foreground">
+                      <h3 className="text-foreground font-serif text-lg font-semibold">
                         {review.guestName}
                       </h3>
                       <RatingStars rating={review.rating} />
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                       <span className="inline-flex items-center gap-1.5">
                         <Mail className="size-3.5" />
                         {review.guestEmail}
@@ -119,12 +123,12 @@ export function OwnerReviewsView({
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm leading-relaxed text-foreground">{review.text}</p>
+                <p className="text-foreground mt-4 text-sm leading-relaxed">{review.text}</p>
 
                 {review.response && (
-                  <div className="mt-4 rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
-                    <div className="mb-1 inline-flex items-center gap-1.5 font-semibold text-foreground">
-                      <MessageSquareReply className="size-4 text-primary" />
+                  <div className="bg-secondary text-muted-foreground mt-4 rounded-2xl p-4 text-sm">
+                    <div className="text-foreground mb-1 inline-flex items-center gap-1.5 font-semibold">
+                      <MessageSquareReply className="text-primary size-4" />
                       Sua resposta
                     </div>
                     <p>{review.response}</p>
@@ -137,7 +141,7 @@ export function OwnerReviewsView({
                   </div>
                 ) : (
                   !review.response && (
-                    <p className="mt-4 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-4 text-xs">
                       Seu papel não pode responder avaliações.
                     </p>
                   )

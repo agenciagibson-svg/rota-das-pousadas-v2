@@ -657,3 +657,45 @@ export function paymentProofRejectedEmail(
   const text = `A pousada não confirmou o Pix da reserva ${ctx.code} (${ctx.pousada.name}).\nMotivo: ${reason}\n${deadline ? `Envie outro comprovante ou pague até ${deadline}.\n` : ''}Acesse: ${link}`
   return { subject, html, text }
 }
+
+/**
+ * Convite para a equipe de uma pousada. Vai para qualquer e-mail convidado —
+ * o texto serve para quem já tem conta (entra e aceita no painel) e para quem
+ * ainda não tem (cria a conta com o mesmo e-mail e pede um novo convite). Não
+ * revela se o e-mail tem conta na plataforma.
+ */
+export function memberInviteEmail(p: {
+  pousadaName: string
+  roleLabel: string
+  inviterName: string | null
+  email: string
+  dashboardUrl: string
+  signupUrl: string
+}): Email {
+  const subject = `Convite para a equipe ${emPousada(p.pousadaName) === 'na' ? 'da' : 'do'} ${p.pousadaName}`
+  const who = p.inviterName
+    ? `<strong>${esc(p.inviterName)}</strong> convidou você`
+    : 'Você foi convidado'
+  const html = wrapLayout({
+    preheader: `Você foi convidado para a equipe ${p.pousadaName} como ${p.roleLabel}.`,
+    pill: { label: 'Convite de equipe', bg: '#dcfce7', fg: '#166534' },
+    title: `Bem-vindo à equipe`,
+    subtitle: `${p.pousadaName} · ${p.roleLabel}`,
+    intro: `${who} para fazer parte da equipe de <strong>${esc(p.pousadaName)}</strong> no painel da Rota das Pousadas, com o papel de <strong>${esc(p.roleLabel)}</strong>.`,
+    ticketHtml: '',
+    extraHtml:
+      notice(
+        `<strong>Já tem conta com ${esc(p.email)}?</strong> Entre no painel e toque em “Aceitar convite”.`,
+        'ok',
+      ) +
+      notice(
+        `<strong>Ainda não tem conta?</strong> Crie uma com este mesmo e-mail em <a href="${esc(p.signupUrl)}" style="color:${C.forest};">${esc(p.signupUrl)}</a> e peça para a pousada enviar o convite de novo.`,
+        'warn',
+      ),
+    cta: { href: esc(p.dashboardUrl), label: 'Abrir o painel' },
+    ctaHint: 'Se você não esperava este convite, pode ignorar este e-mail.',
+    footerNote: 'Você recebeu este e-mail porque uma pousada convidou este endereço para a equipe.',
+  })
+  const text = `Você foi convidado para a equipe de ${p.pousadaName} (${p.roleLabel}) na Rota das Pousadas.\n\nJá tem conta com ${p.email}? Entre em ${p.dashboardUrl} e aceite o convite.\nAinda não tem? Crie uma com este mesmo e-mail em ${p.signupUrl} e peça um novo convite.\n\nSe não esperava este convite, ignore este e-mail.`
+  return { subject, html, text }
+}

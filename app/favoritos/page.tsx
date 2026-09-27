@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { Badge } from '@/components/ui/badge'
 import { getCurrentUser, getMyFavoriteAlertStates, getMyFavorites } from '@/server/queries'
+import { formatPrice } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,29 +25,31 @@ export default async function FavoritosPage() {
   const activeAlertsCount = alertStates.filter((alert) => alert.active).length
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="mx-auto max-w-7xl px-5 pb-20 pt-28 lg:px-8">
-        <div className="flex flex-col justify-between gap-6 border-b border-border pb-8 md:flex-row md:items-end">
+      <main className="mx-auto max-w-7xl px-5 pt-28 pb-20 lg:px-8">
+        <div className="border-border flex flex-col justify-between gap-6 border-b pb-8 md:flex-row md:items-end">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              <Heart className="size-4 fill-primary" />
+            <span className="text-primary inline-flex items-center gap-2 text-sm font-semibold tracking-[0.2em] uppercase">
+              <Heart className="fill-primary size-4" />
               Favoritos
             </span>
-            <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+            <h1 className="text-foreground mt-3 font-serif text-4xl leading-tight font-semibold sm:text-5xl">
               Pousadas salvas para sua próxima rota
             </h1>
-            <p className="mt-3 text-muted-foreground">
-              Compare opções com calma e ative alertas para saber quando surgir uma boa oportunidade.
+            <p className="text-muted-foreground mt-3">
+              Compare opções com calma e ative alertas para saber quando surgir uma boa
+              oportunidade.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col md:items-end">
-            <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">{activeAlertsCount}</span> alertas ativos
+            <div className="border-border bg-card text-muted-foreground rounded-2xl border px-4 py-3 text-sm">
+              <span className="text-foreground font-semibold">{activeAlertsCount}</span> alertas
+              ativos
             </div>
             <Link
               href="/pousadas"
-              className="inline-flex w-fit rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+              className="bg-primary text-primary-foreground inline-flex w-fit rounded-full px-5 py-3 text-sm font-semibold"
             >
               Explorar mais pousadas
             </Link>
@@ -58,9 +61,12 @@ export default async function FavoritosPage() {
             {favorites.map((pousada) => (
               <article
                 key={pousada.slug}
-                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-stone-deep/10"
+                className="group border-border bg-card hover:shadow-stone-deep/10 flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-xl"
               >
-                <Link href={`/pousada/${pousada.slug}`} className="relative aspect-[4/3] overflow-hidden">
+                <Link
+                  href={`/pousada/${pousada.slug}`}
+                  className="relative aspect-[4/3] overflow-hidden"
+                >
                   <Image
                     src={pousada.image || '/placeholder.svg'}
                     alt={pousada.name}
@@ -68,22 +74,24 @@ export default async function FavoritosPage() {
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground">
-                    <Star className="size-3.5 fill-gold text-gold" />
+                  <span className="bg-card text-foreground absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
+                    <Star className="fill-gold text-gold size-3.5" />
                     {pousada.rating.toFixed(1)}
                   </span>
-                  <span className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                  <span className="bg-accent text-accent-foreground absolute top-3 right-3 flex size-9 items-center justify-center rounded-full">
                     <Heart className="size-4 fill-current" />
                   </span>
                 </Link>
 
                 <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
                     <MapPin className="size-4" />
                     {pousada.city}, {pousada.state}
                   </div>
-                  <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground">{pousada.name}</h2>
-                  <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                  <h2 className="text-foreground mt-2 font-serif text-2xl font-semibold">
+                    {pousada.name}
+                  </h2>
+                  <p className="text-muted-foreground mt-3 line-clamp-2 text-sm leading-relaxed">
                     {pousada.description}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -93,9 +101,9 @@ export default async function FavoritosPage() {
                       </Badge>
                     ))}
                   </div>
-                  <div className="mt-5 rounded-2xl border border-border bg-secondary/35 p-4">
+                  <div className="border-border bg-secondary/35 mt-5 rounded-2xl border p-4">
                     <div className="flex items-start gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card text-primary">
+                      <span className="bg-card text-primary flex size-9 shrink-0 items-center justify-center rounded-full">
                         {activeAlertBySlug.get(pousada.slug) ? (
                           <BellRing className="size-4" />
                         ) : (
@@ -103,25 +111,30 @@ export default async function FavoritosPage() {
                         )}
                       </span>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">Monitoramento da rota</p>
-                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                          Avisaremos quando esta pousada entrar em oferta ou ganhar uma janela melhor.
+                        <p className="text-foreground text-sm font-semibold">
+                          Monitoramento da rota
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                          Avisaremos quando esta pousada entrar em oferta ou ganhar uma janela
+                          melhor.
                         </p>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                      <TrendingDown className="size-3.5 text-accent" />
+                    <div className="text-muted-foreground mt-3 flex items-center gap-2 text-xs">
+                      <TrendingDown className="text-accent size-3.5" />
                       Base pronta para e-mail, WhatsApp e notificações.
                     </div>
                   </div>
                   <div className="mt-auto flex items-end justify-between pt-5">
                     <div>
-                      <span className="text-lg font-semibold text-foreground">R$ {pousada.pricePerNight}</span>
-                      <span className="text-xs text-muted-foreground"> / diária</span>
+                      <span className="text-foreground text-lg font-semibold">
+                        {formatPrice(pousada.pricePerNight)}
+                      </span>
+                      <span className="text-muted-foreground text-xs"> / diária</span>
                     </div>
                     <Link
                       href={`/pousada/${pousada.slug}`}
-                      className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent"
+                      className="bg-primary text-primary-foreground hover:bg-accent rounded-full px-4 py-2 text-xs font-semibold transition-colors"
                     >
                       Ver detalhes
                     </Link>
@@ -137,19 +150,19 @@ export default async function FavoritosPage() {
             ))}
           </div>
         ) : (
-          <div className="mt-10 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-            <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-secondary text-primary">
+          <div className="border-border bg-card mt-10 rounded-2xl border border-dashed p-10 text-center">
+            <span className="bg-secondary text-primary mx-auto flex size-12 items-center justify-center rounded-full">
               <Heart className="size-6" />
             </span>
-            <h2 className="mt-5 font-serif text-2xl font-semibold text-foreground">
+            <h2 className="text-foreground mt-5 font-serif text-2xl font-semibold">
               Você ainda não salvou pousadas
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm">
               Abra uma pousada e toque em Salvar. Ela aparece aqui para você comparar depois.
             </p>
             <Link
               href="/pousadas"
-              className="mt-5 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+              className="bg-primary text-primary-foreground mt-5 inline-flex rounded-full px-5 py-2.5 text-sm font-semibold"
             >
               Ver pousadas
             </Link>

@@ -84,6 +84,10 @@ export const pousadaSettingsSchema = z.object({
     .trim()
     .max(2048, 'Endereço de imagem muito longo.')
     .refine(isPousadaImage, 'Informe uma URL (https://...) ou um caminho do site (/...).'),
+  /** Todas as fotos da vitrine, a capa primeiro (a capa também fica em `image`). */
+  gallery: z
+    .array(z.string().trim().min(1).max(2048).refine(isPousadaImage, 'Foto inválida.'))
+    .max(20, 'Use no máximo 20 fotos.'),
   description: z.string().trim().min(20, 'Descreva melhor a pousada.').max(1500),
   tags: z.string().trim().max(160, 'Use no máximo 160 caracteres.'),
   // O fuso define o "hoje" do painel, das reservas pelo site e do check-in;

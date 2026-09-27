@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { saveGuestAction } from '../actions'
 import type { GuestDetail } from '../types'
+import { keepValuesOnSubmit } from '@/lib/forms'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground mb-1 block text-xs font-medium">{label}</span>
       {children}
     </label>
   )
@@ -67,19 +68,28 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
   }
 
   return (
-    <form action={submit} className="space-y-6">
+    <form onSubmit={keepValuesOnSubmit(submit)} className="space-y-6">
       <section className="grid gap-3 sm:grid-cols-2">
         <Field label="Nome completo">
           <input name="fullName" defaultValue={guest.fullName} required className={inputClass} />
         </Field>
         <Field label="Nome preferido">
-          <input name="preferredName" defaultValue={guest.preferredName ?? ''} className={inputClass} />
+          <input
+            name="preferredName"
+            defaultValue={guest.preferredName ?? ''}
+            className={inputClass}
+          />
         </Field>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-3">
         <Field label="E-mail">
-          <input name="email" type="email" defaultValue={guest.email ?? ''} className={inputClass} />
+          <input
+            name="email"
+            type="email"
+            defaultValue={guest.email ?? ''}
+            className={inputClass}
+          />
         </Field>
         <Field label="Telefone">
           <input name="phone" defaultValue={guest.phone ?? ''} className={inputClass} />
@@ -91,13 +101,26 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
 
       <section className="grid gap-3 sm:grid-cols-4">
         <Field label="Tipo de documento">
-          <input name="documentType" defaultValue={guest.documentType ?? ''} className={inputClass} />
+          <input
+            name="documentType"
+            defaultValue={guest.documentType ?? ''}
+            className={inputClass}
+          />
         </Field>
         <Field label="Documento">
-          <input name="documentNumber" defaultValue={guest.documentNumber ?? ''} className={inputClass} />
+          <input
+            name="documentNumber"
+            defaultValue={guest.documentNumber ?? ''}
+            className={inputClass}
+          />
         </Field>
         <Field label="Nascimento">
-          <input name="birthDate" type="date" defaultValue={guest.birthDate ?? ''} className={inputClass} />
+          <input
+            name="birthDate"
+            type="date"
+            defaultValue={guest.birthDate ?? ''}
+            className={inputClass}
+          />
         </Field>
         <Field label="Nacionalidade">
           <input name="nationality" defaultValue={guest.nationality ?? ''} className={inputClass} />
@@ -118,40 +141,72 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
           <input name="address" defaultValue={guest.address ?? ''} className={inputClass} />
         </Field>
         <Field label="CEP">
-          <input name="cep" defaultValue={guest.cep ?? ''} placeholder="00000-000" className={inputClass} />
+          <input
+            name="cep"
+            defaultValue={guest.cep ?? ''}
+            placeholder="00000-000"
+            className={inputClass}
+          />
         </Field>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2">
         <Field label="Contato de emergência — nome">
-          <input name="emergencyContactName" defaultValue={guest.emergencyContact.name ?? ''} className={inputClass} />
+          <input
+            name="emergencyContactName"
+            defaultValue={guest.emergencyContact.name ?? ''}
+            className={inputClass}
+          />
         </Field>
         <Field label="Contato de emergência — telefone">
-          <input name="emergencyContactPhone" defaultValue={guest.emergencyContact.phone ?? ''} className={inputClass} />
+          <input
+            name="emergencyContactPhone"
+            defaultValue={guest.emergencyContact.phone ?? ''}
+            className={inputClass}
+          />
         </Field>
       </section>
 
       <section className="grid gap-3">
         <Field label="Preferências (separadas por vírgula)">
-          <input name="preferences" defaultValue={guest.preferences.join(', ')} className={inputClass} />
+          <input
+            name="preferences"
+            defaultValue={guest.preferences.join(', ')}
+            className={inputClass}
+          />
         </Field>
         <Field label="Restrições alimentares">
-          <textarea name="dietaryRestrictions" defaultValue={guest.dietaryRestrictions} rows={2} className={inputClass} />
+          <textarea
+            name="dietaryRestrictions"
+            defaultValue={guest.dietaryRestrictions}
+            rows={2}
+            className={inputClass}
+          />
         </Field>
         <Field label="Necessidades de acessibilidade">
-          <textarea name="accessibilityNeeds" defaultValue={guest.accessibilityNeeds} rows={2} className={inputClass} />
+          <textarea
+            name="accessibilityNeeds"
+            defaultValue={guest.accessibilityNeeds}
+            rows={2}
+            className={inputClass}
+          />
         </Field>
         <Field label="Observações internas (nunca visível ao hóspede)">
-          <textarea name="internalNotes" defaultValue={guest.internalNotes} rows={3} className={inputClass} />
+          <textarea
+            name="internalNotes"
+            defaultValue={guest.internalNotes}
+            rows={3}
+            className={inputClass}
+          />
         </Field>
-        <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="text-muted-foreground inline-flex items-center gap-2 text-sm">
           <input type="checkbox" name="marketingConsent" defaultChecked={guest.marketingConsent} />
           Consentimento de comunicação de marketing
         </label>
       </section>
 
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-      {saved && !isPending && <p className="text-sm font-medium text-primary">Salvo.</p>}
+      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+      {saved && !isPending && <p className="text-primary text-sm font-medium">Salvo.</p>}
 
       <Button type="submit" disabled={isPending}>
         {isPending ? 'Salvando…' : 'Salvar alterações'}

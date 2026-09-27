@@ -10,6 +10,7 @@ import {
   listBookableRooms,
   recordLinkEvent,
 } from '@/repositories/bio.repository'
+import { formatBRL } from '@/lib/format'
 
 /**
  * Página da bio — o link que a pousada põe no Instagram.
@@ -61,7 +62,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!pousada) return { title: 'Pousada não encontrada' }
   return {
     title: `${pousada.name} — reservas`,
-    description: pousada.description.slice(0, 160) || `Consulte disponibilidade e reserve direto na ${pousada.name}.`,
+    description:
+      pousada.description.slice(0, 160) ||
+      `Consulte disponibilidade e reserve direto na ${pousada.name}.`,
     alternates: { canonical: `${publicEnv.siteUrl}/${pousada.slug}` },
     openGraph: {
       title: `${pousada.name} — reservas`,
@@ -95,14 +98,16 @@ export default async function BioPage({ params, searchParams }: PageProps) {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-10">
         <header className="flex flex-col gap-1.5">
-          <h1 className="font-serif text-2xl font-semibold leading-tight text-foreground">{pousada.name}</h1>
-          <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <h1 className="text-foreground font-serif text-2xl leading-tight font-semibold">
+            {pousada.name}
+          </h1>
+          <p className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
             <MapPin className="size-3.5" /> {pousada.city}, {pousada.state}
           </p>
         </header>
-        <div className="rounded-2xl border border-gold/40 bg-gold/10 p-5">
-          <h2 className="font-serif text-lg font-semibold text-foreground">Reservas em breve</h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">
+        <div className="border-gold/40 bg-gold/10 rounded-2xl border p-5">
+          <h2 className="text-foreground font-serif text-lg font-semibold">Reservas em breve</h2>
+          <p className="text-muted-foreground mt-1.5 text-sm">
             Estamos finalizando o cadastro das acomodações. Enquanto isso, fale direto com a gente.
           </p>
         </div>
@@ -131,8 +136,10 @@ export default async function BioPage({ params, searchParams }: PageProps) {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-10">
       <header className="flex flex-col gap-1.5">
-        <h1 className="font-serif text-2xl font-semibold leading-tight text-foreground">{pousada.name}</h1>
-        <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+        <h1 className="text-foreground font-serif text-2xl leading-tight font-semibold">
+          {pousada.name}
+        </h1>
+        <p className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
           <MapPin className="size-3.5" /> {pousada.city}, {pousada.state}
         </p>
       </header>
@@ -141,31 +148,37 @@ export default async function BioPage({ params, searchParams }: PageProps) {
       <form
         action={`/${pousada.slug}`}
         method="get"
-        className="flex flex-col gap-3 rounded-2xl border border-primary/40 bg-secondary/40 p-4"
+        className="border-primary/40 bg-secondary/40 flex flex-col gap-3 rounded-2xl border p-4"
       >
         <div className="flex gap-2">
           <label className="flex flex-1 flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Entrada</span>
+            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              Entrada
+            </span>
             <input
               type="date"
               name="checkin"
               id="bio-checkin"
               defaultValue={checkin ?? ''}
-              className="rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus-visible:border-ring"
+              className="border-input bg-card text-foreground focus-visible:border-ring rounded-lg border px-3 py-2.5 text-sm outline-none"
             />
           </label>
           <label className="flex flex-1 flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Saída</span>
+            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              Saída
+            </span>
             <input
               type="date"
               name="checkout"
               id="bio-checkout"
               defaultValue={checkout ?? ''}
-              className="rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus-visible:border-ring"
+              className="border-input bg-card text-foreground focus-visible:border-ring rounded-lg border px-3 py-2.5 text-sm outline-none"
             />
           </label>
           <label className="flex w-20 flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Hósp.</span>
+            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+              Hósp.
+            </span>
             <input
               type="number"
               name="hospedes"
@@ -173,20 +186,20 @@ export default async function BioPage({ params, searchParams }: PageProps) {
               min={1}
               max={100}
               defaultValue={guests}
-              className="rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none focus-visible:border-ring"
+              className="border-input bg-card text-foreground focus-visible:border-ring rounded-lg border px-3 py-2.5 text-sm outline-none"
             />
           </label>
         </div>
         <button
           type="submit"
-          className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105"
+          className="bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold transition-all hover:brightness-105"
         >
           Ver disponibilidade
         </button>
       </form>
 
       {hasDates && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {fmt(checkin as string)} a {fmt(checkout as string)} · {noites}{' '}
           {noites === 1 ? 'noite' : 'noites'} · {guests} {guests === 1 ? 'hóspede' : 'hóspedes'}
         </p>
@@ -202,19 +215,19 @@ export default async function BioPage({ params, searchParams }: PageProps) {
                   ? `/pousada/${pousada.slug}/reservar?checkin=${checkin}&checkout=${checkout}&guests=${guests}&origem=link_bio`
                   : `/pousada/${pousada.slug}?origem=link_bio`
               }
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-primary/50"
+              className="border-border bg-card hover:border-primary/50 flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-colors"
             >
               <span className="min-w-0">
-                <span className="block text-sm font-semibold text-foreground">{room.name}</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="text-foreground block text-sm font-semibold">{room.name}</span>
+                <span className="text-muted-foreground block text-xs">
                   até {room.capacity} {room.capacity === 1 ? 'hóspede' : 'hóspedes'}
                 </span>
               </span>
               <span className="shrink-0 text-right">
-                <span className="block text-sm font-semibold tabular-nums text-foreground">
-                  R$ {hasDates ? room.basePrice * noites : room.basePrice}
+                <span className="text-foreground block text-sm font-semibold tabular-nums">
+                  {formatBRL(hasDates ? room.basePrice * noites : room.basePrice)}
                 </span>
-                <span className="block text-[11px] text-muted-foreground">
+                <span className="text-muted-foreground block text-[11px]">
                   {hasDates ? `${noites} ${noites === 1 ? 'noite' : 'noites'}` : 'por noite'}
                 </span>
               </span>
@@ -222,12 +235,12 @@ export default async function BioPage({ params, searchParams }: PageProps) {
           ))}
         </section>
       ) : (
-        <div className="rounded-2xl border border-border bg-secondary/40 p-5">
-          <CalendarDays className="size-5 text-muted-foreground" />
-          <h2 className="mt-2 font-serif text-lg font-semibold text-foreground">
+        <div className="border-border bg-secondary/40 rounded-2xl border p-5">
+          <CalendarDays className="text-muted-foreground size-5" />
+          <h2 className="text-foreground mt-2 font-serif text-lg font-semibold">
             {hasDates ? 'Sem vaga nessas datas' : 'Acomodações em atualização'}
           </h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1.5 text-sm">
             {hasDates
               ? 'Tente outro período — ou peça um orçamento e a pousada avisa se abrir vaga.'
               : 'Peça um orçamento e a pousada responde com as opções disponíveis.'}
@@ -262,7 +275,7 @@ function ContactLinks({
           href={`https://wa.me/${pousada.whatsapp.replace(/\D/g, '')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          className="border-border bg-card text-foreground hover:bg-secondary flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-colors"
         >
           <span className="inline-flex items-center gap-2">
             <MessageCircleMore className="size-4" /> WhatsApp
@@ -275,7 +288,7 @@ function ContactLinks({
           href={`https://instagram.com/${pousada.instagram.replace(/^@/, '')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          className="border-border bg-card text-foreground hover:bg-secondary flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-colors"
         >
           <span className="inline-flex items-center gap-2">
             <Link2 className="size-4" /> Instagram
@@ -287,7 +300,7 @@ function ContactLinks({
         href={maps}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+        className="border-border bg-card text-foreground hover:bg-secondary flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-colors"
       >
         <span className="inline-flex items-center gap-2">
           <MapPin className="size-4" /> Como chegar
@@ -300,9 +313,9 @@ function ContactLinks({
 
 function Footer() {
   return (
-    <footer className="mt-auto pt-4 text-center text-xs text-muted-foreground">
+    <footer className="text-muted-foreground mt-auto pt-4 text-center text-xs">
       Reservas por{' '}
-      <Link href="/" className="font-semibold text-foreground hover:underline">
+      <Link href="/" className="text-foreground font-semibold hover:underline">
         Rota das Pousadas
       </Link>
     </footer>

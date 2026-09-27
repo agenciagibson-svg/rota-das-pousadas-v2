@@ -30,7 +30,12 @@ export type OwnerDashboardSection =
 
 export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
   return [
-    { label: 'Visão geral', icon: LayoutDashboard, href: '/dashboard', active: active === 'overview' },
+    {
+      label: 'Visão geral',
+      icon: LayoutDashboard,
+      href: '/dashboard',
+      active: active === 'overview',
+    },
     {
       label: 'Reservas',
       icon: CalendarCheck,
@@ -86,7 +91,7 @@ export function ownerDashboardNav(active: OwnerDashboardSection): NavItem[] {
       active: active === 'marketing',
     },
     {
-      label: 'Assistente IA',
+      label: 'Assistente',
       icon: Bot,
       href: '/dashboard/assistente',
       active: active === 'assistente',
