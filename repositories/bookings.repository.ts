@@ -499,9 +499,17 @@ export type BookingNotificationContext = {
   total: number
   currency: string
   roomName: string
+  /** 0071 — opcionais: ausentes em respostas de RPC anteriores à migration. */
+  status?: string
+  adults?: number
+  children?: number
+  paymentDueAt?: string | null
   pousada: {
     name: string
     slug: string
+    city?: string | null
+    state?: string | null
+    timezone?: string | null
     address: string | null
     cep: string | null
     checkinTime: string
