@@ -1,10 +1,16 @@
 import Link from 'next/link'
-import { DashboardShell } from '@/components/dashboard/shell'
-import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
+import { OwnerDashboardShell } from '@/components/dashboard/owner-shell'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table'
 import { CalendarCheck } from 'lucide-react'
 import { BOOKING_STATUS } from '@/features/reservas'
 import type { BookingStatus } from '@/features/reservas'
@@ -13,7 +19,11 @@ import type { GuestDetail } from '../types'
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '—'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso))
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(iso))
 }
 
 export function GuestProfileView({
@@ -26,8 +36,8 @@ export function GuestProfileView({
   guest: GuestDetail
 }) {
   return (
-    <DashboardShell
-      nav={ownerDashboardNav('hospedes')}
+    <OwnerDashboardShell
+      section="hospedes"
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
       title={guest.preferredName || guest.fullName}
@@ -36,8 +46,8 @@ export function GuestProfileView({
     >
       <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
         <Card className="p-6">
-          <h2 className="font-semibold text-foreground">Dados do hóspede</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h2 className="text-foreground font-semibold">Dados do hóspede</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
             Cadastro interno desta pousada — não visível para outras pousadas.
           </p>
           <div className="mt-5">
@@ -46,10 +56,14 @@ export function GuestProfileView({
         </Card>
 
         <Card className="p-6">
-          <h2 className="font-semibold text-foreground">Histórico de reservas</h2>
+          <h2 className="text-foreground font-semibold">Histórico de reservas</h2>
           <div className="mt-4">
             {guest.bookings.length === 0 ? (
-              <EmptyState icon={CalendarCheck} title="Nenhuma reserva ainda" description="Este hóspede ainda não tem reservas." />
+              <EmptyState
+                icon={CalendarCheck}
+                title="Nenhuma reserva ainda"
+                description="Este hóspede ainda não tem reservas."
+              />
             ) : (
               <Table>
                 <TableHeader>
@@ -67,7 +81,10 @@ export function GuestProfileView({
                     return (
                       <TableRow key={b.id}>
                         <TableCell>
-                          <Link href={`/dashboard/reservas/${b.id}`} className="font-semibold text-primary hover:underline">
+                          <Link
+                            href={`/dashboard/reservas/${b.id}`}
+                            className="text-primary font-semibold hover:underline"
+                          >
                             {b.code}
                           </Link>
                         </TableCell>
@@ -84,7 +101,7 @@ export function GuestProfileView({
                             b.status
                           )}
                         </TableCell>
-                        <TableCell className="text-right text-foreground">R$ {b.total}</TableCell>
+                        <TableCell className="text-foreground text-right">R$ {b.total}</TableCell>
                       </TableRow>
                     )
                   })}
@@ -94,6 +111,6 @@ export function GuestProfileView({
           </div>
         </Card>
       </div>
-    </DashboardShell>
+    </OwnerDashboardShell>
   )
 }

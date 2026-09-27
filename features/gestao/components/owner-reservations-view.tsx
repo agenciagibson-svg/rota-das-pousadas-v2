@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { DashboardShell } from '@/components/dashboard/shell'
-import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
+import { OwnerDashboardShell } from '@/components/dashboard/owner-shell'
 import { Card } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { ReservationsCalendar } from './reservations-calendar'
@@ -31,8 +30,8 @@ export function OwnerReservationsView({
   todayISO: string
 }) {
   return (
-    <DashboardShell
-      nav={ownerDashboardNav('reservas')}
+    <OwnerDashboardShell
+      section="reservas"
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
       title="Reservas"
@@ -119,6 +118,6 @@ export function OwnerReservationsView({
           </Card>
         </div>
       </div>
-    </DashboardShell>
+    </OwnerDashboardShell>
   )
 }
