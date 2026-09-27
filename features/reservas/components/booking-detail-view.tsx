@@ -204,12 +204,19 @@ export function BookingDetailView({
                 <span>Recebido</span>
                 <span>{formatBRL(booking.amountReceived)}</span>
               </div>
-              <div className="text-foreground flex justify-between font-semibold">
-                <span>{booking.balanceDue > 0 ? 'Falta receber' : 'Saldo'}</span>
-                <span className={booking.balanceDue > 0 ? 'text-amber-700' : 'text-emerald-700'}>
-                  {booking.balanceDue > 0 ? formatBRL(booking.balanceDue) : 'Pago ✓'}
-                </span>
-              </div>
+              {booking.status === 'cancelled' || booking.status === 'no_show' ? (
+                <div className="text-muted-foreground flex justify-between">
+                  <span>Situação</span>
+                  <span>Sem cobrança</span>
+                </div>
+              ) : (
+                <div className="text-foreground flex justify-between font-semibold">
+                  <span>{booking.balanceDue > 0 ? 'Falta receber' : 'Saldo'}</span>
+                  <span className={booking.balanceDue > 0 ? 'text-amber-700' : 'text-emerald-700'}>
+                    {booking.balanceDue > 0 ? formatBRL(booking.balanceDue) : 'Pago ✓'}
+                  </span>
+                </div>
+              )}
             </div>
             {booking.paymentDueAt &&
               (booking.status === 'pending' || booking.status === 'quote') && (

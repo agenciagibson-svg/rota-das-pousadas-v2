@@ -82,15 +82,18 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
         </Field>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <Field label="E-mail">
-          <input
-            name="email"
-            type="email"
-            defaultValue={guest.email ?? ''}
-            className={inputClass}
-          />
-        </Field>
+      {/* E-mail ocupa a linha inteira: endereço longo ficava cortado em 1/3. */}
+      <section className="grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <Field label="E-mail">
+            <input
+              name="email"
+              type="email"
+              defaultValue={guest.email ?? ''}
+              className={inputClass}
+            />
+          </Field>
+        </div>
         <Field label="Telefone">
           <input name="phone" defaultValue={guest.phone ?? ''} className={inputClass} />
         </Field>

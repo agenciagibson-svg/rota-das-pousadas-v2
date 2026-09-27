@@ -147,20 +147,28 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                     <span>Total</span>
                     <span className="whitespace-nowrap">{formatBRL(reservation.total)}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted-foreground">
-                      {reservation.balanceDue > 0 ? 'Falta receber' : 'Pago'}
-                    </span>
-                    <span
-                      className={
-                        reservation.balanceDue > 0
-                          ? 'font-semibold whitespace-nowrap text-amber-700'
-                          : 'font-semibold whitespace-nowrap text-emerald-700'
-                      }
-                    >
-                      {reservation.balanceDue > 0 ? formatBRL(reservation.balanceDue) : '✓'}
-                    </span>
-                  </div>
+                  {/* Cancelada/no-show não tem nada a receber — o saldo antigo confundia. */}
+                  {reservation.status === 'cancelled' || reservation.status === 'no_show' ? (
+                    <div className="text-muted-foreground flex justify-between gap-3">
+                      <span>Situação</span>
+                      <span>Sem cobrança</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">
+                        {reservation.balanceDue > 0 ? 'Falta receber' : 'Pago'}
+                      </span>
+                      <span
+                        className={
+                          reservation.balanceDue > 0
+                            ? 'font-semibold whitespace-nowrap text-amber-700'
+                            : 'font-semibold whitespace-nowrap text-emerald-700'
+                        }
+                      >
+                        {reservation.balanceDue > 0 ? formatBRL(reservation.balanceDue) : '✓'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4">
