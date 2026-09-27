@@ -13,6 +13,7 @@ import { cache } from 'react'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
+import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
 import {
   listMyBookings,
   getBookableRoom as bookableRoom,
@@ -82,6 +83,20 @@ export const getCurrentUser = cache(() => currentUser())
 
 /** Reservas do usuário autenticado, memoizadas por request. */
 export const getMyBookings = cache(() => listMyBookings())
+
+/**
+ * Igual a `getMyBookings`, mas antes confere no Mercado Pago as reservas
+ * pendentes (rede de segurança do webhook — ver `reconcileBookingPayments`).
+ * Usar só em "Minhas reservas" e na página de pagamento: é para onde o
+ * hóspede volta depois de pagar. Se algo foi confirmado, relê a lista.
+ */
+export const getMyBookingsReconciled = cache(async () => {
+  const bookings = await listMyBookings()
+  const pending = bookings.filter((b) => b.status === 'pending' && b.balanceDue > 0).slice(0, 5)
+  if (pending.length === 0) return bookings
+  const results = await Promise.all(pending.map((b) => reconcileBookingPayments(b.id)))
+  return results.some(Boolean) ? listMyBookings() : bookings
+})
 
 /** Diária + capacidade de uma pousada para o fluxo de reserva. */
 export const getBookableRoom = cache(

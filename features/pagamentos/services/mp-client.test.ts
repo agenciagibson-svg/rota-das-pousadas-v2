@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createCheckoutPreference, getPaymentById, mapAuthorizedPaymentStatus } from './mp-client'
+import {
+  createCheckoutPreference,
+  getPaymentById,
+  mapAuthorizedPaymentStatus,
+  searchPaymentsByExternalReference,
+} from './mp-client'
 const payment = {
   id: 123,
   status: 'approved',
@@ -32,6 +37,27 @@ describe('consulta de pagamento', () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
     await expect(getPaymentById('../other', 'test-token')).rejects.toThrow()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('busca de pagamentos por reserva (reconciliação)', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  it('filtra pela referência e ignora itens fora do formato', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ results: [payment, { id: 'lixo' }] })))
+    vi.stubGlobal('fetch', fetch)
+    const found = await searchPaymentsByExternalReference(payment.external_reference, 'test-token')
+    expect(found).toHaveLength(1)
+    expect(found[0]?.id).toBe(123)
+    const url = String(fetch.mock.calls[0]?.[0])
+    expect(url).toContain('external_reference=' + payment.external_reference)
+  })
+  it('recusa referência que não é UUID antes da requisição', async () => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    await expect(searchPaymentsByExternalReference('../x', 'test-token')).rejects.toThrow()
     expect(fetch).not.toHaveBeenCalled()
   })
 })

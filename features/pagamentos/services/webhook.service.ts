@@ -9,7 +9,7 @@ import {
 import { getBookingNotificationContextRpc } from '@/repositories/bookings.repository'
 import { sendEmail } from '@/lib/email/mailer'
 import { bookingConfirmedEmail } from '@/lib/email/templates'
-import { getPaymentById, type MpPayment } from './mp-client'
+import { getPaymentById, searchPaymentsByExternalReference, type MpPayment } from './mp-client'
 
 /**
  * Verifica o header `x-signature` do webhook do Mercado Pago.
@@ -114,6 +114,38 @@ export async function processPaymentNotification(params: {
   }
   if (String(payment.id) !== params.mpPaymentId) throw new Error('ID de pagamento divergente.')
 
+  await recordMpPayment(params.bookingId, payment)
+}
+
+/**
+ * Rede de segurança do webhook: consulta no Mercado Pago os pagamentos desta
+ * reserva e grava os aprovados. Chamado quando o hóspede abre "Minhas
+ * reservas" / a página de pagamento com a reserva ainda pendente — assim um
+ * aviso perdido, atrasado ou recusado nunca deixa uma reserva paga como
+ * "Aguardando pagamento". Idempotente (a RPC 0042 distingue repetição) e
+ * fail-soft: nunca derruba a página. Devolve true se confirmou algo agora.
+ */
+export async function reconcileBookingPayments(bookingId: string): Promise<boolean> {
+  try {
+    const context = await getPousadaPaymentContextForWebhook(bookingId)
+    if (!context?.accessTokenEncrypted) return false
+    const token = decryptToken(context.accessTokenEncrypted)
+    const payments = await searchPaymentsByExternalReference(bookingId, token)
+    let confirmed = false
+    for (const payment of payments) {
+      if (payment.external_reference !== bookingId || payment.status !== 'approved') continue
+      if (await recordMpPayment(bookingId, payment)) confirmed = true
+    }
+    return confirmed
+  } catch (error) {
+    console.error('[mercadopago:reconcile] falhou', { bookingId, error: String(error) })
+    return false
+  }
+}
+
+/** Grava o pagamento (já reconsultado na API) e avisa o hóspede na 1ª confirmação. */
+async function recordMpPayment(bookingId: string, payment: MpPayment): Promise<boolean> {
+  const params = { bookingId }
   const result = await recordPaymentAndConfirmBookingRpc({
     bookingId: params.bookingId,
     providerRef: String(payment.id),
@@ -131,7 +163,9 @@ export async function processPaymentNotification(params: {
   // o e-mail de confirmação de novo a cada reenvio (0060).
   if (result.status === 'ok') {
     await notifyBookingConfirmed(params.bookingId)
+    return true
   }
+  return false
 }
 
 /**

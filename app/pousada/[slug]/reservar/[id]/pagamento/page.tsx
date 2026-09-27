@@ -10,7 +10,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS } from '@/features/reservas'
 import type { Booking } from '@/features/reservas'
-import { getMyBookings, getCurrentUser, getBookingCheckout } from '@/server/queries'
+import { getMyBookingsReconciled, getCurrentUser, getBookingCheckout } from '@/server/queries'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -72,7 +72,7 @@ export default async function PagamentoReservaPage({
     redirect(`/login?next=${encodeURIComponent(`/pousada/${slug}/reservar/${id}/pagamento`)}`)
   }
 
-  const bookings = await getMyBookings()
+  const bookings = await getMyBookingsReconciled()
   const booking = bookings.find((b) => b.id === id && b.pousadaSlug === slug)
   if (!booking) notFound()
 

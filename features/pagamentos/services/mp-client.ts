@@ -356,3 +356,35 @@ export function mapAuthorizedPaymentStatus(
       return 'pending'
   }
 }
+
+const mpPaymentSearchSchema = z.object({ results: z.array(z.unknown()).default([]) })
+
+/**
+ * Busca os pagamentos de uma reserva pelo `external_reference` (= bookingId).
+ * Rede de segurança do webhook: se o aviso do Mercado Pago não chegar ou for
+ * recusado, a reserva ainda é confirmada quando o hóspede volta ao site.
+ * Resultados fora do formato esperado são ignorados, nunca derrubam a busca.
+ */
+export async function searchPaymentsByExternalReference(
+  externalReference: string,
+  sellerAccessToken: string,
+): Promise<MpPayment[]> {
+  if (!/^[0-9a-f-]{36}$/i.test(externalReference)) throw new Error('Referência inválida.')
+  const url = new URL(`${MP_API_BASE}/v1/payments/search`)
+  url.searchParams.set('external_reference', externalReference)
+  url.searchParams.set('sort', 'date_created')
+  url.searchParams.set('criteria', 'desc')
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${sellerAccessToken}` },
+    signal: AbortSignal.timeout(8000),
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar pagamentos no Mercado Pago (${response.status}).`)
+  }
+  const { results } = mpPaymentSearchSchema.parse(await response.json())
+  return results.flatMap((item) => {
+    const parsed = mpPaymentSchema.safeParse(item)
+    return parsed.success ? [parsed.data] : []
+  })
+}

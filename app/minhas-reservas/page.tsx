@@ -20,7 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS, CancelBookingButton } from '@/features/reservas'
 import type { BookingStatus } from '@/features/reservas'
-import { getMyBookings } from '@/server/queries'
+import { getMyBookingsReconciled } from '@/server/queries'
 
 export const metadata: Metadata = {
   title: 'Minhas reservas',
@@ -56,7 +56,7 @@ function isActiveStatus(status: BookingStatus) {
 }
 
 export default async function MyBookingsPage() {
-  const bookings = await getMyBookings()
+  const bookings = await getMyBookingsReconciled()
   const today = new Date().toISOString().slice(0, 10)
   const activeBookings = bookings.filter((booking) => isActiveStatus(booking.status))
   const pendingBookings = bookings.filter(
