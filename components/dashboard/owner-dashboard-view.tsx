@@ -60,6 +60,7 @@ export function OwnerDashboardView({
   departuresToday,
   upcomingReservations,
   showRevenue = true,
+  growthSlot,
 }: {
   displayName: string
   pousadaName: string | null
@@ -76,6 +77,8 @@ export function OwnerDashboardView({
   upcomingReservations: OwnerReservation[]
   /** Faturamento só para quem tem `finance:pousada:view` (recepção/governança não veem). */
   showRevenue?: boolean
+  /** Convite de tráfego pago (só para quem administra a pousada). */
+  growthSlot?: React.ReactNode
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -187,6 +190,8 @@ export function OwnerDashboardView({
           />
         ))}
       </div>
+
+      {growthSlot}
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
         {/* Revenue */}

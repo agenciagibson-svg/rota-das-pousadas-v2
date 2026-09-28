@@ -41,7 +41,7 @@ export type PlatformHost = {
 
 /** KPIs do topo da Visão Geral — números reais, não mais fixos. */
 export type PlatformKpis = {
-  /** GMV (bookings.fee) do mês — dinheiro do hóspede que vai pra pousada, NÃO é receita da Rota. */
+  /** GMV (bookings.total) do mês — dinheiro do hóspede que vai pra pousada, NÃO é receita da Rota. */
   gmvThisMonth: number
   gmvDeltaPct: number | null
   activePousadas: number

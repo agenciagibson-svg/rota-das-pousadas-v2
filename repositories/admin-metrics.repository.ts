@@ -37,13 +37,13 @@ export async function getPlatformKpis(): Promise<PlatformKpis> {
   ] = await Promise.all([
     supabase
       .from('bookings')
-      .select('fee, status')
+      .select('total, status')
       .in('status', REVENUE_STATUSES)
       .gte('created_at', thisMonth.start.toISOString())
       .lt('created_at', thisMonth.end.toISOString()),
     supabase
       .from('bookings')
-      .select('fee, status')
+      .select('total, status')
       .in('status', REVENUE_STATUSES)
       .gte('created_at', lastMonth.start.toISOString())
       .lt('created_at', lastMonth.end.toISOString()),
@@ -59,10 +59,12 @@ export async function getPlatformKpis(): Promise<PlatformKpis> {
       .lt('created_at', thisMonth.end.toISOString()),
   ])
 
+  // GMV = bookings.total. Até 28/09/2026 somava bookings.fee (taxa de serviço), que é 0 desde
+  // 13/09 (SERVICE_FEE_RATE = 0) — o volume aparecia zerado.
   // GMV: dinheiro que o hóspede pagou, vai integralmente pra pousada — NÃO é receita da Rota
   // (a receita real da Rota é a assinatura, ver docs/04_BUSINESS_ARCHITECTURE.md §9).
-  const gmvThisMonth = (bookingsThis ?? []).reduce((sum, b) => sum + Number(b.fee), 0)
-  const gmvLastMonth = (bookingsLast ?? []).reduce((sum, b) => sum + Number(b.fee), 0)
+  const gmvThisMonth = (bookingsThis ?? []).reduce((sum, b) => sum + Number(b.total), 0)
+  const gmvLastMonth = (bookingsLast ?? []).reduce((sum, b) => sum + Number(b.total), 0)
 
   return {
     gmvThisMonth,
@@ -73,13 +75,13 @@ export async function getPlatformKpis(): Promise<PlatformKpis> {
   }
 }
 
-/** GMV (volume processado, bookings.fee) por mês — dinheiro do hóspede pra pousada, NÃO receita da Rota. */
+/** GMV (volume processado, bookings.total) por mês — dinheiro do hóspede pra pousada, NÃO receita da Rota. */
 export async function getGmvByMonth(months = 12): Promise<GmvMonthPoint[]> {
   const supabase = await createSupabaseServerClient()
   const { start } = monthRange(months - 1)
   const { data, error } = await supabase
     .from('bookings')
-    .select('fee, created_at')
+    .select('total, created_at')
     .in('status', REVENUE_STATUSES)
     .gte('created_at', start.toISOString())
   if (error) throw error
@@ -91,7 +93,7 @@ export async function getGmvByMonth(months = 12): Promise<GmvMonthPoint[]> {
   }
   for (const row of data ?? []) {
     const key = row.created_at.slice(0, 7)
-    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + Number(row.fee))
+    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + Number(row.total))
   }
   return [...buckets.entries()].map(([month, amount]) => ({ month, amount }))
 }
@@ -183,7 +185,7 @@ export async function getPousadaPerformance(): Promise<PousadaPerformance[]> {
       .eq('status', 'publicada'),
     supabase
       .from('bookings')
-      .select('pousada_id, fee, checkin, checkout')
+      .select('pousada_id, total, checkin, checkout')
       .in('status', REVENUE_STATUSES)
       .gte('checkin', windowStart.toISOString().slice(0, 10)),
   ])
@@ -209,7 +211,7 @@ export async function getPousadaPerformance(): Promise<PousadaPerformance[]> {
   const bookingsCountByPousada = new Map<string, number>()
   const nightsByPousada = new Map<string, number>()
   for (const b of bookings ?? []) {
-    gmvByPousada.set(b.pousada_id, (gmvByPousada.get(b.pousada_id) ?? 0) + Number(b.fee))
+    gmvByPousada.set(b.pousada_id, (gmvByPousada.get(b.pousada_id) ?? 0) + Number(b.total))
     bookingsCountByPousada.set(b.pousada_id, (bookingsCountByPousada.get(b.pousada_id) ?? 0) + 1)
     nightsByPousada.set(
       b.pousada_id,

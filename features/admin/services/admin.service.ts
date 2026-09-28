@@ -1,4 +1,6 @@
 import 'server-only'
+import { buildReport, type ReportData, type ReportPeriod } from '@/features/admin/report-metrics'
+import { loadReportInput } from '@/repositories/admin-reports.repository'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { can } from '@/lib/auth/rbac'
 import { logAudit } from '@/lib/audit/log'
@@ -40,7 +42,6 @@ import {
   getGmvByMonth,
   getBookingsByRegion,
   getOccupancyRate,
-  getPousadaPerformance,
 } from '@/repositories/admin-metrics.repository'
 import {
   insertGrant,
@@ -69,10 +70,6 @@ import type {
   PlatformAccessGrant,
   PlatformHost,
   PlatformOverview,
-  PlatformKpis,
-  GmvMonthPoint,
-  RegionBookingCount,
-  PousadaPerformance,
   PlatformTeamMember,
   PlatformRoleValue,
   AuditLogEntry,
@@ -452,33 +449,18 @@ export async function revokePlatformRole(email: string): Promise<void> {
 }
 
 /**
- * Dados da tela "Relatórios" — reaproveita os mesmos cálculos ao vivo da
- * Visão Geral (repositories/admin-metrics.repository.ts), com janela de
- * meses configurável. Sem tabela/RPC nova: o ganho da tela é filtro de
- * período + exportação em CSV (features/admin/components/reports-view.tsx),
- * não dado que já não existisse.
+ * Dados da tela "Relatórios" (28/09/2026): período configurável com
+ * comparação ao período anterior, desempenho por região (macrorregião, UF e
+ * cidade) e por pousada, canais, status, dia da semana e alertas. Linhas
+ * cruas em repositories/admin-reports.repository.ts; cálculo puro em
+ * features/admin/report-metrics.ts.
  */
-export async function getReportsData(months = 12): Promise<{
-  kpis: PlatformKpis
-  gmvByMonth: GmvMonthPoint[]
-  bookingsByRegion: RegionBookingCount[]
-  occupancyRate: number
-  pousadaPerformance: PousadaPerformance[]
-}> {
+export async function getReportsData(period: ReportPeriod = '90d'): Promise<ReportData> {
   const user = await getCurrentUser()
   if (!user?.platformRole || !can(user.platformRole, 'reports:global:view')) {
     throw new Error('Você não tem permissão para ver relatórios.')
   }
-  const [kpis, gmvByMonth, bookingsByRegion, occupancyRate, pousadaPerformance] = await Promise.all(
-    [
-      getPlatformKpis(),
-      getGmvByMonth(months),
-      getBookingsByRegion(),
-      getOccupancyRate(),
-      getPousadaPerformance(),
-    ],
-  )
-  return { kpis, gmvByMonth, bookingsByRegion, occupancyRate, pousadaPerformance }
+  return buildReport(await loadReportInput(period))
 }
 
 /**

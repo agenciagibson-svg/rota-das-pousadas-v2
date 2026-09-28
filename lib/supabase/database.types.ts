@@ -2287,6 +2287,78 @@ export type Database = {
         }
         Relationships: []
       }
+      growth_activities: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          pousada_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          pousada_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          pousada_id?: string
+        }
+        Relationships: []
+      }
+      growth_opportunities: {
+        Row: {
+          ad_budget: number | null
+          campaign_end: string | null
+          campaign_start: string | null
+          lost_reason: string
+          next_contact: string | null
+          owner_interest_at: string | null
+          owner_interest_by: string | null
+          pousada_id: string
+          service_fee: number | null
+          stage: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ad_budget?: number | null
+          campaign_end?: string | null
+          campaign_start?: string | null
+          lost_reason?: string
+          next_contact?: string | null
+          owner_interest_at?: string | null
+          owner_interest_by?: string | null
+          pousada_id: string
+          service_fee?: number | null
+          stage?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ad_budget?: number | null
+          campaign_end?: string | null
+          campaign_start?: string | null
+          lost_reason?: string
+          next_contact?: string | null
+          owner_interest_at?: string | null
+          owner_interest_by?: string | null
+          pousada_id?: string
+          service_fee?: number | null
+          stage?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       guest_orders: {
         Row: {
           accepted_at: string | null
@@ -2513,6 +2585,48 @@ export type Database = {
       get_booking_consumption: {
         Args: { p_booking_id: string }
         Returns: Json
+      }
+      save_growth_opportunity: {
+        Args: {
+          p_pousada_id: string
+          p_stage: string
+          p_service_fee: number | null
+          p_ad_budget: number | null
+          p_next_contact: string | null
+          p_campaign_start: string | null
+          p_campaign_end: string | null
+          p_lost_reason: string
+        }
+        Returns: undefined
+      }
+      add_growth_activity: {
+        Args: { p_pousada_id: string; p_kind: string; p_body: string }
+        Returns: undefined
+      }
+      request_growth_help: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      get_growth_status: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      growth_profiles: {
+        Args: { p_pousada_id?: string | null }
+        Returns: {
+          pousada_id: string
+          photos: number
+          has_cover: boolean
+          description_len: number
+          has_mercado_pago: boolean
+          has_pix: boolean
+          active_rooms: number
+          reviews_count: number
+          owner_name: string | null
+          owner_email: string | null
+          whatsapp: string | null
+          phone: string | null
+        }[]
       }
       get_guest_stay: {
         Args: { p_booking_id: string }

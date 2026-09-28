@@ -52,6 +52,8 @@ export type Action =
   | 'payment:refund'
   | 'finance:pousada:view'
   | 'reports:global:view'
+  /** Plano de ação comercial / oferta de tráfego pago (painel master). */
+  | 'growth:manage'
   | 'users:manage'
   | 'member:view'
   | 'member:invite'
@@ -262,6 +264,7 @@ const MATRIX: Record<Role, Action[]> = {
     'pousada:create',
     'pousada:link_owner',
     'reports:global:view',
+    'growth:manage',
     'destination:manage',
   ],
   marketing: [
@@ -270,6 +273,7 @@ const MATRIX: Record<Role, Action[]> = {
     'coupon:platform:create',
     'content:moderate',
     'reports:global:view',
+    'growth:manage',
     'destination:manage',
   ],
   financeiro_plataforma: [
@@ -279,6 +283,7 @@ const MATRIX: Record<Role, Action[]> = {
     'platform_finance:manage',
   ],
   master: [
+    'growth:manage',
     'catalog:view',
     'search:run',
     'favorite:manage',
