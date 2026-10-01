@@ -90,12 +90,33 @@ export const reviewProofSchema = z
     proofId: z.string().uuid(),
     approve: z.boolean(),
     reason: z.string().trim().max(300),
+    /** Valor que entrou no extrato (em reais). Vazio = saldo inteiro da reserva. */
+    amount: z.number().positive('Informe o valor que entrou na conta.').max(1_000_000).optional(),
   })
   .refine((d) => d.approve || d.reason.length >= 3, {
     message: 'Explique o motivo para o hóspede (ex.: valor diferente).',
     path: ['reason'],
   })
 export type ReviewProofInput = z.infer<typeof reviewProofSchema>
+
+export const resolveReviewSchema = z.object({
+  reviewId: z.string().uuid(),
+  resolution: z
+    .string()
+    .trim()
+    .min(3, 'Conte o que foi feito (ex.: valor devolvido ao hóspede).')
+    .max(500),
+})
+export type ResolveReviewInput = z.infer<typeof resolveReviewSchema>
+
+/** "R$ 1.234,56" ou "1234,56" → 1234.56. Vazio/ inválido → null. */
+export function parseBRL(value: string): number | null {
+  const clean = value.replace(/[^\d,.-]/g, '').trim()
+  if (!clean) return null
+  const normalized = clean.includes(',') ? clean.replace(/\./g, '').replace(',', '.') : clean
+  const n = Number(normalized)
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null
+}
 
 /** Caminho no bucket: <bookingId>/<aleatório>.<ext> (a policy do Storage confere o bookingId). */
 export function proofObjectPath(bookingId: string, fileName: string, random: string): string {
@@ -118,4 +139,32 @@ export function displayPixKey(type: PixKeyType, key: string): string {
     return n.length === 11 ? `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}` : key
   }
   return key.trim()
+}
+
+// ---------------------------------------------------------------------------
+// Fila "Pagamentos para revisar" (0082) — textos usados no painel e no e-mail.
+// ---------------------------------------------------------------------------
+export type PaymentReviewKind =
+  'pix_sem_analise' | 'pago_reserva_cancelada' | 'estorno' | 'valor_excedente'
+
+export const PAYMENT_REVIEW_TEXT: Record<PaymentReviewKind, { title: string; action: string }> = {
+  pix_sem_analise: {
+    title: 'Reserva cancelada com comprovante Pix sem análise',
+    action:
+      'O prazo de 24h passou sem ninguém aprovar. Confira no extrato se o Pix entrou: se entrou, devolva o valor ou refaça a reserva com o hóspede.',
+  },
+  pago_reserva_cancelada: {
+    title: 'Pagamento recebido em reserva já cancelada',
+    action:
+      'O Mercado Pago aprovou um pagamento depois que a reserva foi cancelada. Devolva o valor pelo Mercado Pago ou refaça a reserva, se o quarto ainda estiver livre.',
+  },
+  estorno: {
+    title: 'Pagamento estornado ou devolvido',
+    action:
+      'O pagamento foi estornado no Mercado Pago. Confira se a reserva deve continuar de pé e fale com o hóspede.',
+  },
+  valor_excedente: {
+    title: 'Recebido acima do valor da reserva',
+    action: 'Entrou mais dinheiro do que o total da reserva. Devolva o excedente ao hóspede.',
+  },
 }

@@ -11,7 +11,9 @@ import {
   formatDeadline,
   formatStayRange,
   passwordChangedEmail,
+  paymentPartialEmail,
   paymentProofAlertEmail,
+  paymentReviewAlertEmail,
   paymentProofReceivedEmail,
   paymentProofRejectedEmail,
   passwordResetEmail,
@@ -200,5 +202,29 @@ describe('app da estadia nos e-mails', () => {
     expect(confirmed.text).toContain(`/estadia/${ctx.bookingId}`)
     const reminder = checkinReminderEmail(ctx)
     expect(reminder.html).toContain('Abrir o app da estadia')
+  })
+})
+
+describe('Pix: prazo, parcial e fila de revisão (0082)', () => {
+  const now = new Date('2026-09-27T12:00:00Z')
+
+  it('aviso da pousada mostra até quando analisar', () => {
+    const { html } = paymentProofAlertEmail(ctx, 1440)
+    expect(html).toContain('Pagamentos para revisar')
+    expect(html).toContain('até')
+  })
+
+  it('parcial diz quanto entrou e quanto falta', () => {
+    const { subject, html, text } = paymentPartialEmail(ctx, 400, 1040, now)
+    expect(subject).toContain('Falta pagar R$')
+    expect(subject).toContain('1.040,00')
+    expect(html).toContain('400,00')
+    expect(text).toContain('RP-6F4AA5')
+  })
+
+  it('caso da fila explica o que fazer', () => {
+    const { subject, html } = paymentReviewAlertEmail(ctx, 'pix_sem_analise', 1440)
+    expect(subject).toContain('Pagamento para revisar')
+    expect(html).toContain('devolva o valor')
   })
 })

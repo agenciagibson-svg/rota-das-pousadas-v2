@@ -53,3 +53,15 @@ describe('comprovante', () => {
     ).toBe(true)
   })
 })
+
+describe('parseBRL', () => {
+  it('aceita formatos brasileiros', async () => {
+    const { parseBRL } = await import('./pix')
+    expect(parseBRL('1.440,00')).toBe(1440)
+    expect(parseBRL('R$ 400,5')).toBe(400.5)
+    expect(parseBRL('250')).toBe(250)
+    expect(parseBRL('')).toBeNull()
+    expect(parseBRL('0')).toBeNull()
+    expect(parseBRL('abc')).toBeNull()
+  })
+})

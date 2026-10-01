@@ -65,6 +65,8 @@ export function PixPaymentPanel({
   const proof = pix.lastProof
   const awaiting = justSent || proof?.status === 'submitted'
   const rejected = !awaiting && proof?.status === 'rejected'
+  // Pousada aprovou só parte (0082): ainda há saldo, então o QR é do restante.
+  const partial = !awaiting && proof?.status === 'approved' && pix.amount > 0
 
   async function copy() {
     if (!pix.copiaECola) return
@@ -182,10 +184,18 @@ export function PixPaymentPanel({
         <div className="mt-3 flex items-start gap-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
           <XCircle className="mt-0.5 size-4 shrink-0 text-orange-600" />
           <p>
-            <strong>A pousada não confirmou o comprovante anterior:</strong> {proof.rejectionReason}
-            . Envie outro comprovante ou pague de novo.
+            <strong>A pousada não confirmou o comprovante anterior:</strong>{' '}
+            {proof.rejectionReason.replace(/[.\s]+$/, '')}. Envie outro comprovante ou pague de
+            novo.
           </p>
         </div>
+      )}
+
+      {partial && (
+        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+          <strong>A pousada confirmou parte do pagamento.</strong> Falta pagar {brl(pix.amount)}{' '}
+          para confirmar a reserva. Depois, envie o novo comprovante aqui.
+        </p>
       )}
 
       <div className="mt-4 grid gap-5 sm:grid-cols-[180px_1fr] sm:items-center">

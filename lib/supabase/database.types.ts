@@ -1164,6 +1164,7 @@ export type Database = {
       payment_proofs: {
         Row: {
           amount: number
+          approved_amount: number | null
           booking_id: string
           created_at: string
           file_name: string
@@ -1209,6 +1210,47 @@ export type Database = {
           size_bytes?: number
           status?: Database['public']['Enums']['payment_proof_status']
           uploaded_by?: string
+          approved_amount?: number | null
+        }
+        Relationships: []
+      }
+      payment_reviews: {
+        Row: {
+          id: string
+          pousada_id: string
+          booking_id: string
+          kind: string
+          source: string
+          ref: string
+          amount: number
+          status: string
+          resolution: string | null
+          resolved_by: string | null
+          resolved_at: string | null
+          notified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          pousada_id: string
+          booking_id: string
+          kind: string
+          source: string
+          ref: string
+          amount?: number
+          status?: string
+          resolution?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          status?: string
+          resolution?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          notified_at?: string | null
         }
         Relationships: []
       }
@@ -3058,8 +3100,16 @@ export type Database = {
         Returns: { email: string }[]
       }
       review_payment_proof: {
-        Args: { p_proof_id: string; p_approve: boolean; p_reason?: string }
+        Args: { p_proof_id: string; p_approve: boolean; p_reason?: string; p_amount?: number }
         Returns: Json
+      }
+      resolve_payment_review: {
+        Args: { p_review_id: string; p_resolution: string }
+        Returns: undefined
+      }
+      claim_payment_reviews_to_notify: {
+        Args: Record<PropertyKey, never>
+        Returns: { review_id: string; booking_id: string; kind: string; amount: number }[]
       }
       save_pousada_pix_settings: {
         Args: {

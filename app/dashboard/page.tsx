@@ -10,6 +10,8 @@ import {
 import { OwnerDashboardView } from '@/components/dashboard/owner-dashboard-view'
 import { GrowthInvite } from '@/components/dashboard/growth-invite'
 import { getOwnerGrowthCard } from '@/features/admin/services/growth.service'
+import { PaymentAlerts } from '@/components/dashboard/payment-alerts'
+import { getPaymentAlerts } from '@/features/pagamentos/services/pix.service'
 import {
   addDays,
   calculateOccupancy,
@@ -46,7 +48,7 @@ export default async function DashboardPage() {
 
   const role = await getActiveTenantRole()
   const showRevenue = Boolean(role && can(role, 'finance:pousada:view'))
-  const [reservations, rooms, reviews, growth] = await Promise.all([
+  const [reservations, rooms, reviews, growth, paymentAlerts] = await Promise.all([
     getOwnerReservations(),
     // Papéis sem `room:status:view` (financeiro, por exemplo) não leem
     // acomodações. Nesse caso a ocupação fica indisponível e o painel diz isso
@@ -55,6 +57,11 @@ export default async function DashboardPage() {
     getOwnerReviews().catch(() => []),
     // Convite de tráfego pago: só proprietário/admin; falha nunca derruba o painel.
     getOwnerGrowthCard().catch(() => null),
+    // Comprovantes Pix e pagamentos para revisar (0082); falha nunca derruba o painel.
+    getPaymentAlerts().catch((error) => {
+      console.error('[dashboard] alertas de pagamento', String(error))
+      return null
+    }),
   ])
 
   // "Hoje" no fuso da pousada: em UTC o painel já virava o dia às 21h.
@@ -92,6 +99,15 @@ export default async function DashboardPage() {
       departuresToday={departures}
       upcomingReservations={upcomingReservations(reservations, todayISO)}
       growthSlot={growth && pousada.status === 'publicada' ? <GrowthInvite card={growth} /> : null}
+      alertsSlot={
+        paymentAlerts ? (
+          <PaymentAlerts
+            reviews={paymentAlerts.reviews}
+            openProofs={paymentAlerts.openProofs}
+            canResolve={paymentAlerts.canResolve}
+          />
+        ) : null
+      }
     />
   )
 }

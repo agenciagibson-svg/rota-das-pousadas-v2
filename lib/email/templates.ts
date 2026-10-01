@@ -1,5 +1,6 @@
 import { publicEnv } from '@/lib/env'
 import type { BookingNotificationContext } from '@/repositories/bookings.repository'
+import { PAYMENT_REVIEW_TEXT, type PaymentReviewKind } from '@/features/pagamentos/pix'
 
 /**
  * Templates dos 3 e-mails transacionais (visual aprovado em 27/09/2026 — mesma
@@ -625,7 +626,9 @@ export function paymentProofAlertEmail(ctx: BookingNotificationContext, amount: 
     intro: `O hóspede da reserva <strong>${esc(ctx.code)}</strong> enviou o comprovante do Pix. Confira se o valor caiu na conta da pousada e aprove (ou recuse) no painel.`,
     ticketHtml: ticket(ctx, rows),
     extraHtml: notice(
-      'Enquanto você não decide, as datas ficam guardadas para esse hóspede. Aprovando, a reserva é confirmada e o hóspede recebe o comprovante por e-mail.',
+      ctx.paymentDueAt
+        ? `As datas ficam guardadas para esse hóspede <strong>até ${esc(formatDeadline(ctx.paymentDueAt, ctx.pousada.timezone, new Date()))}</strong>. Se ninguém analisar até lá, a reserva é cancelada e o caso vai para "Pagamentos para revisar". Aprovando, a reserva é confirmada.`
+        : 'Enquanto você não decide, as datas ficam guardadas para esse hóspede. Aprovando, a reserva é confirmada e o hóspede recebe o comprovante por e-mail.',
       'warn',
     ),
     cta: { href: link, label: 'Conferir comprovante' },
@@ -634,6 +637,74 @@ export function paymentProofAlertEmail(ctx: BookingNotificationContext, amount: 
       'Você recebeu este aviso porque faz parte da equipe desta pousada na Rota das Pousadas.',
   })
   const text = `Novo comprovante de Pix para conferir.\nReserva: ${ctx.code}\nHóspede: ${ctx.guestName ?? '—'}\nValor esperado: ${formatCurrencyBRL(amount)}\nConfira e aprove em: ${link}`
+  return { subject, html, text }
+}
+
+/** Hóspede: a pousada confirmou só parte do valor; falta pagar o restante. */
+export function paymentPartialEmail(
+  ctx: BookingNotificationContext,
+  received: number,
+  remaining: number,
+  now = new Date(),
+): Email {
+  const link = `${publicEnv.siteUrl}/minhas-reservas`
+  const subject = `Falta pagar ${formatCurrencyBRL(remaining)} — ${ctx.pousada.name} (${ctx.code})`
+  const deadline = ctx.paymentDueAt
+    ? formatDeadline(ctx.paymentDueAt, ctx.pousada.timezone, now)
+    : null
+  const html = wrapLayout({
+    preheader: `A pousada confirmou ${formatCurrencyBRL(received)}. Falta ${formatCurrencyBRL(remaining)}.`,
+    pill: { label: 'Pagamento parcial', bg: '#fef3c7', fg: '#92400e' },
+    title: 'Recebemos parte do pagamento',
+    subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
+    intro: `${greeting(ctx)} A pousada confirmou <strong>${formatCurrencyBRL(received)}</strong> na reserva <strong>${esc(ctx.code)}</strong>. Para confirmar a reserva, falta pagar <strong>${formatCurrencyBRL(remaining)}</strong>.`,
+    ticketHtml: '',
+    extraHtml: notice(
+      deadline
+        ? `Pague o restante e envie o comprovante <strong>até ${esc(deadline)}</strong>. Depois disso a reserva é cancelada.`
+        : 'Pague o restante e envie o comprovante pela página da reserva.',
+      'warn',
+    ),
+    cta: { href: link, label: 'Pagar o restante' },
+  })
+  const text = `A pousada confirmou ${formatCurrencyBRL(received)} da reserva ${ctx.code} (${ctx.pousada.name}). Falta ${formatCurrencyBRL(remaining)}.\n${deadline ? `Pague até ${deadline}.\n` : ''}Acesse: ${link}`
+  return { subject, html, text }
+}
+
+/** Pousada: um caso de dinheiro entrou na fila "Pagamentos para revisar". */
+export function paymentReviewAlertEmail(
+  ctx: BookingNotificationContext,
+  kind: PaymentReviewKind,
+  amount: number,
+): Email {
+  const link = `${publicEnv.siteUrl}/dashboard`
+  const info = PAYMENT_REVIEW_TEXT[kind]
+  const subject = `Pagamento para revisar — ${ctx.code} (${formatCurrencyBRL(amount)})`
+  const rows = rowsTable(
+    [
+      ['Hóspede', ctx.guestName ?? 'Hóspede'],
+      ['Acomodação', ctx.roomName],
+      ['Check-in', formatDayShort(ctx.checkin, true)],
+    ],
+    'Valor',
+    formatCurrencyBRL(amount),
+  )
+  const html = wrapLayout({
+    preheader: info.title,
+    pill: { label: 'Revisar pagamento', bg: '#fee2e2', fg: '#991b1b' },
+    title: info.title,
+    subtitle: `${ctx.pousada.name} · reserva ${ctx.code}`,
+    intro: esc(info.action),
+    ticketHtml: ticket(ctx, rows),
+    extraHtml: notice(
+      'Depois de resolver, registre o que foi feito no painel (Visão geral → Pagamentos para revisar).',
+      'warn',
+    ),
+    cta: { href: link, label: 'Abrir o painel' },
+    footerNote:
+      'Você recebeu este aviso porque faz parte da equipe desta pousada na Rota das Pousadas.',
+  })
+  const text = `${info.title}\nReserva: ${ctx.code}\nValor: ${formatCurrencyBRL(amount)}\n${info.action}\nPainel: ${link}`
   return { subject, html, text }
 }
 

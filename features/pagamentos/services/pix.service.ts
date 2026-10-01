@@ -5,13 +5,21 @@ import { can } from '@/lib/auth/rbac'
 import { buildPixCopiaECola } from '@/lib/pix/brcode'
 import { sendEmail } from '@/lib/email/mailer'
 import {
+  paymentPartialEmail,
   paymentProofAlertEmail,
   paymentProofReceivedEmail,
   paymentProofRejectedEmail,
+  paymentReviewAlertEmail,
 } from '@/lib/email/templates'
 import { getBookingNotificationContextRpc } from '@/repositories/bookings.repository'
 import {
+  claimPaymentReviewsToNotify,
   getBookingPixInstructionsRpc,
+  listOpenPaymentReviews,
+  listOpenProofDeadlines,
+  resolvePaymentReviewRpc,
+  type OpenPaymentReview,
+  type OpenProofDeadline,
   getPixSettingsForPousada,
   getPousadaAlertEmails,
   listProofsForBooking,
@@ -24,7 +32,12 @@ import {
 } from '@/repositories/pix.repository'
 import { requireCapability } from './access'
 import { notifyBookingConfirmed } from './webhook.service'
-import type { PixSettingsInput, ReviewProofInput, SubmitProofInput } from '../pix'
+import type {
+  PixSettingsInput,
+  ResolveReviewInput,
+  ReviewProofInput,
+  SubmitProofInput,
+} from '../pix'
 
 // ---------------------------------------------------------------------------
 // Pousada: configurar a chave
@@ -146,10 +159,19 @@ export async function reviewPaymentProof(input: ReviewProofInput): Promise<{ boo
     proofId: input.proofId,
     approve: input.approve,
     reason: input.approve ? null : input.reason,
+    amount: input.approve ? (input.amount ?? null) : null,
   })
   try {
     if (result.approved && result.confirmed) {
       await notifyBookingConfirmed(result.bookingId)
+    } else if (result.approved && result.remaining > 0 && result.amount) {
+      const ctx = await getBookingNotificationContextRpc(result.bookingId)
+      if (ctx?.guestEmail) {
+        await sendEmail({
+          to: ctx.guestEmail,
+          ...paymentPartialEmail(ctx, result.amount, result.remaining),
+        })
+      }
     } else if (!result.approved) {
       const ctx = await getBookingNotificationContextRpc(result.bookingId)
       if (ctx?.guestEmail) {
@@ -163,4 +185,61 @@ export async function reviewPaymentProof(input: ReviewProofInput): Promise<{ boo
     })
   }
   return { bookingId: result.bookingId }
+}
+
+// ---------------------------------------------------------------------------
+// Pagamentos para revisar (0082)
+// ---------------------------------------------------------------------------
+
+export type PaymentAlerts = {
+  reviews: OpenPaymentReview[]
+  openProofs: OpenProofDeadline[]
+  /** Proprietário/administrador: pode marcar o caso como resolvido. */
+  canResolve: boolean
+}
+
+/** Alertas de dinheiro para a Visão geral. `null` = papel sem acesso a pagamentos. */
+export async function getPaymentAlerts(): Promise<PaymentAlerts | null> {
+  const pousadaId = await getActivePousadaId()
+  const role = await getActiveTenantRole()
+  if (!pousadaId || !role || !can(role, 'payment:register')) return null
+  const [reviews, openProofs] = await Promise.all([
+    listOpenPaymentReviews(pousadaId),
+    listOpenProofDeadlines(pousadaId),
+  ])
+  return { reviews, openProofs, canResolve: can(role, 'pousada:edit') }
+}
+
+export async function resolvePaymentReview(input: ResolveReviewInput): Promise<void> {
+  await requireCapability('pousada:edit')
+  await resolvePaymentReviewRpc(input.reviewId, input.resolution)
+}
+
+/**
+ * Avisa a equipe das pousadas sobre casos novos na fila. Chamada pelo cron
+ * diário e logo depois de cada webhook do Mercado Pago. Nunca lança.
+ */
+export async function notifyPaymentReviews(): Promise<{ notified: number }> {
+  let notified = 0
+  try {
+    const items = await claimPaymentReviewsToNotify()
+    for (const item of items) {
+      try {
+        const ctx = await getBookingNotificationContextRpc(item.bookingId)
+        if (!ctx) continue
+        const staff = await getPousadaAlertEmails(item.bookingId)
+        const email = paymentReviewAlertEmail(ctx, item.kind, item.amount)
+        await Promise.all(staff.map((to) => sendEmail({ to, ...email })))
+        notified += 1
+      } catch (error) {
+        console.error('[pix] falha ao avisar caso de revisão', {
+          reviewId: item.reviewId,
+          error: String(error),
+        })
+      }
+    }
+  } catch (error) {
+    console.error('[pix] falha ao buscar casos de revisão', { error: String(error) })
+  }
+  return { notified }
 }

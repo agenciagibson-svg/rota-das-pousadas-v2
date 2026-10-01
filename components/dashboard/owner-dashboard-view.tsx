@@ -61,6 +61,7 @@ export function OwnerDashboardView({
   upcomingReservations,
   showRevenue = true,
   growthSlot,
+  alertsSlot,
 }: {
   displayName: string
   pousadaName: string | null
@@ -79,6 +80,8 @@ export function OwnerDashboardView({
   showRevenue?: boolean
   /** Convite de tráfego pago (só para quem administra a pousada). */
   growthSlot?: React.ReactNode
+  /** Dinheiro que precisa de alguém: comprovantes Pix e pagamentos para revisar (0082). */
+  alertsSlot?: React.ReactNode
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -177,6 +180,7 @@ export function OwnerDashboardView({
             : 'Sua pousada está em análise pela nossa curadoria. Você já pode preparar tudo; ela ficará visível no site após a aprovação.'}
         </div>
       )}
+      {alertsSlot}
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {visibleStats.map((s) => (

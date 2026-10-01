@@ -4,6 +4,7 @@ import {
   verifyWebhookSignature,
   processPaymentNotification,
 } from '@/features/pagamentos/services/webhook.service'
+import { notifyPaymentReviews } from '@/features/pagamentos/services/pix.service'
 
 const notificationSchema = z.object({
   type: z.string(),
@@ -43,6 +44,8 @@ export async function POST(request: NextRequest) {
     if (!isValid) return NextResponse.json({ error: 'invalid_signature' }, { status: 401 })
     if (body.data.type !== 'payment') return NextResponse.json({ ignored: true })
     await processPaymentNotification({ bookingId: booking.data, mpPaymentId: dataId })
+    // Pagamento que caiu em reserva cancelada/estornado entra na fila (0082): avisa já.
+    await notifyPaymentReviews()
     return NextResponse.json({ ok: true })
   } catch {
     console.error('[mercadopago:webhook] processamento falhou', { bookingId: booking.data, dataId })

@@ -96,7 +96,11 @@ export function BookingDetailView({
               por e-mail ao hóspede.
             </p>
             <div className="mt-4">
-              <ProofReviewPanel proofs={proofs} canReview={!isFinalStatus(booking.status)} />
+              <ProofReviewPanel
+                proofs={proofs}
+                canReview={!isFinalStatus(booking.status)}
+                dueAt={booking.status === 'pending' ? booking.paymentDueAt : null}
+              />
             </div>
           </Card>
         )}

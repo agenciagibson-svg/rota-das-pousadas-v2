@@ -6,11 +6,12 @@ import { getConnectAuthorizationUrl } from './services/oauth.service'
 import { startSubscriptionAuthorization } from './services/subscription.service'
 import { revalidatePath } from 'next/cache'
 import {
+  resolvePaymentReview,
   reviewPaymentProof,
   saveOwnerPixSettings,
   submitPaymentProof,
 } from './services/pix.service'
-import { pixSettingsSchema, reviewProofSchema, submitProofSchema } from './pix'
+import { pixSettingsSchema, resolveReviewSchema, reviewProofSchema, submitProofSchema } from './pix'
 
 /** Inicia a conexão OAuth com o Mercado Pago — só `payment:connect_account` (ver requireCapability). */
 export const connectMercadoPagoAction = createAction(z.object({}), async () => {
@@ -43,5 +44,14 @@ export const reviewPaymentProofAction = createAction(reviewProofSchema, async (i
   const { bookingId } = await reviewPaymentProof(input)
   revalidatePath(`/dashboard/reservas/${bookingId}`)
   revalidatePath('/dashboard/reservas')
+  revalidatePath('/dashboard')
+  revalidatePath('/minhas-reservas')
+  return { ok: true as const }
+})
+
+/** Fecha um caso da fila "Pagamentos para revisar" com a anotação do que foi feito. */
+export const resolvePaymentReviewAction = createAction(resolveReviewSchema, async (input) => {
+  await resolvePaymentReview(input)
+  revalidatePath('/dashboard')
   return { ok: true as const }
 })

@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto'
 import { expireOverduePendingBookings } from '@/features/reservas/services/expire-overdue.service'
 import { purgeStaleQuoteRequests } from '@/features/bio/services/bio.service'
 import { sendCheckinReminders } from '@/features/reservas/services/checkin-reminders.service'
+import { notifyPaymentReviews } from '@/features/pagamentos/services/pix.service'
 
 /**
  * Rodada diária de manutenção: expira pré-reserva vencida, purga pedido de
@@ -34,14 +35,32 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [bookings, quoteRequests, checkinReminders] = await Promise.all([
+    // allSettled: uma tarefa que falha não esconde as outras que rodaram.
+    const [bookings, quoteRequests, checkinReminders] = await Promise.allSettled([
       expireOverduePendingBookings(),
       purgeStaleQuoteRequests(),
       sendCheckinReminders(),
     ])
-    return Response.json({ bookings, quoteRequests, checkinReminders }, { status: 200 })
+    // Depois da expiração: reservas que caíram com comprovante em análise
+    // entram na fila de revisão (0082) e a pousada é avisada por e-mail.
+    const paymentReviews = await notifyPaymentReviews()
+    const out = (r: PromiseSettledResult<unknown>, name: string) => {
+      if (r.status === 'fulfilled') return r.value
+      console.error(`[cron] ${name} falhou`, String(r.reason))
+      return { error: 'falhou' }
+    }
+    const failed = [bookings, quoteRequests, checkinReminders].some((r) => r.status === 'rejected')
+    return Response.json(
+      {
+        bookings: out(bookings, 'expiracao'),
+        quoteRequests: out(quoteRequests, 'orcamentos'),
+        checkinReminders: out(checkinReminders, 'lembretes'),
+        paymentReviews,
+      },
+      { status: failed ? 500 : 200 },
+    )
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Falha inesperada.'
-    return Response.json({ error: message }, { status: 500 })
+    console.error('[cron] expiracao falhou', String(error))
+    return Response.json({ error: 'Falha inesperada.' }, { status: 500 })
   }
 }
