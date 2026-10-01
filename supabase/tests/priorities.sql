@@ -417,3 +417,91 @@ select test_assert((select count(*) from list_membership_names('10000000-0000-00
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
 select test_assert(not has_function_privilege('anon', 'list_membership_names(uuid)', 'EXECUTE'), 'anon não lista nomes');
+
+-- 0081 (C-1): usuário comum não se autopromove; edita o próprio nome.
+-- Roda como `authenticated` — o teste de 0054 rodava como postgres e não via o furo.
+insert into auth.users(id, email) values
+ ('00000000-0000-0000-0000-000000000081', 'comum@example.test'),
+ ('00000000-0000-0000-0000-000000000082', 'marketing@example.test'),
+ ('00000000-0000-0000-0000-000000000083', 'comercial@example.test');
+update profiles set platform_role = 'marketing' where id = '00000000-0000-0000-0000-000000000082';
+update profiles set platform_role = 'comercial' where id = '00000000-0000-0000-0000-000000000083';
+select test_assert(not has_table_privilege('authenticated', 'public.profiles', 'UPDATE'), 'sem UPDATE de tabela em profiles');
+select test_assert(not has_column_privilege('authenticated', 'public.profiles', 'platform_role', 'UPDATE'), 'platform_role sem UPDATE');
+select test_assert(not has_column_privilege('authenticated', 'public.profiles', 'platform_role', 'INSERT'), 'platform_role sem INSERT');
+select test_assert(not has_column_privilege('anon', 'public.profiles', 'full_name', 'UPDATE'), 'anon não edita profiles');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000081', false);
+do $$ begin
+  begin
+    update profiles set platform_role = 'master' where id = '00000000-0000-0000-0000-000000000081';
+    raise exception 'TEST: usuário comum virou master';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+select test_assert(not auth_is_platform_admin(), 'usuário comum segue sem papel de plataforma');
+update profiles set full_name = 'Nome Novo' where id = '00000000-0000-0000-0000-000000000081';
+select test_assert((select full_name from profiles where id = '00000000-0000-0000-0000-000000000081') = 'Nome Novo',
+  'usuário edita o próprio nome');
+-- master continua trocando papel pela RPC (gatilho deixa o caminho security definer).
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
+select test_assert(set_platform_role_by_email('comum@example.test', 'suporte')->>'status' = 'ok', 'master define papel pela RPC');
+select test_assert(revoke_platform_role_by_email('comum@example.test')->>'status' = 'ok', 'master revoga papel pela RPC');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select test_assert((select platform_role is null from profiles where id = '00000000-0000-0000-0000-000000000081'),
+  'papel revogado pela RPC');
+-- Gatilho como defesa em profundidade: mesmo com grant de coluna, authenticated não muda platform_role.
+grant update (platform_role) on public.profiles to authenticated;
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000081', false);
+do $$ begin
+  begin
+    update profiles set platform_role = 'master' where id = '00000000-0000-0000-0000-000000000081';
+    raise exception 'TEST: gatilho deixou mudar platform_role';
+  exception when raise_exception then
+    if sqlerrm <> 'Papel de plataforma só é definido pela equipe da Rota.' then raise; end if;
+  end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+revoke update (platform_role) on public.profiles from authenticated;
+
+-- 0081 (A-1): marketing não escreve catálogo de pousada alheia; comercial/master sim.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000082', false);
+update rooms set base_price = 1 where id = '20000000-0000-0000-0000-000000000003';
+do $$ begin
+  begin
+    insert into availability(room_id, date, price, status)
+      values ('20000000-0000-0000-0000-000000000003', '2099-08-01', 1, 'available');
+    raise exception 'TEST: marketing gravou diária';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+do $$ begin
+  begin
+    insert into media(pousada_id, url, kind) values ('10000000-0000-0000-0000-000000000002', 'https://x.test/a.jpg', 'image');
+    raise exception 'TEST: marketing gravou mídia';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+update reviews set rating = 1 where id = '60000000-0000-0000-0000-000000000011';
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select test_assert((select base_price from rooms where id = '20000000-0000-0000-0000-000000000003') = 300,
+  'marketing não altera diária de pousada alheia');
+select test_assert((select rating from reviews where id = '60000000-0000-0000-0000-000000000011') <> 1,
+  'marketing não altera avaliação');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000083', false);
+update rooms set base_price = 310 where id = '20000000-0000-0000-0000-000000000003';
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
+insert into availability(room_id, date, price, status)
+  values ('20000000-0000-0000-0000-000000000003', '2099-08-01', 320, 'available');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select test_assert((select base_price from rooms where id = '20000000-0000-0000-0000-000000000003') = 310,
+  'comercial segue editando quarto');
+select test_assert(exists(select 1 from availability where room_id = '20000000-0000-0000-0000-000000000003'
+  and date = '2099-08-01' and price = 320), 'master segue editando diária');
