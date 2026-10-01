@@ -9,16 +9,13 @@ import { loginSchema, type LoginInput } from '../schemas'
 import { signInAction, signInAdminAction } from '../actions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { safeNextPath } from '@/features/auth/profile'
 
 type LoginVariant = 'guest' | 'partner' | 'admin'
 
 type LoginFormProps = {
   next?: string
   variant?: LoginVariant
-}
-
-function getSafeNext(next?: string | null) {
-  return next?.startsWith('/') ? next : null
 }
 
 /** Destino padrão pós-login por variante — só entra em jogo quando não há `?next=`. */
@@ -30,7 +27,7 @@ const DEFAULT_REDIRECT: Record<LoginVariant, string> = {
 
 export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
   const router = useRouter()
-  const safeNext = getSafeNext(next)
+  const safeNext = safeNextPath(next)
   const signupHref = safeNext ? `/cadastro?next=${encodeURIComponent(safeNext)}` : '/cadastro'
   const [formError, setFormError] = useState<string | null>(null)
   const forgotHref =

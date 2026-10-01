@@ -46,12 +46,29 @@ export type SendEmailParams = {
   text: string
 }
 
+/**
+ * Para log: só o domínio do destinatário. O assunto não vai para o log
+ * porque traz pousada + código da reserva (LGPD — revisão de 01/10/2026).
+ */
+export function maskRecipient(to: string): string {
+  const at = to.lastIndexOf('@')
+  return at > 0 ? `***${to.slice(at)}` : '***'
+}
+
+function errorCode(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const e = error as { code?: unknown; responseCode?: unknown; name?: unknown }
+    return String(e.code ?? e.responseCode ?? e.name ?? 'erro')
+  }
+  return 'erro'
+}
+
 /** Envia um e-mail transacional. Nunca lança — retorna `false` em qualquer falha (ver comentário do módulo). */
 export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   const transporter = getTransporter()
   if (!transporter) {
     console.warn(
-      `[email] SMTP não configurado (SMTP_USER/SMTP_PASS ausentes) — e-mail para ${params.to} ("${params.subject}") não enviado.`,
+      `[email] SMTP não configurado (SMTP_USER/SMTP_PASS ausentes) — e-mail para ${maskRecipient(params.to)} não enviado.`,
     )
     return false
   }
@@ -68,7 +85,9 @@ export async function sendEmail(params: SendEmailParams): Promise<boolean> {
     })
     return true
   } catch (error) {
-    console.error(`[email] Falha ao enviar e-mail para ${params.to} ("${params.subject}"):`, error)
+    console.error(
+      `[email] Falha ao enviar e-mail para ${maskRecipient(params.to)} (código ${errorCode(error)}).`,
+    )
     return false
   }
 }

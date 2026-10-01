@@ -9,18 +9,15 @@ import { signupSchema, type SignupInput } from '../schemas'
 import { signUpAction } from '../actions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { safeNextPath } from '@/features/auth/profile'
 
 type SignupFormProps = {
   next?: string
 }
 
-function getSafeNext(next?: string | null) {
-  return next?.startsWith('/') ? next : null
-}
-
 export function SignupForm({ next }: SignupFormProps) {
   const router = useRouter()
-  const safeNext = getSafeNext(next)
+  const safeNext = safeNextPath(next)
   const loginHref = safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : '/login'
   const [formError, setFormError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)

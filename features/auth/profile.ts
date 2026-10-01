@@ -189,8 +189,15 @@ export function maskedDocument(type: string | null, last4: string | null): strin
 }
 
 /** Só caminhos internos (evita redirecionar para outro site). */
+/**
+ * Só aceita caminho interno ("/algo"). Recusa "//host" e "/\\host" (o
+ * navegador trata os dois como outro site) e caracteres de controle.
+ */
 export function safeNextPath(next: string | null | undefined): string | null {
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : null
+  if (!next || !next.startsWith('/')) return null
+  if (next.startsWith('//') || next.startsWith('/\\')) return null
+  if (/[\u0000-\u001f\u007f]/.test(next)) return null
+  return next
 }
 
 // Máscaras de digitação (só formatam; a validação é do schema).

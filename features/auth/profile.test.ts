@@ -122,6 +122,10 @@ describe('utilitários', () => {
     expect(maskCep('38400000')).toBe('38400-000')
     expect(maskedDocument('CPF', '4725')).toBe('CPF •••.•••.•47-25')
     expect(safeNextPath('//evil.com')).toBeNull()
+    expect(safeNextPath('/\\evil.com')).toBeNull()
+    expect(safeNextPath('/%0d%0a')).toBe('/%0d%0a')
+    expect(safeNextPath('/a\nb')).toBeNull()
+    expect(safeNextPath('https://evil.com')).toBeNull()
     expect(safeNextPath('/pousada/x/reservar?checkin=2026-10-01')).toBe(
       '/pousada/x/reservar?checkin=2026-10-01',
     )
