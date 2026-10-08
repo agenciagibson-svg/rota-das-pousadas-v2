@@ -81,15 +81,25 @@ export const zIndex = {
   tooltip: 80,
 } as const
 
-/** Brand color tokens (hex mirror of the CSS custom properties). */
+/**
+ * Brand color tokens (hex mirror of the CSS custom properties in
+ * `app/globals.css`). Paleta da marca out/2026 — ver docs/Marca.md.
+ */
 export const brand = {
-  forest: '#0f766e',
-  ocean: '#2563eb',
+  ipe: '#f4b42a',
+  breu: '#0f1716',
+  grafite: '#4f5955',
+  liquen: '#a9b3ae',
+  pedra: '#c9d0cc',
+  neblina: '#eef1ef',
+  // Nomes antigos, remapeados para a paleta nova.
+  forest: '#0f1716',
+  ocean: '#4f5955',
   sunset: '#f97316',
-  gold: '#d4af37',
-  sand: '#efe7d8',
-  linen: '#f8f6f1',
-  stoneDeep: '#1f2420',
+  gold: '#f4b42a',
+  sand: '#e2e7e4',
+  linen: '#eef1ef',
+  stoneDeep: '#0f1716',
 } as const
 
 export type Duration = keyof typeof duration

@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import {
   Menu,
   X,
-  Compass,
   MapPin,
   Sparkles,
   BedDouble,
@@ -18,61 +17,47 @@ import {
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Logo } from '@/components/brand/logo'
 import { useScrolled } from '@/hooks/use-scrolled'
 import { useHeaderSummary } from '@/components/header/use-header-summary'
 import { TripsButton } from '@/components/header/trips-button'
 import { UserMenu, accountLinks, useSignOut } from '@/components/header/user-menu'
-
-type Tone = 'primary' | 'ocean' | 'gold' | 'accent'
-
-const toneClasses: Record<Tone, string> = {
-  primary: 'bg-primary/15 text-primary',
-  ocean: 'bg-ocean/15 text-ocean',
-  gold: 'bg-gold/15 text-gold',
-  accent: 'bg-accent/15 text-accent',
-}
 
 const nav = [
   {
     label: 'Destinos',
     href: '/#destinos',
     icon: MapPin,
-    tone: 'primary' as Tone,
     section: 'Explorar',
   },
   {
     label: 'Experiências',
     href: '/#experiencias',
     icon: Sparkles,
-    tone: 'gold' as Tone,
     section: 'Explorar',
   },
   {
     label: 'Pousadas',
     href: '/pousadas',
     icon: BedDouble,
-    tone: 'ocean' as Tone,
     section: 'Explorar',
   },
   {
     label: 'Concierge',
     href: '/concierge',
     icon: Wand2,
-    tone: 'accent' as Tone,
     section: 'Explorar',
   },
   {
     label: 'Favoritos',
     href: '/favoritos',
     icon: Heart,
-    tone: 'accent' as Tone,
     section: 'Minha conta',
   },
   {
     label: 'Minhas reservas',
     href: '/minhas-reservas',
     icon: CalendarDays,
-    tone: 'primary' as Tone,
     section: 'Minha conta',
   },
 ]
@@ -92,45 +77,33 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
 
   return (
     <>
-      <header
-        className={cn(
-          'fixed inset-x-0 top-0 z-50 transition-all duration-500',
-          solid ? 'glass border-border/60 border-b py-3' : 'py-5',
-        )}
-      >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span
-              className={cn(
-                'flex size-9 items-center justify-center rounded-full transition-colors',
-                solid
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-primary-foreground/90 text-primary',
-              )}
-            >
-              <Compass className="size-5" />
-            </span>
-            <span
-              className={cn(
-                'font-serif text-lg leading-none font-semibold tracking-tight transition-colors',
-                solid ? 'text-foreground' : 'text-primary-foreground',
-              )}
-            >
-              Rota das Pousadas
-            </span>
+      {/* Pílula de vidro flutuando sobre a foto; ao rolar (ou nas páginas
+          internas, forceSolid) vira vidro claro com texto Breu. */}
+      <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 lg:px-6 lg:pt-4">
+        <div
+          className={cn(
+            'mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full border pr-2 pl-5 transition-colors duration-(--motion-fade) lg:pl-6',
+            solid
+              ? 'glass border-border/70 text-foreground shadow-floating'
+              : 'glass-dark text-primary-foreground',
+          )}
+        >
+          <Link
+            href="/"
+            aria-label="Rota das Pousadas, página inicial"
+            className="flex items-center"
+          >
+            <Logo className="h-5 lg:h-6" />
           </Link>
 
-          <nav className="hidden items-center gap-6 lg:flex">
+          <nav aria-label="Principal" className="hidden items-center gap-8 lg:flex">
             {nav
               .filter((item) => item.section === 'Explorar')
               .map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn(
-                    'text-sm font-medium transition-colors hover:opacity-70',
-                    solid ? 'text-foreground' : 'text-primary-foreground',
-                  )}
+                  className="text-sm font-medium transition-opacity duration-(--motion-hover) hover:opacity-70"
                 >
                   {item.label}
                 </Link>
@@ -143,10 +116,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                 {!summary.user.hasPousadaAccess && (
                   <Link
                     href="/anunciar"
-                    className={cn(
-                      'text-sm font-semibold transition-colors hover:opacity-70',
-                      solid ? 'text-foreground' : 'text-primary-foreground',
-                    )}
+                    className="text-sm font-semibold transition-opacity duration-(--motion-hover) hover:opacity-70"
                   >
                     Anuncie sua pousada
                   </Link>
@@ -163,22 +133,14 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                 {loggedOut && (
                   <Link
                     href="/login"
-                    className={cn(
-                      'flex items-center gap-1.5 text-sm font-semibold transition-colors hover:opacity-70',
-                      solid ? 'text-foreground' : 'text-primary-foreground',
-                    )}
+                    className="flex items-center gap-1.5 px-2 text-sm font-semibold transition-opacity duration-(--motion-hover) hover:opacity-70"
                   >
                     <LogIn className="size-4" /> Entrar
                   </Link>
                 )}
                 <Link
                   href="/anunciar"
-                  className={cn(
-                    'rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105',
-                    solid
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-primary-foreground text-primary',
-                  )}
+                  className="flex h-12 items-center rounded-full border border-current/35 px-5 text-sm font-semibold transition-colors duration-(--motion-hover) hover:bg-current/10"
                 >
                   Anuncie sua pousada
                 </Link>
@@ -187,31 +149,30 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
           </div>
 
           <button
+            type="button"
             aria-label={open ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={open}
+            aria-controls="menu-celular"
             onClick={() => setOpen((v) => !v)}
-            className={cn(
-              'flex size-10 items-center justify-center rounded-full transition-colors lg:hidden',
-              solid ? 'text-foreground' : 'text-primary-foreground',
-            )}
+            className="flex size-12 items-center justify-center rounded-full bg-current/10 transition-colors duration-(--motion-hover) lg:hidden"
           >
             {open ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
         </div>
 
         {open && (
-          <div className="border-linen/10 bg-stone-deep shadow-stone-deep/40 relative z-10 mx-4 mt-3 overflow-hidden rounded-3xl border shadow-2xl lg:hidden">
-            <div className="from-primary via-gold to-accent h-1 w-full bg-gradient-to-r" />
+          <div
+            id="menu-celular"
+            className="border-neblina/10 bg-breu text-neblina shadow-modal relative z-10 mx-auto mt-2 max-w-7xl overflow-hidden rounded-3xl border lg:hidden"
+          >
             {user ? (
-              <div className="border-linen/10 flex items-center gap-3 border-b px-6 py-4">
-                <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full text-sm font-bold">
+              <div className="border-neblina/10 flex items-center gap-3 border-b px-6 py-4">
+                <span className="bg-neblina text-breu flex size-10 items-center justify-center rounded-full text-sm font-bold">
                   {user.initials}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-linen truncate text-sm font-semibold">
-                    Olá, {user.firstName}!
-                  </p>
-                  <p className="text-linen/50 truncate text-xs">{user.email}</p>
+                  <p className="truncate text-sm font-semibold">Olá, {user.firstName}!</p>
+                  <p className="text-liquen truncate text-xs">{user.email}</p>
                 </div>
                 {summary?.user && summary.pendingTrips.length > 0 && (
                   <Link
@@ -225,28 +186,26 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
               </div>
             ) : (
               loggedOut && (
-                <div className="border-linen/10 border-b p-3">
+                <div className="border-neblina/10 border-b p-3">
                   <Link
                     href="/login"
                     onClick={() => setOpen(false)}
-                    className="bg-linen/10 text-linen flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold"
+                    className="bg-neblina/10 flex h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold"
                   >
                     <LogIn className="size-4" /> Entrar ou criar conta
                   </Link>
                 </div>
               )
             )}
-            <nav className="flex flex-col p-3">
+            <nav aria-label="Menu" className="flex flex-col p-3">
               {mobileSections.map((section, sectionIndex) => (
                 <div
                   key={section}
-                  className={sectionIndex > 0 ? 'border-linen/10 mt-2 border-t pt-2' : ''}
+                  className={sectionIndex > 0 ? 'border-neblina/10 mt-2 border-t pt-2' : ''}
                 >
-                  <p className="text-linen/40 px-3 pt-2 pb-1 text-[11px] font-semibold tracking-[0.14em] uppercase">
-                    {section}
-                  </p>
+                  <p className="text-liquen px-3 pt-2 pb-1 text-xs font-semibold">{section}</p>
                   {(section === 'Minha conta' && user
-                    ? accountLinks(user).map((l) => ({ ...l, tone: 'primary' as Tone, section }))
+                    ? accountLinks(user).map((l) => ({ ...l, section }))
                     : nav.filter((item) => item.section === section)
                   ).map((item) => {
                     const Icon = item.icon
@@ -256,36 +215,28 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                         key={item.href}
                         href={item.href}
                         onClick={() => setOpen(false)}
+                        aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors',
-                          active
-                            ? 'bg-linen/10 text-linen'
-                            : 'text-linen/80 hover:bg-linen/10 hover:text-linen',
+                          'flex min-h-12 items-center gap-3 rounded-2xl px-3 text-base font-medium transition-colors duration-(--motion-hover)',
+                          active ? 'bg-neblina/10' : 'hover:bg-neblina/10',
                         )}
                       >
-                        <span
-                          className={cn(
-                            'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors',
-                            toneClasses[item.tone],
-                          )}
-                        >
-                          <Icon className="size-4" />
-                        </span>
+                        <Icon className="text-liquen size-5" />
                         {item.label}
-                        {active && <span className="bg-accent ml-auto size-1.5 rounded-full" />}
+                        {active && <span className="bg-ipe ml-auto size-2 rounded-full" />}
                       </Link>
                     )
                   })}
                 </div>
               ))}
             </nav>
-            <div className="border-linen/10 space-y-2 border-t p-3">
+            <div className="border-neblina/10 space-y-2 border-t p-3">
               {user && (
                 <button
                   type="button"
                   onClick={signOut}
                   disabled={signingOut}
-                  className="text-linen/80 hover:bg-linen/10 flex w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
+                  className="text-liquen hover:bg-neblina/10 flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 text-sm font-medium"
                 >
                   <LogOut className="size-4" /> {signingOut ? 'Saindo…' : 'Sair'}
                 </button>
@@ -293,7 +244,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
               <Link
                 href="/anunciar"
                 onClick={() => setOpen(false)}
-                className="bg-accent text-accent-foreground flex items-center justify-center gap-2 rounded-full px-5 py-3 text-center text-sm font-semibold transition-all hover:brightness-105"
+                className="bg-neblina text-breu flex h-12 items-center justify-center gap-2 rounded-full px-5 text-center text-sm font-semibold"
               >
                 Anuncie sua pousada
                 <ArrowUpRight className="size-4" />
@@ -304,7 +255,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
       </header>
       {open && (
         <div
-          className="bg-stone-deep/55 fixed inset-0 z-40 backdrop-blur-sm lg:hidden"
+          className="bg-breu/55 fixed inset-0 z-40 backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}

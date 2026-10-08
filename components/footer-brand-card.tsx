@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'motion/react'
-import { ArrowUpRight, Camera, Compass, HeartHandshake, Play, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Camera, HeartHandshake, Play, Sparkles } from 'lucide-react'
+import { Logo } from '@/components/brand/logo'
 
 const channels = [
   {
@@ -35,57 +35,40 @@ export function FooterBrandCard() {
   const ActiveIcon = active.icon
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-linen/10 bg-linen/[0.06] p-5 shadow-floating">
-      <div className="pointer-events-none absolute right-4 top-4 size-24 rounded-full border border-linen/10" />
-      <div className="pointer-events-none absolute right-8 top-8 size-12 rounded-full border border-linen/10" />
-
+    <div className="relative">
       <div className="relative">
-        <div className="flex items-center gap-3">
-          <motion.span
-            className="relative flex size-12 items-center justify-center rounded-full bg-linen text-primary"
-            animate={{ rotate: [0, 8, -6, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Compass className="size-6" />
-            <span className="absolute -right-1 -top-1 flex size-4 rounded-full bg-accent ring-4 ring-stone-deep" />
-          </motion.span>
-          <div>
-            <span className="font-serif text-xl font-semibold leading-none text-linen">
-              Rota das Pousadas
-            </span>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-linen/45">
-              Passaporte vivo
-            </p>
-          </div>
+        <div>
+          <Logo className="text-linen h-7" />
+          <p className="text-linen/45 mt-3 text-xs font-semibold">Passaporte vivo</p>
         </div>
 
-        <div className="mt-6 rounded-xl border border-linen/10 bg-stone-deep/55 p-4">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-gold">
+        <div className="border-linen/10 bg-stone-deep/55 mt-6 rounded-xl border p-4">
+          <span className="text-ipe inline-flex items-center gap-2 text-xs font-semibold">
             <HeartHandshake className="size-4" />
             Toda grande viagem começa por uma rota
           </span>
-          <p className="mt-3 text-pretty font-serif text-2xl font-semibold leading-tight text-linen">
+          <p className="text-linen mt-3 font-serif text-2xl leading-tight font-semibold text-pretty">
             Um ecossistema para descobrir, reservar e contar histórias de pousadas brasileiras.
           </p>
 
           <div className="mt-5 grid grid-cols-3 gap-2">
             {['curadoria', 'reserva', 'gestão'].map((item, index) => (
-              <div key={item} className="rounded-lg border border-linen/10 bg-linen/[0.04] p-3">
-                <div className="text-lg font-semibold text-linen">{index + 1}</div>
-                <div className="mt-1 text-[11px] uppercase tracking-wide text-linen/45">{item}</div>
+              <div key={item} className="border-linen/10 bg-linen/[0.04] rounded-lg border p-3">
+                <div className="text-linen text-lg font-semibold">{index + 1}</div>
+                <div className="text-linen/45 mt-1 text-xs">{item}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mt-5 rounded-xl border border-linen/10 bg-linen/[0.04] p-3">
+        <div className="border-linen/10 bg-linen/[0.04] mt-5 rounded-xl border p-3">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linen text-stone-deep">
+            <span className="bg-linen text-stone-deep flex size-10 shrink-0 items-center justify-center rounded-full">
               <ActiveIcon className="size-5" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-linen">{active.stat}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-linen/55">{active.pulse}</p>
+              <p className="text-linen text-sm font-semibold">{active.stat}</p>
+              <p className="text-linen/55 mt-0.5 text-xs leading-relaxed">{active.pulse}</p>
             </div>
           </div>
         </div>
@@ -107,7 +90,7 @@ export function FooterBrandCard() {
                 }`}
               >
                 {channel.label}
-                <ArrowUpRight className="size-3 opacity-70 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                <ArrowUpRight className="size-3 opacity-70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
             )
           })}

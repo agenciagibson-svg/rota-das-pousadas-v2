@@ -18,6 +18,13 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
+        // Marca out/2026 (docs/Marca.md): Ipê só no caminho até a reserva/busca.
+        accent: 'bg-accent text-accent-foreground hover:brightness-105',
+        // Sobre foto: vidro escuro com texto claro.
+        glass:
+          'border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground backdrop-blur-md hover:bg-primary-foreground/20',
+        // Claro sobre fundo Breu ou foto.
+        inverse: 'bg-neblina text-breu hover:bg-card',
       },
       size: {
         default:
@@ -31,6 +38,11 @@ const buttonVariants = cva(
         'icon-sm':
           'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
         'icon-lg': 'size-9',
+        // Pílulas da marca: alvo de toque de 48px ou mais nas ações principais.
+        'pill-sm': 'h-9 gap-1.5 rounded-full px-4 text-xs font-semibold',
+        pill: 'h-12 gap-2 rounded-full px-5 text-sm font-semibold',
+        'pill-lg': 'h-14 gap-2 rounded-full px-7 text-base font-semibold',
+        'icon-pill': 'size-12 rounded-full',
       },
     },
     defaultVariants: {

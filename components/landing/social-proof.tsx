@@ -1,6 +1,12 @@
 import Link from 'next/link'
-import { ArrowUpRight, BadgeCheck, Heart, Quote, ShieldCheck, Star, Users } from 'lucide-react'
+import { ArrowUpRight, Quote, Star } from 'lucide-react'
 import { Reveal } from '@/components/reveal'
+import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Container } from '@/components/ui/container'
+import { SectionHeading } from '@/components/ui/section-heading'
+import { cn } from '@/lib/utils'
 
 const testimonials = [
   {
@@ -24,17 +30,17 @@ const testimonials = [
 ]
 
 const trustMarks = [
-  { label: 'Pousadas com curadoria', value: '3.400+', icon: BadgeCheck },
-  { label: 'Destinos brasileiros', value: '180', icon: ShieldCheck },
-  { label: 'Média de avaliação', value: '4.9', icon: Star },
-  { label: 'Hóspedes voltam', value: '96%', icon: Heart },
+  { label: 'Pousadas com curadoria', value: '3.400+' },
+  { label: 'Destinos brasileiros', value: '180' },
+  { label: 'Média de avaliação', value: '4.9' },
+  { label: 'Hóspedes voltam', value: '96%' },
 ]
 
 function Stars() {
   return (
-    <div className="flex items-center gap-1 text-gold">
+    <div className="flex items-center gap-0.5" aria-hidden="true">
       {Array.from({ length: 5 }).map((_, index) => (
-        <Star key={index} className="size-4 fill-gold" />
+        <Star key={index} className="fill-ipe text-ipe size-4" />
       ))}
     </div>
   )
@@ -42,88 +48,85 @@ function Stars() {
 
 export function SocialProof() {
   return (
-    <section className="bg-background py-20 lg:py-28">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+    <section className="py-16 lg:py-24">
+      <Container>
         <Reveal>
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.4fr] lg:items-end">
-            <div>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-                <Users className="size-4" />
-                Prova social
-              </span>
-              <h2 className="mt-3 text-balance font-serif text-3xl font-semibold leading-tight text-foreground sm:text-5xl">
-                Viajantes que encontraram sua rota
-              </h2>
-            </div>
-            <p className="text-pretty leading-relaxed text-muted-foreground">
-              Antes de reservar, o visitante precisa sentir confiança. Aqui mostramos sinais claros de
-              curadoria, avaliação e experiência, reforçando que a Rota das Pousadas não é apenas uma
-              lista: é uma forma mais humana de escolher onde ficar.
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-end lg:gap-16">
+            <SectionHeading eyebrow="Prova social" title="Viajantes que encontraram sua rota" />
+            <p className="text-muted-foreground text-base leading-relaxed text-pretty">
+              Antes de reservar, o visitante precisa sentir confiança. Aqui mostramos sinais claros
+              de curadoria, avaliação e experiência, reforçando que a Rota das Pousadas não é apenas
+              uma lista: é uma forma mais humana de escolher onde ficar.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {trustMarks.map((mark, index) => {
-            const Icon = mark.icon
-            return (
-              <Reveal key={mark.label} delay={index * 0.06}>
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
-                  <div className="flex items-center justify-between">
-                    <Icon className="size-5 text-primary" />
-                    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-                      confiança
-                    </span>
-                  </div>
-                  <div className="mt-5 font-serif text-4xl font-semibold text-foreground">{mark.value}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{mark.label}</div>
-                </div>
-              </Reveal>
-            )
-          })}
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {testimonials.map((item, index) => (
-            <Reveal key={item.name} delay={index * 0.08}>
-              <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-card">
-                <div className="flex items-start justify-between gap-4">
-                  <Quote className="size-7 text-primary/35" />
-                  <Stars />
-                </div>
-                <p className="mt-5 flex-1 text-pretty text-base leading-relaxed text-foreground">
-                  {item.text}
-                </p>
-                <div className="mt-6 border-t border-border pt-4">
-                  <div className="font-semibold text-foreground">{item.name}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{item.route}</div>
-                  <span className="mt-3 inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-                    {item.trip}
-                  </span>
-                </div>
-              </article>
-            </Reveal>
-          ))}
-        </div>
+        {/* Números numa faixa só, separados por fios, sem um ícone por número. */}
+        <Reveal>
+          <Card radius="3xl" border={false} className="mt-10 grid grid-cols-2 lg:grid-cols-4">
+            {trustMarks.map((mark, index) => (
+              <div
+                key={mark.label}
+                className={cn(
+                  'border-border flex flex-col gap-1 p-5 lg:border-b-0 lg:p-8',
+                  index % 2 === 0 && 'border-r',
+                  index < 2 && 'border-b',
+                  index === 1 && 'lg:border-r',
+                )}
+              >
+                <span className="text-muted-foreground text-xs font-medium">confiança</span>
+                <span className="text-display-l text-foreground mt-2 tabular-nums">
+                  {mark.value}
+                </span>
+                <span className="text-muted-foreground text-sm">{mark.label}</span>
+              </div>
+            ))}
+          </Card>
+        </Reveal>
 
         <Reveal>
-          <div className="mt-8 flex flex-col gap-4 rounded-2xl bg-stone-deep p-6 text-linen shadow-floating md:flex-row md:items-center md:justify-between">
+          <ul className="-mx-5 mt-6 flex snap-x snap-mandatory scroll-px-5 [scrollbar-width:none] gap-4 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
+            {testimonials.map((item) => (
+              <li key={item.name} className="w-[85%] shrink-0 snap-start sm:w-[60%] lg:w-auto">
+                <Card radius="3xl" border={false} className="flex h-full flex-col p-6 lg:p-8">
+                  <div className="flex items-start justify-between gap-4">
+                    <Quote className="text-pedra size-7" />
+                    <Stars />
+                  </div>
+                  <p className="text-foreground mt-5 flex-1 text-lg leading-relaxed text-pretty">
+                    {item.text}
+                  </p>
+                  <div className="border-border mt-6 border-t pt-4">
+                    <div className="text-foreground font-semibold">{item.name}</div>
+                    <div className="text-muted-foreground mt-1 text-sm">{item.route}</div>
+                    <Badge variant="secondary" size="md" className="mt-3">
+                      {item.trip}
+                    </Badge>
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+
+        <Reveal>
+          <div className="bg-breu text-neblina mt-6 flex flex-col gap-6 rounded-3xl p-6 md:flex-row md:items-center md:justify-between lg:p-10">
             <div>
-              <h3 className="font-serif text-2xl font-semibold">Pronto para encontrar uma pousada com mais contexto?</h3>
-              <p className="mt-2 text-sm text-linen/65">
+              <h3 className="text-h2">Pronto para encontrar uma pousada com mais contexto?</h3>
+              <p className="text-liquen mt-2 text-base">
                 Busque por cidade, clima ou estilo de viagem e abra uma rota com datas prontas.
               </p>
             </div>
             <Link
               href="/pousadas"
-              className="inline-flex w-fit items-center gap-2 rounded-full bg-linen px-5 py-3 text-sm font-semibold text-stone-deep transition-colors hover:bg-accent hover:text-accent-foreground"
+              className={cn(buttonVariants({ variant: 'accent', size: 'pill-lg' }), 'w-fit')}
             >
               Ver pousadas
-              <ArrowUpRight className="size-4" />
+              <ArrowUpRight className="size-5" />
             </Link>
           </div>
         </Reveal>
-      </div>
+      </Container>
     </section>
   )
 }

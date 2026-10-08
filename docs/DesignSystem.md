@@ -17,10 +17,10 @@ TypeScript em `lib/design-tokens.ts` (use estes em animações Motion).
 
 | Grupo | Onde | Exemplos |
 |---|---|---|
-| Cores de marca | `globals.css` | `--forest`, `--sunset`, `--gold`, `--sand`, `--linen` |
+| Cores de marca | `globals.css` | `--ipe`, `--breu`, `--grafite`, `--liquen`, `--pedra`, `--neblina` (ver `docs/Marca.md`); nomes antigos `--forest`, `--gold`, `--linen`… remapeados para a paleta nova |
 | Cores semânticas | `globals.css` | `--primary`, `--muted`, `--border`, `--destructive` |
 | Raio | `globals.css` | `--radius` (0.9rem) + escala `--radius-sm…3xl` |
-| Tipografia | `globals.css` | `--font-sans` (Manrope), `--font-serif` (Fraunces) |
+| Tipografia | `globals.css` | `--font-sans` (Figtree), `--font-display` (Funnel Display; `--font-serif` é apelido dele) |
 | Sombras / elevação | `tokens.css` | `--shadow-xs…2xl`, `--elevation-0…5` |
 | Motion | `tokens.css` + `design-tokens.ts` | `--ease-standard`, `duration.*`, `easing.*` |
 | Container / grid / z-index | `tokens.css` | `--container-2xl`, `--z-modal`, `--grid-gap` |

@@ -54,3 +54,28 @@ fundo claro.
 - Respiro em volta da logo: a altura do marcador, em todos os lados.
 - Horizontal: mínimo de 20px de altura na tela.
 - Símbolo: funciona a partir de 16px (favicon).
+
+## Aplicação no site
+
+Aprovada por Vitor Filgueiras, responsável pelo redesign, em 07 e 08/10/2026
+(logo C e tipografia Funnel Display). Regra 6 do `AI_RULES.md`: esta é a
+identidade em vigor; mudanças nela pedem nova aprovação.
+
+- **Tokens** (`app/globals.css`): `--ipe`, `--breu`, `--grafite`, `--liquen`,
+  `--pedra`, `--neblina` e as classes `bg-ipe`, `text-liquen`… Os tokens
+  semânticos seguem a paleta: `primary` = Breu, `accent` = Ipê (texto Breu),
+  fundo = Neblina. Os nomes antigos (`forest`, `gold`, `linen`, `stone-deep`…)
+  foram remapeados; `sunset` segue laranja só até o app da estadia ser refeito.
+- **Fontes** (`app/layout.tsx`): `next/font` com Funnel Display e Figtree.
+- **Logo** (`components/brand/logo.tsx`): `<Logo />` desenha o SVG em linha,
+  com o nome em `currentColor` e o ponto em Ipê; `<Marker />` é o marcador
+  sozinho, usado antes dos rótulos de seção (`SectionHeading`).
+- **Botões** (`components/ui/button.tsx`): variantes `accent` (Ipê, só busca e
+  reserva), `glass` (sobre foto) e `inverse` (claro sobre Breu); tamanhos
+  `pill-sm`, `pill` (48px), `pill-lg` (56px) e `icon-pill`.
+- **Card de pousada** (`components/pousada/pousada-card.tsx`): foto, cidade,
+  nome, dois destaques, preço por diária e "Ver detalhes", sempre na mesma
+  ordem, para comparar.
+- **Favicons**: `public/icon.svg`, `icon-192.png`, `icon-512.png`,
+  `icon-maskable-512.png`, `apple-icon.png`, `favicon.ico` e os PNGs de 32px
+  vêm de `public/assets/brand/favicon/`. Cor do tema: Breu (`#0F1716`).

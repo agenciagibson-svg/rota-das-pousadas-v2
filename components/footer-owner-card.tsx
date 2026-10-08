@@ -3,7 +3,16 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
-import { ArrowUpRight, Bot, CalendarCheck, Gauge, Hotel, LifeBuoy, Megaphone, Plus } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Bot,
+  CalendarCheck,
+  Gauge,
+  Hotel,
+  LifeBuoy,
+  Megaphone,
+  Plus,
+} from 'lucide-react'
 
 const ownerActions = [
   {
@@ -54,24 +63,24 @@ export function FooterOwnerCard() {
   const ActiveIcon = active.icon
 
   return (
-    <div className="rounded-2xl border border-linen/10 bg-linen/[0.06] p-4 shadow-floating">
+    <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-linen">Para pousadas</h4>
-          <p className="mt-1 text-xs leading-relaxed text-linen/55">Central do parceiro</p>
+          <h4 className="text-linen text-sm font-semibold">Para pousadas</h4>
+          <p className="text-linen/55 mt-1 text-xs leading-relaxed">Central do parceiro</p>
         </div>
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <span className="bg-linen/10 text-linen flex size-10 shrink-0 items-center justify-center rounded-full">
           <Hotel className="size-5" />
         </span>
       </div>
 
-      <div className="mt-4 rounded-xl border border-linen/10 bg-stone-deep/55 p-4">
+      <div className="border-linen/10 bg-stone-deep/55 mt-4 rounded-xl border p-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-gold">
+          <span className="text-ipe inline-flex items-center gap-2 text-xs font-semibold">
             <ActiveIcon className="size-4" />
             {active.metric}
           </span>
-          <Bot className="size-4 text-linen/40" />
+          <Bot className="text-linen/40 size-4" />
         </div>
 
         <motion.div
@@ -80,10 +89,10 @@ export function FooterOwnerCard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22 }}
         >
-          <p className="mt-3 text-pretty font-serif text-xl font-semibold leading-tight text-linen">
+          <p className="text-linen mt-3 font-serif text-xl leading-tight font-semibold text-pretty">
             {active.title}
           </p>
-          <p className="mt-3 min-h-14 text-sm leading-relaxed text-linen/62">{active.detail}</p>
+          <p className="text-linen/62 mt-3 min-h-14 text-sm leading-relaxed">{active.detail}</p>
         </motion.div>
       </div>
 
@@ -108,7 +117,7 @@ export function FooterOwnerCard() {
                 <Icon className="size-4" />
                 {action.label}
               </span>
-              <ArrowUpRight className="size-3.5 opacity-60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              <ArrowUpRight className="size-3.5 opacity-60 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           )
         })}

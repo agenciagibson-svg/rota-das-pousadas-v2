@@ -19,15 +19,17 @@ export default async function Page() {
     getPousadas(),
   ])
 
+  // Ordem (redesign out/2026): as pousadas logo depois do hero, para o
+  // caminho até "Reservar agora" começar cedo; inspiração depois.
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader />
       <main>
-        <Hero />
-        <Destinations destinations={destinations} />
-        <Experiences experiences={experiences} />
-        <SeasonalOffers />
+        <Hero featured={pousadas.items[0]} />
         <FeaturedPousadas pousadas={pousadas.items} />
+        <Experiences experiences={experiences} />
+        <Destinations destinations={destinations} />
+        <SeasonalOffers />
         <HowItWorks />
         <SocialProof />
         <Faq />

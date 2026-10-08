@@ -14,8 +14,9 @@ const routes = [
     icon: Map,
     kicker: 'Comece pelo mapa',
     title: 'Serra, praia ou cerrado?',
-    detail: 'Passe pelas paisagens e deixe a rota apontar para o tipo de viagem que combina com o seu momento.',
-    tone: 'text-gold',
+    detail:
+      'Passe pelas paisagens e deixe a rota apontar para o tipo de viagem que combina com o seu momento.',
+    tone: 'text-liquen',
   },
   {
     label: 'Experiências',
@@ -25,7 +26,7 @@ const routes = [
     kicker: 'Escolha pelo clima',
     title: 'Natureza, luxo, romance ou aventura.',
     detail: 'A navegação sai do comum: primeiro a sensação da viagem, depois a pousada ideal.',
-    tone: 'text-accent',
+    tone: 'text-liquen',
   },
   {
     label: 'Pousadas',
@@ -35,7 +36,7 @@ const routes = [
     kicker: 'Veja a sequência completa',
     title: 'Todas as pousadas em uma trilha visual.',
     detail: 'Abra qualquer pousada para ver o slide de fotos e reservar logo abaixo.',
-    tone: 'text-primary',
+    tone: 'text-liquen',
   },
   {
     label: 'Ofertas',
@@ -45,7 +46,7 @@ const routes = [
     kicker: 'Próxima camada',
     title: 'Datas boas merecem ofertas vivas.',
     detail: 'A base já leva para as pousadas; depois encaixamos preços dinâmicos por temporada.',
-    tone: 'text-sunset',
+    tone: 'text-liquen',
   },
   {
     label: 'Roteiros',
@@ -54,8 +55,9 @@ const routes = [
     icon: Route,
     kicker: 'Monte uma jornada',
     title: 'Uma rota, várias pousadas, zero planilha.',
-    detail: 'A ideia é evoluir para roteiros combinados, com pernoites sugeridos e distâncias inteligentes.',
-    tone: 'text-ocean',
+    detail:
+      'A ideia é evoluir para roteiros combinados, com pernoites sugeridos e distâncias inteligentes.',
+    tone: 'text-liquen',
   },
 ]
 
@@ -69,23 +71,23 @@ export function FooterExploreCard() {
   }
 
   return (
-    <div className="rounded-2xl border border-linen/10 bg-linen/[0.06] p-4 shadow-floating">
+    <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h4 className="text-sm font-semibold text-linen">Explorar</h4>
-          <p className="mt-1 text-xs leading-relaxed text-linen/55">Bussola de rotas interativa</p>
+          <h4 className="text-linen text-sm font-semibold">Explorar</h4>
+          <p className="text-linen/55 mt-1 text-xs leading-relaxed">Bussola de rotas interativa</p>
         </div>
         <button
           type="button"
           onClick={spinRoute}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-linen/15 text-linen transition-colors hover:bg-linen hover:text-stone-deep"
+          className="border-linen/15 text-linen hover:bg-linen hover:text-stone-deep flex size-10 shrink-0 items-center justify-center rounded-full border transition-colors"
           aria-label="Girar bussola de rotas"
         >
           <Compass className="size-5" />
         </button>
       </div>
 
-      <div className="relative mt-4 overflow-hidden rounded-xl border border-linen/10 bg-stone-deep">
+      <div className="border-linen/10 bg-stone-deep relative mt-4 overflow-hidden rounded-xl border">
         <div className="relative aspect-[5/3] min-h-44">
           <Image
             key={active.image}
@@ -126,7 +128,7 @@ export function FooterExploreCard() {
               <ActiveIcon className="size-4" />
               {active.kicker}
             </span>
-            <p className="mt-2 text-pretty font-serif text-xl font-semibold leading-tight text-linen">
+            <p className="text-linen mt-2 font-serif text-xl leading-tight font-semibold text-pretty">
               {active.title}
             </p>
           </div>
@@ -157,11 +159,11 @@ export function FooterExploreCard() {
         })}
       </div>
 
-      <p className="mt-4 min-h-12 text-sm leading-relaxed text-linen/65">{active.detail}</p>
+      <p className="text-linen/65 mt-4 min-h-12 text-sm leading-relaxed">{active.detail}</p>
 
       <Link
         href={active.href}
-        className="mt-4 inline-flex w-full items-center justify-between rounded-xl bg-linen px-4 py-3 text-sm font-semibold text-stone-deep transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="bg-linen text-stone-deep hover:bg-accent hover:text-accent-foreground mt-4 inline-flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
       >
         Abrir {active.label}
         <ArrowUpRight className="size-4" />

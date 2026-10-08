@@ -21,7 +21,7 @@ regras prevalecem** — pare e peça confirmação.
 2. **Sempre reutilizar `components/ui`.** Toda a UI é composta a partir do
    Design System.
 3. **Nunca usar cores hardcoded.** Sem hex/rgb no código. Use os tokens de cor
-   (`bg-primary`, `text-muted-foreground`, `--forest`, …). Novos valores de cor
+   (`bg-primary`, `text-muted-foreground`, `bg-ipe`, …). Novos valores de cor
    só em `app/globals.css`.
 4. **Nunca usar CSS inline** (`style={{…}}`) para estilo. Exceções técnicas
    permitidas: largura de barra de progresso dinâmica e templates de e-mail em
@@ -68,8 +68,9 @@ bibliotecas nem importar SVGs avulsos.
 
 ## Tipografia (obrigatório)
 
-Use a hierarquia oficial (`text-display-xl … text-overline`). Fraunces para
-títulos, Manrope para corpo. Não crie tamanhos fora da escala.
+Use a hierarquia oficial (`text-display-xl … text-overline`). Funnel Display
+para títulos, Figtree para corpo (marca out/2026, `docs/Marca.md`). Não crie
+tamanhos fora da escala.
 
 ---
 

@@ -57,13 +57,13 @@ export function FooterCompanyCard() {
   const ActiveIcon = active.icon
 
   return (
-    <div className="border-linen/10 bg-linen/[0.06] shadow-floating rounded-2xl border p-4">
+    <div>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="text-linen text-sm font-semibold">Rota das Pousadas</h4>
           <p className="text-linen/55 mt-1 text-xs leading-relaxed">Mapa da marca</p>
         </div>
-        <span className="border-linen/15 text-linen/60 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-wide uppercase">
+        <span className="border-linen/15 text-linen/60 rounded-full border px-3 py-1 text-xs font-semibold">
           Brasil
         </span>
       </div>
@@ -100,7 +100,7 @@ export function FooterCompanyCard() {
           transition={{ duration: 0.22 }}
           className="mt-5"
         >
-          <span className="text-gold inline-flex items-center gap-2 text-xs font-semibold">
+          <span className="text-ipe inline-flex items-center gap-2 text-xs font-semibold">
             <ActiveIcon className="size-4" />
             {active.step}
           </span>
