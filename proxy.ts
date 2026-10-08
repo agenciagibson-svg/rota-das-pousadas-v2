@@ -103,13 +103,18 @@ export default async function proxy(request: NextRequest) {
   const nonce = crypto.randomUUID().replaceAll('-', '')
   const csp = contentSecurityPolicy(nonce)
 
-  if (!isSupabaseConfigured()) {
-    return applySecurityHeaders(NextResponse.next(), csp)
-  }
-
   // O Next só carimba o nonce nos próprios scripts se enxergar a CSP no
   // cabeçalho da REQUISIÇÃO — por isso ela vai nos dois lados.
   const extraRequestHeaders = { 'x-nonce': nonce, 'content-security-policy': csp }
+
+  if (!isSupabaseConfigured()) {
+    // Modo demonstração (sem Supabase, dados de exemplo): mesmo repasse do
+    // caminho normal. Sem ele a CSP bloqueava os scripts do próprio Next e a
+    // home ficava parada em "Preparando sua rota…" (ver proxy.test.ts).
+    const headers = new Headers(request.headers)
+    for (const [name, value] of Object.entries(extraRequestHeaders)) headers.set(name, value)
+    return applySecurityHeaders(NextResponse.next({ request: { headers } }), csp)
+  }
 
   const { response, user } = await updateSession(request, extraRequestHeaders)
   const matched = PUBLIC_AUTH_PAGES.includes(path)
