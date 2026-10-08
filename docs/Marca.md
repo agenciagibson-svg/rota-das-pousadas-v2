@@ -16,9 +16,11 @@ que marca destinos e preços na interface. Sem fontes serifadas.
 | `simbolo-solto*.svg`           | Só o marcador, sem placa (avatar, selo, carregando)                      |
 | `favicon/`                     | `favicon.ico` (16/32/48), `icon.svg`, PNGs 192/512, maskable e apple 180 |
 
-O nome está convertido em curvas (Bricolage Grotesque 800, `opsz` 96), então o
-SVG não depende da fonte instalada. Não redesenhe, não estique e não troque as
-cores do marcador: o ponto é sempre Ipê.
+O nome está convertido em curvas (Funnel Display 500, espaçamento natural da
+fonte), então o SVG não depende da fonte instalada. O anel do marcador tem a
+mesma espessura do traço do "o" e o ponto ocupa 60% do miolo, para continuar
+visível no cabeçalho. Não redesenhe, não estique e não troque as cores do
+marcador: o ponto é sempre Ipê.
 
 ## Cores
 
@@ -37,7 +39,13 @@ fundo claro.
 
 ## Tipografia
 
-- Títulos: **Bricolage Grotesque** 700/800 (Google Fonts, OFL).
+- Títulos: **Funnel Display** (Google Fonts, OFL). Peso 500 nos títulos
+  grandes, 600 em títulos de até 24px (nome da pousada no card) e 300 só na
+  segunda linha do título principal, uma vez por página, no lugar do contorno.
+- Espaçamento dos títulos: -1% a partir de 40px, -0,5% entre 24 e 39px, zero
+  abaixo disso. Altura de linha mínima de 1,04. Nada de títulos em 700/800 nem
+  espaçamento apertado: a marca pede leveza.
+- Escala: display 80/40px (desktop/celular), título de seção 40/28px.
 - Texto e interface: **Figtree** 400/600/700 (Google Fonts, OFL), números de
   preço com `tabular-nums`.
 
