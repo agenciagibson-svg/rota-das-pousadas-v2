@@ -1,7 +1,9 @@
 import 'server-only'
+import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import type { LinkReport, QuoteRequest, QuoteRequestStatus } from '@/features/bio/types'
+import { getPousadaRepository } from './pousadas.repository'
 
 type QuoteRow = {
   id: string
@@ -181,6 +183,21 @@ export async function listBookableRooms(
   checkout: string | null,
   guests: number,
 ): Promise<BookableRoom[]> {
+  if (!isSupabaseConfigured()) {
+    // Modo demonstração: a acomodação padrão da pousada de exemplo.
+    const p = await getPousadaRepository().findBySlug(slug)
+    return p
+      ? [
+          {
+            id: `demo-${p.slug}`,
+            name: 'Acomodação principal',
+            description: 'Acomodação padrão da pousada.',
+            basePrice: p.pricePerNight,
+            capacity: 4,
+          },
+        ]
+      : []
+  }
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc('list_bookable_rooms', {
     p_slug: slug,
@@ -223,6 +240,30 @@ export type BioPousada = {
 }
 
 /**
+ * Modo demonstração (sem Supabase): a bio sai da pousada de exemplo, para a
+ * página abrir no preview. Sem WhatsApp, o contato direto não aparece.
+ */
+async function demoBioPousada(slug: string): Promise<BioPousada | null> {
+  const p = await getPousadaRepository().findBySlug(slug)
+  if (!p) return null
+  return {
+    id: p.id ?? p.slug,
+    slug: p.slug,
+    name: p.name,
+    city: p.city,
+    state: p.state,
+    description: p.description,
+    image: p.image,
+    instagram: p.instagram,
+    whatsapp: p.whatsapp ?? '',
+    pricePerNight: p.pricePerNight,
+    checkinTime: p.checkinTime ?? '14:00',
+    checkoutTime: p.checkoutTime ?? '12:00',
+    published: true,
+  }
+}
+
+/**
  * Dados da pousada para a página da bio, incluindo o `id` — que a página
  * precisa para registrar evento e para o formulário de orçamento, e que o tipo
  * de domínio `Pousada` não carrega.
@@ -232,6 +273,7 @@ export type BioPousada = {
  * mesmo dia — a página precisa existir antes de a curadoria aprovar.
  */
 export async function getBioPousadaBySlug(slug: string): Promise<BioPousada | null> {
+  if (!isSupabaseConfigured()) return demoBioPousada(slug)
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('pousadas')

@@ -1,5 +1,7 @@
 import 'server-only'
+import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getPousadaRepository } from './pousadas.repository'
 import type { AccommodationStatus, BedConfigItem, HousekeepingRoom, ManagedRoom, RoomOperationalStatus } from '@/features/acomodacoes/types'
 
 export type NewRoom = {
@@ -270,6 +272,25 @@ export type BookableRoom = {
 }
 
 /**
+ * Modo demonstração (sem Supabase): a mesma acomodação padrão que o banco cria
+ * para toda pousada nova (migrations 0004/0005), com a diária da pousada de
+ * exemplo. Só para a página da pousada abrir no preview — reservar de verdade
+ * continua exigindo o banco.
+ */
+async function demoBookableRoom(slug: string): Promise<BookableRoom | null> {
+  const pousada = await getPousadaRepository().findBySlug(slug)
+  if (!pousada) return null
+  return {
+    pousadaId: pousada.id ?? pousada.slug,
+    roomId: `demo-${pousada.slug}`,
+    name: 'Acomodação principal',
+    description: 'Acomodação padrão da pousada.',
+    nightly: pousada.pricePerNight,
+    capacity: 4,
+  }
+}
+
+/**
  * Resolve a acomodação reservável (mais barata) de uma pousada publicada, a
  * partir do slug. Única porta ao banco para leitura de rooms neste fluxo.
  */
@@ -280,6 +301,7 @@ export type BookableRoom = {
  * internal_notes, status operacional ou colunas administrativas.
  */
 export async function getBookableRoomBySlug(slug: string, checkin?: string, checkout?: string, guests = 1): Promise<BookableRoom | null> {
+  if (!isSupabaseConfigured()) return demoBookableRoom(slug)
   const supabase = await createSupabaseServerClient()
 
   const { data: pousada, error } = await supabase
