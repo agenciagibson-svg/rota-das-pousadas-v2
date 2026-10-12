@@ -4,34 +4,45 @@ import { useTransition, useState } from 'react'
 import Link from 'next/link'
 import { Heart, Loader2 } from 'lucide-react'
 import { toggleFavoriteAction } from '@/features/favoritos/actions'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+/**
+ * Salvar nos favoritos. `outline`: pílula com texto, sobre fundo claro.
+ * `glass`: só o coração, em vidro escuro, sobre a foto (o texto vira rótulo
+ * acessível). Salva = coração cheio em Ipê.
+ */
 export function FavoriteButton({
   slug,
   initialFavorite,
   isLoggedIn,
   className,
+  variant = 'outline',
 }: {
   slug: string
   initialFavorite: boolean
   isLoggedIn: boolean
   className?: string
+  variant?: 'outline' | 'glass'
 }) {
   const [favorite, setFavorite] = useState(initialFavorite)
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
+  const glass = variant === 'glass'
+  const shape = glass
+    ? cn(buttonVariants({ variant: 'glass', size: 'icon-pill' }), 'glass-dark')
+    : buttonVariants({ variant: 'outline', size: 'pill' })
+  const label = favorite ? 'Salva' : 'Salvar'
 
   if (!isLoggedIn) {
     return (
       <Link
         href={`/login?next=${encodeURIComponent(`/favoritos/salvar/${slug}`)}`}
-        className={cn(
-          'inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-all hover:-translate-y-0.5 hover:bg-secondary hover:shadow-md active:translate-y-0',
-          className,
-        )}
+        aria-label={glass ? 'Salvar' : undefined}
+        className={cn(shape, className)}
       >
-        <Heart className="size-4" />
-        Salvar
+        <Heart className="size-5" />
+        {!glass && 'Salvar'}
       </Link>
     )
   }
@@ -55,30 +66,24 @@ export function FavoriteButton({
             setError(result.error)
           })
         }}
-        className={cn(
-          'inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.97]',
-          favorite
-            ? 'bg-accent text-accent-foreground hover:brightness-105'
-            : 'text-foreground hover:bg-secondary',
-          isPending && 'opacity-70',
-          className,
-        )}
+        className={cn(shape, isPending && 'opacity-70', className)}
         aria-pressed={favorite}
+        aria-label={glass ? label : undefined}
       >
         {isPending ? (
-          <Loader2 className="size-4 animate-spin" />
+          <Loader2 className="size-5 animate-spin" />
         ) : (
           <Heart
             className={cn(
-              'size-4 transition-transform duration-300',
-              favorite && 'scale-110 fill-current',
+              'size-5 transition-transform duration-(--motion-hover)',
+              favorite && 'fill-ipe text-ipe scale-110',
             )}
           />
         )}
-        {favorite ? 'Salva' : 'Salvar'}
+        {!glass && label}
       </button>
       {error ? (
-        <p className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-destructive/20 bg-card p-2 text-xs text-destructive shadow-card">
+        <p className="border-destructive/20 bg-card text-destructive shadow-card absolute top-full right-0 z-10 mt-2 w-56 rounded-lg border p-2 text-xs">
           {error}
         </p>
       ) : null}

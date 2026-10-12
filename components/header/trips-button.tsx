@@ -89,12 +89,12 @@ export function TripsButton({
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     {t.awaitingApproval ? (
-                      <span className="flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                      <span className="bg-secondary text-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
                         <Clock className="size-3" /> Pix em análise
                       </span>
                     ) : (
                       left && (
-                        <span className="flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                        <span className="bg-ipe/20 text-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
                           <Clock className="size-3" /> Pague em {left}
                         </span>
                       )

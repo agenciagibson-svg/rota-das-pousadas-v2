@@ -119,7 +119,7 @@ export function BookingForm({
       />
 
       {price && price.nights > 0 && (
-        <div className="border-border bg-secondary/40 space-y-2 rounded-2xl border p-4 text-sm">
+        <div className="bg-secondary space-y-2 rounded-2xl p-4 text-sm tabular-nums">
           <div className="text-muted-foreground flex justify-between">
             <span>
               {formatBRL(nightly)} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
@@ -146,6 +146,7 @@ export function BookingForm({
           <Button
             type="button"
             variant="secondary"
+            size="pill"
             disabled={savingName}
             onClick={handleSaveName}
             className="w-full"
@@ -157,19 +158,33 @@ export function BookingForm({
         formError && <p className="text-destructive text-sm font-medium">{formError}</p>
       )}
 
-      <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
+      <Button
+        type="submit"
+        variant="accent"
+        size="pill-lg"
+        disabled={isSubmitting}
+        className="w-full"
+      >
         {isSubmitting ? 'Confirmando…' : 'Confirmar reserva'}
       </Button>
-      <p className="text-muted-foreground text-center text-xs">
+      <p className="text-muted-foreground text-center text-sm">
         Você ainda não será cobrado — o pagamento será solicitado na próxima etapa.
       </p>
-      <p className="text-muted-foreground text-center text-xs">
+      <p className="text-muted-foreground text-center text-sm">
         Ao confirmar, você aceita os{' '}
-        <Link href="/termos" target="_blank" className="text-primary underline">
+        <Link
+          href="/termos"
+          target="_blank"
+          className="text-foreground underline underline-offset-2"
+        >
           Termos de Uso
         </Link>{' '}
         e a pousada recebe os dados do seu cadastro para a ficha de hospedagem (
-        <Link href="/privacidade" target="_blank" className="text-primary underline">
+        <Link
+          href="/privacidade"
+          target="_blank"
+          className="text-foreground underline underline-offset-2"
+        >
           Privacidade
         </Link>
         ).

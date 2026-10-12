@@ -26,10 +26,7 @@ export function Textarea({
   return (
     <div className={cn('flex flex-col gap-1.5', wrapperClassName)}>
       {label && (
-        <label
-          htmlFor={fieldId}
-          className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
-        >
+        <label htmlFor={fieldId} className="text-foreground text-sm font-medium">
           {label}
         </label>
       )}
@@ -40,14 +37,17 @@ export function Textarea({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cn(
-          'rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-ring focus:ring-3 focus:ring-ring/20',
+          'border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-ipe/60 rounded-2xl border px-4 py-3 text-sm transition-colors duration-(--motion-hover) outline-none focus:ring-2',
           error && 'border-destructive focus:border-destructive focus:ring-destructive/20',
           className,
         )}
         {...props}
       />
       {(hint || error) && (
-        <p id={describedBy} className={cn('text-xs', error ? 'text-destructive' : 'text-muted-foreground')}>
+        <p
+          id={describedBy}
+          className={cn('text-xs', error ? 'text-destructive' : 'text-muted-foreground')}
+        >
           {error ?? hint}
         </p>
       )}

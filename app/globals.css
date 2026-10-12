@@ -62,6 +62,8 @@
   --color-liquen: var(--liquen);
   --color-pedra: var(--pedra);
   --color-neblina: var(--neblina);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -106,6 +108,11 @@
   --accent-foreground: #0f1716;
 
   --destructive: #b3412a;
+
+  /* Cor de estado (não de marca): só para confirmações — pagamento aprovado,
+   * reserva confirmada. Atenção usa Ipê suave; erro usa destructive. */
+  --success: #2f6a4f;
+  --success-foreground: #eef1ef;
 
   --border: #d5dbd8;
   --input: #c9d0cc;
@@ -182,9 +189,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* `clip` (e não `hidden`) corta a rolagem horizontal sem transformar o body
+   num contêiner de rolagem — com `hidden`, `position: sticky` (abas da
+   pousada, card de reserva, título do FAQ) deixava de grudar. */
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
 }
 

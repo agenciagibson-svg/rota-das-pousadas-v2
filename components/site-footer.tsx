@@ -1,12 +1,14 @@
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import { FooterBrandCard } from '@/components/footer-brand-card'
 import { FooterCompanyCard } from '@/components/footer-company-card'
 import { FooterExploreCard } from '@/components/footer-explore-card'
 import { FooterOwnerCard } from '@/components/footer-owner-card'
 
-export function SiteFooter() {
+/** `withBottomBar`: a página tem uma barra presa ao pé da tela no celular (ex.: "Reservar agora"), então o rodapé ganha folga para ela não cobrir o fim. */
+export function SiteFooter({ withBottomBar = false }: { withBottomBar?: boolean }) {
   return (
-    <footer className="bg-stone-deep text-linen">
+    <footer className={cn('bg-stone-deep text-linen', withBottomBar && 'pb-24 lg:pb-0')}>
       <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1.25fr_0.85fr_0.85fr]">
           <FooterBrandCard />
