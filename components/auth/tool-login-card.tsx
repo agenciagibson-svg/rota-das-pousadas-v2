@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Compass } from 'lucide-react'
+import { Logo } from '@/components/brand/logo'
 import { Card } from '@/components/ui/card'
 
 /**
@@ -19,19 +19,18 @@ export function ToolLoginCard({
   children: ReactNode
 }) {
   return (
-    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5 py-8">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5 py-8">
       <div className="w-full max-w-md">
-        <Link href="/" className="mx-auto mb-6 flex w-fit items-center gap-2.5">
-          <span className="bg-ocean text-primary-foreground flex size-9 items-center justify-center rounded-full">
-            <Compass className="size-5" />
-          </span>
-          <span className="text-foreground font-serif text-lg font-semibold">
-            Rota das Pousadas
-          </span>
+        <Link
+          href="/"
+          aria-label="Rota das Pousadas, página inicial"
+          className="text-foreground mx-auto mb-8 flex w-fit"
+        >
+          <Logo className="h-6" />
         </Link>
 
-        <Card radius="3xl" className="shadow-card p-8">
-          <h1 className="text-foreground font-serif text-2xl font-semibold">{title}</h1>
+        <Card radius="3xl" border={false} className="p-6 sm:p-8">
+          <h1 className="text-h2 text-foreground">{title}</h1>
           <p className="text-muted-foreground mt-1.5 text-sm">{subtitle}</p>
           <div className="mt-6">{children}</div>
         </Card>

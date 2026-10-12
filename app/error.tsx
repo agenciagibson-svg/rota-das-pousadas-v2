@@ -24,7 +24,11 @@ export default function RootError({
         icon={AlertTriangle}
         title="Algo saiu da rota"
         description="Encontramos um erro inesperado. Tente novamente em instantes."
-        action={<Button onClick={reset}>Tentar novamente</Button>}
+        action={
+          <Button size="lg" onClick={reset}>
+            Tentar novamente
+          </Button>
+        }
       />
     </div>
   )

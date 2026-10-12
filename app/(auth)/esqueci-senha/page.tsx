@@ -17,8 +17,8 @@ export default async function ForgotPasswordPage({
   const audience = parseResetAudience(para)
 
   return (
-    <Card radius="3xl" className="shadow-card p-8">
-      <h1 className="text-foreground font-serif text-3xl font-semibold">Esqueceu a senha?</h1>
+    <Card radius="3xl" border={false} className="p-6 sm:p-8">
+      <h1 className="text-h1 text-foreground">Esqueceu a senha?</h1>
       <p className="text-muted-foreground mt-2 text-base">
         Sem problema. Informe o e-mail da sua conta e enviamos um link para você criar uma nova
         senha.

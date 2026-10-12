@@ -22,7 +22,7 @@ export default function NotFound() {
         title="Página não encontrada"
         description="A rota que você procura não existe ou foi movida. Vamos recomeçar do início."
         action={
-          <Link href="/" className={buttonVariants()}>
+          <Link href="/" className={buttonVariants({ size: 'lg' })}>
             Voltar para o início
           </Link>
         }

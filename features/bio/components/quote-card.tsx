@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, MessageCircleMore } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { submitQuoteRequestAction } from '../actions'
@@ -63,9 +63,11 @@ export function QuoteCard({
 
   if (sent) {
     return (
-      <div className="border-primary/40 bg-primary/5 rounded-2xl border p-5 text-center">
-        <Check className="text-primary mx-auto size-6" />
-        <h2 className="text-foreground mt-2 font-serif text-lg font-semibold">Pedido enviado</h2>
+      <div role="status" className="bg-card rounded-3xl p-6 text-center">
+        <span className="bg-success/10 text-success mx-auto flex size-12 items-center justify-center rounded-full">
+          <Check className="size-6" />
+        </span>
+        <h2 className="text-h3 text-foreground mt-3">Pedido enviado</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           A pousada recebeu seus dados e vai responder com o orçamento. Guarde o número do seu
           telefone por perto.
@@ -75,8 +77,8 @@ export function QuoteCard({
   }
 
   return (
-    <div className="border-border bg-card rounded-2xl border p-5">
-      <h2 className="text-foreground font-serif text-lg font-semibold">Precisa de um orçamento?</h2>
+    <div className="bg-card rounded-3xl p-5">
+      <h2 className="text-h3 text-foreground">Precisa de um orçamento?</h2>
       <p className="text-muted-foreground mt-1 text-sm">
         Grupo grande, data especial, pedido fora do comum — conte o que precisa e a pousada responde
         com um valor fechado.
@@ -84,13 +86,15 @@ export function QuoteCard({
 
       {!open ? (
         <div className="mt-4 flex flex-col gap-2">
-          <Button onClick={() => setOpen(true)}>Pedir orçamento</Button>
+          <Button size="lg" onClick={() => setOpen(true)}>
+            Pedir orçamento
+          </Button>
           {whatsapp && (
             <a
               href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="border-input text-foreground hover:bg-secondary inline-flex items-center justify-center gap-1.5 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
             >
               <MessageCircleMore className="size-4" />
               Prefiro falar no WhatsApp
@@ -98,149 +102,115 @@ export function QuoteCard({
           )}
         </div>
       ) : (
-        <form onSubmit={keepValuesOnSubmit(onSubmit)} className="mt-4 flex flex-col gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Seu nome
-            </span>
-            <Input name="name" id="quote-name" required maxLength={150} autoComplete="name" />
-            {fieldErrors.name && (
-              <span className="text-destructive text-xs">{fieldErrors.name}</span>
-            )}
-          </label>
+        <form onSubmit={keepValuesOnSubmit(onSubmit)} className="mt-5 flex flex-col gap-4">
+          <Input
+            label="Seu nome"
+            error={fieldErrors.name}
+            name="name"
+            id="quote-name"
+            required
+            maxLength={150}
+            autoComplete="name"
+          />
 
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              WhatsApp
-            </span>
+          <Input
+            label="WhatsApp"
+            error={fieldErrors.phone}
+            name="phone"
+            id="quote-phone"
+            required
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(34) 99999-9999"
+          />
+
+          <Input
+            label="E-mail (opcional)"
+            error={fieldErrors.email}
+            name="email"
+            id="quote-email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+          />
+
+          <div className="flex gap-3">
             <Input
-              name="phone"
-              id="quote-phone"
-              required
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="(34) 99999-9999"
+              label="Entrada"
+              wrapperClassName="min-w-0 flex-1"
+              name="checkin"
+              id="quote-checkin"
+              type="date"
+              defaultValue={defaults.checkin}
             />
-            {fieldErrors.phone && (
-              <span className="text-destructive text-xs">{fieldErrors.phone}</span>
-            )}
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              E-mail (opcional)
-            </span>
             <Input
-              name="email"
-              id="quote-email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
+              label="Saída"
+              error={fieldErrors.checkout}
+              wrapperClassName="min-w-0 flex-1"
+              name="checkout"
+              id="quote-checkout"
+              type="date"
+              defaultValue={defaults.checkout}
             />
-            {fieldErrors.email && (
-              <span className="text-destructive text-xs">{fieldErrors.email}</span>
-            )}
-          </label>
-
-          <div className="flex gap-2">
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Entrada
-              </span>
-              <Input
-                name="checkin"
-                id="quote-checkin"
-                type="date"
-                defaultValue={defaults.checkin}
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Saída
-              </span>
-              <Input
-                name="checkout"
-                id="quote-checkout"
-                type="date"
-                defaultValue={defaults.checkout}
-              />
-            </label>
-          </div>
-          {fieldErrors.checkout && (
-            <span className="text-destructive text-xs">{fieldErrors.checkout}</span>
-          )}
-
-          <div className="flex gap-2">
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Adultos
-              </span>
-              <Input
-                name="adults"
-                id="quote-adults"
-                type="number"
-                min={1}
-                max={100}
-                defaultValue={defaults.adults}
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Crianças
-              </span>
-              <Input
-                name="children"
-                id="quote-children"
-                type="number"
-                min={0}
-                max={100}
-                defaultValue={0}
-              />
-            </label>
           </div>
 
-          <label className="text-foreground flex items-center gap-2 text-sm">
+          <div className="flex gap-3">
+            <Input
+              label="Adultos"
+              wrapperClassName="min-w-0 flex-1"
+              name="adults"
+              id="quote-adults"
+              type="number"
+              min={1}
+              max={100}
+              defaultValue={defaults.adults}
+            />
+            <Input
+              label="Crianças"
+              wrapperClassName="min-w-0 flex-1"
+              name="children"
+              id="quote-children"
+              type="number"
+              min={0}
+              max={100}
+              defaultValue={0}
+            />
+          </div>
+
+          <label className="text-foreground flex min-h-11 items-center gap-3 text-sm">
             <input
               type="checkbox"
               name="pets"
               id="quote-pets"
-              className="border-input size-4 rounded"
+              className="border-input accent-breu size-5 rounded"
             />
             Vou levar pet
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Ocasião (opcional)
-            </span>
-            <Input
-              name="occasion"
-              id="quote-occasion"
-              maxLength={80}
-              placeholder="Réveillon, casamento, retiro…"
-            />
-          </label>
+          <Input
+            label="Ocasião (opcional)"
+            name="occasion"
+            id="quote-occasion"
+            maxLength={80}
+            placeholder="Réveillon, casamento, retiro…"
+          />
 
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              O que você precisa
-            </span>
-            <Textarea
-              name="message"
-              id="quote-message"
-              rows={3}
-              maxLength={2000}
-              placeholder="Ex.: somos duas famílias, precisamos de 3 quartos e café mais cedo."
-            />
-          </label>
+          <Textarea
+            label="O que você precisa"
+            name="message"
+            id="quote-message"
+            rows={3}
+            maxLength={2000}
+            placeholder="Ex.: somos duas famílias, precisamos de 3 quartos e café mais cedo."
+          />
 
-          <label className="text-foreground flex items-start gap-2 text-sm">
+          <label className="text-foreground flex items-start gap-3 text-sm">
             <input
               type="checkbox"
               name="consent"
               id="quote-consent"
               required
-              className="border-input mt-0.5 size-4 rounded"
+              className="border-input accent-breu mt-0.5 size-5 shrink-0 rounded"
             />
             <span>
               Concordo que meus dados sejam usados pela pousada só pra responder este pedido de
@@ -253,13 +223,17 @@ export function QuoteCard({
 
           <TurnstileWidget onVerify={setTurnstileToken} />
 
-          {error && <p className="text-destructive text-sm">{error}</p>}
+          {error && (
+            <p role="alert" className="text-destructive text-sm">
+              {error}
+            </p>
+          )}
 
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            <Button type="button" variant="ghost" size="lg" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={pending} className="flex-1">
+            <Button type="submit" size="lg" disabled={pending} className="flex-1">
               {pending ? 'Enviando…' : 'Enviar pedido'}
             </Button>
           </div>

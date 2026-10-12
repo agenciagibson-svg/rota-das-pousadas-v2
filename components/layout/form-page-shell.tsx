@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { Container } from '@/components/ui/container'
+import { Marker } from '@/components/brand/logo'
 import { Card } from '@/components/ui/card'
 
 /**
@@ -29,20 +30,16 @@ export function FormPageShell({
 }) {
   return (
     <div className="bg-background relative min-h-screen overflow-hidden">
-      <div className="bg-primary/10 pointer-events-none absolute -top-24 -right-24 size-96 rounded-full blur-3xl" />
-      <div className="bg-accent/10 pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full blur-3xl" />
-
       <SiteHeader forceSolid />
 
       <main className="relative pt-32 pb-24 lg:pt-40 lg:pb-32">
         <Container className="max-w-3xl">
           <div className="text-center">
-            <span className="text-primary text-sm font-semibold tracking-[0.2em] uppercase">
+            <span className="text-overline inline-flex items-center gap-2">
+              <Marker className="text-foreground" />
               {eyebrow}
             </span>
-            <h1 className="text-foreground mt-4 font-serif text-4xl font-semibold text-balance sm:text-5xl">
-              {title}
-            </h1>
+            <h1 className="text-display-l text-foreground mt-4">{title}</h1>
             {description && (
               <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-lg leading-relaxed text-pretty">
                 {description}
@@ -50,13 +47,16 @@ export function FormPageShell({
             )}
           </div>
 
-          <Card radius="3xl" className="shadow-card mt-10 p-8 sm:p-10">
+          <Card radius="3xl" border={false} className="mt-10 p-6 sm:p-10">
             {children}
           </Card>
 
           {backHref && backLabel && (
             <p className="text-muted-foreground mt-8 text-center text-base">
-              <Link href={backHref} className="text-primary font-semibold hover:underline">
+              <Link
+                href={backHref}
+                className="text-foreground font-semibold underline-offset-4 hover:underline"
+              >
                 {backLabel}
               </Link>
             </p>
