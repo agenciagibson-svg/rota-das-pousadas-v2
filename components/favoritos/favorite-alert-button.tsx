@@ -36,7 +36,7 @@ export function FavoriteAlertButton({
           })
         }}
         className={cn(
-          'inline-flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-colors sm:w-auto',
+          'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors duration-(--motion-hover) sm:w-auto',
           active
             ? 'border-primary bg-primary text-primary-foreground'
             : 'border-border bg-card text-foreground hover:bg-secondary',
@@ -53,7 +53,7 @@ export function FavoriteAlertButton({
         {active ? 'Alerta ativo' : 'Ativar alerta'}
       </button>
       {error ? (
-        <p className="absolute right-0 top-full z-10 mt-2 w-56 rounded-lg border border-destructive/20 bg-card p-2 text-xs text-destructive shadow-card">
+        <p className="border-destructive/20 bg-card text-destructive shadow-card absolute top-full right-0 z-10 mt-2 w-56 rounded-lg border p-2 text-xs">
           {error}
         </p>
       ) : null}

@@ -3,53 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
-import { ArrowUpRight, BriefcaseBusiness, Leaf, Mail, Newspaper, ScrollText } from 'lucide-react'
-
-const companyLinks = [
-  {
-    label: 'História',
-    href: '#',
-    icon: ScrollText,
-    title: 'A rota nasce das pousadas com alma',
-    detail:
-      'Uma marca feita para valorizar hospedagens independentes, destinos brasileiros e viagens com mais significado.',
-    step: 'origem',
-  },
-  {
-    label: 'Sustentabilidade',
-    href: '#',
-    icon: Leaf,
-    title: 'Turismo que respeita o lugar',
-    detail:
-      'Curadoria para destacar pousadas conectadas com natureza, comunidade local e operação responsável.',
-    step: 'impacto',
-  },
-  {
-    label: 'Imprensa',
-    href: '#',
-    icon: Newspaper,
-    title: 'Uma nova vitrine para o turismo nacional',
-    detail:
-      'Materiais, releases e dados da plataforma para contar a expansão da Rota das Pousadas.',
-    step: 'voz',
-  },
-  {
-    label: 'Carreiras',
-    href: '#',
-    icon: BriefcaseBusiness,
-    title: 'Gente construindo tecnologia com hospitalidade',
-    detail: 'Produto, operação, marketing e IA trabalhando para aproximar pousadas e viajantes.',
-    step: 'time',
-  },
-  {
-    label: 'Contato',
-    href: 'mailto:agenciagibson@gmail.com',
-    icon: Mail,
-    title: 'Fale com a Rota das Pousadas',
-    detail: 'Parcerias, suporte, imprensa e oportunidades podem começar por uma mensagem simples.',
-    step: 'conversa',
-  },
-]
+import { ArrowUpRight } from 'lucide-react'
+import { companyLinks } from '@/components/footer-links'
 
 export function FooterCompanyCard() {
   const [activeIndex, setActiveIndex] = useState(0)

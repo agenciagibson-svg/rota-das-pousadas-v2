@@ -1,13 +1,16 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Search, Star } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
+import { PousadaCard } from '@/components/pousada/pousada-card'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { SectionHeading } from '@/components/ui/section-heading'
+import { cn } from '@/lib/utils'
 import { getPousadas } from '@/server/queries'
 import { PaginationLinks } from '@/components/ui/pagination'
 import { catalogQuerySchema } from '@/features/pousadas/search'
-import { formatPrice } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,29 +82,29 @@ export default async function PousadasPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="mx-auto max-w-7xl px-5 pt-28 pb-20 lg:px-8">
-        <div className="border-border flex flex-col justify-between gap-6 border-b pb-8 md:flex-row md:items-end">
-          <div className="max-w-2xl">
-            <span className="text-primary text-sm font-semibold tracking-[0.2em] uppercase">
-              Todas as pousadas
-            </span>
-            <h1 className="text-foreground mt-3 font-serif text-4xl leading-tight font-semibold sm:text-5xl">
-              Escolha a pousada e veja os detalhes
-            </h1>
-            <p className="text-muted-foreground mt-3">
-              A lista mostra as pousadas publicadas em sequência. Ao selecionar uma, você abre a
-              página dela com fotos, informações e reserva.
-            </p>
-          </div>
+      <main className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <SectionHeading
+            as="h1"
+            eyebrow="Todas as pousadas"
+            title="Escolha a pousada e veja os detalhes"
+            description="A lista mostra as pousadas publicadas em sequência. Ao selecionar uma, você abre a página dela com fotos, informações e reserva."
+          />
 
-          <form action="/pousadas" className="relative w-full md:max-w-sm">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
-            <input
-              name="busca"
-              defaultValue={busca}
-              placeholder="Buscar por nome ou cidade"
-              className="border-border bg-card focus:border-primary h-12 w-full rounded-full border pr-4 pl-11 text-sm transition-colors outline-none"
-            />
+          <form action="/pousadas" role="search" className="w-full md:max-w-sm">
+            <label htmlFor="catalogo-busca" className="sr-only">
+              Buscar por nome ou cidade
+            </label>
+            <div className="bg-card focus-within:ring-ipe/60 flex h-14 items-center gap-3 rounded-full pr-2 pl-5 focus-within:ring-2">
+              <Search className="text-muted-foreground size-5 shrink-0" />
+              <input
+                id="catalogo-busca"
+                name="busca"
+                defaultValue={busca}
+                placeholder="Buscar por nome ou cidade"
+                className="text-foreground placeholder:text-muted-foreground h-full min-w-0 flex-1 bg-transparent text-base outline-none"
+              />
+            </div>
             {checkin ? <input type="hidden" name="checkin" value={checkin} /> : null}
             {checkout ? <input type="hidden" name="checkout" value={checkout} /> : null}
             {hospedes ? <input type="hidden" name="hospedes" value={hospedes} /> : null}
@@ -112,70 +115,67 @@ export default async function PousadasPage({
         </div>
 
         {surpresa === '1' ? (
-          <div className="border-primary/20 bg-primary/5 mt-8 rounded-2xl border p-5">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-foreground font-serif text-2xl font-semibold">
-                  Sua rota surpresa está pronta
-                </h2>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Escolhemos uma direção para você explorar agora. Abra uma pousada e continue a
-                  reserva com as datas preenchidas.
-                </p>
-              </div>
-              <Link
-                href="/"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20 inline-flex w-fit rounded-full px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-              >
-                Sortear outra
-              </Link>
+          <div className="bg-breu text-neblina mt-8 flex flex-col gap-4 rounded-3xl p-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-h2">Sua rota surpresa está pronta</h2>
+              <p className="text-liquen mt-1 text-base">
+                Escolhemos uma direção para você explorar agora. Abra uma pousada e continue a
+                reserva com as datas preenchidas.
+              </p>
             </div>
+            <Link
+              href="/"
+              className={cn(buttonVariants({ variant: 'inverse', size: 'pill' }), 'w-fit shrink-0')}
+            >
+              Sortear outra
+            </Link>
           </div>
         ) : null}
 
         {oferta === 'estacao' ? (
-          <div className="border-accent/20 bg-accent/5 mt-8 rounded-2xl border p-5">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-foreground font-serif text-2xl font-semibold">
-                  Oferta da estação selecionada
-                </h2>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Mantivemos suas datas sugeridas e filtramos pousadas alinhadas com o clima da
-                  temporada.
-                </p>
-              </div>
-              <Link
-                href="/#ofertas"
-                className="bg-accent text-accent-foreground hover:bg-accent/90 hover:shadow-accent/20 inline-flex w-fit rounded-full px-4 py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-              >
-                Trocar oferta
-              </Link>
+          <div className="border-ipe/50 bg-ipe/15 mt-8 flex flex-col gap-4 rounded-3xl border p-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-h2 text-foreground">Oferta da estação selecionada</h2>
+              <p className="text-muted-foreground mt-1 text-base">
+                Mantivemos suas datas sugeridas e filtramos pousadas alinhadas com o clima da
+                temporada.
+              </p>
             </div>
+            <Link
+              href="/#ofertas"
+              className={cn(buttonVariants({ size: 'pill' }), 'w-fit shrink-0')}
+            >
+              Trocar oferta
+            </Link>
           </div>
         ) : null}
 
-        <div className="text-muted-foreground mt-8 flex flex-col gap-4 text-sm md:flex-row md:items-center md:justify-between">
+        <div className="border-border mt-8 flex flex-col gap-4 border-t pt-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <span>
+            <p className="text-foreground text-base font-semibold" aria-live="polite">
               {result.total} pousada{result.total === 1 ? '' : 's'} encontrada
               {result.total === 1 ? '' : 's'}
-            </span>
+            </p>
             {activeFilters.length ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 {activeFilters.map((filter) => (
-                  <span
+                  <Badge
                     key={filter}
-                    className="border-border bg-card text-foreground rounded-full border px-3 py-1 text-xs font-medium"
+                    variant="outline"
+                    size="lg"
+                    className="bg-card border-transparent"
                   >
                     {filter}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             ) : null}
           </div>
           {busca ? (
-            <Link href="/pousadas" className="text-primary font-semibold hover:underline">
+            <Link
+              href="/pousadas"
+              className={cn(buttonVariants({ variant: 'outline', size: 'pill-sm' }), 'w-fit')}
+            >
               Limpar busca
             </Link>
           ) : null}
@@ -187,86 +187,31 @@ export default async function PousadasPage({
           </p>
         )}
         {result.items.length ? (
-          <div className="mt-8 grid grid-cols-1 gap-5">
+          <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {result.items.map((pousada) => (
-              <Link
-                key={pousada.slug}
-                href={pousadaHref(pousada.slug)}
-                className="group border-border bg-card hover:shadow-stone-deep/10 grid overflow-hidden rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-xl md:grid-cols-[280px_1fr]"
-              >
-                <div className="relative aspect-[4/3] md:aspect-auto md:min-h-52">
-                  <Image
-                    src={pousada.image || '/placeholder.svg'}
-                    alt={pousada.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 280px"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="flex min-w-0 flex-col gap-4 p-5 md:p-6">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
-                        <span className="inline-flex items-center gap-1.5">
-                          <MapPin className="size-4" />
-                          {pousada.city}, {pousada.state}
-                        </span>
-                        <span className="text-foreground inline-flex items-center gap-1.5 font-semibold">
-                          <Star className="fill-gold text-gold size-4" />
-                          {pousada.rating.toFixed(1)}
-                          <span className="text-muted-foreground font-normal">
-                            ({pousada.reviews} avaliações)
-                          </span>
-                        </span>
-                      </div>
-                      <h2 className="text-foreground mt-2 font-serif text-2xl font-semibold">
-                        {pousada.name}
-                      </h2>
-                    </div>
-                    <div className="shrink-0 md:text-right">
-                      <div className="text-foreground text-xl font-semibold">
-                        {formatPrice(pousada.pricePerNight)}
-                      </div>
-                      <div className="text-muted-foreground text-xs">/ diária</div>
-                    </div>
-                  </div>
-
-                  <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
-                    {pousada.description}
-                  </p>
-
-                  <div className="mt-auto flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {pousada.tags.slice(0, 4).map((tag) => (
-                        <Badge key={tag} variant="secondary" size="sm">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <span className="bg-primary text-primary-foreground group-hover:bg-accent group-hover:text-accent-foreground inline-flex w-fit rounded-full px-5 py-2.5 text-sm font-semibold transition-colors">
-                      Ver pousada
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <li key={pousada.slug}>
+                <PousadaCard
+                  pousada={pousada}
+                  href={pousadaHref(pousada.slug)}
+                  cta="Ver pousada"
+                  showDescription
+                  showReviews
+                  maxTags={4}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
-          <div className="border-border bg-card mt-10 rounded-2xl border border-dashed p-10 text-center">
-            <h2 className="text-foreground font-serif text-2xl font-semibold">
-              Nenhuma pousada encontrada
-            </h2>
-            <p className="text-muted-foreground mt-2 text-sm">
+          <Card radius="3xl" border={false} className="mt-10 p-10 text-center">
+            <h2 className="text-h2 text-foreground">Nenhuma pousada encontrada</h2>
+            <p className="text-muted-foreground mt-2 text-base">
               Tente buscar por outro nome, cidade ou veja todas as pousadas novamente.
             </p>
-            <Link
-              href="/pousadas"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20 mt-5 inline-flex rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-            >
+            <Link href="/pousadas" className={cn(buttonVariants({ size: 'pill' }), 'mt-6')}>
               Ver todas
             </Link>
-          </div>
+          </Card>
         )}
         <PaginationLinks page={result.page} totalPages={result.totalPages} href={pageHref} />
       </main>

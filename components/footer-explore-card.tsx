@@ -4,62 +4,8 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'motion/react'
-import { ArrowUpRight, Compass, Hotel, Map, Route, Sparkles, Tags } from 'lucide-react'
-
-const routes = [
-  {
-    label: 'Destinos',
-    href: '/#destinos',
-    image: '/images/canastra.png',
-    icon: Map,
-    kicker: 'Comece pelo mapa',
-    title: 'Serra, praia ou cerrado?',
-    detail:
-      'Passe pelas paisagens e deixe a rota apontar para o tipo de viagem que combina com o seu momento.',
-    tone: 'text-liquen',
-  },
-  {
-    label: 'Experiências',
-    href: '/#experiencias',
-    image: '/images/experience.png',
-    icon: Sparkles,
-    kicker: 'Escolha pelo clima',
-    title: 'Natureza, luxo, romance ou aventura.',
-    detail: 'A navegação sai do comum: primeiro a sensação da viagem, depois a pousada ideal.',
-    tone: 'text-liquen',
-  },
-  {
-    label: 'Pousadas',
-    href: '/pousadas',
-    image: '/images/pousada-1.png',
-    icon: Hotel,
-    kicker: 'Veja a sequência completa',
-    title: 'Todas as pousadas em uma trilha visual.',
-    detail: 'Abra qualquer pousada para ver o slide de fotos e reservar logo abaixo.',
-    tone: 'text-liquen',
-  },
-  {
-    label: 'Ofertas',
-    href: '/pousadas',
-    image: '/images/capitolio.png',
-    icon: Tags,
-    kicker: 'Próxima camada',
-    title: 'Datas boas merecem ofertas vivas.',
-    detail: 'A base já leva para as pousadas; depois encaixamos preços dinâmicos por temporada.',
-    tone: 'text-liquen',
-  },
-  {
-    label: 'Roteiros',
-    href: '/#editorial',
-    image: '/images/jalapao.png',
-    icon: Route,
-    kicker: 'Monte uma jornada',
-    title: 'Uma rota, várias pousadas, zero planilha.',
-    detail:
-      'A ideia é evoluir para roteiros combinados, com pernoites sugeridos e distâncias inteligentes.',
-    tone: 'text-liquen',
-  },
-]
+import { ArrowUpRight, Compass } from 'lucide-react'
+import { routes } from '@/components/footer-links'
 
 export function FooterExploreCard() {
   const [activeIndex, setActiveIndex] = useState(0)

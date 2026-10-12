@@ -3,59 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
-import {
-  ArrowUpRight,
-  Bot,
-  CalendarCheck,
-  Gauge,
-  Hotel,
-  LifeBuoy,
-  Megaphone,
-  Plus,
-} from 'lucide-react'
-
-const ownerActions = [
-  {
-    label: 'Anunciar',
-    href: '/anunciar',
-    icon: Plus,
-    title: 'Coloque sua pousada na rota',
-    detail: 'Cadastro rápido, análise de curadoria e publicação para receber reservas diretas.',
-    metric: '0% comissão',
-  },
-  {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: Gauge,
-    title: 'Controle a operação em um painel',
-    detail: 'Reservas, acomodações, financeiro e configurações no mesmo lugar.',
-    metric: '24h online',
-  },
-  {
-    label: 'Reservas',
-    href: '/dashboard/reservas',
-    icon: CalendarCheck,
-    title: 'Acompanhe cada reserva',
-    detail: 'Veja hóspede, período, prazo de pagamento, status e ações do proprietário.',
-    metric: 'tempo real',
-  },
-  {
-    label: 'Marketing',
-    href: '/dashboard/marketing',
-    icon: Megaphone,
-    title: 'Transforme baixa ocupação em campanha',
-    detail: 'Sugestões por temporada, feriados e oportunidades comerciais.',
-    metric: 'IA aplicada',
-  },
-  {
-    label: 'Suporte',
-    href: '/dashboard/mensagens',
-    icon: LifeBuoy,
-    title: 'Converse com hóspedes e parceiros',
-    detail: 'Central para dúvidas, histórico por reserva e respostas rápidas.',
-    metric: 'humano + IA',
-  },
-]
+import { ArrowUpRight, Bot, Hotel } from 'lucide-react'
+import { ownerActions } from '@/components/footer-links'
 
 export function FooterOwnerCard() {
   const [activeIndex, setActiveIndex] = useState(0)

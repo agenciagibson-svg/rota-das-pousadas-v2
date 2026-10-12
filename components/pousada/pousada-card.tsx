@@ -16,14 +16,26 @@ export function PousadaCard({
   pousada,
   sizes = '(max-width: 640px) 82vw, (max-width: 1024px) 50vw, 25vw',
   className,
+  href,
+  cta = 'Ver detalhes',
+  showDescription = false,
+  showReviews = false,
+  maxTags = 2,
 }: {
   pousada: Pousada
   sizes?: string
   className?: string
+  /** Link com datas e hóspedes já escolhidos (catálogo). Padrão: página da pousada. */
+  href?: string
+  cta?: string
+  /** Catálogo: duas linhas da descrição, para comparar além do preço. */
+  showDescription?: boolean
+  showReviews?: boolean
+  maxTags?: number
 }) {
   return (
     <Link
-      href={`/pousada/${pousada.slug}`}
+      href={href ?? `/pousada/${pousada.slug}`}
       className={cn(
         'group bg-card hover:shadow-floating flex h-full flex-col overflow-hidden rounded-3xl transition-[transform,box-shadow] duration-(--motion-fade) hover:-translate-y-1',
         className,
@@ -40,6 +52,11 @@ export function PousadaCard({
         <Badge variant="glass" size="lg" className="absolute top-3 left-3 tabular-nums">
           <Star className="fill-ipe text-ipe size-3.5" />
           {pousada.rating.toFixed(1)}
+          {showReviews && (
+            <span className="text-muted-foreground font-normal">
+              ({pousada.reviews} avaliações)
+            </span>
+          )}
         </Badge>
       </div>
       <div className="flex flex-1 flex-col p-5">
@@ -47,8 +64,13 @@ export function PousadaCard({
           {pousada.city}, {pousada.state}
         </span>
         <h3 className="text-h3 text-foreground mt-1">{pousada.name}</h3>
+        {showDescription && (
+          <p className="text-muted-foreground mt-2 line-clamp-2 text-sm leading-relaxed">
+            {pousada.description}
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {pousada.tags.slice(0, 2).map((t) => (
+          {pousada.tags.slice(0, maxTags).map((t) => (
             <Badge key={t} variant="secondary" size="md">
               {t}
             </Badge>
@@ -67,7 +89,7 @@ export function PousadaCard({
               'group-hover:bg-accent group-hover:text-accent-foreground transition-colors duration-(--motion-hover)',
             )}
           >
-            Ver detalhes
+            {cta}
           </span>
         </div>
       </div>
