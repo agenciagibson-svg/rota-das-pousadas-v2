@@ -26,7 +26,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'border-border bg-card/50 flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed text-center',
+        'bg-card flex flex-col items-center justify-center gap-3 rounded-3xl text-center',
         large ? 'px-8 py-20' : 'px-6 py-16',
         className,
       )}
@@ -41,14 +41,7 @@ export function EmptyState({
           <Icon className={large ? 'size-8' : 'size-6'} />
         </span>
       )}
-      <h3
-        className={cn(
-          'text-foreground font-serif font-semibold',
-          large ? 'mt-1 text-3xl' : 'text-xl',
-        )}
-      >
-        {title}
-      </h3>
+      <h3 className={cn('text-foreground', large ? 'text-h1 mt-1' : 'text-h3')}>{title}</h3>
       {description && (
         <p
           className={cn(

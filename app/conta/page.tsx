@@ -56,14 +56,14 @@ export default async function ContaPage({
   return (
     <>
       <SiteHeader forceSolid />
-      <main className="pt-28 pb-24">
+      <main className="pt-32 pb-24">
         <Container className="max-w-3xl">
           <div className="mb-8 flex items-center gap-4">
             <span className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-full text-xl font-bold">
               {initials}
             </span>
             <div>
-              <h1 className="font-serif text-3xl font-semibold">Meu perfil</h1>
+              <h1 className="text-h1 text-foreground">Meu perfil</h1>
               <p className="text-muted-foreground">Seu cadastro na Rota das Pousadas.</p>
             </div>
           </div>
@@ -71,9 +71,9 @@ export default async function ContaPage({
           {me.missing.length > 0 ? (
             <div
               role="status"
-              className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+              className="border-ipe/50 bg-ipe/15 text-foreground mb-6 flex items-start gap-3 rounded-2xl border p-4 text-sm"
             >
-              <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+              <AlertCircle className="text-foreground mt-0.5 size-5 shrink-0" />
               <div>
                 <p className="font-semibold">
                   {safeNext
@@ -87,13 +87,13 @@ export default async function ContaPage({
               </div>
             </div>
           ) : (
-            <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
-              <CheckCircle2 className="size-5 shrink-0 text-emerald-600" />
+            <div className="border-success/30 bg-success/10 text-foreground mb-6 flex items-center gap-3 rounded-2xl border p-4 text-sm font-medium">
+              <CheckCircle2 className="text-success size-5 shrink-0" />
               Cadastro completo — suas reservas já levam tudo o que a pousada precisa.
             </div>
           )}
 
-          <Card className="mb-6 p-6">
+          <Card radius="3xl" border={false} className="mb-6 p-6">
             <TravelerProfileForm
               email={user.email}
               storedDocumentLabel={maskedDocument(
@@ -124,14 +124,14 @@ export default async function ContaPage({
             />
           </Card>
 
-          <Card className="p-6">
-            <h2 className="mb-4 font-semibold">Atalhos</h2>
+          <Card radius="3xl" border={false} className="p-6">
+            <h2 className="text-h3 mb-4">Atalhos</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {shortcuts.map((s) => (
                 <Link
                   key={s.href}
                   href={s.href}
-                  className="border-border hover:bg-secondary flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium"
+                  className="border-border hover:bg-secondary flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition-colors duration-(--motion-hover)"
                 >
                   <s.icon className="text-primary size-5" />
                   {s.label}

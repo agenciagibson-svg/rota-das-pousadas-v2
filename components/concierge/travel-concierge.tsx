@@ -17,6 +17,7 @@ import {
   Waves,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { Pousada } from '@/types'
 import { prepareCatalog, recommendPousadas } from '@/features/concierge'
@@ -142,24 +143,20 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-12">
-      <aside className="border-border bg-card shadow-card rounded-3xl border p-5 lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
+      <aside className="bg-card rounded-3xl p-5 lg:sticky lg:top-28 lg:col-span-4 lg:self-start lg:p-6">
         <div className="flex items-center gap-3">
           <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-full">
             <Sparkles className="size-5" />
           </span>
           <div>
-            <p className="text-primary text-sm font-semibold tracking-[0.18em] uppercase">
-              Concierge
-            </p>
-            <h2 className="text-foreground font-serif text-2xl font-semibold">Monte sua rota</h2>
+            <p className="text-muted-foreground text-sm font-semibold">Concierge</p>
+            <h2 className="text-h2 text-foreground">Monte sua rota</h2>
           </div>
         </div>
 
         <div className="mt-6 space-y-6">
           <div>
-            <label className="text-muted-foreground text-xs font-semibold uppercase">
-              Destino desejado
-            </label>
+            <label className="text-foreground text-sm font-medium">Destino desejado</label>
             <div className="relative mt-2">
               <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
               <input
@@ -172,7 +169,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
           </div>
 
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase">Clima da viagem</p>
+            <p className="text-foreground text-sm font-medium">Clima da viagem</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               {moods.map((item) => {
                 const Icon = item.icon
@@ -181,6 +178,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                     key={item.key}
                     type="button"
                     onClick={() => setMood(item.key)}
+                    aria-pressed={mood === item.key}
                     className={cn(
                       'rounded-2xl border p-4 text-left transition-all',
                       mood === item.key
@@ -205,22 +203,30 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
           </div>
 
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase">Orçamento</p>
+            <p className="text-foreground text-sm font-medium">Orçamento</p>
             <div className="mt-3 grid gap-2">
               {budgets.map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => setBudget(item.key)}
+                  aria-pressed={budget === item.key}
                   className={cn(
-                    'flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition-colors',
+                    'flex min-h-12 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-colors duration-(--motion-hover)',
                     budget === item.key
-                      ? 'border-primary bg-primary/10 text-primary'
+                      ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border',
                   )}
                 >
                   <span className="font-semibold">{item.label}</span>
-                  <span className="text-muted-foreground text-xs">{item.description}</span>
+                  <span
+                    className={cn(
+                      'text-xs',
+                      budget === item.key ? 'text-primary-foreground/75' : 'text-muted-foreground',
+                    )}
+                  >
+                    {item.description}
+                  </span>
                 </button>
               ))}
             </div>
@@ -228,9 +234,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-muted-foreground text-xs font-semibold uppercase">
-                Hóspedes
-              </span>
+              <span className="text-foreground text-sm font-medium">Hóspedes</span>
               <input
                 type="number"
                 min={1}
@@ -241,7 +245,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
               />
             </label>
             <label className="block">
-              <span className="text-muted-foreground text-xs font-semibold uppercase">Noites</span>
+              <span className="text-foreground text-sm font-medium">Noites</span>
               <input
                 type="number"
                 min={1}
@@ -254,17 +258,18 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
           </div>
 
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase">Viajando com</p>
+            <p className="text-foreground text-sm font-medium">Viajando com</p>
             <div className="mt-3 flex gap-2">
               {Object.entries(companionLabels).map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setCompanion(key as keyof typeof companionLabels)}
+                  aria-pressed={companion === key}
                   className={cn(
-                    'rounded-full px-4 py-2 text-xs font-semibold transition-colors',
+                    'min-h-11 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-(--motion-hover)',
                     companion === key
-                      ? 'bg-accent text-accent-foreground'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-secondary text-foreground',
                   )}
                 >
@@ -280,10 +285,10 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
         <div className="border-border bg-stone-deep text-linen overflow-hidden rounded-3xl border">
           <div className="grid lg:grid-cols-[1fr_0.82fr]">
             <div className="p-6 sm:p-8">
-              <Badge variant="glass" size="lg" className="bg-linen/10 text-linen">
+              <Badge variant="outline" size="lg" className="border-linen/25 text-linen">
                 Roteiro recomendado
               </Badge>
-              <h2 className="mt-5 font-serif text-4xl leading-tight font-semibold text-balance sm:text-5xl">
+              <h2 className="text-display-l mt-5">
                 {destination
                   ? `Uma rota por ${destination}`
                   : `Uma rota de ${moodConfig.label.toLowerCase()}`}
@@ -306,7 +311,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href={searchHref}
-                  className="bg-accent text-accent-foreground inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+                  className={buttonVariants({ variant: 'accent', size: 'pill' })}
                 >
                   Ver rota filtrada
                   <ArrowRight className="size-4" />
@@ -338,7 +343,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                     <MapPin className="size-4" />
                     {hero.city}, {hero.state}
                   </p>
-                  <h3 className="mt-1 font-serif text-2xl font-semibold">{hero.name}</h3>
+                  <h3 className="text-h2 mt-1">{hero.name}</h3>
                 </div>
               ) : null}
             </div>
@@ -358,7 +363,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   alt={pousada.name}
                   fill
                   sizes="(max-width: 640px) 100vw, 180px"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover transition-transform duration-(--motion-reveal) group-hover:scale-105"
                 />
                 <span className="bg-card text-foreground absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold">
                   #{index + 1}
@@ -371,12 +376,10 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                       <MapPin className="size-4" />
                       {pousada.city}, {pousada.state}
                     </p>
-                    <h3 className="text-foreground mt-1 font-serif text-2xl font-semibold">
-                      {pousada.name}
-                    </h3>
+                    <h3 className="text-h3 text-foreground mt-1">{pousada.name}</h3>
                   </div>
                   <span className="text-foreground inline-flex items-center gap-1.5 text-sm font-semibold">
-                    <Star className="fill-gold text-gold size-4" />
+                    <Star className="fill-ipe text-ipe size-4" />
                     {pousada.rating.toFixed(1)}
                   </span>
                 </div>
@@ -391,11 +394,16 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                   ))}
                 </div>
                 <div className="mt-5 flex items-center justify-between gap-4">
-                  <p className="text-foreground text-lg font-semibold">
+                  <p className="text-foreground text-lg font-semibold tabular-nums">
                     {formatPrice(pousada.pricePerNight)}
-                    <span className="text-muted-foreground text-xs font-normal"> / diária</span>
+                    <span className="text-muted-foreground text-sm font-normal"> / diária</span>
                   </p>
-                  <span className="bg-primary text-primary-foreground group-hover:bg-accent inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold">
+                  <span
+                    className={cn(
+                      buttonVariants({ size: 'pill-sm' }),
+                      'group-hover:bg-accent group-hover:text-accent-foreground',
+                    )}
+                  >
                     Ver pousada
                     <ArrowRight className="size-3.5" />
                   </span>
