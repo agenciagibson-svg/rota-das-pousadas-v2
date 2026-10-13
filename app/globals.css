@@ -153,6 +153,14 @@
   --sidebar-border: #d5dbd8;
   --sidebar-ring: #0f1716;
 
+  /* Varinha do concierge: o único ponto multicolorido do site (pedido do
+   * cliente). Começa no Ipê e passa por coral, magenta, anil e menta. */
+  --wand-1: #f4b42a;
+  --wand-2: #ff6b4a;
+  --wand-3: #e0439b;
+  --wand-4: #5b6cff;
+  --wand-5: #2fc4a0;
+
   /* App da estadia, tema claro = a marca como sempre foi. */
   --app-bg: #eef1ef;
   --app-soft: #eef1ef;
@@ -259,6 +267,94 @@ html:has([data-stay-app][data-theme='dark']) body {
   .text-balance {
     text-wrap: balance;
   }
+  /* Faíscas da varinha do concierge piscando em tempos diferentes. */
+  .magic-wand-spark {
+    animation: wand-spark 1.8s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .magic-wand-spark-2 {
+    animation-delay: 0.6s;
+  }
+  .magic-wand-spark-3 {
+    animation-delay: 1.2s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .magic-wand-spark {
+      animation: none;
+    }
+  }
+  /* Selo da varinha no chat: anel multicolor girando (as cores da varinha). */
+  .concierge-wand-badge {
+    background: var(--background);
+    isolation: isolate;
+  }
+  .concierge-wand-badge::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--wand-angle, 0deg),
+      var(--wand-1),
+      var(--wand-2),
+      var(--wand-3),
+      var(--wand-4),
+      var(--wand-5),
+      var(--wand-1)
+    );
+    animation: wand-ring 4s linear infinite;
+  }
+  .concierge-wand-badge::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--card);
+  }
+  /* Três pontos de "digitando". */
+  .concierge-typing {
+    display: inline-flex;
+    gap: 3px;
+  }
+  .concierge-typing i {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: wand-spark 1.2s ease-in-out infinite;
+  }
+  .concierge-typing i:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .concierge-typing i:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .concierge-wand-badge::before,
+    .concierge-typing i {
+      animation: none;
+    }
+  }
+  /* Título sobre foto: sombra larga e macia, só para destacar as letras. */
+  .text-legible {
+    text-shadow: 0 2px 28px color-mix(in oklab, var(--breu) 55%, transparent);
+  }
+  /* Véu do hero: desfoque + escurecimento que somem em degradê para cima. */
+  .hero-text-veil {
+    background: linear-gradient(
+      to top,
+      color-mix(in oklab, var(--breu) 55%, transparent),
+      color-mix(in oklab, var(--breu) 20%, transparent) 60%,
+      transparent
+    );
+    backdrop-filter: blur(10px) saturate(115%);
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    mask-image: linear-gradient(to top, black 55%, transparent);
+    -webkit-mask-image: linear-gradient(to top, black 55%, transparent);
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -301,5 +397,29 @@ body {
   select,
   textarea {
     font-size: 16px;
+  }
+}
+
+@property --wand-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes wand-ring {
+  to {
+    --wand-angle: 360deg;
+  }
+}
+
+@keyframes wand-spark {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
   }
 }

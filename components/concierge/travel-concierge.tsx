@@ -11,11 +11,11 @@ import {
   MapPin,
   Mountain,
   Search,
-  Sparkles,
   Star,
   Users,
   Waves,
 } from 'lucide-react'
+import { MagicWand } from '@/components/brand/magic-wand'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -145,8 +145,8 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
     <div className="grid gap-8 lg:grid-cols-12">
       <aside className="bg-card rounded-3xl p-5 lg:sticky lg:top-28 lg:col-span-4 lg:self-start lg:p-6">
         <div className="flex items-center gap-3">
-          <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-full">
-            <Sparkles className="size-5" />
+          <span className="concierge-wand-badge relative flex size-11 shrink-0 items-center justify-center rounded-full">
+            <MagicWand className="size-5" />
           </span>
           <div>
             <p className="text-muted-foreground text-sm font-semibold">Concierge</p>

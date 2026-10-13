@@ -1,4 +1,5 @@
 import { isoDateInTimeZone } from '@/lib/dates'
+import { seasonStock } from '@/lib/stock-images'
 
 /**
  * Estações da "home viva": conteúdo do hero e utilitários de data usados pelo
@@ -53,6 +54,25 @@ export const seasons: Record<
     image: '/images/hero.png',
     alt: 'Pousada em meio a natureza verde ao nascer do sol',
   },
+}
+
+/**
+ * Fotos de cada estação no hero: a original primeiro e duas do banco de
+ * imagens. O hero alterna entre elas a cada volta pela estação.
+ */
+export const seasonImages: Record<SeasonKey, { src: string; alt: string }[]> = {
+  verao: [{ src: seasons.verao.image, alt: seasons.verao.alt }, ...seasonStock.verao],
+  outono: [{ src: seasons.outono.image, alt: seasons.outono.alt }, ...seasonStock.outono],
+  inverno: [{ src: seasons.inverno.image, alt: seasons.inverno.alt }, ...seasonStock.inverno],
+  primavera: [
+    { src: seasons.primavera.image, alt: seasons.primavera.alt },
+    ...seasonStock.primavera,
+  ],
+}
+
+/** Próxima estação na ordem do ano (o hero gira sozinho nessa ordem). */
+export function nextSeason(key: SeasonKey): SeasonKey {
+  return seasonOrder[(seasonOrder.indexOf(key) + 1) % seasonOrder.length]!
 }
 
 export const surpriseRoutes: Record<SeasonKey, string[]> = {

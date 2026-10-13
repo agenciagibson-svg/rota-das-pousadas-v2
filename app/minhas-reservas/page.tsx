@@ -27,6 +27,10 @@ import {
   parseMpReturnStatus,
 } from '@/features/pagamentos/components/payment-return-banner'
 import { isoDateInTimeZone } from '@/lib/dates'
+import { isSupabaseConfigured } from '@/lib/env'
+import { DemoNotice } from '@/components/demo/demo-notice'
+import { demoMyBookings } from '@/features/reservas/demo'
+import { DEMO_STAY_ID } from '@/features/estadia/demo'
 import { formatBRL, formatDateTime, formatISODate } from '@/lib/format'
 
 export const metadata: Metadata = {
@@ -53,7 +57,12 @@ export default async function MyBookingsPage({
   searchParams: Promise<{ pago?: string; status?: string; collection_status?: string }>
 }) {
   const query = await searchParams
-  const [bookings, user] = await Promise.all([getMyBookingsReconciled(), getCurrentUser()])
+  // Preview sem banco (sem login possível): reservas fictícias para conhecer a área.
+  const demo = !isSupabaseConfigured()
+  const [bookings, user] = await Promise.all([
+    demo ? demoMyBookings() : getMyBookingsReconciled(),
+    getCurrentUser(),
+  ])
   // Volta do Mercado Pago (`?pago=<id>&status=...`): destaque do resultado no topo.
   const returned = query.pago ? bookings.find((b) => b.id === query.pago) : undefined
   const mpStatus = parseMpReturnStatus(query.collection_status ?? query.status)
@@ -76,6 +85,13 @@ export default async function MyBookingsPage({
           <p className="text-muted-foreground mt-2 text-base">
             Acompanhe suas estadias, valores e próximas ações.
           </p>
+
+          {demo && (
+            <DemoNotice className="mt-6">
+              Este ambiente de teste não tem banco conectado. Com a sua conta, aqui aparecem as suas
+              reservas de verdade.
+            </DemoNotice>
+          )}
 
           {returned && (
             <PaymentReturnBanner booking={returned} mpStatus={mpStatus} guestEmail={user?.email} />
@@ -267,15 +283,16 @@ export default async function MyBookingsPage({
                             )}
                             {(booking.status === 'confirmed' ||
                               booking.status === 'checked_in' ||
-                              booking.status === 'checked_out') && (
-                              <Link
-                                href={`/estadia/${booking.id}`}
-                                className={buttonVariants({ size: 'pill-sm' })}
-                              >
-                                <Smartphone className="size-3.5" />
-                                App da estadia
-                              </Link>
-                            )}
+                              booking.status === 'checked_out') &&
+                              (!demo || booking.id === DEMO_STAY_ID) && (
+                                <Link
+                                  href={`/estadia/${booking.id}`}
+                                  className={buttonVariants({ size: 'pill-sm' })}
+                                >
+                                  <Smartphone className="size-3.5" />
+                                  App da estadia
+                                </Link>
+                              )}
                             {canRebook && (
                               <Link
                                 href={{

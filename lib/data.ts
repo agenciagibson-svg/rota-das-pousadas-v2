@@ -1,11 +1,5 @@
-import type {
-  Destination,
-  Experience,
-  Pousada,
-  Room,
-  Review,
-  Season,
-} from '@/lib/types'
+import { pousadaStock } from '@/lib/stock-images'
+import type { Destination, Experience, Pousada, Room, Review, Season } from '@/lib/types'
 
 // Re-export domain types so existing imports (e.g. `import type { Pousada }
 // from '@/lib/data'`) keep working. New code should import from '@/lib/types'.
@@ -95,18 +89,58 @@ export const destinations: Destination[] = [
 ]
 
 export const experiences: Experience[] = [
-  { slug: 'chales-romanticos', name: 'Chalés Românticos', icon: 'Heart', description: 'Refúgios a dois com lareira e vista.' },
-  { slug: 'natureza', name: 'Natureza', icon: 'Trees', description: 'Imersão total em meio à mata.' },
+  {
+    slug: 'chales-romanticos',
+    name: 'Chalés Românticos',
+    icon: 'Heart',
+    description: 'Refúgios a dois com lareira e vista.',
+  },
+  {
+    slug: 'natureza',
+    name: 'Natureza',
+    icon: 'Trees',
+    description: 'Imersão total em meio à mata.',
+  },
   { slug: 'luxo', name: 'Luxo', icon: 'Gem', description: 'Alta hotelaria e serviço impecável.' },
-  { slug: 'pet-friendly', name: 'Pet Friendly', icon: 'PawPrint', description: 'Traga quem você ama, todos eles.' },
-  { slug: 'piscina-aquecida', name: 'Piscina Aquecida', icon: 'WavesLadder', description: 'Mergulhe em qualquer estação.' },
-  { slug: 'cachoeiras', name: 'Cachoeiras', icon: 'Droplets', description: 'Águas cristalinas ao seu alcance.' },
+  {
+    slug: 'pet-friendly',
+    name: 'Pet Friendly',
+    icon: 'PawPrint',
+    description: 'Traga quem você ama, todos eles.',
+  },
+  {
+    slug: 'piscina-aquecida',
+    name: 'Piscina Aquecida',
+    icon: 'WavesLadder',
+    description: 'Mergulhe em qualquer estação.',
+  },
+  {
+    slug: 'cachoeiras',
+    name: 'Cachoeiras',
+    icon: 'Droplets',
+    description: 'Águas cristalinas ao seu alcance.',
+  },
   { slug: 'fazenda', name: 'Fazenda', icon: 'Wheat', description: 'O ritmo bom da vida no campo.' },
   { slug: 'glamping', name: 'Glamping', icon: 'Tent', description: 'Acampar com sofisticação.' },
-  { slug: 'ecoturismo', name: 'Ecoturismo', icon: 'Leaf', description: 'Viaje leve, com propósito.' },
-  { slug: 'serra', name: 'Serra', icon: 'Mountain', description: 'Ar puro e horizontes infinitos.' },
+  {
+    slug: 'ecoturismo',
+    name: 'Ecoturismo',
+    icon: 'Leaf',
+    description: 'Viaje leve, com propósito.',
+  },
+  {
+    slug: 'serra',
+    name: 'Serra',
+    icon: 'Mountain',
+    description: 'Ar puro e horizontes infinitos.',
+  },
   { slug: 'praia', name: 'Praia', icon: 'Sun', description: 'O mar como quintal.' },
-  { slug: 'cabanas', name: 'Cabanas', icon: 'Home', description: 'Aconchego de madeira e silêncio.' },
+  {
+    slug: 'cabanas',
+    name: 'Cabanas',
+    icon: 'Home',
+    description: 'Aconchego de madeira e silêncio.',
+  },
 ]
 
 export const pousadas: Pousada[] = [
@@ -116,7 +150,13 @@ export const pousadas: Pousada[] = [
     city: 'Monte Verde',
     state: 'MG',
     image: '/images/pousada-1.png',
-    gallery: ['/images/pousada-1.png', '/images/gallery-1.png', '/images/gallery-2.png', '/images/gallery-3.png', '/images/gallery-4.png'],
+    gallery: [
+      '/images/pousada-1.png',
+      '/images/gallery-1.png',
+      '/images/gallery-2.png',
+      '/images/gallery-3.png',
+      '/images/gallery-4.png',
+    ],
     rating: 4.9,
     reviews: 328,
     pricePerNight: 720,
@@ -131,7 +171,13 @@ export const pousadas: Pousada[] = [
     city: 'Capitólio',
     state: 'MG',
     image: '/images/pousada-2.png',
-    gallery: ['/images/pousada-2.png', '/images/gallery-4.png', '/images/gallery-1.png', '/images/gallery-3.png', '/images/gallery-2.png'],
+    gallery: [
+      '/images/pousada-2.png',
+      '/images/gallery-4.png',
+      '/images/gallery-1.png',
+      '/images/gallery-3.png',
+      '/images/gallery-2.png',
+    ],
     rating: 4.8,
     reviews: 214,
     pricePerNight: 640,
@@ -146,7 +192,13 @@ export const pousadas: Pousada[] = [
     city: 'Jalapão',
     state: 'TO',
     image: '/images/pousada-3.png',
-    gallery: ['/images/pousada-3.png', '/images/gallery-3.png', '/images/gallery-2.png', '/images/gallery-1.png', '/images/gallery-4.png'],
+    gallery: [
+      '/images/pousada-3.png',
+      '/images/gallery-3.png',
+      '/images/gallery-2.png',
+      '/images/gallery-1.png',
+      '/images/gallery-4.png',
+    ],
     rating: 5.0,
     reviews: 156,
     pricePerNight: 980,
@@ -161,13 +213,115 @@ export const pousadas: Pousada[] = [
     city: 'Fernando de Noronha',
     state: 'PE',
     image: '/images/pousada-4.png',
-    gallery: ['/images/pousada-4.png', '/images/gallery-1.png', '/images/gallery-4.png', '/images/gallery-3.png', '/images/gallery-2.png'],
+    gallery: [
+      '/images/pousada-4.png',
+      '/images/gallery-1.png',
+      '/images/gallery-4.png',
+      '/images/gallery-3.png',
+      '/images/gallery-2.png',
+    ],
     rating: 5.0,
     reviews: 402,
     pricePerNight: 1680,
     tags: ['Praia', 'Luxo', 'Vista Mar', 'Café Premium'],
     description:
       'Debruçada sobre uma das baías mais bonitas do mundo, a Casa do Mar oferece suítes com varanda voltada para o oceano, café da manhã autoral e o silêncio raro de um paraíso preservado.',
+    instagram: '',
+  },
+  {
+    slug: 'pousada-mare-alta',
+    name: 'Pousada Maré Alta',
+    city: 'Trancoso',
+    state: 'BA',
+    image: pousadaStock.mareAlta[0],
+    gallery: [...pousadaStock.mareAlta],
+    rating: 4.8,
+    reviews: 189,
+    pricePerNight: 540,
+    maxGuests: 4,
+    tags: ['Praia', 'Família', 'Pet Friendly', 'Pé na Areia'],
+    description:
+      'Bangalôs de palha entre coqueiros, a poucos passos do mar calmo de Trancoso. Redes na varanda, café da manhã baiano e espaço para as crianças brincarem no jardim — e o cachorro da família também é bem-vindo. Bangalôs para até 4 pessoas, perfeitos para o verão.',
+    instagram: '',
+  },
+  {
+    slug: 'ponta-azul-resort',
+    name: 'Ponta Azul Resort',
+    city: 'Maragogi',
+    state: 'AL',
+    image: pousadaStock.pontaAzul[0],
+    gallery: [...pousadaStock.pontaAzul],
+    rating: 4.9,
+    reviews: 512,
+    pricePerNight: 1190,
+    maxGuests: 5,
+    tags: ['Resort', 'Praia', 'Família', 'Piscina'],
+    description:
+      'Resort à beira das piscinas naturais de Maragogi, com piscina de borda infinita, clube infantil, restaurante de frutos do mar e passeios de catamarã incluídos. Suítes amplas para famílias de até 5 pessoas, com vista para o mar azul-turquesa.',
+    instagram: '',
+  },
+  {
+    slug: 'cabanas-da-mata',
+    name: 'Cabanas da Mata',
+    city: 'Visconde de Mauá',
+    state: 'RJ',
+    image: pousadaStock.cabanasDaMata[0],
+    gallery: [...pousadaStock.cabanasDaMata],
+    rating: 4.9,
+    reviews: 247,
+    pricePerNight: 460,
+    maxGuests: 4,
+    tags: ['Cabanas', 'Floresta', 'Cachoeiras', 'Pet Friendly'],
+    description:
+      'Cabanas de madeira escondidas na floresta da Mantiqueira, com deck, rede e lareira. Trilhas saem da porta até as cachoeiras do vale, e os pets podem acompanhar o passeio. Cabanas para casais e famílias pequenas, de 2 a 4 pessoas.',
+    instagram: '',
+  },
+  {
+    slug: 'fazenda-serra-azul',
+    name: 'Fazenda Serra Azul',
+    city: 'Tiradentes',
+    state: 'MG',
+    image: pousadaStock.fazendaSerraAzul[0],
+    gallery: [...pousadaStock.fazendaSerraAzul],
+    rating: 4.7,
+    reviews: 173,
+    pricePerNight: 390,
+    maxGuests: 6,
+    tags: ['Fazenda', 'Família', 'Pet Friendly', 'Café Colonial'],
+    description:
+      'Casarão colonial numa fazenda a 10 minutos do centro histórico de Tiradentes. Cavalgada, horta, ordenha de manhã e café colonial com quitandas mineiras. Quartos para até 6 pessoas, pensados para famílias, grupos de amigos e os bichos de estimação.',
+    instagram: '',
+  },
+  {
+    slug: 'ecolodge-rio-negro',
+    name: 'Ecolodge Rio Negro',
+    city: 'Novo Airão',
+    state: 'AM',
+    image: pousadaStock.ecolodgeRioNegro[0],
+    gallery: [...pousadaStock.ecolodgeRioNegro],
+    rating: 4.9,
+    reviews: 98,
+    pricePerNight: 1350,
+    maxGuests: 3,
+    tags: ['Floresta', 'Ecoturismo', 'Aventura', 'Natureza'],
+    description:
+      'Bangalôs flutuantes no Rio Negro, cercados pela floresta amazônica. Passeios de canoa pelos igapós, encontro com os botos, trilhas guiadas por ribeirinhos e pôr do sol no rio. Pensão completa, para até 3 pessoas por bangalô.',
+    instagram: '',
+  },
+  {
+    slug: 'chales-serra-gelada',
+    name: 'Chalés da Serra Gelada',
+    city: 'Urubici',
+    state: 'SC',
+    image: pousadaStock.chalesSerraGelada[0],
+    gallery: [...pousadaStock.chalesSerraGelada],
+    rating: 4.8,
+    reviews: 231,
+    pricePerNight: 610,
+    maxGuests: 2,
+    tags: ['Chalés Românticos', 'Lareira', 'Serra', 'Inverno'],
+    description:
+      'Chalés entre araucárias na serra catarinense, onde o inverno traz geada e, em alguns anos, neve. Lareira, ofurô na varanda, fondue e vista para o mar de nuvens ao amanhecer. Chalés para casais, até 2 pessoas.',
     instagram: '',
   },
 ]
@@ -188,13 +342,46 @@ export const amenities = [
 ]
 
 export const rooms: Room[] = [
-  { name: 'Chalé Vale', price: 720, guests: 2, size: '42 m²', desc: 'Lareira, banheira e varanda com vista.' },
-  { name: 'Suíte Bosque', price: 890, guests: 3, size: '58 m²', desc: 'Living privativo e deck com ofurô.' },
-  { name: 'Master Panorâmica', price: 1240, guests: 4, size: '76 m²', desc: 'Dois ambientes e vista 180° do vale.' },
+  {
+    name: 'Chalé Vale',
+    price: 720,
+    guests: 2,
+    size: '42 m²',
+    desc: 'Lareira, banheira e varanda com vista.',
+  },
+  {
+    name: 'Suíte Bosque',
+    price: 890,
+    guests: 3,
+    size: '58 m²',
+    desc: 'Living privativo e deck com ofurô.',
+  },
+  {
+    name: 'Master Panorâmica',
+    price: 1240,
+    guests: 4,
+    size: '76 m²',
+    desc: 'Dois ambientes e vista 180° do vale.',
+  },
 ]
 
 export const reviews: Review[] = [
-  { name: 'Marina Alves', location: 'São Paulo, SP', rating: 5, text: 'A vista da varanda ao amanhecer é de tirar o fôlego. Voltaremos com certeza — cada detalhe é impecável.' },
-  { name: 'Rafael e Bianca', location: 'Belo Horizonte, MG', rating: 5, text: 'Lua de mel perfeita. A lareira, o café da manhã e o atendimento fizeram tudo virar memória para a vida toda.' },
-  { name: 'Carla Menezes', location: 'Rio de Janeiro, RJ', rating: 4, text: 'Lugar lindíssimo e tranquilo. O spa foi o ponto alto da viagem. Recomendo demais para casais.' },
+  {
+    name: 'Marina Alves',
+    location: 'São Paulo, SP',
+    rating: 5,
+    text: 'A vista da varanda ao amanhecer é de tirar o fôlego. Voltaremos com certeza — cada detalhe é impecável.',
+  },
+  {
+    name: 'Rafael e Bianca',
+    location: 'Belo Horizonte, MG',
+    rating: 5,
+    text: 'Lua de mel perfeita. A lareira, o café da manhã e o atendimento fizeram tudo virar memória para a vida toda.',
+  },
+  {
+    name: 'Carla Menezes',
+    location: 'Rio de Janeiro, RJ',
+    rating: 4,
+    text: 'Lugar lindíssimo e tranquilo. O spa foi o ponto alto da viagem. Recomendo demais para casais.',
+  },
 ]

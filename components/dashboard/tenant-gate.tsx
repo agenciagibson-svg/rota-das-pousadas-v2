@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Ban, Clock3, MapPinned } from 'lucide-react'
+import { Ban, Clock3, FlaskConical, MapPinned } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { LogoutButton } from '@/features/auth/components/logout-button'
@@ -23,6 +23,31 @@ export function NoMembershipScreen() {
               Cadastrar minha pousada
             </Link>
             <LogoutButton className="h-12 rounded-full px-5" />
+          </div>
+        }
+      />
+    </div>
+  )
+}
+
+/** Preview sem banco conectado: não há login; mostra a demonstração do painel. */
+export function DemoModeScreen() {
+  return (
+    <div className="bg-background flex min-h-screen items-center justify-center px-5">
+      <EmptyState
+        size="lg"
+        as="h1"
+        icon={FlaskConical}
+        title="Painel da pousada em demonstração"
+        description="Este ambiente de teste não tem banco conectado, então não há login de pousada. Veja a visão geral do painel com reservas fictícias."
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            <Link href="/parceiros/demonstracao" className={buttonVariants({ size: 'lg' })}>
+              Ver painel de demonstração
+            </Link>
+            <Link href="/" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+              Voltar ao site
+            </Link>
           </div>
         }
       />

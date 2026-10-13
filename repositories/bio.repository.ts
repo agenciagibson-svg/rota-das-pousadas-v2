@@ -193,7 +193,7 @@ export async function listBookableRooms(
             name: 'Acomodação principal',
             description: 'Acomodação padrão da pousada.',
             basePrice: p.pricePerNight,
-            capacity: 4,
+            capacity: p.maxGuests ?? 4,
           },
         ]
       : []

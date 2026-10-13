@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import { ConciergeChat } from '@/components/concierge/concierge-chat'
 import { TravelConcierge } from '@/components/concierge/travel-concierge'
 import { Marker } from '@/components/brand/logo'
 import { getPousadas } from '@/server/queries'
@@ -32,6 +33,15 @@ export default async function ConciergePage() {
           <p className="text-body-l text-muted-foreground mt-4 text-pretty">
             Uma camada inteligente para transformar intenção em pousadas recomendadas, datas
             sugeridas e uma busca pronta para reservar.
+          </p>
+        </div>
+        <div className="mx-auto max-w-4xl">
+          <ConciergeChat />
+        </div>
+        <div className="mt-16 mb-6 max-w-2xl">
+          <h2 className="text-h2 text-foreground">Prefere escolher por filtros?</h2>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Escolha o clima da viagem, o grupo e o orçamento — as sugestões mudam na hora.
           </p>
         </div>
         <TravelConcierge pousadas={result.items} />

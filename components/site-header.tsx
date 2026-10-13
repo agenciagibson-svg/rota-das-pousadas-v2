@@ -18,10 +18,12 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Logo } from '@/components/brand/logo'
+import { MagicWand } from '@/components/brand/magic-wand'
 import { useScrolled } from '@/hooks/use-scrolled'
 import { useHeaderSummary } from '@/components/header/use-header-summary'
 import { TripsButton } from '@/components/header/trips-button'
 import { UserMenu, accountLinks, useSignOut } from '@/components/header/user-menu'
+import { AccessMenu, accessLinks } from '@/components/header/access-menu'
 
 const nav = [
   {
@@ -116,8 +118,9 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-sm font-medium transition-opacity duration-(--motion-hover) hover:opacity-70"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity duration-(--motion-hover) hover:opacity-70"
                 >
+                  {item.href === '/concierge' && <MagicWand className="size-4" />}
                   {item.label}
                 </Link>
               ))}
@@ -143,14 +146,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
               </>
             ) : (
               <>
-                {loggedOut && (
-                  <Link
-                    href="/login"
-                    className="flex items-center gap-1.5 px-2 text-sm font-semibold transition-opacity duration-(--motion-hover) hover:opacity-70"
-                  >
-                    <LogIn className="size-4" /> Entrar
-                  </Link>
-                )}
+                {loggedOut && <AccessMenu solid={solid} />}
                 <Link
                   href="/anunciar"
                   className="flex h-12 items-center rounded-full border border-current/35 px-5 text-sm font-semibold transition-colors duration-(--motion-hover) hover:bg-current/10"
@@ -218,8 +214,15 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                   className={sectionIndex > 0 ? 'border-neblina/10 mt-2 border-t pt-2' : ''}
                 >
                   <p className="text-liquen px-3 pt-2 pb-1 text-xs font-semibold">{section}</p>
-                  {(section === 'Minha conta' && user
-                    ? accountLinks(user).map((l) => ({ ...l, section }))
+                  {(section === 'Minha conta'
+                    ? user
+                      ? accountLinks(user).map((l) => ({ ...l, section }))
+                      : [
+                          ...accessLinks.map((l) => ({ ...l, section })),
+                          ...nav.filter(
+                            (item) => item.section === section && item.href !== '/minhas-reservas',
+                          ),
+                        ]
                     : nav.filter((item) => item.section === section)
                   ).map((item) => {
                     const Icon = item.icon
@@ -235,7 +238,11 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
                           active ? 'bg-neblina/10' : 'hover:bg-neblina/10',
                         )}
                       >
-                        <Icon className="text-liquen size-5" />
+                        {item.href === '/concierge' ? (
+                          <MagicWand className="size-5" />
+                        ) : (
+                          <Icon className="text-liquen size-5" />
+                        )}
                         {item.label}
                         {active && <span className="bg-ipe ml-auto size-2 rounded-full" />}
                       </Link>
