@@ -234,7 +234,7 @@ export function ConciergeChat() {
                 void send(draft)
               }
             }}
-            placeholder="Ex.: praia com pets em janeiro"
+            placeholder="Ex.: praia com pets"
             className="border-border bg-background focus-visible:border-foreground focus-visible:ring-ipe/60 max-h-32 min-h-12 flex-1 resize-none rounded-3xl border px-5 py-3 text-base transition-colors outline-none focus-visible:ring-2 sm:text-sm"
           />
           <button
