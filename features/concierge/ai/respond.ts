@@ -55,9 +55,22 @@ export async function respondConcierge({
         '[concierge] OpenAI indisponível; usando o modo local.',
         String(error).slice(0, 300),
       )
+      return { ...localConcierge(messages, pousadas, today), fallback: fallbackCode(error) }
     }
   }
-  return localConcierge(messages, pousadas, today)
+  return { ...localConcierge(messages, pousadas, today), fallback: 'sem_chave' }
+}
+
+/**
+ * Motivo curto (sem detalhes da OpenAI) de o modo local ter respondido —
+ * ajuda a diagnosticar chave inválida (401), cota (429) ou modelo (404).
+ */
+export function fallbackCode(error: unknown): string {
+  if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+    return 'openai_tempo_esgotado'
+  }
+  const status = String(error).match(/OpenAI (\d{3})/)?.[1]
+  return status ? `openai_${status}` : 'openai_falhou'
 }
 
 /**

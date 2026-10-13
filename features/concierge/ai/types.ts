@@ -30,4 +30,6 @@ export type ConciergeReply = {
   quickReplies: string[]
   /** `openai` quando o ChatGPT respondeu; `local` no modo sem chave (ou se a OpenAI falhar). */
   engine: 'openai' | 'local'
+  /** Por que o modo local respondeu (`sem_chave`, `openai_401`, `openai_429`…). */
+  fallback?: string
 }

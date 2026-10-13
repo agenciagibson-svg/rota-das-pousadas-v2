@@ -9,6 +9,7 @@ describe('respondConcierge', () => {
   it('sem chave: responde no modo local', async () => {
     const r = await respondConcierge({ messages, pousadas, today: TODAY })
     expect(r.engine).toBe('local')
+    expect(r.fallback).toBe('sem_chave')
     expect(r.cards.length).toBeGreaterThan(0)
   })
 
@@ -26,6 +27,7 @@ describe('respondConcierge', () => {
     })
     expect(fetchImpl).toHaveBeenCalled()
     expect(r.engine).toBe('local')
+    expect(r.fallback).toBe('openai_500')
     warn.mockRestore()
   })
 })
