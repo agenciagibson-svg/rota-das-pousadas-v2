@@ -24,7 +24,7 @@ export default async function Page() {
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader />
-      <main>
+      <main id="conteudo" tabIndex={-1}>
         <Hero featured={pousadas.items[0]} />
         <FeaturedPousadas pousadas={pousadas.items} />
         <Experiences experiences={experiences} />

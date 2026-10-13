@@ -135,7 +135,7 @@ export function StayHome(ctx: StayCtx) {
                     className={cx(
                       'size-2.5 rounded-full border-2',
                       st === 'done' && 'border-breu bg-breu',
-                      st === 'now' && 'border-ipe bg-ipe shadow-[0_0_0_4px_rgb(244_180_42/0.3)]',
+                      st === 'now' && 'border-ipe bg-ipe ring-ipe/30 ring-4',
                       st === 'next' && 'border-pedra bg-secondary',
                     )}
                   />
@@ -158,11 +158,7 @@ export function StayHome(ctx: StayCtx) {
             {highlights.map((item, i) => (
               <div
                 key={item.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => ctx.openItem(item)}
-                onKeyDown={(e) => e.key === 'Enter' && ctx.openItem(item)}
-                className="bg-card relative min-h-[214px] w-[232px] shrink-0 cursor-pointer snap-start overflow-hidden rounded-[30px] p-4 text-left"
+                className="bg-card relative min-h-[214px] w-[232px] shrink-0 snap-start overflow-hidden rounded-[30px] p-4 text-left"
               >
                 <div className="flex items-center gap-2">
                   <Pill>{i === 0 ? 'Destaque' : 'No quarto'}</Pill>
@@ -182,16 +178,22 @@ export function StayHome(ctx: StayCtx) {
                   <button
                     type="button"
                     aria-label={`Adicionar ${item.name}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
+                    onClick={() => {
                       ctx.change(item, 1)
                       ctx.notify(`${item.name} na sacola`)
                     }}
-                    className="bg-ipe text-breu absolute right-3.5 bottom-3.5 grid size-10 place-items-center rounded-full"
+                    className="bg-ipe text-breu absolute right-3.5 bottom-3.5 z-20 grid size-10 place-items-center rounded-full"
                   >
                     <Plus className="size-4" strokeWidth={2.8} />
                   </button>
                 ) : null}
+                {/* Card inteiro abre o detalhe (botão de verdade, sem aninhar o "+"). */}
+                <button
+                  type="button"
+                  aria-label={item.name}
+                  onClick={() => ctx.openItem(item)}
+                  className="focus-visible:ring-ipe absolute inset-0 z-10 rounded-[30px] outline-none focus-visible:ring-2 focus-visible:ring-inset"
+                />
               </div>
             ))}
           </div>

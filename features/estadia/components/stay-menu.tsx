@@ -59,9 +59,12 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
         </p>
       ) : (
         <>
-          <label className="bg-card flex h-12 items-center gap-2.5 rounded-full px-4">
+          <label className="bg-card focus-within:ring-ipe/60 flex h-12 items-center gap-2.5 rounded-full px-4 focus-within:ring-2">
             <Search className="size-[17px]" strokeWidth={2.4} />
             <input
+              type="search"
+              enterKeyHint="search"
+              autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar no cardápio"
@@ -80,6 +83,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                     key={c}
                     type="button"
                     onClick={() => setCat(c)}
+                    aria-pressed={on}
                     className={cx(
                       'flex h-[46px] shrink-0 items-center gap-2 rounded-full py-1 pr-4 pl-1 text-[13px] font-semibold',
                       on ? 'bg-ipe text-breu' : 'bg-card text-breu',
@@ -116,12 +120,8 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                 return (
                   <div
                     key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => ctx.openItem(item)}
-                    onKeyDown={(e) => e.key === 'Enter' && ctx.openItem(item)}
                     className={cx(
-                      'bg-card flex cursor-pointer flex-col rounded-[26px] px-3 pt-3 pb-3.5 text-center',
+                      'bg-card relative flex flex-col rounded-[26px] px-3 pt-3 pb-3.5 text-center',
                       !item.available && 'opacity-55',
                     )}
                   >
@@ -133,9 +133,14 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                         alt={item.name}
                       />
                     </div>
-                    <p className="mt-2.5 line-clamp-2 text-[13.5px] leading-tight font-bold">
+                    {/* O nome abre o detalhe; o ::after estende o clique ao card inteiro. */}
+                    <button
+                      type="button"
+                      onClick={() => ctx.openItem(item)}
+                      className="focus-visible:after:ring-ipe mt-2.5 line-clamp-2 text-[13.5px] leading-tight font-bold outline-none after:absolute after:inset-0 after:rounded-[26px] focus-visible:after:ring-2"
+                    >
                       {item.name}
-                    </p>
+                    </button>
                     {item.description && (
                       <p className="text-muted-foreground mt-0.5 line-clamp-1 text-[11px]">
                         {item.description}
@@ -157,10 +162,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                           Esgotado
                         </span>
                       ) : qty > 0 ? (
-                        <div
-                          className="bg-breu text-neblina flex items-center gap-1 rounded-full p-[3px]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="bg-breu text-neblina relative z-10 flex items-center gap-1 rounded-full p-[3px]">
                           <button
                             type="button"
                             aria-label={`Menos ${item.name}`}
@@ -184,11 +186,8 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                         <button
                           type="button"
                           aria-label={`Adicionar ${item.name}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            ctx.change(item, 1)
-                          }}
-                          className="bg-ipe text-breu grid size-[34px] place-items-center rounded-full"
+                          onClick={() => ctx.change(item, 1)}
+                          className="bg-ipe text-breu relative z-10 grid size-[34px] place-items-center rounded-full"
                         >
                           <Plus className="size-4" strokeWidth={2.8} />
                         </button>

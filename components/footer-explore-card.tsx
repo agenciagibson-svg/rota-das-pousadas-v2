@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { ArrowUpRight, Compass } from 'lucide-react'
 import { routes } from '@/components/footer-links'
 
@@ -11,6 +11,8 @@ export function FooterExploreCard() {
   const [activeIndex, setActiveIndex] = useState(0)
   const active = routes[activeIndex]
   const ActiveIcon = active.icon
+  // O traçado da rota "se desenha"; com movimento reduzido, aparece pronto.
+  const reduceMotion = useReducedMotion()
 
   function spinRoute() {
     setActiveIndex((current) => (current + 1) % routes.length)
@@ -20,7 +22,7 @@ export function FooterExploreCard() {
     <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h4 className="text-linen text-sm font-semibold">Explorar</h4>
+          <h2 className="text-linen text-sm font-semibold">Explorar</h2>
           <p className="text-linen/55 mt-1 text-xs leading-relaxed">Bussola de rotas interativa</p>
         </div>
         <button
@@ -43,16 +45,16 @@ export function FooterExploreCard() {
             sizes="(max-width: 1024px) 100vw, 300px"
             className="object-cover opacity-75 transition-opacity duration-[var(--motion-page)]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(31,36,32,0.08),rgba(31,36,32,0.88))]" />
+          <div className="from-breu/10 to-breu/90 absolute inset-0 bg-gradient-to-b" />
           <svg className="absolute inset-0 size-full" viewBox="0 0 320 190" aria-hidden="true">
             <motion.path
               key={active.label}
               d="M22 148 C84 82, 126 174, 176 88 S260 34, 298 116"
               fill="none"
-              stroke="rgba(248,246,241,0.82)"
+              className="stroke-neblina/80"
               strokeLinecap="round"
               strokeWidth="3"
-              initial={{ pathLength: 0, opacity: 0 }}
+              initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             />
@@ -62,7 +64,8 @@ export function FooterExploreCard() {
                 cx={x}
                 cy={[148, 88, 116][index]}
                 r="5"
-                fill="rgb(248,246,241)"
+                // O último ponto é a chegada: Ipê, como o ponto da logo.
+                className={index === 2 ? 'fill-ipe' : 'fill-neblina'}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.12 + index * 0.08 }}
@@ -93,7 +96,8 @@ export function FooterExploreCard() {
               onMouseEnter={() => setActiveIndex(index)}
               onFocus={() => setActiveIndex(index)}
               aria-label={`Explorar ${route.label}`}
-              className={`flex h-11 items-center justify-center rounded-xl border transition-all ${
+              aria-pressed={selected}
+              className={`flex h-11 items-center justify-center rounded-xl border transition ${
                 selected
                   ? 'border-linen/35 bg-linen text-stone-deep'
                   : 'border-linen/10 text-linen/55 hover:border-linen/25 hover:text-linen'
@@ -105,7 +109,9 @@ export function FooterExploreCard() {
         })}
       </div>
 
-      <p className="text-linen/65 mt-4 min-h-12 text-sm leading-relaxed">{active.detail}</p>
+      <p aria-live="polite" className="text-linen/65 mt-4 min-h-12 text-sm leading-relaxed">
+        {active.detail}
+      </p>
 
       <Link
         href={active.href}

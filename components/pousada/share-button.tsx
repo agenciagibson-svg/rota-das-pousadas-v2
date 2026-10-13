@@ -55,7 +55,7 @@ export function ShareButton({
       <Share2 className="size-5" />
       {!glass && label}
       <span aria-live="polite" className="sr-only">
-        {glass && shared ? 'Link copiado!' : ''}
+        {shared ? 'Link copiado!' : ''}
       </span>
     </button>
   )

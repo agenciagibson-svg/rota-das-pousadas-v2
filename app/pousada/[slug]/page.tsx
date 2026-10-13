@@ -72,7 +72,7 @@ export default async function PousadaPage({
     <div className="bg-background min-h-screen">
       <JsonLd data={pousadaJsonLd(pousada)} />
       <SiteHeader forceSolid />
-      <main>
+      <main id="conteudo" tabIndex={-1}>
         <PousadaDetail
           pousada={pousada}
           room={room}

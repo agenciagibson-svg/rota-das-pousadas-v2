@@ -27,7 +27,7 @@ function Steps({ status }: { status: GuestOrder['status'] }) {
                 className={cx(
                   'grid size-[22px] shrink-0 place-items-center rounded-full',
                   done && 'bg-breu text-neblina',
-                  now && 'bg-ipe text-breu shadow-[0_0_0_4px_rgb(244_180_42/0.3)]',
+                  now && 'bg-ipe text-breu ring-ipe/30 ring-4',
                   !done && !now && 'bg-secondary',
                 )}
               >

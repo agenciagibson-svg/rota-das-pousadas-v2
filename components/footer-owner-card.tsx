@@ -15,7 +15,7 @@ export function FooterOwnerCard() {
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-linen text-sm font-semibold">Para pousadas</h4>
+          <h2 className="text-linen text-sm font-semibold">Para pousadas</h2>
           <p className="text-linen/55 mt-1 text-xs leading-relaxed">Central do parceiro</p>
         </div>
         <span className="bg-linen/10 text-linen flex size-10 shrink-0 items-center justify-center rounded-full">
@@ -56,7 +56,7 @@ export function FooterOwnerCard() {
               onMouseEnter={() => setActiveIndex(index)}
               onFocus={() => setActiveIndex(index)}
               onClick={() => setActiveIndex(index)}
-              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-all ${
+              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
                 selected
                   ? 'border-linen/35 bg-linen text-stone-deep'
                   : 'border-linen/10 text-linen/65 hover:border-linen/25 hover:text-linen'

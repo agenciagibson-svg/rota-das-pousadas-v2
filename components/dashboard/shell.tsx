@@ -157,7 +157,7 @@ export function DashboardShell({
             <div className="border-border bg-secondary/60 hidden items-center gap-2 rounded-full border px-4 py-2 md:flex">
               <Search className="text-muted-foreground size-4" />
               <input
-                placeholder="Buscar..."
+                placeholder="Buscar…"
                 className="placeholder:text-muted-foreground w-40 bg-transparent text-sm outline-none"
               />
             </div>
@@ -171,7 +171,9 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="px-5 py-6 lg:px-8 lg:py-8">{children}</main>
+        <main id="conteudo" tabIndex={-1} className="px-5 py-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
       </div>
     </div>
   )

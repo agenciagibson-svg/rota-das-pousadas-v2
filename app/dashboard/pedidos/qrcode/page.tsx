@@ -11,7 +11,7 @@ export default async function PedidosQrPage() {
   const { stayUrl, stayQrSvg } = await getOrdersScreen(pousada?.timezone || 'America/Sao_Paulo')
 
   return (
-    <main className="mx-auto max-w-md p-6 print:p-0">
+    <main id="conteudo" tabIndex={-1} className="mx-auto max-w-md p-6 print:p-0">
       <div className="mb-4 flex justify-end print:hidden">
         <PrintButton />
       </div>

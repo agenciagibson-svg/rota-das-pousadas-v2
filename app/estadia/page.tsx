@@ -27,7 +27,7 @@ export default async function EstadiaIndexPage() {
   if (current.length === 0 && stays.length === 1) redirect(`/estadia/${stays[0]!.id}`)
 
   return (
-    <main className="bg-background min-h-dvh">
+    <main id="conteudo" tabIndex={-1} className="bg-background min-h-dvh">
       <header className="bg-breu text-neblina rounded-b-3xl">
         <div className="mx-auto max-w-lg px-5 pt-[max(24px,env(safe-area-inset-top))] pb-8">
           <Logo className="h-5" title="Rota das Pousadas" />

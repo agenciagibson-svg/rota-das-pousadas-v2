@@ -83,7 +83,10 @@ export function FavoriteButton({
         {!glass && label}
       </button>
       {error ? (
-        <p className="border-destructive/20 bg-card text-destructive shadow-card absolute top-full right-0 z-10 mt-2 w-56 rounded-lg border p-2 text-xs">
+        <p
+          role="alert"
+          className="border-destructive/20 bg-card text-destructive shadow-card absolute top-full right-0 z-10 mt-2 w-56 rounded-lg border p-2 text-xs"
+        >
           {error}
         </p>
       ) : null}

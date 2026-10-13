@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import {
   Menu,
@@ -75,11 +75,24 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
 
   const solid = forceSolid || scrolled
 
+  // Menu do celular: Esc fecha e devolve o foco ao botão que abriu.
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      toggleRef.current?.focus()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
   return (
     <>
       {/* Pílula de vidro flutuando sobre a foto; ao rolar (ou nas páginas
           internas, forceSolid) vira vidro claro com texto Breu. */}
-      <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 lg:px-6 lg:pt-4">
+      <header data-site-header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 lg:px-6 lg:pt-4">
         <div
           className={cn(
             'mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full border pr-2 pl-5 transition-colors duration-(--motion-fade) lg:pl-6',
@@ -153,6 +166,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
             aria-label={open ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={open}
             aria-controls="menu-celular"
+            ref={toggleRef}
             onClick={() => setOpen((v) => !v)}
             className="flex size-12 items-center justify-center rounded-full bg-current/10 transition-colors duration-(--motion-hover) lg:hidden"
           >
@@ -163,7 +177,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
         {open && (
           <div
             id="menu-celular"
-            className="border-neblina/10 bg-breu text-neblina shadow-modal relative z-10 mx-auto mt-2 max-w-7xl overflow-hidden rounded-3xl border lg:hidden"
+            className="border-neblina/10 bg-breu text-neblina shadow-modal relative z-10 mx-auto mt-2 max-h-[calc(100dvh-6rem)] max-w-7xl overflow-y-auto overscroll-contain rounded-3xl border lg:hidden"
           >
             {user ? (
               <div className="border-neblina/10 flex items-center gap-3 border-b px-6 py-4">

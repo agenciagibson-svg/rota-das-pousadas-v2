@@ -83,7 +83,8 @@ export function PartnerLoginShowcase({
             <Sparkles className="text-ipe size-4" />
             Painel do parceiro
           </span>
-          <h2 className="text-display-l mt-4">Sua pousada, sob controle total.</h2>
+          {/* Vitrine: texto de apoio, não título — o h1 da página é o do formulário. */}
+          <p className="text-display-l mt-4">Sua pousada, sob controle total.</p>
           <p className="text-linen/80 mt-5 max-w-lg text-lg leading-relaxed text-pretty">
             Reservas, hóspedes, financeiro e equipe — tudo num painel só, pensado pra quem
             administra uma pousada de verdade.
@@ -114,7 +115,11 @@ export function PartnerLoginShowcase({
         </div>
       </div>
 
-      <div className="bg-background flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-20">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="bg-background flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-20"
+      >
         <div className="mx-auto w-full max-w-lg">
           {/* No desktop a logo já está no painel de foto ao lado. */}
           <div className="mb-10 flex justify-center lg:hidden">
@@ -124,7 +129,7 @@ export function PartnerLoginShowcase({
           <p className="text-muted-foreground mt-3 text-lg leading-relaxed">{subtitle}</p>
           <div className="mt-10">{children}</div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

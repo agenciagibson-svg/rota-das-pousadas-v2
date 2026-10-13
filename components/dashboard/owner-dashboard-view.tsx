@@ -172,7 +172,7 @@ export function OwnerDashboardView({
           className={`mb-5 rounded-2xl border p-4 text-sm ${
             pousadaStatus === 'reprovada'
               ? 'border-destructive/30 bg-destructive/5 text-destructive'
-              : 'border-gold/40 bg-gold/10 text-[color:#8a6d0f]'
+              : 'border-ipe/50 bg-ipe/15 text-foreground'
           }`}
         >
           {pousadaStatus === 'reprovada'
@@ -455,7 +455,7 @@ export function OwnerDashboardView({
             )}
             <Link
               href="/dashboard/marketing"
-              className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105"
+              className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition hover:brightness-105"
             >
               Abrir marketing
               <ArrowUpRight className="size-4" />

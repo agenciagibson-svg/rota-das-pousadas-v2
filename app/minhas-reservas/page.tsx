@@ -26,26 +26,12 @@ import {
   PaymentReturnBanner,
   parseMpReturnStatus,
 } from '@/features/pagamentos/components/payment-return-banner'
-import { formatBRL } from '@/lib/format'
+import { isoDateInTimeZone } from '@/lib/dates'
+import { formatBRL, formatDateTime, formatISODate } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Minhas reservas',
   robots: { index: false, follow: false },
-}
-
-function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
 }
 
 /** Pendente com prazo vencido: a vaga já foi liberada (0070). */
@@ -71,7 +57,8 @@ export default async function MyBookingsPage({
   // Volta do Mercado Pago (`?pago=<id>&status=...`): destaque do resultado no topo.
   const returned = query.pago ? bookings.find((b) => b.id === query.pago) : undefined
   const mpStatus = parseMpReturnStatus(query.collection_status ?? query.status)
-  const today = new Date().toISOString().slice(0, 10)
+  // "Hoje" no fuso de Brasília (UTC vira o dia às 21h).
+  const today = isoDateInTimeZone(new Date())
   const activeBookings = bookings.filter((booking) => isActiveStatus(booking.status))
   const pendingBookings = bookings.filter(
     (booking) =>
@@ -83,7 +70,7 @@ export default async function MyBookingsPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pt-32 pb-24">
+      <main id="conteudo" tabIndex={-1} className="pt-32 pb-24">
         <Container className="max-w-5xl">
           <h1 className="text-h1 text-foreground">Minhas reservas</h1>
           <p className="text-muted-foreground mt-2 text-base">
@@ -189,8 +176,9 @@ export default async function MyBookingsPage({
                                 </span>
                                 <span className="inline-flex items-center gap-1.5">
                                   <CalendarCheck className="size-3.5" />
-                                  {formatDate(booking.checkin)} - {formatDate(booking.checkout)} ·{' '}
-                                  {booking.nights} {booking.nights === 1 ? 'noite' : 'noites'}
+                                  {formatISODate(booking.checkin)} –{' '}
+                                  {formatISODate(booking.checkout)} · {booking.nights}{' '}
+                                  {booking.nights === 1 ? 'noite' : 'noites'}
                                 </span>
                                 <span className="inline-flex items-center gap-1.5">
                                   <Users className="size-3.5" />
@@ -205,7 +193,7 @@ export default async function MyBookingsPage({
                             </div>
 
                             <div className="shrink-0 text-left lg:text-right">
-                              <div className="text-foreground text-2xl font-semibold">
+                              <div className="text-foreground text-2xl font-semibold tabular-nums">
                                 {formatBRL(booking.total)}
                               </div>
                               <div className="text-muted-foreground text-xs">

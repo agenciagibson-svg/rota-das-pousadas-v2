@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type UIEvent } from 'react'
+import { useEffect, useState, type UIEvent } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { Modal } from './modal'
@@ -40,6 +40,19 @@ export function Gallery({
   const [visible, setVisible] = useState(0)
   const go = (delta: number) =>
     setIndex((i) => (i === null ? i : (i + delta + images.length) % images.length))
+
+  // Setas do teclado trocam a foto com a galeria aberta.
+  const lightboxOpen = index !== null
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') go(-1)
+      else if (e.key === 'ArrowRight') go(1)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `go` só usa setState funcional
+  }, [lightboxOpen, images.length])
 
   function onStripScroll(event: UIEvent<HTMLDivElement>) {
     const el = event.currentTarget
@@ -130,6 +143,7 @@ export function Gallery({
       <Modal
         open={index !== null}
         onClose={() => setIndex(null)}
+        label={index !== null ? images[index].alt : undefined}
         className="max-w-5xl border-0 bg-transparent p-0 shadow-none"
       >
         {index !== null && (
@@ -167,7 +181,10 @@ export function Gallery({
             >
               <ChevronRight className="size-5" />
             </button>
-            <div className="glass text-foreground absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-sm font-medium tabular-nums">
+            <div
+              aria-live="polite"
+              className="glass text-foreground absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-sm font-medium tabular-nums"
+            >
               {index + 1} / {images.length}
             </div>
           </div>

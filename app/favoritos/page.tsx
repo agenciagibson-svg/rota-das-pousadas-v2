@@ -30,7 +30,7 @@ export default async function FavoritosPage() {
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
+      <main id="conteudo" tabIndex={-1} className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
         <div className="border-border flex flex-col justify-between gap-6 border-b pb-8 md:flex-row md:items-end">
           <SectionHeading
             as="h1"

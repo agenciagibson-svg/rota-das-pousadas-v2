@@ -106,7 +106,7 @@ export default async function ReservarPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pt-28 pb-24">
+      <main id="conteudo" tabIndex={-1} className="pt-28 pb-24">
         <Container className="max-w-5xl">
           <Breadcrumb
             items={[

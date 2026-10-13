@@ -19,7 +19,7 @@ export default async function ConciergePage() {
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
+      <main id="conteudo" tabIndex={-1} className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
         <div className="mb-10 max-w-3xl">
           <span className="text-overline inline-flex items-center gap-2">
             <Marker className="text-foreground" />

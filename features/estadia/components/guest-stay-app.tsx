@@ -63,10 +63,13 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const [detail, setDetail] = useState<StayMenuItem | null>(null)
   const [detailQty, setDetailQty] = useState(1)
   const [bagOpen, setBagOpen] = useState(false)
+  const closeDetail = useCallback(() => setDetail(null), [])
+  const closeBag = useCallback(() => setBagOpen(false), [])
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSent, setReviewSent] = useState(false)
+  const [reviewSending, setReviewSending] = useState(false)
   const lastStatus = useRef<Map<string, string> | null>(null)
 
   const services = useMemo(() => stay.menu.filter((m) => m.category === 'servicos'), [stay.menu])
@@ -140,13 +143,25 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
     return () => clearTimeout(t)
   }, [toast])
 
+  // A aba aberta fica na URL (?aba=): voltar e recarregar mantêm onde a pessoa estava.
+  useEffect(() => {
+    const aba = new URLSearchParams(window.location.search).get('aba')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lê a URL só depois de hidratar
+    if (aba && TABS.some((t) => t.id === aba)) setTab(aba as StayTab)
+  }, [])
+
   const go = useCallback((next: StayTab, anchor?: string) => {
     setDetail(null)
     setBagOpen(false)
     setTab(next)
+    const url = new URL(window.location.href)
+    if (next === 'inicio') url.searchParams.delete('aba')
+    else url.searchParams.set('aba', next)
+    window.history.replaceState(window.history.state, '', url)
     requestAnimationFrame(() => {
       const el = anchor ? document.getElementById(anchor) : null
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
       else window.scrollTo({ top: 0 })
     })
   }, [])
@@ -206,7 +221,9 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
       setReviewError('Escolha de 1 a 5 estrelas.')
       return
     }
+    setReviewSending(true)
     const res = await submitStayReviewAction({ bookingId: booking.id, rating, text: reviewText })
+    setReviewSending(false)
     if (!res.ok) setReviewError(res.error)
     else {
       setReviewSent(true)
@@ -248,7 +265,11 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
 
   return (
     <div className={cx('text-breu min-h-dvh', APP_BG)}>
-      <main className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-44">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-44"
+      >
         {tab === 'inicio' && <StayHome {...ctx} />}
         {tab === 'estadia' && <StayDetails {...ctx} />}
         {tab === 'pedir' && <StayMenu {...ctx} openBag={() => setBagOpen(true)} />}
@@ -263,6 +284,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
               setText: setReviewText,
               error: reviewError,
               sent: reviewSent,
+              sending: reviewSending,
               submit: () => void submitReview(),
             }}
           />
@@ -276,7 +298,52 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
       </main>
 
       {/* Detalhe do item */}
-      <Sheet open={!!detail} label={detail ? detail.name : 'Item'}>
+      <Sheet
+        open={!!detail}
+        label={detail ? detail.name : 'Item'}
+        onClose={closeDetail}
+        footer={
+          detail && detailCanAdd ? (
+            <div className="from-neblina absolute inset-x-0 bottom-0 bg-gradient-to-t from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
+              <div className="mx-auto flex max-w-lg items-center gap-2.5">
+                <div className="bg-card flex items-center gap-1 rounded-full p-[5px]">
+                  <button
+                    type="button"
+                    aria-label="Menos"
+                    onClick={() => setDetailQty((q) => Math.max(1, q - 1))}
+                    className="bg-neblina grid size-[38px] place-items-center rounded-full"
+                  >
+                    <Minus className="size-3.5" strokeWidth={2.8} />
+                  </button>
+                  <span className="min-w-6 text-center font-bold">{detailQty}</span>
+                  <button
+                    type="button"
+                    aria-label="Mais"
+                    onClick={() => setDetailQty((q) => Math.min(detailRoom, q + 1))}
+                    className="bg-neblina grid size-[38px] place-items-center rounded-full"
+                  >
+                    <Plus className="size-3.5" strokeWidth={2.8} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    change(detail, detailQty)
+                    setToast(`${detailQty}× ${detail.name} na sacola`)
+                    setDetail(null)
+                  }}
+                  className="bg-breu text-neblina flex h-[50px] flex-1 items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
+                >
+                  Adicionar
+                  <span className="bg-ipe text-breu rounded-full px-3.5 py-2 text-[13.5px]">
+                    {formatBRL(detail.price * detailQty)}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : null
+        }
+      >
         {detail && (
           <>
             <RoundButton label="Voltar" onClick={() => setDetail(null)}>
@@ -321,48 +388,8 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
           </>
         )}
       </Sheet>
-      {detail && detailCanAdd && (
-        <div className="from-neblina fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
-          <div className="mx-auto flex max-w-lg items-center gap-2.5">
-            <div className="bg-card flex items-center gap-1 rounded-full p-[5px]">
-              <button
-                type="button"
-                aria-label="Menos"
-                onClick={() => setDetailQty((q) => Math.max(1, q - 1))}
-                className="bg-neblina grid size-[38px] place-items-center rounded-full"
-              >
-                <Minus className="size-3.5" strokeWidth={2.8} />
-              </button>
-              <span className="min-w-6 text-center font-bold">{detailQty}</span>
-              <button
-                type="button"
-                aria-label="Mais"
-                onClick={() => setDetailQty((q) => Math.min(detailRoom, q + 1))}
-                className="bg-neblina grid size-[38px] place-items-center rounded-full"
-              >
-                <Plus className="size-3.5" strokeWidth={2.8} />
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                change(detail, detailQty)
-                setToast(`${detailQty}× ${detail.name} na sacola`)
-                setDetail(null)
-              }}
-              className="bg-breu text-neblina flex h-[50px] flex-1 items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
-            >
-              Adicionar
-              <span className="bg-ipe text-breu rounded-full px-3.5 py-2 text-[13.5px]">
-                {formatBRL(detail.price * detailQty)}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Sacola */}
-      <Sheet open={bagOpen} label="Sua sacola">
+      <Sheet open={bagOpen} label="Sua sacola" onClose={closeBag}>
         <div className="flex items-center gap-2.5">
           <RoundButton label="Voltar" onClick={() => setBagOpen(false)}>
             <ArrowLeft className="size-[18px]" />
@@ -431,7 +458,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
               rows={2}
               placeholder="Alguma observação? (ex.: bem gelada, deixar na porta)"
               aria-label="Observação do pedido"
-              className="bg-card placeholder:text-muted-foreground mt-3 w-full resize-none rounded-[20px] px-4 py-3 text-[13px] outline-none"
+              className="bg-card placeholder:text-muted-foreground focus-visible:ring-ipe/60 mt-3 w-full resize-none rounded-[20px] px-4 py-3 text-[13px] outline-none focus-visible:ring-2"
             />
             <p className="text-muted-foreground mt-2 px-1 text-xs">
               Vai para a conta da estadia e é pago no check-out.
@@ -468,7 +495,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
           <button
             type="button"
             onClick={() => setBagOpen(true)}
-            className="bg-ipe text-breu mx-auto flex w-full max-w-[calc(512px-36px)] items-center gap-2.5 rounded-full py-1.5 pr-1.5 pl-2 text-left shadow-[0_14px_28px_-14px_rgba(15,23,22,0.55)]"
+            className="bg-ipe text-breu shadow-floating mx-auto flex w-full max-w-[calc(512px-36px)] items-center gap-2.5 rounded-full py-1.5 pr-1.5 pl-2 text-left"
           >
             <span className="bg-breu/10 grid size-[38px] place-items-center rounded-full font-bold">
               {cartCount}
@@ -484,23 +511,25 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         </div>
       )}
 
-      {toast && (
-        <div
-          role="status"
-          className="fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[60] flex justify-center px-4"
-        >
+      {/* Região sempre montada: o leitor de tela anuncia quando o texto entra. */}
+      <div
+        role="status"
+        className="pointer-events-none fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[60] flex justify-center px-4"
+      >
+        {toast && (
           <p className="bg-breu text-neblina rounded-full px-4 py-2.5 text-[12.5px] font-semibold shadow-lg">
             {toast}
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {!detail && !bagOpen && (
         <nav
+          data-bottom-bar
           aria-label="Menu do app"
           className="fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-30 flex justify-center"
         >
-          <div className="bg-breu flex gap-1.5 rounded-full p-1.5 shadow-[0_16px_30px_-12px_rgba(0,0,0,0.5)]">
+          <div className="bg-breu shadow-floating flex gap-1.5 rounded-full p-1.5">
             {TABS.map((t) => {
               const Icon = t.icon
               const active = tab === t.id
@@ -510,7 +539,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                   key={t.id}
                   type="button"
                   onClick={() => go(t.id)}
-                  aria-label={t.label}
+                  aria-label={badge > 0 ? `${t.label} (${badge})` : t.label}
                   aria-current={active ? 'page' : undefined}
                   title={t.label}
                   className={cx(

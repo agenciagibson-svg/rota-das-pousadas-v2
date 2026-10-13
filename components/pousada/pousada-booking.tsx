@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ComponentProps } from 'react'
 import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
@@ -85,7 +85,7 @@ export function PousadaBooking({
 
   return (
     <>
-      <div id="reservar" className="bg-card shadow-floating scroll-mt-28 rounded-3xl p-6">
+      <div id="reservar" className="bg-card shadow-floating scroll-mt-4 rounded-3xl p-6">
         <div className="flex items-end justify-between gap-4">
           <div>
             <span className="text-foreground text-2xl font-semibold tabular-nums">
@@ -133,9 +133,11 @@ export function PousadaBooking({
           </div>
         </div>
 
-        <Link href={href} aria-disabled={!canReserve} className={cn(reserveClass, 'mt-4 w-full')}>
-          Reservar agora
-        </Link>
+        <ReserveAction
+          href={href}
+          enabled={canReserve}
+          className={cn(reserveClass, 'mt-4 w-full')}
+        />
         <p className="text-muted-foreground mt-2 text-center text-sm">
           Você ainda não será cobrado
         </p>
@@ -157,7 +159,10 @@ export function PousadaBooking({
       </div>
 
       {/* Celular: barra presa ao pé da tela com o preço e o botão Ipê. */}
-      <div className="fixed inset-x-3 bottom-3 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <div
+        data-bottom-bar
+        className="fixed inset-x-3 bottom-3 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden"
+      >
         <div className="bg-breu/90 border-neblina/10 text-primary-foreground shadow-premium flex items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-5 backdrop-blur-md">
           <span className="flex min-w-0 flex-col">
             <span className="text-pedra text-sm">
@@ -168,11 +173,40 @@ export function PousadaBooking({
             </span>
             <span className="text-liquen truncate text-xs">Você ainda não será cobrado</span>
           </span>
-          <Link href={href} aria-disabled={!canReserve} className={cn(reserveClass, 'shrink-0')}>
-            Reservar agora
-          </Link>
+          <ReserveAction
+            href={href}
+            enabled={canReserve}
+            className={cn(reserveClass, 'shrink-0')}
+          />
         </div>
       </div>
     </>
+  )
+}
+
+/**
+ * "Reservar agora": link de verdade quando dá para reservar; sem acomodação
+ * disponível vira texto desativado (fora do Tab e sem Enter levando adiante).
+ */
+function ReserveAction({
+  href,
+  enabled,
+  className,
+}: {
+  href: ComponentProps<typeof Link>['href']
+  enabled: boolean
+  className: string
+}) {
+  if (!enabled) {
+    return (
+      <span aria-disabled="true" className={className}>
+        Reservar agora
+      </span>
+    )
+  }
+  return (
+    <Link href={href} className={className}>
+      Reservar agora
+    </Link>
   )
 }

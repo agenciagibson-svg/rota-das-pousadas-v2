@@ -18,7 +18,11 @@ export default async function EstadiaPage({ params }: { params: Promise<{ id: st
   } catch (e) {
     console.error('[estadia] falha ao carregar', e)
     return (
-      <main className="flex min-h-dvh items-center justify-center p-6 text-center">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="flex min-h-dvh items-center justify-center p-6 text-center"
+      >
         <div>
           <p className="text-foreground font-semibold">Não foi possível abrir sua estadia agora</p>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -36,7 +40,11 @@ export default async function EstadiaPage({ params }: { params: Promise<{ id: st
   }
   if (!data) {
     return (
-      <main className="flex min-h-dvh items-center justify-center p-6 text-center">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="flex min-h-dvh items-center justify-center p-6 text-center"
+      >
         <div>
           <p className="text-foreground font-semibold">Esta estadia não é desta conta</p>
           <p className="text-muted-foreground mt-1 text-sm">

@@ -116,7 +116,11 @@ export default async function BioPage({ params, searchParams }: PageProps) {
   if (!pousada.published) {
     await recordLinkEvent({ pousadaId: pousada.id, event: 'view' })
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8"
+      >
         <BioHeader name={pousada.name} city={pousada.city} state={pousada.state} />
         <div className="border-ipe/50 bg-ipe/15 rounded-3xl border p-5">
           <h2 className="text-h3 text-foreground">Reservas em breve</h2>
@@ -147,7 +151,11 @@ export default async function BioPage({ params, searchParams }: PageProps) {
   const noites = hasDates ? nights(checkin as string, checkout as string) : 0
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8">
+    <main
+      id="conteudo"
+      tabIndex={-1}
+      className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8"
+    >
       <BioHeader name={pousada.name} city={pousada.city} state={pousada.state} />
 
       {/* Seletor de datas — form GET, sem JavaScript. */}

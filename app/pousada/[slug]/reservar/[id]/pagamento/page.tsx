@@ -16,7 +16,7 @@ import {
   type PixPayment,
 } from '@/features/pagamentos/services/pix.service'
 import { PixPaymentPanel } from '@/features/pagamentos/components/pix-payment-panel'
-import { formatBRL } from '@/lib/format'
+import { formatBRL, formatDateTime, formatISODate } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -24,21 +24,6 @@ export const metadata: Metadata = {
 }
 
 export const dynamic = 'force-dynamic'
-
-function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
 
 /** Pendente com prazo vencido (fora do render, por pureza do React). */
 function isDeadlinePassed(booking: Booking): boolean {
@@ -123,7 +108,7 @@ export default async function PagamentoReservaPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pt-28 pb-24">
+      <main id="conteudo" tabIndex={-1} className="pt-28 pb-24">
         <Container className="max-w-2xl">
           <Breadcrumb
             items={[
@@ -145,8 +130,8 @@ export default async function PagamentoReservaPage({
             <div className="text-muted-foreground space-y-1.5 text-sm">
               <div className="flex items-center gap-1.5">
                 <CalendarCheck className="size-4" />
-                {formatDate(booking.checkin)} - {formatDate(booking.checkout)} · {booking.nights}{' '}
-                {booking.nights === 1 ? 'noite' : 'noites'}
+                {formatISODate(booking.checkin)} – {formatISODate(booking.checkout)} ·{' '}
+                {booking.nights} {booking.nights === 1 ? 'noite' : 'noites'}
               </div>
               <div className="flex items-center gap-1.5">
                 <Users className="size-4" />
@@ -155,7 +140,7 @@ export default async function PagamentoReservaPage({
             </div>
 
             <div className="border-border mt-5 space-y-1.5 border-t pt-4 text-sm">
-              <div className="text-muted-foreground flex justify-between">
+              <div className="text-muted-foreground flex justify-between tabular-nums">
                 <span>Estadia</span>
                 <span>{formatBRL(booking.subtotal)}</span>
               </div>

@@ -274,7 +274,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
             name="houseRules"
             defaultValue={settings.houseRules}
             rows={4}
-            placeholder="Ex.: silêncio após 22h, pets sob consulta..."
+            placeholder="Ex.: silêncio após 22h, pets sob consulta…"
             className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
           />
           {fieldErrors.houseRules && (
@@ -304,7 +304,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
         </div>
         <Button type="submit" size="lg" disabled={isPending}>
           <Save className="size-4" />
-          {isPending ? 'Salvando...' : 'Salvar configurações'}
+          {isPending ? 'Salvando…' : 'Salvar configurações'}
         </Button>
       </div>
     </form>

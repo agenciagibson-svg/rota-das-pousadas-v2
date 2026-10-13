@@ -156,14 +156,20 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
 
         <div className="mt-6 space-y-6">
           <div>
-            <label className="text-foreground text-sm font-medium">Destino desejado</label>
+            <label htmlFor="concierge-destino" className="text-foreground text-sm font-medium">
+              Destino desejado
+            </label>
             <div className="relative mt-2">
               <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2" />
               <input
+                id="concierge-destino"
+                name="destino"
+                autoComplete="off"
+                enterKeyHint="done"
                 value={destination}
                 onChange={(event) => setDestination(event.target.value)}
                 placeholder="Ex.: Canastra, serra, praia"
-                className="border-border bg-background focus:border-primary h-12 w-full rounded-full border pr-4 pl-11 text-sm transition-colors outline-none"
+                className="border-border bg-background focus-visible:border-foreground focus-visible:ring-ipe/60 h-12 w-full rounded-full border pr-4 pl-11 text-sm transition-colors outline-none focus-visible:ring-2"
               />
             </div>
           </div>
@@ -180,7 +186,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                     onClick={() => setMood(item.key)}
                     aria-pressed={mood === item.key}
                     className={cn(
-                      'rounded-2xl border p-4 text-left transition-all',
+                      'rounded-2xl border p-4 text-left transition',
                       mood === item.key
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border bg-background hover:border-primary/45',
@@ -241,7 +247,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                 max={12}
                 value={guests}
                 onChange={(event) => setGuests(Number(event.target.value) || 1)}
-                className="border-border bg-background focus:border-primary mt-2 h-12 w-full rounded-2xl border px-4 text-sm outline-none"
+                className="border-border bg-background focus-visible:border-foreground focus-visible:ring-ipe/60 mt-2 h-12 w-full rounded-2xl border px-4 text-sm tabular-nums outline-none focus-visible:ring-2"
               />
             </label>
             <label className="block">
@@ -252,7 +258,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
                 max={15}
                 value={nights}
                 onChange={(event) => setNights(Number(event.target.value) || 1)}
-                className="border-border bg-background focus:border-primary mt-2 h-12 w-full rounded-2xl border px-4 text-sm outline-none"
+                className="border-border bg-background focus-visible:border-foreground focus-visible:ring-ipe/60 mt-2 h-12 w-full rounded-2xl border px-4 text-sm tabular-nums outline-none focus-visible:ring-2"
               />
             </label>
           </div>
@@ -288,7 +294,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
               <Badge variant="outline" size="lg" className="border-linen/25 text-linen">
                 Roteiro recomendado
               </Badge>
-              <h2 className="text-display-l mt-5">
+              <h2 className="text-display-l mt-5" aria-live="polite">
                 {destination
                   ? `Uma rota por ${destination}`
                   : `Uma rota de ${moodConfig.label.toLowerCase()}`}
@@ -355,7 +361,7 @@ export function TravelConcierge({ pousadas }: { pousadas: Pousada[] }) {
             <Link
               key={pousada.slug}
               href={`/pousada/${pousada.slug}`}
-              className="group border-border bg-card hover:shadow-stone-deep/10 grid overflow-hidden rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-xl sm:grid-cols-[180px_1fr]"
+              className="group border-border bg-card hover:shadow-stone-deep/10 grid overflow-hidden rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-xl sm:grid-cols-[180px_1fr]"
             >
               <div className="relative aspect-[4/3] sm:aspect-auto">
                 <Image

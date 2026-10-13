@@ -32,7 +32,7 @@ export function FormPageShell({
     <div className="bg-background relative min-h-screen overflow-hidden">
       <SiteHeader forceSolid />
 
-      <main className="relative pt-32 pb-24 lg:pt-40 lg:pb-32">
+      <main id="conteudo" tabIndex={-1} className="relative pt-32 pb-24 lg:pt-40 lg:pb-32">
         <Container className="max-w-3xl">
           <div className="text-center">
             <span className="text-overline inline-flex items-center gap-2">

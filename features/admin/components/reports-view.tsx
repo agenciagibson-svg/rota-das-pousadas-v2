@@ -440,7 +440,8 @@ export function ReportsView({ data }: { data: ReportData }) {
               label: STATUS_LABEL[s.key] ?? s.key,
               value: s.count,
               hint: `${s.share}%`,
-              color: s.key === 'cancelled' || s.key === 'no_show' ? '#c2410c' : undefined,
+              color:
+                s.key === 'cancelled' || s.key === 'no_show' ? 'var(--destructive)' : undefined,
             }))}
             format={(v) => num(v)}
           />
@@ -643,7 +644,7 @@ function RegionSection({ data, suffix }: { data: ReportData; suffix: string }) {
                     <td className="text-foreground px-3 py-2 font-medium whitespace-nowrap">
                       <span
                         className="mr-2 inline-block size-2 rounded-sm"
-                        style={{ background: r.region ? REGION_COLOR[r.region] : '#a3a3a3' }}
+                        style={{ background: r.region ? REGION_COLOR[r.region] : 'var(--liquen)' }}
                       />
                       {r.label}
                     </td>

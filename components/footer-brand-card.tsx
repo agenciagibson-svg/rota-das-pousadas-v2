@@ -83,7 +83,7 @@ export function FooterBrandCard() {
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
                 onClick={() => setActiveIndex(index)}
-                className={`group inline-flex items-center justify-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold transition-all ${
+                className={`group inline-flex items-center justify-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold transition ${
                   selected
                     ? 'border-linen bg-linen text-stone-deep'
                     : 'border-linen/15 text-linen/70 hover:border-linen/35 hover:text-linen'

@@ -75,7 +75,7 @@ export function InviteMemberForm() {
       </label>
       <Button type="submit" disabled={isPending}>
         <UserPlus className="size-4" />
-        {isPending ? 'Convidando...' : 'Convidar'}
+        {isPending ? 'Convidando…' : 'Convidar'}
       </Button>
       {error && <p className="text-destructive text-sm font-medium sm:basis-full">{error}</p>}
       {message && <p className="text-primary text-sm font-medium sm:basis-full">{message}</p>}

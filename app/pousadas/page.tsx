@@ -10,7 +10,8 @@ import { SectionHeading } from '@/components/ui/section-heading'
 import { cn } from '@/lib/utils'
 import { getPousadas } from '@/server/queries'
 import { PaginationLinks } from '@/components/ui/pagination'
-import { catalogQuerySchema } from '@/features/pousadas/search'
+import { formatISODate } from '@/lib/format'
+import { catalogQuerySchema, singleParam } from '@/features/pousadas/search'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,19 +23,19 @@ export const metadata = {
 export default async function PousadasPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    busca?: string
-    checkin?: string
-    checkout?: string
-    hospedes?: string
-    temporada?: string
-    surpresa?: string
-    oferta?: string
-    pagina?: string
-  }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const { busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina } =
-    await searchParams
+  const query = await searchParams
+  const [busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina] = [
+    'busca',
+    'checkin',
+    'checkout',
+    'hospedes',
+    'temporada',
+    'surpresa',
+    'oferta',
+    'pagina',
+  ].map((key) => singleParam(query[key]))
   const parsed = catalogQuerySchema.safeParse({
     search: busca,
     checkin,
@@ -64,8 +65,8 @@ export default async function PousadasPage({
     surpresa === '1' ? 'Rota surpresa' : null,
     oferta === 'estacao' ? 'Oferta da estação' : null,
     busca ? `Destino: ${busca}` : null,
-    checkin ? `Check-in: ${checkin}` : null,
-    checkout ? `Check-out: ${checkout}` : null,
+    checkin ? `Check-in: ${formatISODate(checkin)}` : null,
+    checkout ? `Check-out: ${formatISODate(checkout)}` : null,
     hospedes ? `${hospedes} hóspede${hospedes === '1' ? '' : 's'}` : null,
     temporada ? `Estação: ${temporada}` : null,
   ].filter(Boolean)
@@ -82,7 +83,7 @@ export default async function PousadasPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
+      <main id="conteudo" tabIndex={-1} className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
             as="h1"
@@ -100,6 +101,9 @@ export default async function PousadasPage({
               <input
                 id="catalogo-busca"
                 name="busca"
+                type="search"
+                enterKeyHint="search"
+                autoComplete="off"
                 defaultValue={busca}
                 placeholder="Buscar por nome ou cidade"
                 className="text-foreground placeholder:text-muted-foreground h-full min-w-0 flex-1 bg-transparent text-base outline-none"

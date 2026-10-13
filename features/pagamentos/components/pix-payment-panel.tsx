@@ -157,7 +157,11 @@ export function PixPaymentPanel({
           className="hidden"
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
-        {error && <p className="text-destructive mt-2 text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-destructive mt-2 text-sm font-medium">
+            {error}
+          </p>
+        )}
       </div>
     )
   }
@@ -207,7 +211,7 @@ export function PixPaymentPanel({
           dangerouslySetInnerHTML={{ __html: pix.qrSvg }}
         />
         <div className="min-w-0 space-y-2 text-sm">
-          <p className="text-foreground text-2xl font-semibold">{brl(pix.amount)}</p>
+          <p className="text-foreground text-2xl font-semibold tabular-nums">{brl(pix.amount)}</p>
           <p className="text-muted-foreground">
             Para: <strong className="text-foreground">{pix.holderName}</strong>
           </p>
@@ -232,7 +236,7 @@ export function PixPaymentPanel({
           />
           <Button type="button" onClick={() => void copy()} className="shrink-0">
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            {copied ? 'Copiado!' : 'Copiar'}
+            <span aria-live="polite">{copied ? 'Copiado!' : 'Copiar'}</span>
           </Button>
         </div>
       </div>
@@ -259,7 +263,11 @@ export function PixPaymentPanel({
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
           {uploading ? 'Enviando comprovante…' : 'Enviar comprovante do Pix'}
         </Button>
-        {error && <p className="text-destructive mt-2 text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-destructive mt-2 text-sm font-medium">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   )

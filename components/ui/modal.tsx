@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 import { cn } from '@/lib/utils'
 
 /**
  * Low-level overlay primitive: backdrop + centered panel, rendered in a portal.
- * Handles Escape-to-close and body scroll lock. `Dialog` builds on top of this;
+ * Handles Escape-to-close, body scroll lock and focus (in, trapped, restored). `Dialog` builds on top of this;
  * use `Modal` directly only when you need full control of the panel contents.
  */
 export function Modal({
@@ -15,6 +16,7 @@ export function Modal({
   children,
   className,
   labelledBy,
+  label,
   describedBy,
 }: {
   open: boolean
@@ -22,10 +24,14 @@ export function Modal({
   children: ReactNode
   className?: string
   labelledBy?: string
+  /** Nome da janela quando não há um título visível para `labelledBy`. */
+  label?: string
   describedBy?: string
 }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, open && mounted)
 
   useEffect(() => {
     if (!open) return
@@ -45,10 +51,12 @@ export function Modal({
     // O overlay rola: janela mais alta que a tela (ex.: editar acomodação)
     // não pode cortar o título nem o botão de salvar.
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledBy}
+      aria-label={labelledBy ? undefined : label}
       aria-describedby={describedBy}
     >
       <div

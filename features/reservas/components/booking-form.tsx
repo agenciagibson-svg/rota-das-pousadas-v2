@@ -135,8 +135,13 @@ export function BookingForm({
 
       {formError === MISSING_NAME_ERROR ? (
         <div className="border-destructive/30 bg-destructive/5 space-y-3 rounded-2xl border p-4">
-          <p className="text-destructive text-sm font-medium">{formError}</p>
+          <p role="alert" className="text-destructive text-sm font-medium">
+            {formError}
+          </p>
           <Input
+            id="reserva-nome"
+            name="name"
+            autoComplete="name"
             label="Seu nome completo"
             placeholder="Como você quer ser identificado na reserva"
             value={nameValue}
@@ -155,7 +160,11 @@ export function BookingForm({
           </Button>
         </div>
       ) : (
-        formError && <p className="text-destructive text-sm font-medium">{formError}</p>
+        formError && (
+          <p role="alert" className="text-destructive text-sm font-medium">
+            {formError}
+          </p>
+        )
       )}
 
       <Button

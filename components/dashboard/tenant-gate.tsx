@@ -13,6 +13,7 @@ export function NoMembershipScreen() {
     <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
         size="lg"
+        as="h1"
         icon={MapPinned}
         title="Nenhum acesso de gestão ainda"
         description="Sua conta não está vinculada a nenhuma pousada. Cadastre a sua ou peça para um proprietário te convidar."
@@ -37,6 +38,7 @@ export function InvitedOnlyScreen({ invites }: { invites: PendingInvite[] }) {
       <div className="w-full max-w-lg">
         <EmptyState
           size="lg"
+          as="h1"
           icon={Clock3}
           title={single ? 'Convite pendente' : 'Convites pendentes'}
           description={
@@ -66,6 +68,7 @@ export function SuspendedScreen({
     <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
         size="lg"
+        as="h1"
         icon={Ban}
         title="Acesso suspenso"
         description={`Seu acesso à gestão de ${pousadaName} foi suspenso${reason ? `: ${reason}` : '.'} Fale com o proprietário para reativar.`}

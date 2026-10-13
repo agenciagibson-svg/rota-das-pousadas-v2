@@ -24,7 +24,7 @@ export function LegalPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pt-32 pb-24">
+      <main id="conteudo" tabIndex={-1} className="pt-32 pb-24">
         <div className="mx-auto max-w-3xl px-5 lg:px-8">
           <span className="text-overline inline-flex items-center gap-2">
             <Marker className="text-foreground" />
@@ -54,7 +54,7 @@ export function LegalPage({
 
           <div className="mt-10 space-y-10">
             {sections.map((s, i) => (
-              <section key={s.id} id={s.id} className="scroll-mt-28">
+              <section key={s.id} id={s.id} className="scroll-mt-4">
                 <h2 className="text-h2 text-foreground">
                   {i + 1}. {s.title}
                 </h2>

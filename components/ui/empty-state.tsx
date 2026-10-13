@@ -13,6 +13,7 @@ export function EmptyState({
   description,
   action,
   size = 'md',
+  as: Heading = 'h3',
   className,
 }: {
   icon?: LucideIcon
@@ -20,6 +21,8 @@ export function EmptyState({
   description?: string
   action?: ReactNode
   size?: 'md' | 'lg'
+  /** Nível do título. `h1` quando o estado vazio é a página inteira (404, erro). */
+  as?: 'h1' | 'h2' | 'h3'
   className?: string
 }) {
   const large = size === 'lg'
@@ -41,7 +44,9 @@ export function EmptyState({
           <Icon className={large ? 'size-8' : 'size-6'} />
         </span>
       )}
-      <h3 className={cn('text-foreground', large ? 'text-h1 mt-1' : 'text-h3')}>{title}</h3>
+      <Heading className={cn('text-foreground', large ? 'text-h1 mt-1' : 'text-h3')}>
+        {title}
+      </Heading>
       {description && (
         <p
           className={cn(

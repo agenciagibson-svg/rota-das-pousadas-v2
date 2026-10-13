@@ -15,7 +15,7 @@ export function FooterCompanyCard() {
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-linen text-sm font-semibold">Rota das Pousadas</h4>
+          <h2 className="text-linen text-sm font-semibold">Rota das Pousadas</h2>
           <p className="text-linen/55 mt-1 text-xs leading-relaxed">Mapa da marca</p>
         </div>
         <span className="border-linen/15 text-linen/60 rounded-full border px-3 py-1 text-xs font-semibold">
@@ -36,7 +36,7 @@ export function FooterCompanyCard() {
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
                 aria-label={`Abrir ${item.label}`}
-                className={`relative z-10 flex size-7 items-center justify-center rounded-full border transition-all ${
+                className={`relative z-10 flex size-7 items-center justify-center rounded-full border transition ${
                   selected
                     ? 'border-gold bg-gold text-stone-deep'
                     : 'border-linen/20 bg-stone-deep text-linen/45 hover:text-linen'
@@ -77,7 +77,7 @@ export function FooterCompanyCard() {
               onMouseEnter={() => setActiveIndex(index)}
               onFocus={() => setActiveIndex(index)}
               onClick={() => setActiveIndex(index)}
-              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-all ${
+              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
                 selected
                   ? 'border-linen/35 bg-linen text-stone-deep'
                   : 'border-linen/10 text-linen/65 hover:border-linen/25 hover:text-linen'

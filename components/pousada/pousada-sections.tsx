@@ -41,6 +41,7 @@ function formatReviewDate(iso: string): string {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: 'America/Sao_Paulo',
   }).format(new Date(iso))
 }
 
@@ -61,7 +62,7 @@ function Block({
   className?: string
 }) {
   return (
-    <section id={id} className={cn('border-border scroll-mt-40 border-t py-10', className)}>
+    <section id={id} className={cn('border-border scroll-mt-16 border-t py-10', className)}>
       <Reveal>
         <h2 className="text-h2 text-foreground">{title}</h2>
         <div className="mt-6">{children}</div>
@@ -86,7 +87,7 @@ function InfoItem({
       </span>
       <div className="text-base">
         <div className="text-foreground font-semibold">{title}</div>
-        <div className="text-muted-foreground mt-1 text-pretty">{children}</div>
+        <div className="text-muted-foreground mt-1 text-pretty break-words">{children}</div>
       </div>
     </div>
   )
@@ -213,8 +214,14 @@ export function ReviewsSection({
             <li key={r.id}>
               <Card radius="3xl" border={false} className="flex h-full flex-col p-5">
                 <Quote className="text-pedra size-6" />
-                <p className="text-foreground mt-3 flex-1 text-base leading-relaxed">{r.text}</p>
-                <div className="mt-4 flex items-center gap-1" aria-label={`${r.rating} de 5`}>
+                <p className="text-foreground mt-3 flex-1 text-base leading-relaxed break-words">
+                  {r.text}
+                </p>
+                <div
+                  role="img"
+                  className="mt-4 flex items-center gap-1"
+                  aria-label={`${r.rating} de 5`}
+                >
                   {Array.from({ length: r.rating }).map((_, i) => (
                     <Star key={i} className="fill-ipe text-ipe size-3.5" />
                   ))}
@@ -223,7 +230,7 @@ export function ReviewsSection({
                   {formatReviewDate(r.createdAt)}
                 </div>
                 {r.response && (
-                  <div className="bg-secondary text-muted-foreground mt-3 rounded-2xl p-3 text-sm">
+                  <div className="bg-secondary text-muted-foreground mt-3 rounded-2xl p-3 text-sm break-words">
                     <span className="text-foreground font-semibold">Resposta da pousada: </span>
                     {r.response}
                   </div>

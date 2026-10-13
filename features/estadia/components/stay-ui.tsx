@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import {
   AirVent,
@@ -34,6 +35,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { InventoryCategory } from '@/features/estoque/labels'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 
 /** Paleta do app da estadia: Neblina, Breu e o Ipê da marca (docs/Marca.md). */
 export const APP_BG = 'bg-neblina'
@@ -193,7 +195,7 @@ export function ItemVisual({
   const Icon = CATEGORY_ICON[category] ?? Package
   return (
     <div
-      className="relative shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e2e7e4)] shadow-[inset_0_0_0_1px_#d5dbd8]"
+      className="ring-border relative shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_40%,var(--card),var(--secondary))] ring-1 ring-inset"
       style={{ width: size, height: size }}
     >
       {photoUrl ? (
@@ -248,31 +250,53 @@ export function serviceIcon(name: string): LucideIcon {
   return ConciergeBell
 }
 
-/** Folha que sobe por cima do app (detalhe do item, sacola). */
+/**
+ * Folha que sobe por cima do app (detalhe do item, sacola). Fechada, sai da
+ * árvore de foco (`inert`); aberta, prende o foco e fecha no Esc. `footer`
+ * fica preso ao pé da folha, dentro da janela (barra de quantidade/adicionar).
+ */
 export function Sheet({
   open,
   children,
   label,
+  onClose,
+  footer,
 }: {
   open: boolean
   children: React.ReactNode
   label: string
+  onClose?: () => void
+  footer?: React.ReactNode
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useFocusTrap(ref, open)
+  useEffect(() => {
+    if (!open || !onClose) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   return (
     <div
+      ref={ref}
       role="dialog"
       aria-modal="true"
       aria-label={label}
       aria-hidden={!open}
+      inert={!open}
       className={cx(
-        'fixed inset-0 z-40 overflow-y-auto transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
+        'fixed inset-0 z-40 transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
         APP_BG,
         open ? 'translate-y-0' : 'pointer-events-none translate-y-full',
       )}
     >
-      <div className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-40">
-        {children}
+      <div className="h-full overflow-y-auto overscroll-contain">
+        <div className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-40">
+          {children}
+        </div>
       </div>
+      {footer}
     </div>
   )
 }

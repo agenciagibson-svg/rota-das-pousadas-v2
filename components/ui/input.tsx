@@ -47,6 +47,8 @@ export function Input({
         <input
           id={inputId}
           name={name}
+          // E-mail não passa pelo corretor ortográfico (Web Interface Guidelines).
+          spellCheck={props.type === 'email' ? false : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(

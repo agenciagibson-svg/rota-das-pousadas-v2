@@ -10,6 +10,7 @@ export function AdminAccessDenied() {
     <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5">
       <EmptyState
         size="lg"
+        as="h1"
         icon={ShieldAlert}
         title="Acesso restrito"
         description="Esse painel é só para a equipe da Rota das Pousadas. Se você é dono de pousada, entre pelo painel de parceiro."

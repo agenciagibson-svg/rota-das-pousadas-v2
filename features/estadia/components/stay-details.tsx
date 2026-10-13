@@ -220,9 +220,9 @@ export function StayDetails(ctx: StayCtx) {
       <div className="bg-card overflow-hidden rounded-[28px] p-2">
         <div
           aria-hidden
-          className="relative h-[124px] rounded-[22px] bg-[#e9eee4] bg-[linear-gradient(35deg,transparent_46%,#fff_46%_50%,transparent_50%),linear-gradient(-20deg,transparent_60%,#fff_60%_63%,transparent_63%),radial-gradient(circle_at_20%_70%,#cfe3c8_0_18%,transparent_19%),radial-gradient(circle_at_80%_25%,#cfe3c8_0_14%,transparent_15%)]"
+          className="bg-secondary relative h-[124px] rounded-[22px] bg-[linear-gradient(35deg,transparent_46%,var(--card)_46%_50%,transparent_50%),linear-gradient(-20deg,transparent_60%,var(--card)_60%_63%,transparent_63%),radial-gradient(circle_at_20%_70%,var(--pedra)_0_18%,transparent_19%),radial-gradient(circle_at_80%_25%,var(--pedra)_0_14%,transparent_15%)]"
         >
-          <span className="bg-ipe text-breu absolute top-1/2 left-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full shadow-[0_0_0_8px_rgba(244,180,42,0.25)]">
+          <span className="bg-ipe text-breu ring-ipe/25 absolute top-1/2 left-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full ring-8">
             <BedDouble className="size-[18px]" />
           </span>
         </div>

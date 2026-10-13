@@ -12,6 +12,7 @@ export type ReviewState = {
   setText: (t: string) => void
   error: string | null
   sent: boolean
+  sending: boolean
   submit: () => void
 }
 
@@ -130,15 +131,15 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
               <p className="text-muted-foreground mt-0.5 text-xs">
                 Sua nota ajuda outros viajantes.
               </p>
-              <div className="mt-3 flex justify-center gap-1.5" role="radiogroup" aria-label="Nota">
+              <div className="mt-3 flex justify-center gap-0.5" role="group" aria-label="Nota">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
                     type="button"
-                    role="radio"
-                    aria-checked={review.rating === n}
+                    aria-pressed={review.rating === n}
                     aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`}
                     onClick={() => review.setRating(n)}
+                    className="rounded-full p-1.5"
                   >
                     <Star
                       className={cx(
@@ -158,7 +159,7 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
                     rows={3}
                     placeholder="Conte o que você mais gostou (opcional)"
                     aria-label="Comentário"
-                    className="bg-neblina w-full resize-none rounded-[18px] px-3.5 py-3 text-[13px] outline-none"
+                    className="bg-neblina focus-visible:ring-ipe/60 w-full resize-none rounded-[18px] px-3.5 py-3 text-[13px] outline-none focus-visible:ring-2"
                   />
                   {review.error && (
                     <p role="alert" className="text-destructive mt-1 text-sm font-medium">
@@ -168,9 +169,10 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
                   <button
                     type="button"
                     onClick={review.submit}
-                    className="bg-breu text-neblina mt-2 w-full rounded-full py-3.5 text-sm font-bold"
+                    disabled={review.sending}
+                    className="bg-breu text-neblina mt-2 w-full rounded-full py-3.5 text-sm font-bold disabled:opacity-60"
                   >
-                    Enviar avaliação
+                    {review.sending ? 'Enviando…' : 'Enviar avaliação'}
                   </button>
                 </div>
               )}

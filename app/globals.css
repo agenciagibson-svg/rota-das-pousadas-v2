@@ -155,6 +155,24 @@
     background: var(--ipe);
     color: var(--breu);
   }
+  /* Toque: sem o atraso do duplo toque e com um realce discreto em Ipê. */
+  html {
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--ipe) 22%, transparent);
+  }
+  /* Alvo do "Pular para o conteúdo": recebe o foco sem desenhar contorno. */
+  main:focus {
+    outline: none;
+  }
+  a,
+  button,
+  [role='button'],
+  input,
+  label,
+  select,
+  summary,
+  textarea {
+    touch-action: manipulation;
+  }
 }
 
 @layer utilities {
@@ -185,6 +203,17 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Cabeçalho fixo e barras presas ao pé (reserva no celular, menu do app da
+   estadia) não podem cobrir a âncora nem o elemento que recebe o foco. */
+html:has([data-site-header]) {
+  scroll-padding-top: 6rem;
+}
+@media (max-width: 1023px) {
+  html:has([data-bottom-bar]) {
+    scroll-padding-bottom: 6.5rem;
+  }
 }
 
 /* `clip` (e não `hidden`) corta a rolagem horizontal sem transformar o body

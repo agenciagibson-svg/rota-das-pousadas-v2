@@ -17,6 +17,9 @@ import { keepValuesOnSubmit } from '@/lib/forms'
  * registro no painel, com as datas e o número de pessoas já preenchidos a
  * partir do que a pessoa acabou de buscar.
  */
+/** Campos com mensagem de erro do servidor, na ordem em que aparecem. */
+const FIELD_ORDER = ['name', 'phone', 'email', 'checkout', 'consent'] as const
+
 export function QuoteCard({
   pousadaId,
   whatsapp,
@@ -55,7 +58,11 @@ export function QuoteCard({
     setPending(false)
     if (!result.ok) {
       setError(result.error)
-      setFieldErrors(result.fieldErrors ?? {})
+      const errors = result.fieldErrors ?? {}
+      setFieldErrors(errors)
+      // Leva o foco ao primeiro campo com erro, na ordem do formulário.
+      const first = FIELD_ORDER.find((key) => errors[key])
+      if (first) requestAnimationFrame(() => document.getElementById(`quote-${first}`)?.focus())
       return
     }
     setSent(true)
@@ -210,6 +217,8 @@ export function QuoteCard({
               name="consent"
               id="quote-consent"
               required
+              aria-invalid={fieldErrors.consent ? true : undefined}
+              aria-describedby={fieldErrors.consent ? 'quote-consent-erro' : undefined}
               className="border-input accent-breu mt-0.5 size-5 shrink-0 rounded"
             />
             <span>
@@ -218,7 +227,9 @@ export function QuoteCard({
             </span>
           </label>
           {fieldErrors.consent && (
-            <span className="text-destructive text-xs">{fieldErrors.consent}</span>
+            <span id="quote-consent-erro" className="text-destructive text-xs">
+              {fieldErrors.consent}
+            </span>
           )}
 
           <TurnstileWidget onVerify={setTurnstileToken} />

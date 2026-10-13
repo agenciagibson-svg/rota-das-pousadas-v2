@@ -41,9 +41,9 @@ function SponsoredStayCard() {
           <MapPin className="size-4" />
           Monte Verde, MG
         </p>
-        <h2 className="text-display-l mt-3 max-w-xl">
+        <p className="text-display-l mt-3 max-w-xl">
           O refúgio que aparece antes da viagem começar.
-        </h2>
+        </p>
         <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-3">
           {[
             ['Diária', 'R$ 720'],
@@ -83,7 +83,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         >
           <Logo className="h-6" />
         </Link>
-        <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
+        <main
+          id="conteudo"
+          tabIndex={-1}
+          className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10"
+        >
           {children}
         </main>
       </div>

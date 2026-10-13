@@ -49,6 +49,7 @@ export function TripsButton({
         onClick={() => setOpen((v) => !v)}
         aria-label={count ? `Minhas viagens — ${count} aguardando pagamento` : 'Minhas viagens'}
         aria-expanded={open}
+        aria-controls="minhas-viagens"
         className={cn(
           'relative flex size-10 items-center justify-center rounded-full border transition-colors',
           solid
@@ -65,7 +66,12 @@ export function TripsButton({
       </button>
 
       {open && (
-        <div className="border-border bg-card absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl">
+        <div
+          id="minhas-viagens"
+          role="region"
+          aria-label="Minhas viagens"
+          className="border-border bg-card absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl"
+        >
           <div className="border-border border-b px-4 py-3">
             <p className="font-display text-base font-medium">Minhas viagens</p>
             <p className="text-muted-foreground text-xs">
@@ -85,7 +91,9 @@ export function TripsButton({
                         {shortDate(t.checkin)} a {shortDate(t.checkout)} · {t.code}
                       </p>
                     </div>
-                    <span className="text-primary text-sm font-bold">{brl(t.total)}</span>
+                    <span className="text-primary text-sm font-bold tabular-nums">
+                      {brl(t.total)}
+                    </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     {t.awaitingApproval ? (

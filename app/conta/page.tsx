@@ -56,7 +56,7 @@ export default async function ContaPage({
   return (
     <>
       <SiteHeader forceSolid />
-      <main className="pt-32 pb-24">
+      <main id="conteudo" tabIndex={-1} className="pt-32 pb-24">
         <Container className="max-w-3xl">
           <div className="mb-8 flex items-center gap-4">
             <span className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-full text-xl font-bold">

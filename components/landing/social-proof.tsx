@@ -85,7 +85,12 @@ export function SocialProof() {
         </Reveal>
 
         <Reveal>
-          <ul className="-mx-5 mt-6 flex snap-x snap-mandatory scroll-px-5 [scrollbar-width:none] gap-4 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
+          {/* No celular a lista rola de lado: focável para rolar pelo teclado. */}
+          <ul
+            tabIndex={0}
+            aria-label="Depoimentos de hóspedes"
+            className="focus-visible:ring-ipe/60 -mx-5 mt-6 flex snap-x snap-mandatory scroll-px-5 [scrollbar-width:none] gap-4 overflow-x-auto px-5 pb-2 outline-none focus-visible:ring-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0"
+          >
             {testimonials.map((item) => (
               <li key={item.name} className="w-[85%] shrink-0 snap-start sm:w-[60%] lg:w-auto">
                 <Card radius="3xl" border={false} className="flex h-full flex-col p-6 lg:p-8">
