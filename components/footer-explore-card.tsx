@@ -74,7 +74,7 @@ export function FooterExploreCard() {
               <ActiveIcon className="size-4" />
               {active.kicker}
             </span>
-            <p className="text-linen mt-2 font-serif text-xl leading-tight font-semibold text-pretty">
+            <p className="text-linen font-display mt-2 text-xl leading-tight font-medium text-pretty">
               {active.title}
             </p>
           </div>

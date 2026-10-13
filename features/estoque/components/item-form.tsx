@@ -19,7 +19,7 @@ import type { InventoryItem } from '../types'
 
 const SELECT =
   'border-input bg-card text-foreground focus:border-ring rounded-xl border px-3.5 py-2.5 text-sm outline-none'
-const LABEL = 'text-muted-foreground text-[11px] font-semibold tracking-wide uppercase'
+const LABEL = 'text-foreground text-sm font-medium'
 
 /** Cadastro/edição de item. Quantidade só no cadastro — depois, por movimento. */
 export function ItemForm({
@@ -183,7 +183,7 @@ export function ItemForm({
         />
       </div>
 
-      <label className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-sm">
+      <label className="border-success/30 bg-success/10/50 flex items-start gap-2 rounded-xl border p-3 text-sm">
         <input
           type="checkbox"
           className="mt-0.5 size-4"

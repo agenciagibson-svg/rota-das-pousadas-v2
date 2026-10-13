@@ -35,8 +35,8 @@ import {
 } from 'lucide-react'
 import type { InventoryCategory } from '@/features/estoque/labels'
 
-/** Paleta do app da estadia (cinza claro, preto e o laranja da marca). */
-export const APP_BG = 'bg-[#f4f4f2]'
+/** Paleta do app da estadia: Neblina, Breu e o Ipê da marca (docs/Marca.md). */
+export const APP_BG = 'bg-neblina'
 
 export function cx(...xs: (string | false | null | undefined)[]) {
   return xs.filter(Boolean).join(' ')
@@ -62,14 +62,14 @@ export function RoundButton({
 }) {
   const cls = cx(
     'relative grid size-11 shrink-0 place-items-center rounded-full transition active:scale-95',
-    dark ? 'bg-[#1e1e1e] text-white' : 'bg-white text-[#1e1e1e]',
+    dark ? 'bg-breu text-neblina' : 'bg-card text-breu',
     className,
   )
   const inner = (
     <>
       {children}
       {badge ? (
-        <span className="bg-sunset absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-[#f4f4f2] px-1 text-[10px] font-extrabold text-white">
+        <span className="bg-ipe border-neblina text-breu absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 px-1 text-[10px] font-bold">
           {badge}
         </span>
       ) : null}
@@ -95,7 +95,7 @@ export function RoundButton({
   )
 }
 
-/** Título em dois tons: parte forte em preto, o resto em cinza claro. */
+/** Título em dois pesos (Funnel Display): parte forte em Breu, o resto leve em Grafite. */
 export function TwoTone({
   strong,
   light,
@@ -108,9 +108,9 @@ export function TwoTone({
   className?: string
 }) {
   return (
-    <Tag className={cx('tracking-[-0.035em]', className)}>
-      <span className="font-extrabold text-[#1e1e1e]">{strong}</span>
-      {light ? <span className="font-normal text-[#b3b3ae]"> {light}</span> : null}
+    <Tag className={cx('font-display tracking-[-0.01em]', className)}>
+      <span className="text-breu font-medium">{strong}</span>
+      {light ? <span className="text-grafite font-light"> {light}</span> : null}
     </Tag>
   )
 }
@@ -128,13 +128,13 @@ export function SectionHead({
 }) {
   return (
     <div className="mt-6 mb-3 flex items-center justify-between px-0.5">
-      <h2 className="text-[17px] font-bold tracking-[-0.02em] text-[#1e1e1e]">{title}</h2>
+      <h2 className="font-display text-breu text-[17px] font-medium">{title}</h2>
       {action && onAction ? (
-        <button type="button" onClick={onAction} className="text-[12.5px] text-[#9a9a96]">
+        <button type="button" onClick={onAction} className="text-muted-foreground text-[12.5px]">
           {action} ›
         </button>
       ) : aside ? (
-        <span className="text-xs text-[#9a9a96]">{aside}</span>
+        <span className="text-muted-foreground text-xs">{aside}</span>
       ) : null}
     </div>
   )
@@ -151,10 +151,10 @@ export function Pill({
     <span
       className={cx(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold whitespace-nowrap',
-        tone === 'dark' && 'bg-[#1e1e1e] text-white',
-        tone === 'white' && 'bg-white text-[#1e1e1e]',
-        tone === 'gray' && 'bg-[#2e2e2c] text-[#e5e5e2]',
-        tone === 'orange' && 'bg-sunset text-white',
+        tone === 'dark' && 'bg-breu text-neblina',
+        tone === 'white' && 'bg-card text-breu',
+        tone === 'gray' && 'bg-neblina/10 text-neblina',
+        tone === 'orange' && 'bg-ipe text-breu',
       )}
     >
       {children}
@@ -193,13 +193,13 @@ export function ItemVisual({
   const Icon = CATEGORY_ICON[category] ?? Package
   return (
     <div
-      className="relative shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_40%,#ffffff,#ebebe8)] shadow-[inset_0_0_0_1px_#e2e2de]"
+      className="relative shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e2e7e4)] shadow-[inset_0_0_0_1px_#d5dbd8]"
       style={{ width: size, height: size }}
     >
       {photoUrl ? (
         <Image src={photoUrl} alt={alt} fill sizes={`${size}px`} className="object-cover" />
       ) : (
-        <div className="absolute inset-0 grid place-items-center text-[#c9c9c4]">
+        <div className="text-liquen absolute inset-0 grid place-items-center">
           <Icon style={{ width: size * 0.42, height: size * 0.42 }} strokeWidth={1.6} />
         </div>
       )}

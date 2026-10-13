@@ -47,7 +47,7 @@ export function FooterBrandCard() {
             <HeartHandshake className="size-4" />
             Toda grande viagem começa por uma rota
           </span>
-          <p className="text-linen mt-3 font-serif text-2xl leading-tight font-semibold text-pretty">
+          <p className="text-linen font-display mt-3 text-2xl leading-tight font-medium text-pretty">
             Um ecossistema para descobrir, reservar e contar histórias de pousadas brasileiras.
           </p>
 

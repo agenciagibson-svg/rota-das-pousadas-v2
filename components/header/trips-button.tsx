@@ -67,7 +67,7 @@ export function TripsButton({
       {open && (
         <div className="border-border bg-card absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl">
           <div className="border-border border-b px-4 py-3">
-            <p className="font-serif text-base font-semibold">Minhas viagens</p>
+            <p className="font-display text-base font-medium">Minhas viagens</p>
             <p className="text-muted-foreground text-xs">
               {count ? `${count} aguardando pagamento` : 'Nada pendente por aqui'}
             </p>

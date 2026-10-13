@@ -5,8 +5,9 @@ import { canAccessSection, sectionForHref } from '@/lib/auth/dashboard-sections'
 import { roleLabel } from '@/features/membros/components/role-labels'
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Compass, Menu, X, Search, Bell, Globe, CalendarDays, type LucideIcon } from 'lucide-react'
+import { Menu, X, Search, Bell, Globe, CalendarDays, type LucideIcon } from 'lucide-react'
 import { LogoutButton } from '@/features/auth/components/logout-button'
+import { Marker } from '@/components/brand/logo'
 
 export type NavItem = { label: string; icon: LucideIcon; active?: boolean; href?: string }
 
@@ -56,15 +57,15 @@ export function DashboardShell({
           <div className="flex items-center justify-between px-6 py-5">
             <Link href="/" className="flex items-center gap-2.5">
               <span
-                className={`flex size-9 items-center justify-center rounded-full ${accentBg} text-primary-foreground`}
+                className={`flex size-9 items-center justify-center rounded-xl ${accentBg} text-neblina`}
               >
-                <Compass className="size-5" />
+                <Marker className="size-5" />
               </span>
               <span className="flex flex-col leading-none">
-                <span className="text-foreground font-serif text-base font-semibold">
+                <span className="text-foreground font-display text-base font-medium">
                   {brandLabel}
                 </span>
-                <span className="text-muted-foreground text-[11px]">{brandSub}</span>
+                <span className="text-muted-foreground mt-0.5 text-xs">{brandSub}</span>
               </span>
             </Link>
             <button onClick={() => setOpen(false)} className="lg:hidden" aria-label="Fechar menu">
@@ -139,7 +140,7 @@ export function DashboardShell({
               <Menu className="text-foreground size-6" />
             </button>
             <div>
-              <h1 className="text-foreground font-serif text-xl font-semibold lg:text-2xl">
+              <h1 className="text-foreground font-display text-xl font-medium lg:text-2xl">
                 {title}
               </h1>
               <p className="text-muted-foreground hidden text-sm sm:block">{subtitle}</p>

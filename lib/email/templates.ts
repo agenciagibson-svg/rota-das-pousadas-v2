@@ -15,24 +15,28 @@ import { PAYMENT_REVIEW_TEXT, type PaymentReviewKind } from '@/features/pagament
  *    (features/auth/services/password-reset.service.ts).
  *
  * Regras de e-mail: só tabelas e estilo inline (Gmail/Outlook ignoram <style>
- * e SVG); fontes do site com fallback (Gmail cai em Georgia/Arial); logo é PNG
- * hospedado em /email/logo-compass.png. Todo texto vindo do banco passa por
+ * e SVG); fontes do site com fallback (Gmail cai em Arial); a marca é PNG
+ * hospedado em /email/marca.png (e marca-negativo.png sobre fundo Breu).
+ * `logo-compass.png` continua no ar só para e-mails antigos já enviados. Todo texto vindo do banco passa por
  * `esc()` — regras da casa e política de cancelamento são digitadas pelo dono.
  * Os e-mails linkam de volta pra `/minhas-reservas` em vez de duplicar o painel.
  */
 
+/** Paleta da marca (docs/Marca.md): Neblina, Breu, Grafite e Ipê. */
 const C = {
-  linen: '#f8f6f1',
-  forest: '#0f766e',
-  ink: '#1f2420',
-  muted: '#6b6459',
-  border: '#e4ddd0',
-  accent: '#f97316',
-  heroText: '#cfe7e3',
-  footerText: '#a8a296',
+  linen: '#eef1ef',
+  forest: '#0f1716',
+  ink: '#0f1716',
+  muted: '#4f5955',
+  border: '#d5dbd8',
+  accent: '#f4b42a',
+  /** Texto sobre o Ipê: Breu (branco sobre Ipê não tem contraste). */
+  accentText: '#0f1716',
+  heroText: '#c9d0cc',
+  footerText: '#a9b3ae',
 }
-const SERIF = "'Fraunces',Georgia,'Times New Roman',serif"
-const SANS = "'Manrope',Arial,Helvetica,sans-serif"
+const DISPLAY = "'Funnel Display','Helvetica Neue',Arial,sans-serif"
+const SANS = "'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif"
 const DEFAULT_TZ = 'America/Sao_Paulo'
 const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const MONTHS = [
@@ -210,8 +214,9 @@ function firstName(name: string | null): string | null {
 // Blocos de layout
 // ---------------------------------------------------------------------------
 
-function logoImg(size: number): string {
-  return `<img src="${publicEnv.siteUrl}/email/logo-compass.png" width="${size}" height="${size}" alt="" style="display:inline-block;border:0;vertical-align:middle;border-radius:50%;">`
+function logoImg(size: number, dark = false): string {
+  const file = dark ? 'marca-negativo.png' : 'marca.png'
+  return `<img src="${publicEnv.siteUrl}/email/${file}" width="${size}" height="${size}" alt="" style="display:inline-block;border:0;vertical-align:middle;">`
 }
 
 function infoRow(
@@ -247,10 +252,10 @@ function ticket(ctx: BookingNotificationContext, rowsHtml: string): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.linen};border:1px solid ${C.border};border-radius:16px;">
   <tr><td style="padding:18px 22px 6px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="font:700 10px ${SANS};letter-spacing:2px;text-transform:uppercase;color:${C.muted};">Código da reserva</td>
-      <td align="right" style="font:700 10px ${SANS};letter-spacing:2px;text-transform:uppercase;color:${C.muted};">${esc(ctx.pousada.name)}</td>
+      <td style="font:600 12px ${SANS};color:${C.muted};">Código da reserva</td>
+      <td align="right" style="font:600 12px ${SANS};color:${C.muted};">${esc(ctx.pousada.name)}</td>
     </tr><tr>
-      <td colspan="2" style="padding-top:4px;font:600 26px ${SERIF};color:${C.ink};letter-spacing:1px;">${esc(ctx.code)}</td>
+      <td colspan="2" style="padding-top:4px;font:500 26px ${DISPLAY};color:${C.ink};letter-spacing:1px;">${esc(ctx.code)}</td>
     </tr></table>
   </td></tr>
   <tr><td style="padding:0 22px;"><div style="border-top:2px dashed ${C.border};font-size:0;line-height:0;">&nbsp;</div></td></tr>
@@ -261,8 +266,8 @@ function ticket(ctx: BookingNotificationContext, rowsHtml: string): string {
 function notice(html: string, tone: 'warn' | 'ok'): string {
   const s =
     tone === 'warn'
-      ? 'background:#fff4eb;border:1px solid #fed7b5;color:#7c2d12;'
-      : 'background:#ecfdf5;border:1px solid #bbe5d9;color:#134e4a;'
+      ? 'background:#fdf0d4;border:1px solid #f8d58a;color:#0f1716;'
+      : 'background:#eaf0ed;border:1px solid #c1d2c9;color:#0f1716;'
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr><td style="padding:14px 18px;border-radius:14px;${s}font:500 14px/1.5 ${SANS};">${html}</td></tr></table>`
 }
 
@@ -303,7 +308,7 @@ function wrapLayout(p: LayoutParams): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>${esc(p.title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500&family=Figtree:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:${C.linen};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${esc(p.preheader)}</div>
@@ -312,13 +317,13 @@ function wrapLayout(p: LayoutParams): string {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
   <tr><td style="padding:0 12px 18px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td>${logoImg(40)}<span style="font:600 20px ${SERIF};color:${C.ink};vertical-align:middle;padding-left:10px;">Rota das Pousadas</span></td>
-      <td align="right" style="font:600 10px ${SANS};letter-spacing:2px;text-transform:uppercase;color:${C.muted};">Cada destino tem uma história</td>
+      <td>${logoImg(40)}<span style="font:500 20px ${DISPLAY};color:${C.ink};vertical-align:middle;padding-left:10px;">Rota das Pousadas</span></td>
+      <td align="right" style="font:500 12px ${SANS};color:${C.muted};">Cada destino tem uma história</td>
     </tr></table>
   </td></tr>
   <tr><td style="background:${C.forest};border-radius:22px 22px 0 0;padding:34px 36px 30px;">
-    <span style="display:inline-block;background:${p.pill.bg};color:${p.pill.fg};font:700 11px ${SANS};letter-spacing:1px;text-transform:uppercase;padding:6px 12px;border-radius:999px;">${esc(p.pill.label)}</span>
-    <h1 style="margin:16px 0 6px;font:600 30px/1.15 ${SERIF};color:${C.linen};">${esc(p.title)}</h1>
+    <span style="display:inline-block;background:${p.pill.bg};color:${p.pill.fg};font:600 12px ${SANS};padding:6px 12px;border-radius:999px;">${esc(p.pill.label)}</span>
+    <h1 style="margin:16px 0 6px;font:500 30px/1.15 ${DISPLAY};color:${C.linen};">${esc(p.title)}</h1>
     <p style="margin:0;font:500 15px/1.5 ${SANS};color:${C.heroText};">${esc(p.subtitle)}</p>
   </td></tr>
   <tr><td style="background:#ffffff;padding:30px 36px 8px;border-left:1px solid ${C.border};border-right:1px solid ${C.border};">
@@ -327,14 +332,14 @@ function wrapLayout(p: LayoutParams): string {
     ${p.extraHtml ?? ''}
   </td></tr>
   <tr><td align="center" style="background:#ffffff;padding:18px 36px 34px;border:1px solid ${C.border};border-top:0;border-radius:0 0 22px 22px;">
-    <a href="${p.cta.href}" style="display:inline-block;background:${C.accent};color:#ffffff;font:700 15px ${SANS};text-decoration:none;padding:15px 34px;border-radius:999px;">${esc(p.cta.label)} &rarr;</a>
+    <a href="${p.cta.href}" style="display:inline-block;background:${C.accent};color:${C.accentText};font:700 15px ${SANS};text-decoration:none;padding:15px 34px;border-radius:999px;">${esc(p.cta.label)} &rarr;</a>
     <p style="margin:14px 0 0;font:500 12px ${SANS};color:${C.muted};">${p.ctaHint ?? `Ou acesse <a href="${p.cta.href}" style="color:${C.forest};font-weight:700;">Minhas reservas</a> em rotadaspousadas.com.br`}</p>
   </td></tr>
   <tr><td style="padding:22px 12px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.ink};border-radius:18px;"><tr><td style="padding:22px 26px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td width="52" valign="middle">${logoImg(38)}</td>
-        <td valign="middle"><div style="font:600 16px ${SERIF};color:${C.linen};">Rota das Pousadas</div>
+        <td width="52" valign="middle">${logoImg(38, true)}</td>
+        <td valign="middle"><div style="font:500 16px ${DISPLAY};color:${C.linen};">Rota das Pousadas</div>
           <div style="font:500 12px/1.5 ${SANS};color:${C.footerText};margin-top:2px;">Reserva direto com a pousada, sem intermediário na hospedagem.</div></td>
       </tr></table>
     </td></tr></table>
@@ -378,7 +383,7 @@ export function bookingRequestReceivedEmail(
   )
   const deadlineHtml = deadline
     ? notice(
-        `<strong style="color:#c2410c;">Pague até ${esc(deadline)}</strong> — depois disso a reserva é cancelada e as datas voltam a ficar livres.`,
+        `<strong style="color:${C.ink};">Pague até ${esc(deadline)}</strong> — depois disso a reserva é cancelada e as datas voltam a ficar livres.`,
         'warn',
       )
     : notice(
@@ -389,7 +394,7 @@ export function bookingRequestReceivedEmail(
     preheader: deadline
       ? `Pague até ${deadline} para garantir sua estadia.`
       : 'Conclua o pagamento para garantir sua estadia.',
-    pill: { label: 'Aguardando pagamento', bg: C.accent, fg: '#ffffff' },
+    pill: { label: 'Aguardando pagamento', bg: C.accent, fg: C.accentText },
     title: 'Seu refúgio está quase garantido',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `${greeting(ctx)} Recebemos seu pedido de reserva ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>. Só falta o pagamento para confirmar.`,
@@ -416,11 +421,11 @@ export function bookingRequestReceivedEmail(
 /** Bloco do app da estadia (0078): pedir pelo celular e falar com a recepção. */
 function stayAppBlock(ctx: BookingNotificationContext): string {
   const href = esc(`${publicEnv.siteUrl}/estadia/${ctx.bookingId}`)
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:16px;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;background:${C.linen};border:1px solid ${C.border};border-radius:16px;">
 <tr><td style="padding:16px 18px;">
-<p style="margin:0;font:700 14px ${SANS};color:#065f46;">App da sua estadia</p>
-<p style="margin:6px 0 12px;font:500 13px/1.55 ${SANS};color:#065f46;">Durante a hospedagem, peça água, bebidas, toalha extra e fale com a recepção pelo celular. O consumo vai para a conta e é pago no check-out. Abra o link e toque em “Adicionar à tela inicial”.</p>
-<a href="${href}" style="display:inline-block;background:#047857;color:#ffffff;font:700 13px ${SANS};text-decoration:none;padding:10px 16px;border-radius:10px;">Abrir o app da estadia</a>
+<p style="margin:0;font:700 14px ${SANS};color:${C.ink};">App da sua estadia</p>
+<p style="margin:6px 0 12px;font:500 13px/1.55 ${SANS};color:${C.muted};">Durante a hospedagem, peça água, bebidas, toalha extra e fale com a recepção pelo celular. O consumo vai para a conta e é pago no check-out. Abra o link e toque em “Adicionar à tela inicial”.</p>
+<a href="${href}" style="display:inline-block;background:${C.ink};color:${C.linen};font:700 13px ${SANS};text-decoration:none;padding:10px 16px;border-radius:999px;">Abrir o app da estadia</a>
 </td></tr></table>`
 }
 
@@ -454,7 +459,7 @@ export function bookingConfirmedEmail(ctx: BookingNotificationContext): Email {
     : ''
   const html = wrapLayout({
     preheader: `Reserva ${ctx.code} confirmada. Guarde este e-mail como comprovante.`,
-    pill: { label: 'Confirmada', bg: '#d1fae5', fg: '#065f46' },
+    pill: { label: 'Confirmada', bg: '#e2ece6', fg: '#2f6a4f' },
     title: 'Tudo certo, sua estadia está confirmada',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `Pagamento recebido. Guarde este e-mail: ele é o seu comprovante da reserva ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>.`,
@@ -514,7 +519,7 @@ export function passwordResetEmail(p: { name: string | null; email: string; link
   const safeLink = esc(p.link)
   const html = wrapLayout({
     preheader: 'Use o botão para criar sua nova senha. O link vale por 1 hora.',
-    pill: { label: 'Nova senha', bg: '#fef3c7', fg: '#92400e' },
+    pill: { label: 'Nova senha', bg: C.accent, fg: C.accentText },
     title: 'Vamos criar sua nova senha',
     subtitle: 'O link vale por 1 hora e funciona uma única vez.',
     intro: `${helloName(p.name)} Recebemos um pedido para redefinir a senha da conta <strong>${esc(p.email)}</strong> na Rota das Pousadas. Toque no botão abaixo para escolher a nova senha.`,
@@ -552,13 +557,13 @@ export function passwordChangedEmail(p: {
   const subject = 'Sua senha foi alterada — Rota das Pousadas'
   const html = wrapLayout({
     preheader: `A senha da sua conta foi alterada em ${when}.`,
-    pill: { label: 'Segurança', bg: '#d1fae5', fg: '#065f46' },
+    pill: { label: 'Segurança', bg: '#e2ece6', fg: '#2f6a4f' },
     title: 'Sua senha foi alterada',
     subtitle: `Em ${when} (horário de Brasília)`,
     intro: `${helloName(p.name)} A senha da sua conta na Rota das Pousadas acabou de ser alterada. Por segurança, desconectamos os outros aparelhos em que a conta estava aberta.`,
     ticketHtml: '',
     extraHtml: notice(
-      `<strong>Não foi você?</strong> Crie uma nova senha agora em <a href="${esc(p.resetUrl)}" style="color:#7c2d12;font-weight:700;">Esqueci minha senha</a> e confira suas reservas.`,
+      `<strong>Não foi você?</strong> Crie uma nova senha agora em <a href="${esc(p.resetUrl)}" style="color:${C.ink};font-weight:700;">Esqueci minha senha</a> e confira suas reservas.`,
       'warn',
     ),
     cta: { href: esc(p.loginUrl), label: 'Entrar na minha conta' },
@@ -589,7 +594,7 @@ export function paymentProofReceivedEmail(ctx: BookingNotificationContext, amoun
   )
   const html = wrapLayout({
     preheader: 'A pousada vai conferir o seu Pix e confirmar a reserva.',
-    pill: { label: 'Em análise', bg: '#e0f2fe', fg: '#075985' },
+    pill: { label: 'Em análise', bg: C.linen, fg: C.ink },
     title: 'Recebemos o seu comprovante',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `${greeting(ctx)} O comprovante do Pix da reserva <strong>${esc(ctx.code)}</strong> chegou. Agora a pousada confere o valor na conta dela e confirma a sua reserva — você recebe outro e-mail assim que isso acontecer.`,
@@ -620,7 +625,7 @@ export function paymentProofAlertEmail(ctx: BookingNotificationContext, amount: 
   )
   const html = wrapLayout({
     preheader: `O hóspede enviou o comprovante do Pix da reserva ${ctx.code}.`,
-    pill: { label: 'Aprovar pagamento', bg: C.accent, fg: '#ffffff' },
+    pill: { label: 'Aprovar pagamento', bg: C.accent, fg: C.accentText },
     title: 'Chegou um comprovante de Pix',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `O hóspede da reserva <strong>${esc(ctx.code)}</strong> enviou o comprovante do Pix. Confira se o valor caiu na conta da pousada e aprove (ou recuse) no painel.`,
@@ -654,7 +659,7 @@ export function paymentPartialEmail(
     : null
   const html = wrapLayout({
     preheader: `A pousada confirmou ${formatCurrencyBRL(received)}. Falta ${formatCurrencyBRL(remaining)}.`,
-    pill: { label: 'Pagamento parcial', bg: '#fef3c7', fg: '#92400e' },
+    pill: { label: 'Pagamento parcial', bg: C.accent, fg: C.accentText },
     title: 'Recebemos parte do pagamento',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `${greeting(ctx)} A pousada confirmou <strong>${formatCurrencyBRL(received)}</strong> na reserva <strong>${esc(ctx.code)}</strong>. Para confirmar a reserva, falta pagar <strong>${formatCurrencyBRL(remaining)}</strong>.`,
@@ -691,7 +696,7 @@ export function paymentReviewAlertEmail(
   )
   const html = wrapLayout({
     preheader: info.title,
-    pill: { label: 'Revisar pagamento', bg: '#fee2e2', fg: '#991b1b' },
+    pill: { label: 'Revisar pagamento', bg: '#f6e0db', fg: '#b3412a' },
     title: info.title,
     subtitle: `${ctx.pousada.name} · reserva ${ctx.code}`,
     intro: esc(info.action),
@@ -721,7 +726,7 @@ export function paymentProofRejectedEmail(
     : null
   const html = wrapLayout({
     preheader: 'A pousada não conseguiu confirmar o seu Pix. Veja o motivo.',
-    pill: { label: 'Ação necessária', bg: '#fee2e2', fg: '#991b1b' },
+    pill: { label: 'Ação necessária', bg: '#f6e0db', fg: '#b3412a' },
     title: 'A pousada não confirmou o seu Pix',
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `${greeting(ctx)} A pousada analisou o comprovante da reserva <strong>${esc(ctx.code)}</strong> e não conseguiu confirmar o pagamento.`,
@@ -760,7 +765,7 @@ export function memberInviteEmail(p: {
     : 'Você foi convidado'
   const html = wrapLayout({
     preheader: `Você foi convidado para a equipe ${p.pousadaName} como ${p.roleLabel}.`,
-    pill: { label: 'Convite de equipe', bg: '#dcfce7', fg: '#166534' },
+    pill: { label: 'Convite de equipe', bg: C.linen, fg: C.ink },
     title: `Bem-vindo à equipe`,
     subtitle: `${p.pousadaName} · ${p.roleLabel}`,
     intro: `${who} para fazer parte da equipe de <strong>${esc(p.pousadaName)}</strong> no painel da Rota das Pousadas, com o papel de <strong>${esc(p.roleLabel)}</strong>.`,

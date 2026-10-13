@@ -97,9 +97,7 @@ export function PlatformTeam({ initialTeam }: { initialTeam: PlatformTeamMember[
             disabled={isPending}
           />
           <label className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Papel
-            </span>
+            <span className="text-foreground text-sm font-medium">Papel</span>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as PlatformRoleValue)}

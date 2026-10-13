@@ -66,9 +66,7 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
   return (
     <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Acomodação
-        </span>
+        <span className="text-foreground text-sm font-medium">Acomodação</span>
         <select
           name="roomId"
           required
@@ -85,9 +83,7 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
         </select>
       </label>
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Tipo
-        </span>
+        <span className="text-foreground text-sm font-medium">Tipo</span>
         <select
           name="blockType"
           className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"

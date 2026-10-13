@@ -54,14 +54,29 @@ export function Drawer({
 
   return createPortal(
     <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="absolute inset-0 bg-stone-deep/40 backdrop-blur-sm" aria-hidden="true" onClick={onClose} />
-      <div className={cn('absolute border-border bg-card p-6 shadow-2xl shadow-stone-deep/20', panelBySide[side], roundBySide[side], className)}>
+      <div
+        className="bg-stone-deep/40 absolute inset-0 backdrop-blur-sm"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div
+        className={cn(
+          'border-border bg-card shadow-stone-deep/20 absolute p-6 shadow-2xl',
+          panelBySide[side],
+          roundBySide[side],
+          className,
+        )}
+      >
         <div className="flex items-center justify-between">
-          {title ? <h2 className="font-serif text-lg font-semibold text-foreground">{title}</h2> : <span />}
+          {title ? (
+            <h2 className="font-display text-foreground text-lg font-medium">{title}</h2>
+          ) : (
+            <span />
+          )}
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="text-muted-foreground hover:bg-secondary hover:text-foreground flex size-8 items-center justify-center rounded-full transition-colors"
           >
             <X className="size-5" />
           </button>

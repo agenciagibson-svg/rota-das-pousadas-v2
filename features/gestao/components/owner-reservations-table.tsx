@@ -36,7 +36,7 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                   <Link
                     href={`/dashboard/reservas/${reservation.id}`}
-                    className="text-foreground min-w-0 truncate font-serif text-lg font-semibold hover:underline sm:text-xl"
+                    className="text-foreground font-display min-w-0 truncate text-lg font-medium hover:underline sm:text-xl"
                   >
                     {reservation.guestName}
                   </Link>
@@ -111,7 +111,7 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                 {reservation.status === 'pending' && reservation.proofPending && (
                   <Link
                     href={`/dashboard/reservas/${reservation.id}`}
-                    className="mt-4 block rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-900 hover:bg-amber-100"
+                    className="border-ipe/50 bg-ipe/15 text-foreground hover:bg-ipe/25 mt-4 block rounded-2xl border p-3 text-sm font-medium"
                   >
                     O hóspede enviou o comprovante do Pix. Confira na conta e aprove →
                   </Link>
@@ -161,8 +161,8 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                       <span
                         className={
                           reservation.balanceDue > 0
-                            ? 'font-semibold whitespace-nowrap text-amber-700'
-                            : 'font-semibold whitespace-nowrap text-emerald-700'
+                            ? 'text-foreground font-semibold whitespace-nowrap'
+                            : 'text-success font-semibold whitespace-nowrap'
                         }
                       >
                         {reservation.balanceDue > 0 ? formatBRL(reservation.balanceDue) : '✓'}

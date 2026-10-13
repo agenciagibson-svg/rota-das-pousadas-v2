@@ -38,12 +38,12 @@ export function Dialog({
       <div className="flex items-start justify-between gap-4">
         <div>
           {title && (
-            <h2 id={titleId} className="font-serif text-xl font-semibold text-foreground">
+            <h2 id={titleId} className="font-display text-foreground text-xl font-medium">
               {title}
             </h2>
           )}
           {description && (
-            <p id={descId} className="mt-1 text-sm text-muted-foreground">
+            <p id={descId} className="text-muted-foreground mt-1 text-sm">
               {description}
             </p>
           )}
@@ -51,7 +51,7 @@ export function Dialog({
         <button
           onClick={onClose}
           aria-label="Fechar"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="text-muted-foreground hover:bg-secondary hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors"
         >
           <X className="size-5" />
         </button>

@@ -56,7 +56,7 @@ export default async function AdminAuditoriaPage({
 
         <Card className="p-6">
           <div className="mb-4">
-            <h3 className="text-foreground font-serif text-lg font-semibold">
+            <h3 className="text-foreground font-display text-lg font-medium">
               Tentativas de login
             </h3>
             <p className="text-muted-foreground text-sm">

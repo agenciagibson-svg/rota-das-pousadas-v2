@@ -97,9 +97,7 @@ function NewChannelForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () =>
   return (
     <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Acomodação
-        </span>
+        <span className="text-foreground text-sm font-medium">Acomodação</span>
         <select
           name="roomId"
           required
@@ -117,9 +115,7 @@ function NewChannelForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () =>
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Canal
-        </span>
+        <span className="text-foreground text-sm font-medium">Canal</span>
         <select
           name="provider"
           value={provider}
@@ -135,9 +131,7 @@ function NewChannelForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () =>
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Link do calendário do canal
-        </span>
+        <span className="text-foreground text-sm font-medium">Link do calendário do canal</span>
         <Input name="importUrl" type="url" placeholder="https://..." inputMode="url" />
         <span className="text-muted-foreground text-xs">{ONDE_ENCONTRAR[provider]}</span>
         <span className="text-muted-foreground text-xs">
@@ -146,9 +140,7 @@ function NewChannelForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () =>
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Apelido (opcional)
-        </span>
+        <span className="text-foreground text-sm font-medium">Apelido (opcional)</span>
         <Input name="label" maxLength={80} placeholder="Ex.: anúncio do chalé no Airbnb" />
       </label>
 
@@ -294,9 +286,7 @@ export function ChannelsView({
 
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 <div className="bg-secondary/40 rounded-xl p-3.5">
-                  <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                    A Rota lê deste link
-                  </p>
+                  <p className="text-foreground text-sm font-medium">A Rota lê deste link</p>
                   {channel.importUrl ? (
                     <>
                       <p className="text-foreground mt-1.5 text-xs break-all">
@@ -319,9 +309,7 @@ export function ChannelsView({
                 </div>
 
                 <div className="bg-secondary/40 rounded-xl p-3.5">
-                  <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                    Cole este link no canal
-                  </p>
+                  <p className="text-foreground text-sm font-medium">Cole este link no canal</p>
                   <div className="mt-1.5 flex items-start gap-2">
                     <p className="text-foreground min-w-0 flex-1 text-xs break-all">
                       {channel.exportUrl}

@@ -82,7 +82,7 @@ function OrderCard({
   return (
     <div
       className={`rounded-2xl border p-4 ${
-        order.status === 'novo' ? 'border-amber-300 bg-amber-50/60' : 'border-border bg-card'
+        order.status === 'novo' ? 'border-ipe/50 bg-ipe/10' : 'border-border bg-card'
       } ${closed ? 'opacity-75' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -354,7 +354,7 @@ export function OrdersBoard({
       )}
 
       {appItemsCount === 0 && (
-        <Card className="mt-4 border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <Card className="border-ipe/50 bg-ipe/15 text-foreground mt-4 p-4 text-sm">
           Nenhum item aparece no app do hóspede ainda. Em{' '}
           <Link href="/dashboard/estoque" className="font-semibold underline">
             Estoque

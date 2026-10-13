@@ -10,7 +10,7 @@ import { SelectPousadaForm } from './select-pousada-form'
 /** Usuário autenticado, mas sem nenhum vínculo (ativo, suspenso ou convite) com pousada alguma. */
 export function NoMembershipScreen() {
   return (
-    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
         size="lg"
         icon={MapPinned}
@@ -18,10 +18,10 @@ export function NoMembershipScreen() {
         description="Sua conta não está vinculada a nenhuma pousada. Cadastre a sua ou peça para um proprietário te convidar."
         action={
           <div className="flex flex-wrap justify-center gap-2">
-            <Link href="/anunciar" className={buttonVariants()}>
+            <Link href="/anunciar" className={buttonVariants({ size: 'lg' })}>
               Cadastrar minha pousada
             </Link>
-            <LogoutButton />
+            <LogoutButton className="h-12 rounded-full px-5" />
           </div>
         }
       />
@@ -33,7 +33,7 @@ export function NoMembershipScreen() {
 export function InvitedOnlyScreen({ invites }: { invites: PendingInvite[] }) {
   const single = invites.length === 1 ? invites[0] : null
   return (
-    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5 py-16">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5 py-16">
       <div className="w-full max-w-lg">
         <EmptyState
           size="lg"
@@ -44,7 +44,7 @@ export function InvitedOnlyScreen({ invites }: { invites: PendingInvite[] }) {
               ? `Você foi convidado para a equipe de ${single.pousadaName}. Aceite para acessar a gestão.`
               : 'Você foi convidado para a equipe de mais de uma pousada. Responda a cada convite.'
           }
-          action={<LogoutButton />}
+          action={<LogoutButton className="h-12 rounded-full px-5" />}
         />
         <div className="mt-6">
           <PendingInvites invites={invites} />
@@ -63,13 +63,13 @@ export function SuspendedScreen({
   reason: string | null
 }) {
   return (
-    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
         size="lg"
         icon={Ban}
         title="Acesso suspenso"
         description={`Seu acesso à gestão de ${pousadaName} foi suspenso${reason ? `: ${reason}` : '.'} Fale com o proprietário para reativar.`}
-        action={<LogoutButton />}
+        action={<LogoutButton className="h-12 rounded-full px-5" />}
       />
     </div>
   )
@@ -84,9 +84,9 @@ export function SelectPousadaScreen({
   invites?: PendingInvite[]
 }) {
   return (
-    <div className="bg-secondary/40 flex min-h-screen items-center justify-center px-5 py-16">
+    <div className="bg-background flex min-h-screen items-center justify-center px-5 py-16">
       <div className="w-full max-w-lg">
-        <h1 className="text-foreground text-center font-serif text-4xl font-semibold">
+        <h1 className="text-foreground font-display text-center text-4xl font-medium">
           Qual pousada você quer gerenciar?
         </h1>
         <p className="text-muted-foreground mt-3 text-center text-lg">
@@ -114,9 +114,7 @@ export function PendingInvitesBanner({ invites }: { invites: PendingInvite[] }) 
   return (
     <div className="border-border bg-secondary/40 border-b px-4 py-3 sm:px-6">
       <div className="mx-auto max-w-5xl">
-        <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-          Convite de equipe
-        </p>
+        <p className="text-foreground mb-2 text-sm font-semibold">Convite de equipe</p>
         <PendingInvites invites={invites} compact />
       </div>
     </div>

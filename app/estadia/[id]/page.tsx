@@ -24,7 +24,10 @@ export default async function EstadiaPage({ params }: { params: Promise<{ id: st
           <p className="text-muted-foreground mt-1 text-sm">
             Verifique a internet e tente de novo.
           </p>
-          <Link href={`/estadia/${id}`} className="text-primary mt-3 inline-block font-semibold">
+          <Link
+            href={`/estadia/${id}`}
+            className="text-foreground mt-3 inline-flex min-h-11 items-center font-semibold underline-offset-4 hover:underline"
+          >
             Tentar de novo
           </Link>
         </div>
@@ -39,7 +42,10 @@ export default async function EstadiaPage({ params }: { params: Promise<{ id: st
           <p className="text-muted-foreground mt-1 text-sm">
             Entre com a conta usada na reserva para usar o app.
           </p>
-          <Link href="/estadia" className="text-primary mt-3 inline-block font-semibold">
+          <Link
+            href="/estadia"
+            className="text-foreground mt-3 inline-flex min-h-11 items-center font-semibold underline-offset-4 hover:underline"
+          >
             Ver minhas estadias
           </Link>
         </div>

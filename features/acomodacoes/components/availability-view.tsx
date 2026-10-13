@@ -106,17 +106,13 @@ export function AvailabilityView({
               wrapperClassName="sm:col-span-1"
             />
             <label className="flex flex-col justify-end gap-1.5 sm:col-span-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Pets
-              </span>
+              <span className="text-foreground text-sm font-medium">Pets</span>
               <span className="border-input bg-card flex h-[42px] items-center gap-2 rounded-xl border px-3.5 text-sm">
                 <input type="checkbox" name="pets" /> Com pet
               </span>
             </label>
             <label className="flex flex-col gap-1.5 sm:col-span-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Categoria
-              </span>
+              <span className="text-foreground text-sm font-medium">Categoria</span>
               <select
                 name="categoryId"
                 className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"

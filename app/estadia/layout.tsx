@@ -1,12 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
-
-// Fonte do app da estadia (visual de app de pedidos, diferente do site).
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: 'Minha estadia',
@@ -18,12 +10,14 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#f4f4f2',
+  themeColor: '#eef1ef',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
 }
 
+// Mesma tipografia do site (Figtree + Funnel Display, herdadas do layout raiz):
+// o app da estadia tem cara de app de pedidos, mas é a mesma marca.
 export default function EstadiaLayout({ children }: { children: React.ReactNode }) {
-  return <div className={jakarta.className}>{children}</div>
+  return children
 }

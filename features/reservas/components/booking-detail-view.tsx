@@ -88,7 +88,7 @@ export function BookingDetailView({
 
         {proofs.length > 0 && (
           <Card
-            className={`p-6 ${proofs.some((p) => p.status === 'submitted') ? 'ring-2 ring-amber-300' : ''}`}
+            className={`p-6 ${proofs.some((p) => p.status === 'submitted') ? 'ring-ipe/60 ring-2' : ''}`}
           >
             <h2 className="text-foreground font-semibold">Pagamento por Pix direto</h2>
             <p className="text-muted-foreground text-sm">
@@ -223,7 +223,7 @@ export function BookingDetailView({
               ) : (
                 <div className="text-foreground flex justify-between font-semibold">
                   <span>{booking.balanceDue > 0 ? 'Falta receber' : 'Saldo'}</span>
-                  <span className={booking.balanceDue > 0 ? 'text-amber-700' : 'text-emerald-700'}>
+                  <span className={booking.balanceDue > 0 ? 'text-foreground' : 'text-success'}>
                     {booking.balanceDue > 0 ? formatBRL(booking.balanceDue) : 'Pago ✓'}
                   </span>
                 </div>

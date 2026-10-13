@@ -95,7 +95,7 @@ export const brand = {
   // Nomes antigos, remapeados para a paleta nova.
   forest: '#0f1716',
   ocean: '#4f5955',
-  sunset: '#f97316',
+  sunset: '#f4b42a',
   gold: '#f4b42a',
   sand: '#e2e7e4',
   linen: '#eef1ef',

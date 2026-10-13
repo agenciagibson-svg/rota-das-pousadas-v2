@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, Megaphone, Rocket } from 'lucide-react'
 import { formatDateTime, formatISODate } from '@/lib/format'
 import { requestGrowthHelpAction } from '@/features/admin/growth-actions'
 import type { OwnerGrowthCard } from '@/features/admin/services/growth.service'
+import { buttonVariants } from '@/components/ui/button'
 
 /** Convite do painel da pousada: diagnóstico rápido + "Tenho interesse" em tráfego pago. */
 export function GrowthInvite({ card }: { card: NonNullable<OwnerGrowthCard> }) {
@@ -38,7 +39,7 @@ export function GrowthInvite({ card }: { card: NonNullable<OwnerGrowthCard> }) {
   if (active) {
     return (
       <div className="border-border bg-card mt-5 flex items-start gap-3 rounded-2xl border p-5">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+        <span className="bg-success/10 text-success grid size-10 shrink-0 place-items-center rounded-full">
           <Rocket className="size-5" />
         </span>
         <div>
@@ -55,7 +56,7 @@ export function GrowthInvite({ card }: { card: NonNullable<OwnerGrowthCard> }) {
   return (
     <div className="border-border bg-card mt-5 grid gap-5 rounded-2xl border p-5 lg:grid-cols-[1fr_auto]">
       <div className="flex items-start gap-3">
-        <span className="bg-sunset/10 text-sunset grid size-10 shrink-0 place-items-center rounded-full">
+        <span className="bg-ipe/25 text-foreground grid size-10 shrink-0 place-items-center rounded-full">
           <Megaphone className="size-5" />
         </span>
         <div>
@@ -71,7 +72,7 @@ export function GrowthInvite({ card }: { card: NonNullable<OwnerGrowthCard> }) {
             {checklist.map((c) => (
               <li key={c.key} className="flex items-center gap-2">
                 {c.ok ? (
-                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  <CheckCircle2 className="text-success size-4" />
                 ) : (
                   <Circle className="text-muted-foreground size-4" />
                 )}
@@ -85,7 +86,7 @@ export function GrowthInvite({ card }: { card: NonNullable<OwnerGrowthCard> }) {
       </div>
       <div className="flex flex-col items-start justify-center gap-2 lg:items-end">
         {interestAt ? (
-          <p className="max-w-xs text-sm text-emerald-700 lg:text-right">
+          <p className="text-success max-w-xs text-sm lg:text-right">
             Pedido enviado em {formatDateTime(interestAt)}. A equipe da Rota vai falar com você pelo
             WhatsApp.
           </p>
@@ -94,7 +95,7 @@ export function GrowthInvite({ card }: { card: NonNullable<OwnerGrowthCard> }) {
             type="button"
             disabled={pending}
             onClick={() => void ask()}
-            className="bg-sunset rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className={buttonVariants({ variant: 'accent', size: 'pill' })}
           >
             {pending ? 'Enviando…' : 'Tenho interesse'}
           </button>

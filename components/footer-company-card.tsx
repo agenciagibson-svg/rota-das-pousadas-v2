@@ -59,7 +59,7 @@ export function FooterCompanyCard() {
             <ActiveIcon className="size-4" />
             {active.step}
           </span>
-          <p className="text-linen mt-3 font-serif text-xl leading-tight font-semibold text-pretty">
+          <p className="text-linen font-display mt-3 text-xl leading-tight font-medium text-pretty">
             {active.title}
           </p>
           <p className="text-linen/62 mt-3 min-h-16 text-sm leading-relaxed">{active.detail}</p>

@@ -67,28 +67,28 @@ export function InstallPrompt() {
   if (!visible) return null
 
   return (
-    <div className="relative mb-1 rounded-[24px] bg-white p-4 pr-10 text-sm">
+    <div className="bg-card relative mb-1 rounded-[24px] p-4 pr-10 text-sm">
       <button
         type="button"
         onClick={dismiss}
         aria-label="Fechar"
-        className="absolute top-2.5 right-2.5 rounded-full bg-[#f4f4f2] p-1.5 text-[#1e1e1e]"
+        className="bg-neblina text-breu absolute top-2.5 right-2.5 rounded-full p-1.5"
       >
         <X className="size-4" />
       </button>
-      <p className="font-bold text-[#1e1e1e]">Deixe o app na tela do seu celular</p>
+      <p className="text-breu font-bold">Deixe o app na tela do seu celular</p>
       {ios ? (
-        <p className="mt-1 text-[#9a9a96]">
+        <p className="text-muted-foreground mt-1">
           No Safari, toque em <Share className="inline size-4 align-text-bottom" /> Compartilhar e
           depois em <strong>Adicionar à Tela de Início</strong>.
         </p>
       ) : (
         <>
-          <p className="mt-1 text-[#9a9a96]">Abra com um toque, como qualquer aplicativo.</p>
+          <p className="text-muted-foreground mt-1">Abra com um toque, como qualquer aplicativo.</p>
           <button
             type="button"
             onClick={() => void install()}
-            className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#1e1e1e] px-4 py-2.5 font-bold text-white"
+            className="bg-breu text-neblina mt-3 inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-bold"
           >
             <Download className="size-4" />
             Instalar app

@@ -103,7 +103,7 @@ export function OwnerReviewsView({
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-foreground font-serif text-lg font-semibold">
+                      <h3 className="text-foreground font-display text-lg font-medium">
                         {review.guestName}
                       </h3>
                       <RatingStars rating={review.rating} />

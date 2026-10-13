@@ -45,17 +45,29 @@ export function ExpenseForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3" noValidate>
-      <Input label="Descrição" placeholder="Ex.: Conta de energia" error={errors.description?.message} {...register('description')} />
+      <Input
+        label="Descrição"
+        placeholder="Ex.: Conta de energia"
+        error={errors.description?.message}
+        {...register('description')}
+      />
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Valor (R$)" type="number" min={1} placeholder="0" error={errors.amount?.message} {...register('amount')} />
+        <Input
+          label="Valor (R$)"
+          type="number"
+          min={1}
+          placeholder="0"
+          error={errors.amount?.message}
+          {...register('amount')}
+        />
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="category" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <label htmlFor="category" className="text-foreground text-sm font-medium">
             Categoria
           </label>
           <select
             id="category"
             className={cn(
-              'rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20',
+              'border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 rounded-xl border px-3.5 py-2.5 text-sm transition-colors outline-none focus:ring-3',
             )}
             {...register('category')}
           >
@@ -67,8 +79,13 @@ export function ExpenseForm() {
           </select>
         </div>
       </div>
-      <Input label="Vencimento (opcional)" type="date" error={errors.dueDate?.message} {...register('dueDate')} />
-      {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
+      <Input
+        label="Vencimento (opcional)"
+        type="date"
+        error={errors.dueDate?.message}
+        {...register('dueDate')}
+      />
+      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Lançando…' : 'Lançar despesa'}
       </Button>

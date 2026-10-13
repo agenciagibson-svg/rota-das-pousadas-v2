@@ -65,7 +65,7 @@ identidade em vigor; mudanças nela pedem nova aprovação.
   `--pedra`, `--neblina` e as classes `bg-ipe`, `text-liquen`… Os tokens
   semânticos seguem a paleta: `primary` = Breu, `accent` = Ipê (texto Breu),
   fundo = Neblina. Os nomes antigos (`forest`, `gold`, `linen`, `stone-deep`…)
-  foram remapeados; `sunset` segue laranja só até o app da estadia ser refeito.
+  foram remapeados (inclusive `sunset`, que virou Ipê com o app da estadia refeito).
 - **Fontes** (`app/layout.tsx`): `next/font` com Funnel Display e Figtree.
 - **Logo** (`components/brand/logo.tsx`): `<Logo />` desenha o SVG em linha,
   com o nome em `currentColor` e o ponto em Ipê; `<Marker />` é o marcador
