@@ -48,7 +48,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
       />
 
       {orderBlockedReason && (
-        <p className="bg-ipe/15 text-breu mb-3 rounded-[20px] p-4 text-[13px] font-medium">
+        <p className="bg-ipe/15 text-app-ink mb-3 rounded-[20px] p-4 text-[13px] font-medium">
           {orderBlockedReason}
         </p>
       )}
@@ -86,7 +86,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                     aria-pressed={on}
                     className={cx(
                       'flex h-[46px] shrink-0 items-center gap-2 rounded-full py-1 pr-4 pl-1 text-[13px] font-semibold',
-                      on ? 'bg-ipe text-breu' : 'bg-card text-breu',
+                      on ? 'bg-ipe text-breu' : 'bg-card text-app-ink',
                     )}
                   >
                     <ItemVisual photoUrl={first.photoUrl} category={c} size={38} />
@@ -162,7 +162,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                           Esgotado
                         </span>
                       ) : qty > 0 ? (
-                        <div className="bg-breu text-neblina relative z-10 flex items-center gap-1 rounded-full p-[3px]">
+                        <div className="bg-app-action text-app-on-action relative z-10 flex items-center gap-1 rounded-full p-[3px]">
                           <button
                             type="button"
                             aria-label={`Menos ${item.name}`}

@@ -61,7 +61,7 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
             <RoundButton
               label="Ligar para a pousada"
               href={`tel:${phone}`}
-              className="bg-neblina size-[42px]"
+              className="bg-app-soft size-[42px]"
             >
               <Phone className="size-[17px]" />
             </RoundButton>
@@ -73,7 +73,7 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
         <>
           <SectionHead title="Pedidos rápidos" aside="Um toque e a equipe recebe" />
           {orderBlockedReason ? (
-            <p className="bg-ipe/15 text-breu rounded-[20px] p-4 text-[13px] font-medium">
+            <p className="bg-ipe/15 text-app-ink rounded-[20px] p-4 text-[13px] font-medium">
               {orderBlockedReason}
             </p>
           ) : (
@@ -91,7 +91,7 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
                     }}
                     className="bg-card rounded-[24px] p-3.5 text-left disabled:opacity-50"
                   >
-                    <span className="bg-neblina grid size-[38px] place-items-center rounded-full">
+                    <span className="bg-app-soft grid size-[38px] place-items-center rounded-full">
                       <Icon className="size-[17px]" />
                     </span>
                     <p className="mt-3 text-[13.5px] leading-tight font-bold">{s.name}</p>
@@ -159,7 +159,7 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
                     rows={3}
                     placeholder="Conte o que você mais gostou (opcional)"
                     aria-label="Comentário"
-                    className="bg-neblina focus-visible:ring-ipe/60 w-full resize-none rounded-[18px] px-3.5 py-3 text-[13px] outline-none focus-visible:ring-2"
+                    className="bg-app-soft focus-visible:ring-ipe/60 w-full resize-none rounded-[18px] px-3.5 py-3 text-[13px] outline-none focus-visible:ring-2"
                   />
                   {review.error && (
                     <p role="alert" className="text-destructive mt-1 text-sm font-medium">
@@ -170,7 +170,7 @@ export function StayReception(ctx: StayCtx & { review: ReviewState }) {
                     type="button"
                     onClick={review.submit}
                     disabled={review.sending}
-                    className="bg-breu text-neblina mt-2 w-full rounded-full py-3.5 text-sm font-bold disabled:opacity-60"
+                    className="bg-app-action text-app-on-action mt-2 w-full rounded-full py-3.5 text-sm font-bold disabled:opacity-60"
                   >
                     {review.sending ? 'Enviando…' : 'Enviar avaliação'}
                   </button>

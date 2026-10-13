@@ -38,7 +38,7 @@ import type { InventoryCategory } from '@/features/estoque/labels'
 import { useFocusTrap } from '@/hooks/use-focus-trap'
 
 /** Paleta do app da estadia: Neblina, Breu e o Ipê da marca (docs/Marca.md). */
-export const APP_BG = 'bg-neblina'
+export const APP_BG = 'bg-app'
 
 export function cx(...xs: (string | false | null | undefined)[]) {
   return xs.filter(Boolean).join(' ')
@@ -64,14 +64,14 @@ export function RoundButton({
 }) {
   const cls = cx(
     'relative grid size-11 shrink-0 place-items-center rounded-full transition active:scale-95',
-    dark ? 'bg-breu text-neblina' : 'bg-card text-breu',
+    dark ? 'bg-app-strong text-neblina' : 'bg-card text-app-ink',
     className,
   )
   const inner = (
     <>
       {children}
       {badge ? (
-        <span className="bg-ipe border-neblina text-breu absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 px-1 text-[10px] font-bold">
+        <span className="bg-ipe border-app text-breu absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 px-1 text-[10px] font-bold">
           {badge}
         </span>
       ) : null}
@@ -111,8 +111,8 @@ export function TwoTone({
 }) {
   return (
     <Tag className={cx('font-display tracking-[-0.01em]', className)}>
-      <span className="text-breu font-medium">{strong}</span>
-      {light ? <span className="text-grafite font-light"> {light}</span> : null}
+      <span className="text-app-ink font-medium">{strong}</span>
+      {light ? <span className="text-app-ink-2 font-light"> {light}</span> : null}
     </Tag>
   )
 }
@@ -130,7 +130,7 @@ export function SectionHead({
 }) {
   return (
     <div className="mt-6 mb-3 flex items-center justify-between px-0.5">
-      <h2 className="font-display text-breu text-[17px] font-medium">{title}</h2>
+      <h2 className="font-display text-app-ink text-[17px] font-medium">{title}</h2>
       {action && onAction ? (
         <button type="button" onClick={onAction} className="text-muted-foreground text-[12.5px]">
           {action} ›
@@ -153,8 +153,8 @@ export function Pill({
     <span
       className={cx(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold whitespace-nowrap',
-        tone === 'dark' && 'bg-breu text-neblina',
-        tone === 'white' && 'bg-card text-breu',
+        tone === 'dark' && 'bg-app-strong text-neblina',
+        tone === 'white' && 'bg-card text-app-ink',
         tone === 'gray' && 'bg-neblina/10 text-neblina',
         tone === 'orange' && 'bg-ipe text-breu',
       )}

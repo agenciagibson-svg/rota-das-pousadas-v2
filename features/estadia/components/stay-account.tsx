@@ -26,7 +26,7 @@ function Steps({ status }: { status: GuestOrder['status'] }) {
               <span
                 className={cx(
                   'grid size-[22px] shrink-0 place-items-center rounded-full',
-                  done && 'bg-breu text-neblina',
+                  done && 'bg-app-action text-app-on-action',
                   now && 'bg-ipe text-breu ring-ipe/30 ring-4',
                   !done && !now && 'bg-secondary',
                 )}
@@ -34,7 +34,7 @@ function Steps({ status }: { status: GuestOrder['status'] }) {
                 {done && <Check className="size-3" strokeWidth={3.5} />}
               </span>
               {i < 3 && (
-                <span className={cx('mx-1 h-0.5 flex-1', i < s ? 'bg-breu' : 'bg-secondary')} />
+                <span className={cx('mx-1 h-0.5 flex-1', i < s ? 'bg-app-ink' : 'bg-secondary')} />
               )}
             </div>
           )
@@ -66,7 +66,7 @@ export function StayAccount(ctx: StayCtx & { cancel: (o: GuestOrder) => void }) 
       </div>
       <TwoTone strong="Sua" light="conta" className="mt-5 mb-4 px-0.5 text-[28px] leading-[1.1]" />
 
-      <section className="bg-breu text-neblina rounded-[30px] p-5">
+      <section className="bg-app-strong text-neblina rounded-[30px] p-5">
         <p className="text-liquen text-xs">A pagar no check-out</p>
         <p className="font-display mt-1 text-[38px] leading-none font-medium">
           <span className="mr-1 align-top text-base">R$</span>
@@ -110,7 +110,7 @@ export function StayAccount(ctx: StayCtx & { cancel: (o: GuestOrder) => void }) 
           {ctx.orders.map((o) => (
             <li key={o.id} className="bg-card rounded-[24px] p-3.5">
               <div className="flex items-center gap-2.5">
-                <span className="bg-neblina grid size-10 shrink-0 place-items-center rounded-full">
+                <span className="bg-app-soft grid size-10 shrink-0 place-items-center rounded-full">
                   <ShoppingBag className="size-[17px]" />
                 </span>
                 <div className="min-w-0 flex-1">

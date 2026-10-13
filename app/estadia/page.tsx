@@ -30,7 +30,7 @@ export default async function EstadiaIndexPage() {
 
   return (
     <main id="conteudo" tabIndex={-1} className="bg-background min-h-dvh">
-      <header className="bg-breu text-neblina rounded-b-3xl">
+      <header className="bg-app-strong text-neblina rounded-b-3xl">
         <div className="mx-auto max-w-lg px-5 pt-[max(24px,env(safe-area-inset-top))] pb-8">
           <Logo className="h-5" title="Rota das Pousadas" />
           <h1 className="text-h1 mt-8">Minha estadia</h1>

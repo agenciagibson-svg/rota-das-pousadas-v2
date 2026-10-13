@@ -264,7 +264,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const detailCanAdd = !!detail && detail.available && !orderBlockedReason && detailRoom > 0
 
   return (
-    <div className={cx('text-breu min-h-dvh', APP_BG)}>
+    <div className={cx('text-app-ink min-h-dvh', APP_BG)}>
       <main
         id="conteudo"
         tabIndex={-1}
@@ -304,14 +304,14 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         onClose={closeDetail}
         footer={
           detail && detailCanAdd ? (
-            <div className="from-neblina absolute inset-x-0 bottom-0 bg-gradient-to-t from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
+            <div className="from-app absolute inset-x-0 bottom-0 bg-gradient-to-t from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
               <div className="mx-auto flex max-w-lg items-center gap-2.5">
                 <div className="bg-card flex items-center gap-1 rounded-full p-[5px]">
                   <button
                     type="button"
                     aria-label="Menos"
                     onClick={() => setDetailQty((q) => Math.max(1, q - 1))}
-                    className="bg-neblina grid size-[38px] place-items-center rounded-full"
+                    className="bg-app-soft grid size-[38px] place-items-center rounded-full"
                   >
                     <Minus className="size-3.5" strokeWidth={2.8} />
                   </button>
@@ -320,7 +320,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                     type="button"
                     aria-label="Mais"
                     onClick={() => setDetailQty((q) => Math.min(detailRoom, q + 1))}
-                    className="bg-neblina grid size-[38px] place-items-center rounded-full"
+                    className="bg-app-soft grid size-[38px] place-items-center rounded-full"
                   >
                     <Plus className="size-3.5" strokeWidth={2.8} />
                   </button>
@@ -332,7 +332,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                     setToast(`${detailQty}× ${detail.name} na sacola`)
                     setDetail(null)
                   }}
-                  className="bg-breu text-neblina flex h-[50px] flex-1 items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
+                  className="bg-app-action text-app-on-action flex h-[50px] flex-1 items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
                 >
                   Adicionar
                   <span className="bg-ipe text-breu rounded-full px-3.5 py-2 text-[13.5px]">
@@ -362,7 +362,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                 <h2 className="font-display text-[22px] leading-tight font-medium">
                   {detail.name}
                 </h2>
-                <span className="text-breu font-display text-[22px] font-medium whitespace-nowrap">
+                <span className="text-app-ink font-display text-[22px] font-medium whitespace-nowrap">
                   {detail.price === 0 ? 'Cortesia' : formatBRL(detail.price)}
                 </span>
               </div>
@@ -371,7 +371,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                   {detail.description}
                 </p>
               )}
-              <div className="border-border text-grafite mt-4 flex justify-between border-y py-3 text-xs">
+              <div className="border-border text-app-ink-2 mt-4 flex justify-between border-y py-3 text-xs">
                 <span>Entrega no quarto</span>
                 <span>{booking.roomName}</span>
                 <span>Vai para a conta</span>
@@ -380,7 +380,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                 <p className="text-muted-foreground mt-3 text-sm font-bold">Esgotado no momento.</p>
               )}
               {orderBlockedReason && (
-                <p className="bg-ipe/15 text-breu mt-3 rounded-[18px] p-3 text-[12.5px]">
+                <p className="bg-ipe/15 text-app-ink mt-3 rounded-[18px] p-3 text-[12.5px]">
                   {orderBlockedReason}
                 </p>
               )}
@@ -401,7 +401,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         </div>
         <h2 className="font-display mt-5 mb-4 px-0.5 text-[28px] leading-[1.1] tracking-[-0.01em]">
           <span className="font-medium">Sua</span>{' '}
-          <span className="text-grafite font-light">sacola</span>
+          <span className="text-app-ink-2 font-light">sacola</span>
         </h2>
         {cartLines.length === 0 ? (
           <p className="bg-card text-muted-foreground rounded-[24px] p-5 text-center text-[13px]">
@@ -423,7 +423,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                       <p className="truncate text-[13.5px] font-bold">{item.name}</p>
                       <p className="text-muted-foreground text-xs">{formatBRL(item.price * q)}</p>
                     </div>
-                    <div className="bg-breu text-neblina flex items-center gap-1 rounded-full p-[3px]">
+                    <div className="bg-app-action text-app-on-action flex items-center gap-1 rounded-full p-[3px]">
                       <button
                         type="button"
                         aria-label={q === 1 ? `Remover ${item.name}` : `Menos ${item.name}`}
@@ -470,7 +470,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
               </p>
             )}
             {orderBlockedReason ? (
-              <p className="bg-ipe/15 text-breu mt-3 rounded-[18px] p-3 text-[12.5px]">
+              <p className="bg-ipe/15 text-app-ink mt-3 rounded-[18px] p-3 text-[12.5px]">
                 {orderBlockedReason}
               </p>
             ) : (
@@ -478,7 +478,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                 type="button"
                 disabled={sending}
                 onClick={() => void sendCart()}
-                className="bg-breu text-neblina mt-4 flex h-14 w-full items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold disabled:opacity-60"
+                className="bg-app-action text-app-on-action mt-4 flex h-14 w-full items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold disabled:opacity-60"
               >
                 {sending ? 'Enviando…' : 'Enviar pedido'}
                 <span className="bg-ipe text-breu rounded-full px-4 py-2.5 text-[13.5px]">
@@ -504,7 +504,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
               Sua sacola
               <b className="block text-[15px]">{formatBRL(cartTotal)}</b>
             </span>
-            <span className="bg-breu text-neblina rounded-full px-4 py-2.5 text-[13.5px] font-bold">
+            <span className="bg-app-action text-app-on-action rounded-full px-4 py-2.5 text-[13.5px] font-bold">
               Ver sacola
             </span>
           </button>
@@ -517,7 +517,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
         className="pointer-events-none fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[60] flex justify-center px-4"
       >
         {toast && (
-          <p className="bg-breu text-neblina rounded-full px-4 py-2.5 text-[12.5px] font-semibold shadow-lg">
+          <p className="bg-app-action text-app-on-action rounded-full px-4 py-2.5 text-[12.5px] font-semibold shadow-lg">
             {toast}
           </p>
         )}
@@ -529,7 +529,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
           aria-label="Menu do app"
           className="fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-30 flex justify-center"
         >
-          <div className="bg-breu shadow-floating flex gap-1.5 rounded-full p-1.5">
+          <div className="bg-app-strong shadow-floating flex gap-1.5 rounded-full p-1.5 dark:ring-1 dark:ring-white/10">
             {TABS.map((t) => {
               const Icon = t.icon
               const active = tab === t.id

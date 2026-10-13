@@ -17,6 +17,7 @@ import { DEFAULT_EMERGENCY } from '../info'
 import { daysBetween, hourLabel, shortDate } from '../dates'
 import type { StayCtx } from './stay-context'
 import { tipMapsUrl } from './stay-home'
+import { ThemeChoice } from './stay-theme'
 import { Pill, RoundButton, SectionHead, TwoTone, amenityIcon, cx, tipIcon } from './stay-ui'
 
 function Row({
@@ -34,7 +35,7 @@ function Row({
 }) {
   return (
     <li className="[&+&]:border-border flex items-center gap-3 py-3 [&+&]:border-t">
-      <span className="bg-neblina grid size-10 shrink-0 place-items-center rounded-full">
+      <span className="bg-app-soft grid size-10 shrink-0 place-items-center rounded-full">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
@@ -89,7 +90,7 @@ export function StayDetails(ctx: StayCtx) {
         className="mt-5 mb-4 px-0.5 text-[28px] leading-[1.1]"
       />
 
-      <section className="bg-breu text-neblina rounded-[30px] p-4">
+      <section className="bg-app-strong text-neblina rounded-[30px] p-4">
         <div className="flex items-center gap-3.5">
           <span className="bg-ipe text-breu grid size-[76px] shrink-0 place-items-center rounded-[22px]">
             <BedDouble className="size-9" strokeWidth={1.6} />
@@ -169,7 +170,7 @@ export function StayDetails(ctx: StayCtx) {
                 <button
                   type="button"
                   onClick={() => ctx.copy(info.wifiPassword, 'Senha do Wi-Fi copiada')}
-                  className="bg-breu text-neblina shrink-0 rounded-full px-3 py-2 text-xs font-bold"
+                  className="bg-app-action text-app-on-action shrink-0 rounded-full px-3 py-2 text-xs font-bold"
                 >
                   Copiar
                 </button>
@@ -237,7 +238,7 @@ export function StayDetails(ctx: StayCtx) {
             href={ctx.mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-breu text-neblina rounded-full py-3 text-center text-[12.5px] font-bold"
+            className="bg-app-action text-app-on-action rounded-full py-3 text-center text-[12.5px] font-bold"
           >
             Google Maps
           </a>
@@ -245,7 +246,7 @@ export function StayDetails(ctx: StayCtx) {
             href={ctx.wazeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-neblina rounded-full py-3 text-center text-[12.5px] font-bold"
+            className="bg-app-soft rounded-full py-3 text-center text-[12.5px] font-bold"
           >
             Waze
           </a>
@@ -268,7 +269,7 @@ export function StayDetails(ctx: StayCtx) {
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 py-3"
                   >
-                    <span className="text-breu bg-ipe/25 grid size-10 shrink-0 place-items-center rounded-full">
+                    <span className="text-app-ink bg-ipe/25 grid size-10 shrink-0 place-items-center rounded-full">
                       <Icon className="size-[17px]" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -277,7 +278,7 @@ export function StayDetails(ctx: StayCtx) {
                       </p>
                       <p className="text-[13.5px] font-bold">{t.name}</p>
                     </div>
-                    <span className="bg-neblina grid size-7 place-items-center rounded-full">
+                    <span className="bg-app-soft grid size-7 place-items-center rounded-full">
                       <ChevronRight className="size-3.5" />
                     </span>
                   </a>
@@ -302,10 +303,13 @@ export function StayDetails(ctx: StayCtx) {
         ))}
       </div>
 
+      <SectionHead title="Aparência" aside="Vale só neste aparelho" />
+      <ThemeChoice />
+
       {pousada.cancellationPolicy && (
         <details className="bg-card mt-3 rounded-[22px] px-4 py-3 text-[13px]">
           <summary className="cursor-pointer font-bold">Política de cancelamento</summary>
-          <p className="text-grafite mt-2 whitespace-pre-line">{pousada.cancellationPolicy}</p>
+          <p className="text-app-ink-2 mt-2 whitespace-pre-line">{pousada.cancellationPolicy}</p>
         </details>
       )}
 
@@ -316,7 +320,7 @@ export function StayDetails(ctx: StayCtx) {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-breu text-neblina mt-4 flex h-14 w-full items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
+          className="bg-app-action text-app-on-action mt-4 flex h-14 w-full items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
         >
           Fazer check-out expresso
           <span className="bg-ipe text-breu grid size-[42px] place-items-center rounded-full">

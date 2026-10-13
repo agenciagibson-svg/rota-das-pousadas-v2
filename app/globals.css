@@ -4,7 +4,8 @@
 @import '../styles/tokens.css';
 @import '../styles/typography.css';
 
-@custom-variant dark (&:is(.dark *));
+/* `dark:` vale dentro de `.dark` e do app da estadia em tema escuro. */
+@custom-variant dark (&:is(.dark *, [data-theme='dark'], [data-theme='dark'] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -64,6 +65,15 @@
   --color-neblina: var(--neblina);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+
+  /* App da estadia: tokens com tema claro e escuro (ver bloco `[data-theme]`). */
+  --color-app: var(--app-bg);
+  --color-app-soft: var(--app-soft);
+  --color-app-ink: var(--app-ink);
+  --color-app-ink-2: var(--app-ink-2);
+  --color-app-strong: var(--app-strong);
+  --color-app-action: var(--app-action);
+  --color-app-on-action: var(--app-on-action);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -142,6 +152,63 @@
   --sidebar-accent-foreground: #0f1716;
   --sidebar-border: #d5dbd8;
   --sidebar-ring: #0f1716;
+
+  /* App da estadia, tema claro = a marca como sempre foi. */
+  --app-bg: #eef1ef;
+  --app-soft: #eef1ef;
+  --app-ink: #0f1716;
+  --app-ink-2: #4f5955;
+  /* Superfície forte (cartão da chave, conta, barra de abas): Breu. */
+  --app-strong: #0f1716;
+  /* Botões principais (enviar pedido, adicionar): Breu com texto Neblina. */
+  --app-action: #0f1716;
+  --app-on-action: #eef1ef;
+}
+
+/*
+ * App da estadia em tema escuro: segue o celular ou a escolha do hóspede
+ * (`features/estadia/components/stay-theme.tsx`). Fundo Breu, cartões um
+ * degrau acima, botões principais claros e o Ipê continua o único acento.
+ * Os tokens semânticos (card, borda, texto) mudam só dentro do app.
+ */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #0f1716;
+  --foreground: #eef1ef;
+  --card: #18221f;
+  --card-foreground: #eef1ef;
+  --popover: #18221f;
+  --popover-foreground: #eef1ef;
+  --primary: #eef1ef;
+  --primary-foreground: #0f1716;
+  --secondary: #26322e;
+  --secondary-foreground: #eef1ef;
+  --muted: #1d2825;
+  --muted-foreground: #a9b3ae;
+  --destructive: #ec8f7a;
+  --border: #2c3834;
+  --input: #3a4743;
+  --ring: #eef1ef;
+  /* Linhas e estrelas vazias: Pedra escurecida para não brilhar no escuro. */
+  --pedra: #3a4743;
+
+  --app-bg: #0f1716;
+  --app-soft: #26322e;
+  --app-ink: #eef1ef;
+  --app-ink-2: #a9b3ae;
+  --app-strong: #1f2c28;
+  --app-action: #eef1ef;
+  --app-on-action: #0f1716;
+}
+
+/* Fundo da página atrás do app (rolagem elástica do iPhone) acompanha o tema. */
+html:has([data-stay-app]) body {
+  background: var(--app-bg);
+}
+html:has([data-stay-app][data-theme='dark']),
+html:has([data-stay-app][data-theme='dark']) body {
+  background: #0f1716;
+  color-scheme: dark;
 }
 
 @layer base {

@@ -72,11 +72,11 @@ export function InstallPrompt() {
         type="button"
         onClick={dismiss}
         aria-label="Fechar"
-        className="bg-neblina text-breu absolute top-2.5 right-2.5 rounded-full p-1.5"
+        className="bg-app-soft text-app-ink absolute top-2.5 right-2.5 rounded-full p-1.5"
       >
         <X className="size-4" />
       </button>
-      <p className="text-breu font-bold">Deixe o app na tela do seu celular</p>
+      <p className="text-app-ink font-bold">Deixe o app na tela do seu celular</p>
       {ios ? (
         <p className="text-muted-foreground mt-1">
           No Safari, toque em <Share className="inline size-4 align-text-bottom" /> Compartilhar e
@@ -88,7 +88,7 @@ export function InstallPrompt() {
           <button
             type="button"
             onClick={() => void install()}
-            className="bg-breu text-neblina mt-3 inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-bold"
+            className="bg-app-action text-app-on-action mt-3 inline-flex items-center gap-2 rounded-full px-4 py-2.5 font-bold"
           >
             <Download className="size-4" />
             Instalar app

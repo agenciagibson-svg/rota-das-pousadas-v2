@@ -5,6 +5,7 @@ import { agendaState } from '../info'
 import { daysBetween, dayMonth, hourLabel, shortDate } from '../dates'
 import type { StayCtx } from './stay-context'
 import { InstallPrompt } from './install-prompt'
+import { ThemeQuickToggle } from './stay-theme'
 import { ItemVisual, Pill, RoundButton, SectionHead, TwoTone, cx, tipIcon } from './stay-ui'
 
 export function stayStatusLabel(ctx: StayCtx): string {
@@ -29,13 +30,14 @@ export function StayHome(ctx: StayCtx) {
   return (
     <>
       <div className="flex items-center gap-2.5">
-        <span className="bg-breu text-neblina grid size-11 shrink-0 place-items-center rounded-full">
+        <span className="bg-app-strong text-neblina grid size-11 shrink-0 place-items-center rounded-full">
           <Home className="size-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-muted-foreground text-[11.5px]">Sua estadia em</p>
           <p className="truncate text-[14.5px] font-bold">{pousada.name}</p>
         </div>
+        <ThemeQuickToggle />
         <RoundButton label="Falar com a recepção" onClick={() => ctx.go('recepcao')}>
           <MessageCircle className="size-[18px]" />
         </RoundButton>
@@ -52,7 +54,7 @@ export function StayHome(ctx: StayCtx) {
       <button
         type="button"
         onClick={() => ctx.go('estadia')}
-        className="bg-breu text-neblina mt-3 grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-[28px] p-[18px] text-left"
+        className="bg-app-strong text-neblina mt-3 grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-[28px] p-[18px] text-left"
       >
         <div className="min-w-0">
           <p className="text-liquen truncate text-[11.5px]">{booking.roomName}</p>
@@ -109,7 +111,7 @@ export function StayHome(ctx: StayCtx) {
       {info.guestInfo && (
         <div className="bg-card mt-3 rounded-[24px] p-4">
           <p className="text-muted-foreground text-[11.5px] font-semibold">Recado da pousada</p>
-          <p className="text-breu mt-1 text-[13.5px] leading-relaxed whitespace-pre-line">
+          <p className="text-app-ink mt-1 text-[13.5px] leading-relaxed whitespace-pre-line">
             {info.guestInfo}
           </p>
         </div>
@@ -134,7 +136,7 @@ export function StayHome(ctx: StayCtx) {
                   <span
                     className={cx(
                       'size-2.5 rounded-full border-2',
-                      st === 'done' && 'border-breu bg-breu',
+                      st === 'done' && 'border-app-ink bg-app-ink',
                       st === 'now' && 'border-ipe bg-ipe ring-ipe/30 ring-4',
                       st === 'next' && 'border-pedra bg-secondary',
                     )}
@@ -221,9 +223,9 @@ export function StayHome(ctx: StayCtx) {
                   <div
                     className={cx(
                       'relative grid h-[104px] place-items-center rounded-[20px]',
-                      i % 3 === 0 && 'bg-breu text-neblina',
+                      i % 3 === 0 && 'bg-app-strong text-neblina',
                       i % 3 === 1 && 'bg-ipe text-breu',
-                      i % 3 === 2 && 'bg-secondary text-breu',
+                      i % 3 === 2 && 'bg-secondary text-app-ink',
                     )}
                   >
                     <Icon className="size-9" strokeWidth={1.6} />
@@ -271,7 +273,7 @@ function QuickTile({
       <span
         className={cx(
           'grid size-[42px] place-items-center rounded-full',
-          accent ? 'bg-ipe text-breu' : 'bg-neblina',
+          accent ? 'bg-ipe text-breu' : 'bg-app-soft',
         )}
       >
         {icon}
@@ -280,7 +282,7 @@ function QuickTile({
     </>
   )
   const cls =
-    'flex flex-col items-center gap-2 rounded-[22px] bg-card px-1 py-3 text-[11.5px] font-bold text-breu'
+    'flex flex-col items-center gap-2 rounded-[22px] bg-card px-1 py-3 text-[11.5px] font-bold text-app-ink'
   return href ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
       {body}

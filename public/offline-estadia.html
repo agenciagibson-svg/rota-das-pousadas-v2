@@ -1,0 +1,113 @@
+<!doctype html>
+<!--
+  Página "sem conexão" do app da estadia, servida pelo service worker
+  (public/sw-estadia.js) quando a rede cai. Arquivo estático: cores da marca
+  escritas aqui mesmo (exceção técnica, como os e-mails), tema claro/escuro
+  pelo sistema do celular.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef1ef" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1716" />
+    <title>Sem conexão · Minha estadia</title>
+    <style>
+      :root {
+        --bg: #eef1ef;
+        --card: #ffffff;
+        --ink: #0f1716;
+        --ink-2: #4f5955;
+        --action: #0f1716;
+        --on-action: #eef1ef;
+        --ring: #0f1716;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1716;
+          --card: #18221f;
+          --ink: #eef1ef;
+          --ink-2: #a9b3ae;
+          --action: #eef1ef;
+          --on-action: #0f1716;
+          --ring: #eef1ef;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Figtree, ui-sans-serif, system-ui, -apple-system, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      main {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+      }
+      .card {
+        width: 100%;
+        max-width: 360px;
+        background: var(--card);
+        border-radius: 30px;
+        padding: 32px 24px;
+        text-align: center;
+      }
+      svg {
+        width: 56px;
+        height: 56px;
+      }
+      h1 {
+        margin: 18px 0 8px;
+        font-size: 26px;
+        line-height: 1.1;
+        font-weight: 500;
+      }
+      p {
+        margin: 0;
+        color: var(--ink-2);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 24px;
+        min-height: 48px;
+        padding: 0 24px;
+        border-radius: 999px;
+        background: var(--action);
+        color: var(--on-action);
+        font-weight: 700;
+        font-size: 15px;
+        text-decoration: none;
+        touch-action: manipulation;
+      }
+      a:focus-visible {
+        outline: 2px solid #f4b42a;
+        outline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="conteudo">
+      <div class="card">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="17.25" fill="none" stroke="currentColor" stroke-width="9.5" />
+          <circle cx="32" cy="32" r="7.2" fill="#f4b42a" />
+        </svg>
+        <h1>Sem conexão</h1>
+        <p>Assim que a internet voltar, o app da sua estadia abre de novo.</p>
+        <a href="/estadia">Tentar de novo</a>
+      </div>
+    </main>
+  </body>
+</html>

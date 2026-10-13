@@ -80,7 +80,7 @@ export const baseMetadata: Metadata = {
     ],
     apple: [{ url: '/apple-icon.png' }],
   },
-  manifest: '/manifest.webmanifest',
+  manifest: '/site.webmanifest',
 }
 
 /** Per-pousada metadata for the detail route. */
