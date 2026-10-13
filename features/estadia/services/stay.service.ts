@@ -1,5 +1,6 @@
 import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
+import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import {
   cancelGuestOrderRpc,
@@ -7,6 +8,7 @@ import {
   listBookingOrders,
   placeGuestOrderRpc,
 } from '@/repositories/orders.repository'
+import { DEMO_STAY_ID, demoMyStays, demoStay } from '../demo'
 import { parseGuestStay, type GuestStay } from '../types'
 import type { GuestOrder } from '@/features/pedidos/types'
 
@@ -22,6 +24,8 @@ export type MyStay = {
 
 /** Estadias do usuário que ainda fazem sentido no app (confirmadas, em curso ou recém-encerradas). */
 export async function listMyStays(): Promise<MyStay[]> {
+  // Modo demonstração (preview sem Supabase): uma estadia de exemplo em curso.
+  if (!isSupabaseConfigured()) return demoMyStays()
   const user = await getCurrentUser()
   if (!user) return []
   const supabase = await createSupabaseServerClient()
@@ -61,6 +65,7 @@ export async function listMyStays(): Promise<MyStay[]> {
 export async function getStay(
   bookingId: string,
 ): Promise<{ stay: GuestStay; orders: GuestOrder[] } | null> {
+  if (!isSupabaseConfigured()) return bookingId === DEMO_STAY_ID ? demoStay() : null
   try {
     const [raw, orders] = await Promise.all([
       getGuestStayRpc(bookingId),
@@ -79,14 +84,20 @@ export async function placeOrder(
   items: { itemId: string; quantity: number }[],
   note: string,
 ) {
+  // Demonstração: o pedido "vai" (aviso de enviado), mas nada é gravado.
+  if (!isSupabaseConfigured()) {
+    return { orderId: `demo-${Date.now()}`, total: 0 }
+  }
   return placeGuestOrderRpc(bookingId, items, note)
 }
 
 export async function cancelOrder(orderId: string) {
+  if (!isSupabaseConfigured()) return
   await cancelGuestOrderRpc(orderId)
 }
 
 export async function submitReview(bookingId: string, rating: number, text: string) {
+  if (!isSupabaseConfigured()) return
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login.')
   const supabase = await createSupabaseServerClient()

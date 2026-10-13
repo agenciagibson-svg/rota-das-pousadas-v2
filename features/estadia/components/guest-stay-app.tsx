@@ -157,7 +157,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
     const url = new URL(window.location.href)
     if (next === 'inicio') url.searchParams.delete('aba')
     else url.searchParams.set('aba', next)
-    window.history.replaceState(window.history.state, '', url)
+    window.history.replaceState(null, '', url)
     requestAnimationFrame(() => {
       const el = anchor ? document.getElementById(anchor) : null
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches

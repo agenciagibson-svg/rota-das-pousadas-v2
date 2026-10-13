@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { CalendarDays, ChevronRight } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
+import { isSupabaseConfigured } from '@/lib/env'
 import { getCurrentUser } from '@/server/queries'
 import { listMyStays } from '@/features/estadia/services/stay.service'
 import { formatISODate } from '@/lib/format'
@@ -14,7 +15,8 @@ export const dynamic = 'force-dynamic'
  */
 export default async function EstadiaIndexPage() {
   const user = await getCurrentUser()
-  if (!user) redirect('/login?next=/estadia')
+  // Modo demonstração (preview sem Supabase): abre a estadia de exemplo sem login.
+  if (!user && isSupabaseConfigured()) redirect('/login?next=/estadia')
 
   const stays = await listMyStays()
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(

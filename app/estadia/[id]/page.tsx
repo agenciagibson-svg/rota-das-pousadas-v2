@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { isSupabaseConfigured } from '@/lib/env'
 import { getCurrentUser } from '@/server/queries'
 import { getStay } from '@/features/estadia/services/stay.service'
 import { GuestStayApp } from '@/features/estadia/components/guest-stay-app'
@@ -10,7 +11,9 @@ export default async function EstadiaPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound()
   const user = await getCurrentUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent(`/estadia/${id}`)}`)
+  if (!user && isSupabaseConfigured()) {
+    redirect(`/login?next=${encodeURIComponent(`/estadia/${id}`)}`)
+  }
 
   let data
   try {
