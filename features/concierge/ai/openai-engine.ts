@@ -268,12 +268,11 @@ export async function openaiConcierge({
           guests: criteria.guests,
         }),
       )
-    return {
-      reply,
-      cards,
-      quickReplies: suggestQuickReplies(criteria, today),
-      engine: 'openai',
-    }
+    // Cartões já com datas: o que falta é escolher — não sugerir datas de novo.
+    const quickReplies = cards.some((c) => c.nights)
+      ? ['Ver mais opções', 'Mudar as datas', 'Somos mais pessoas']
+      : suggestQuickReplies(criteria, today)
+    return { reply, cards, quickReplies, engine: 'openai' }
   }
   throw new Error('OpenAI: limite de rodadas de ferramenta')
 }

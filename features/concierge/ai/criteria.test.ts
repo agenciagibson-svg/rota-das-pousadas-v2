@@ -56,4 +56,18 @@ describe('extractCriteria — entende o que a pessoa escreveu', () => {
     expect(extractCriteria(['no nordeste'], TODAY).states).toEqual(['BA', 'AL', 'PE', 'CE', 'RN'])
     expect(extractCriteria(['em Minas'], TODAY).states).toEqual(['MG'])
   })
+
+  it('datas com o nome do mês', () => {
+    const c = extractCriteria(['somos 2 adultos e o cachorro, de 20 a 23 de novembro'], TODAY)
+    expect(c.dates).toEqual({ checkin: '2026-11-20', checkout: '2026-11-23' })
+    expect(c.guests).toBe(2)
+    expect(extractCriteria(['de 28 de dezembro a 2 de janeiro'], TODAY).dates).toEqual({
+      checkin: '2026-12-28',
+      checkout: '2027-01-02',
+    })
+    expect(extractCriteria(['chegando 5 de março, 3 noites'], TODAY).dates).toEqual({
+      checkin: '2027-03-05',
+      checkout: '2027-03-08',
+    })
+  })
 })

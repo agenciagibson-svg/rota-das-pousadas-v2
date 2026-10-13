@@ -358,6 +358,22 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
+const MONTHS = [
+  'janeiro',
+  'fevereiro',
+  'marco',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+]
+const MONTHS_RE = MONTHS.join('|')
+
 /** Dia/mês sem ano: o próximo que ainda não passou. */
 function resolveDate(
   day: number,
@@ -392,6 +408,32 @@ function datesIn(text: string, today: string): { checkin: string; checkout: stri
       checkout = resolveDate(Number(range[4]), endMonth, Number(checkin.slice(0, 4)) + 1, today)
     }
     if (checkin && checkout) return { checkin, checkout }
+  }
+  // "20 a 23 de novembro", "28 de dezembro a 2 de janeiro".
+  const named = text.match(
+    new RegExp(
+      `(\\d{1,2})\\s*(?:de\\s+(${MONTHS_RE})\\s*)?(?:a|ate|-|ao)\\s*(?:dia\\s+)?(\\d{1,2})\\s*de\\s+(${MONTHS_RE})`,
+    ),
+  )
+  if (named) {
+    const endMonth = MONTHS.indexOf(named[4]!) + 1
+    const startMonth = named[2] ? MONTHS.indexOf(named[2]) + 1 : endMonth
+    const checkin = resolveDate(Number(named[1]), startMonth, null, today)
+    let checkout = resolveDate(Number(named[3]), endMonth, null, today)
+    if (checkin && checkout && checkout <= checkin) {
+      checkout = resolveDate(Number(named[3]), endMonth, Number(checkin.slice(0, 4)) + 1, today)
+    }
+    if (checkin && checkout) return { checkin, checkout }
+  }
+  const namedSingle = text.match(new RegExp(`(\\d{1,2})\\s*de\\s+(${MONTHS_RE})`))
+  if (namedSingle) {
+    const checkin = resolveDate(
+      Number(namedSingle[1]),
+      MONTHS.indexOf(namedSingle[2]!) + 1,
+      null,
+      today,
+    )
+    if (checkin) return { checkin, checkout: null }
   }
   const single = text.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/)
   if (single) {
