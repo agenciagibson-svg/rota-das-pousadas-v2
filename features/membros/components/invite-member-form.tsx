@@ -60,7 +60,7 @@ export function InviteMemberForm() {
   return (
     <form
       onSubmit={keepValuesOnSubmit(submit)}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
     >
       <div className="flex-1">
         <Input
