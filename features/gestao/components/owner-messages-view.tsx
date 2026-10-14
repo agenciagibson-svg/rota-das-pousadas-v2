@@ -212,7 +212,7 @@ export function OwnerMessagesView({
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/dashboard/reservas/${r.id}`}
-                        className="text-foreground font-serif text-lg font-semibold hover:underline"
+                        className="text-foreground font-display text-lg font-medium hover:underline"
                       >
                         {r.guestName}
                       </Link>
@@ -245,7 +245,7 @@ export function OwnerMessagesView({
                           href={`${wa}?text=${encodeURIComponent(message)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                          className="bg-success text-success-foreground hover:bg-success/90 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
                         >
                           <MessageCircleMore className="size-3.5" />
                           Enviar no WhatsApp

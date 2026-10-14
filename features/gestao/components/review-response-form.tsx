@@ -36,14 +36,14 @@ export function ReviewResponseForm({
         value={response}
         onChange={(event) => setResponse(event.target.value)}
         rows={3}
-        placeholder="Escreva uma resposta pública para o hóspede..."
-        className="w-full resize-none rounded-2xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
+        placeholder="Escreva uma resposta pública para o hóspede…"
+        className="border-border bg-card text-foreground focus:border-primary w-full resize-none rounded-2xl border px-3 py-2 text-sm transition outline-none"
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {error ? <span className="text-xs font-medium text-destructive">{error}</span> : <span />}
+        {error ? <span className="text-destructive text-xs font-medium">{error}</span> : <span />}
         <Button type="button" size="sm" onClick={submit} disabled={isPending}>
           <Send className="size-3.5" />
-          {isPending ? 'Salvando...' : initialResponse ? 'Atualizar resposta' : 'Responder'}
+          {isPending ? 'Salvando…' : initialResponse ? 'Atualizar resposta' : 'Responder'}
         </Button>
       </div>
     </div>

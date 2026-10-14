@@ -29,24 +29,30 @@ export default async function AdminAnfitrioesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Nome</th>
-                  <th className="pb-2 pr-4 font-medium">E-mail</th>
-                  <th className="pb-2 pr-4 font-medium">Pousada</th>
+                <tr className="border-border text-muted-foreground border-b text-xs font-medium">
+                  <th className="pr-4 pb-2 font-medium">Nome</th>
+                  <th className="pr-4 pb-2 font-medium">E-mail</th>
+                  <th className="pr-4 pb-2 font-medium">Pousada</th>
                   <th className="pb-2 font-medium">Desde</th>
                 </tr>
               </thead>
               <tbody>
                 {hosts.map((h) => (
-                  <tr key={`${h.userId}-${h.pousadaId}`} className="border-b border-border/60 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-foreground">{h.fullName}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{h.email}</td>
+                  <tr
+                    key={`${h.userId}-${h.pousadaId}`}
+                    className="border-border/60 border-b last:border-0"
+                  >
+                    <td className="text-foreground py-2.5 pr-4 font-medium">{h.fullName}</td>
+                    <td className="text-muted-foreground py-2.5 pr-4">{h.email}</td>
                     <td className="py-2.5 pr-4">
-                      <Link href={`/pousada/${h.pousadaSlug}`} className="text-ocean hover:underline">
+                      <Link
+                        href={`/pousada/${h.pousadaSlug}`}
+                        className="text-ocean hover:underline"
+                      >
                         {h.pousadaName}
                       </Link>
                     </td>
-                    <td className="py-2.5 text-muted-foreground">
+                    <td className="text-muted-foreground py-2.5">
                       {new Date(h.createdAt).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>

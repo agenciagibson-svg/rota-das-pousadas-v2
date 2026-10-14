@@ -1,78 +1,71 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Star, MapPin, ArrowUpRight } from 'lucide-react'
+import { Star } from 'lucide-react'
 import type { Destination } from '@/types'
 import { Reveal } from '@/components/reveal'
+import { Badge } from '@/components/ui/badge'
 import { Section } from '@/components/ui/container'
+import { SectionHeading } from '@/components/ui/section-heading'
 import { formatPrice } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
+/** Posição de cada foto no mosaico: a primeira é a grande; a sexta, a larga. */
+function tileLayout(index: number) {
+  if (index === 0) return 'col-span-2 row-span-2 min-h-80 lg:min-h-0'
+  if (index === 5) return 'col-span-2 min-h-56 lg:min-h-0'
+  return 'min-h-56 lg:min-h-0'
+}
+
+/**
+ * Mosaico de destinos: a foto manda, o texto fica embaixo sobre a sombra. Em
+ * vez de cards iguais, tamanhos diferentes dão ritmo à seção.
+ */
 export function Destinations({ destinations }: { destinations: Destination[] }) {
   return (
-    <Section id="destinos" className="py-20 lg:py-28">
+    <Section id="destinos" className="pt-12 pb-16 lg:pt-16 lg:pb-24">
       <Reveal>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="max-w-2xl">
-            <span className="text-primary text-sm font-semibold tracking-[0.2em] uppercase">
-              Destinos em destaque
-            </span>
-            <h2 className="text-foreground mt-3 font-serif text-3xl leading-tight font-semibold text-balance sm:text-5xl">
-              Onde o Brasil respira mais fundo
-            </h2>
-          </div>
-          <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-pretty">
+          <SectionHeading eyebrow="Destinos em destaque" title="Onde o Brasil respira mais fundo" />
+          <p className="text-muted-foreground max-w-sm text-base leading-relaxed text-pretty">
             Curadoria de lugares que valem a viagem — da serra mineira às águas de Noronha, cada
             rota é um convite à descoberta.
           </p>
         </div>
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:auto-rows-[15rem] lg:grid-cols-4">
         {destinations.map((d, i) => {
           const featured = i === 0
           return (
-            <Reveal
-              key={d.slug}
-              delay={(i % 3) * 0.08}
-              className={featured ? 'sm:col-span-2 lg:row-span-2' : ''}
-            >
+            <Reveal key={d.slug} delay={(i % 4) * 0.06} className={tileLayout(i)}>
               <Link
                 href={`/pousada/refugio-das-nuvens`}
-                className={`group relative block h-full overflow-hidden rounded-3xl ${
-                  featured ? 'min-h-[320px] lg:min-h-[560px]' : 'min-h-[300px]'
-                }`}
+                className="group relative block h-full overflow-hidden rounded-3xl"
               >
                 <Image
                   src={d.image || '/placeholder.svg'}
                   alt={`${d.name}, ${d.state}`}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  sizes={
+                    featured ? '(max-width: 1024px) 100vw, 50vw' : '(max-width: 1024px) 50vw, 25vw'
+                  }
+                  className="object-cover transition-transform duration-(--motion-reveal) group-hover:scale-105"
                 />
-                <div className="from-stone-deep/85 via-stone-deep/10 absolute inset-0 bg-gradient-to-t to-transparent" />
+                <div className="from-breu/85 via-breu/10 absolute inset-0 bg-gradient-to-t to-transparent" />
 
-                <div className="bg-primary-foreground/15 text-primary-foreground absolute top-4 right-4 flex size-10 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-500 group-hover:opacity-100">
-                  <ArrowUpRight className="size-5" />
-                </div>
-
-                <div className="absolute inset-x-0 bottom-0 p-5 lg:p-7">
-                  <div className="text-primary-foreground/80 flex items-center gap-2 text-xs font-medium">
-                    <MapPin className="size-3.5" />
-                    {d.state}
-                    <span className="mx-1 opacity-50">•</span>
-                    {d.pousadas} pousadas
-                  </div>
-                  <h3
-                    className={`text-primary-foreground mt-2 font-serif font-semibold ${featured ? 'text-3xl lg:text-4xl' : 'text-2xl'}`}
-                  >
-                    {d.name}
-                  </h3>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="bg-primary-foreground/15 text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur">
-                      <Star className="fill-gold text-gold size-3.5" />
+                <div className="text-primary-foreground absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 lg:p-6">
+                  <span className="text-primary-foreground/80 text-xs font-medium">
+                    {d.state} · {d.pousadas} pousadas
+                  </span>
+                  <h3 className={cn(featured ? 'text-h1' : 'text-h3')}>{d.name}</h3>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Badge variant="glass" size="sm" className="tabular-nums">
+                      <Star className="fill-ipe text-ipe size-3" />
                       {d.rating.toFixed(1)}
-                    </span>
-                    <span className="text-primary-foreground/90 text-sm font-medium">
-                      A partir de <span className="font-semibold">{formatPrice(d.priceFrom)}</span>
+                    </Badge>
+                    <span className="text-primary-foreground/90 text-xs font-medium sm:text-sm">
+                      A partir de{' '}
+                      <span className="font-semibold tabular-nums">{formatPrice(d.priceFrom)}</span>
                     </span>
                   </div>
                 </div>

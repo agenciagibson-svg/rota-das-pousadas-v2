@@ -117,7 +117,7 @@ export function AdminView({
           <Card className="p-6 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-foreground font-serif text-lg font-semibold">GMV mensal</h3>
+                <h3 className="text-foreground font-display text-lg font-medium">GMV mensal</h3>
                 <p className="text-muted-foreground text-sm">Últimos 12 meses</p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export function AdminView({
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-foreground font-serif text-lg font-semibold">Taxa de ocupação</h3>
+            <h3 className="text-foreground font-display text-lg font-medium">Taxa de ocupação</h3>
             <p className="text-muted-foreground text-sm">Aproximação da rede (mês atual)</p>
             <div className="mt-2 flex justify-center">
               <Donut value={overview.occupancyRate} color="var(--ocean)" />
@@ -137,7 +137,7 @@ export function AdminView({
 
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="p-6">
-            <h3 className="text-foreground font-serif text-lg font-semibold">
+            <h3 className="text-foreground font-display text-lg font-medium">
               Reservas por região
             </h3>
             <p className="text-muted-foreground mb-4 text-sm">Top 5 estados</p>
@@ -152,7 +152,7 @@ export function AdminView({
 
           <Card className="p-6 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-foreground font-serif text-lg font-semibold">
+              <h3 className="text-foreground font-display text-lg font-medium">
                 Aprovações pendentes
               </h3>
               <span className="bg-ocean/15 text-ocean rounded-full px-2.5 py-0.5 text-xs font-semibold">
@@ -166,7 +166,7 @@ export function AdminView({
         {canCreatePousada && (
           <Card className="flex items-center justify-between gap-4 p-6">
             <div>
-              <h3 className="text-foreground font-serif text-lg font-semibold">Cadastro rápido</h3>
+              <h3 className="text-foreground font-display text-lg font-medium">Cadastro rápido</h3>
               <p className="text-muted-foreground text-sm">
                 Cadastre uma pousada em nome do proprietário usando o Instagram como referência.
               </p>
@@ -183,7 +183,7 @@ export function AdminView({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="p-6">
-            <h3 className="text-foreground mb-4 font-serif text-lg font-semibold">
+            <h3 className="text-foreground font-display mb-4 text-lg font-medium">
               Destinos por volume
             </h3>
             {overview.featuredDestinations.length === 0 ? (
@@ -215,7 +215,7 @@ export function AdminView({
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-foreground mb-4 font-serif text-lg font-semibold">
+            <h3 className="text-foreground font-display mb-4 text-lg font-medium">
               Pousadas em destaque
             </h3>
             {overview.featuredPousadas.length === 0 ? (

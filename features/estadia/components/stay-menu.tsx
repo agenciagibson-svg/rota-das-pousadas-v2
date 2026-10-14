@@ -34,7 +34,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
           <ArrowLeft className="size-[18px]" />
         </RoundButton>
         <div className="min-w-0 flex-1">
-          <p className="text-[11.5px] text-[#9a9a96]">Entrega em</p>
+          <p className="text-muted-foreground text-[11.5px]">Entrega em</p>
           <p className="truncate text-[14.5px] font-bold">{stay.booking.roomName}</p>
         </div>
         <RoundButton label="Ver sacola" onClick={ctx.openBag} badge={ctx.cartCount || undefined}>
@@ -48,25 +48,28 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
       />
 
       {orderBlockedReason && (
-        <p className="mb-3 rounded-[20px] bg-[#fff0e6] p-4 text-[13px] font-medium text-[#9a3412]">
+        <p className="bg-ipe/15 text-app-ink mb-3 rounded-[20px] p-4 text-[13px] font-medium">
           {orderBlockedReason}
         </p>
       )}
 
       {products.length === 0 ? (
-        <p className="rounded-[24px] bg-white p-5 text-center text-[13px] text-[#9a9a96]">
+        <p className="bg-card text-muted-foreground rounded-[24px] p-5 text-center text-[13px]">
           A pousada ainda não cadastrou itens no app. Fale com a recepção.
         </p>
       ) : (
         <>
-          <label className="flex h-12 items-center gap-2.5 rounded-full bg-white px-4">
+          <label className="bg-card focus-within:ring-ipe/60 flex h-12 items-center gap-2.5 rounded-full px-4 focus-within:ring-2">
             <Search className="size-[17px]" strokeWidth={2.4} />
             <input
+              type="search"
+              enterKeyHint="search"
+              autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar no cardápio"
               aria-label="Buscar no cardápio"
-              className="min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-[#9a9a96]"
+              className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[13.5px] outline-none"
             />
           </label>
 
@@ -80,9 +83,10 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                     key={c}
                     type="button"
                     onClick={() => setCat(c)}
+                    aria-pressed={on}
                     className={cx(
                       'flex h-[46px] shrink-0 items-center gap-2 rounded-full py-1 pr-4 pl-1 text-[13px] font-semibold',
-                      on ? 'bg-sunset text-white' : 'bg-white text-[#1e1e1e]',
+                      on ? 'bg-ipe text-breu' : 'bg-card text-app-ink',
                     )}
                   >
                     <ItemVisual photoUrl={first.photoUrl} category={c} size={38} />
@@ -105,7 +109,7 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
           />
 
           {visible.length === 0 ? (
-            <p className="rounded-[24px] bg-white p-5 text-center text-[13px] text-[#9a9a96]">
+            <p className="bg-card text-muted-foreground rounded-[24px] p-5 text-center text-[13px]">
               Nada encontrado.
             </p>
           ) : (
@@ -116,12 +120,8 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                 return (
                   <div
                     key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => ctx.openItem(item)}
-                    onKeyDown={(e) => e.key === 'Enter' && ctx.openItem(item)}
                     className={cx(
-                      'flex cursor-pointer flex-col rounded-[26px] bg-white px-3 pt-3 pb-3.5 text-center',
+                      'bg-card relative flex flex-col rounded-[26px] px-3 pt-3 pb-3.5 text-center',
                       !item.available && 'opacity-55',
                     )}
                   >
@@ -133,16 +133,21 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                         alt={item.name}
                       />
                     </div>
-                    <p className="mt-2.5 line-clamp-2 text-[13.5px] leading-tight font-bold tracking-[-0.01em]">
+                    {/* O nome abre o detalhe; o ::after estende o clique ao card inteiro. */}
+                    <button
+                      type="button"
+                      onClick={() => ctx.openItem(item)}
+                      className="focus-visible:after:ring-ipe mt-2.5 line-clamp-2 text-[13.5px] leading-tight font-bold outline-none after:absolute after:inset-0 after:rounded-[26px] focus-visible:after:ring-2"
+                    >
                       {item.name}
-                    </p>
+                    </button>
                     {item.description && (
-                      <p className="mt-0.5 line-clamp-1 text-[11px] text-[#9a9a96]">
+                      <p className="text-muted-foreground mt-0.5 line-clamp-1 text-[11px]">
                         {item.description}
                       </p>
                     )}
                     <div className="mt-auto flex items-center justify-between gap-1 pt-3 text-left">
-                      <span className="text-[18px] font-extrabold tracking-[-0.03em]">
+                      <span className="font-display text-[18px] font-medium">
                         {item.price === 0 ? (
                           <span className="text-sm">Cortesia</span>
                         ) : (
@@ -153,12 +158,11 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                         )}
                       </span>
                       {!item.available ? (
-                        <span className="text-[11px] font-bold text-[#9a9a96]">Esgotado</span>
+                        <span className="text-muted-foreground text-[11px] font-bold">
+                          Esgotado
+                        </span>
                       ) : qty > 0 ? (
-                        <div
-                          className="flex items-center gap-1 rounded-full bg-[#1e1e1e] p-[3px] text-white"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="bg-app-action text-app-on-action relative z-10 flex items-center gap-1 rounded-full p-[3px]">
                           <button
                             type="button"
                             aria-label={`Menos ${item.name}`}
@@ -167,15 +171,13 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                           >
                             <Minus className="size-3.5" strokeWidth={2.8} />
                           </button>
-                          <span className="min-w-3.5 text-center text-[13px] font-extrabold">
-                            {qty}
-                          </span>
+                          <span className="min-w-3.5 text-center text-[13px] font-bold">{qty}</span>
                           <button
                             type="button"
                             aria-label={`Mais ${item.name}`}
                             disabled={qty >= item.maxQuantity}
                             onClick={() => ctx.change(item, 1)}
-                            className="bg-sunset grid size-7 place-items-center rounded-full disabled:opacity-40"
+                            className="bg-ipe text-breu grid size-7 place-items-center rounded-full disabled:opacity-40"
                           >
                             <Plus className="size-3.5" strokeWidth={2.8} />
                           </button>
@@ -184,11 +186,8 @@ export function StayMenu(ctx: StayCtx & { openBag: () => void }) {
                         <button
                           type="button"
                           aria-label={`Adicionar ${item.name}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            ctx.change(item, 1)
-                          }}
-                          className="bg-sunset grid size-[34px] place-items-center rounded-full text-white"
+                          onClick={() => ctx.change(item, 1)}
+                          className="bg-ipe text-breu relative z-10 grid size-[34px] place-items-center rounded-full"
                         >
                           <Plus className="size-4" strokeWidth={2.8} />
                         </button>

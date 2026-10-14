@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import {
   AirVent,
@@ -34,9 +35,10 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { InventoryCategory } from '@/features/estoque/labels'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 
-/** Paleta do app da estadia (cinza claro, preto e o laranja da marca). */
-export const APP_BG = 'bg-[#f4f4f2]'
+/** Paleta do app da estadia: Neblina, Breu e o Ipê da marca (docs/Marca.md). */
+export const APP_BG = 'bg-app'
 
 export function cx(...xs: (string | false | null | undefined)[]) {
   return xs.filter(Boolean).join(' ')
@@ -62,14 +64,14 @@ export function RoundButton({
 }) {
   const cls = cx(
     'relative grid size-11 shrink-0 place-items-center rounded-full transition active:scale-95',
-    dark ? 'bg-[#1e1e1e] text-white' : 'bg-white text-[#1e1e1e]',
+    dark ? 'bg-app-strong text-neblina' : 'bg-card text-app-ink',
     className,
   )
   const inner = (
     <>
       {children}
       {badge ? (
-        <span className="bg-sunset absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-[#f4f4f2] px-1 text-[10px] font-extrabold text-white">
+        <span className="bg-ipe border-app text-breu absolute -top-0.5 -right-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 px-1 text-[10px] font-bold">
           {badge}
         </span>
       ) : null}
@@ -95,7 +97,7 @@ export function RoundButton({
   )
 }
 
-/** Título em dois tons: parte forte em preto, o resto em cinza claro. */
+/** Título em dois pesos (Funnel Display): parte forte em Breu, o resto leve em Grafite. */
 export function TwoTone({
   strong,
   light,
@@ -108,9 +110,9 @@ export function TwoTone({
   className?: string
 }) {
   return (
-    <Tag className={cx('tracking-[-0.035em]', className)}>
-      <span className="font-extrabold text-[#1e1e1e]">{strong}</span>
-      {light ? <span className="font-normal text-[#b3b3ae]"> {light}</span> : null}
+    <Tag className={cx('font-display tracking-[-0.01em]', className)}>
+      <span className="text-app-ink font-medium">{strong}</span>
+      {light ? <span className="text-app-ink-2 font-light"> {light}</span> : null}
     </Tag>
   )
 }
@@ -128,13 +130,13 @@ export function SectionHead({
 }) {
   return (
     <div className="mt-6 mb-3 flex items-center justify-between px-0.5">
-      <h2 className="text-[17px] font-bold tracking-[-0.02em] text-[#1e1e1e]">{title}</h2>
+      <h2 className="font-display text-app-ink text-[17px] font-medium">{title}</h2>
       {action && onAction ? (
-        <button type="button" onClick={onAction} className="text-[12.5px] text-[#9a9a96]">
+        <button type="button" onClick={onAction} className="text-muted-foreground text-[12.5px]">
           {action} ›
         </button>
       ) : aside ? (
-        <span className="text-xs text-[#9a9a96]">{aside}</span>
+        <span className="text-muted-foreground text-xs">{aside}</span>
       ) : null}
     </div>
   )
@@ -151,10 +153,10 @@ export function Pill({
     <span
       className={cx(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold whitespace-nowrap',
-        tone === 'dark' && 'bg-[#1e1e1e] text-white',
-        tone === 'white' && 'bg-white text-[#1e1e1e]',
-        tone === 'gray' && 'bg-[#2e2e2c] text-[#e5e5e2]',
-        tone === 'orange' && 'bg-sunset text-white',
+        tone === 'dark' && 'bg-app-strong text-neblina',
+        tone === 'white' && 'bg-card text-app-ink',
+        tone === 'gray' && 'bg-neblina/10 text-neblina',
+        tone === 'orange' && 'bg-ipe text-breu',
       )}
     >
       {children}
@@ -193,13 +195,13 @@ export function ItemVisual({
   const Icon = CATEGORY_ICON[category] ?? Package
   return (
     <div
-      className="relative shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_40%,#ffffff,#ebebe8)] shadow-[inset_0_0_0_1px_#e2e2de]"
+      className="ring-border relative shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_40%,var(--card),var(--secondary))] ring-1 ring-inset"
       style={{ width: size, height: size }}
     >
       {photoUrl ? (
         <Image src={photoUrl} alt={alt} fill sizes={`${size}px`} className="object-cover" />
       ) : (
-        <div className="absolute inset-0 grid place-items-center text-[#c9c9c4]">
+        <div className="text-liquen absolute inset-0 grid place-items-center">
           <Icon style={{ width: size * 0.42, height: size * 0.42 }} strokeWidth={1.6} />
         </div>
       )}
@@ -248,31 +250,53 @@ export function serviceIcon(name: string): LucideIcon {
   return ConciergeBell
 }
 
-/** Folha que sobe por cima do app (detalhe do item, sacola). */
+/**
+ * Folha que sobe por cima do app (detalhe do item, sacola). Fechada, sai da
+ * árvore de foco (`inert`); aberta, prende o foco e fecha no Esc. `footer`
+ * fica preso ao pé da folha, dentro da janela (barra de quantidade/adicionar).
+ */
 export function Sheet({
   open,
   children,
   label,
+  onClose,
+  footer,
 }: {
   open: boolean
   children: React.ReactNode
   label: string
+  onClose?: () => void
+  footer?: React.ReactNode
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useFocusTrap(ref, open)
+  useEffect(() => {
+    if (!open || !onClose) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   return (
     <div
+      ref={ref}
       role="dialog"
       aria-modal="true"
       aria-label={label}
       aria-hidden={!open}
+      inert={!open}
       className={cx(
-        'fixed inset-0 z-40 overflow-y-auto transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
+        'fixed inset-0 z-40 transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
         APP_BG,
         open ? 'translate-y-0' : 'pointer-events-none translate-y-full',
       )}
     >
-      <div className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-40">
-        {children}
+      <div className="h-full overflow-y-auto overscroll-contain">
+        <div className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-40">
+          {children}
+        </div>
       </div>
+      {footer}
     </div>
   )
 }

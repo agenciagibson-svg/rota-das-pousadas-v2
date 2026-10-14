@@ -64,10 +64,7 @@ export function ExpenseForm() {
           {...register('amount')}
         />
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="category"
-            className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase"
-          >
+          <label htmlFor="category" className="text-foreground text-sm font-medium">
             Categoria
           </label>
           <select

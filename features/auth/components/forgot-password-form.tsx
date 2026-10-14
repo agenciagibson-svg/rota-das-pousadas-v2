@@ -44,15 +44,15 @@ export function ForgotPasswordForm({
   if (sentTo) {
     return (
       <div className="flex flex-col gap-4" role="status">
-        <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-          <MailCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+        <div className="border-success/30 bg-success/10 text-foreground flex items-start gap-3 rounded-2xl border p-4 text-sm">
+          <MailCheck className="text-success mt-0.5 size-5 shrink-0" />
           <div>
             <p className="font-semibold">Confira seu e-mail</p>
             <p className="mt-1">
               Se existir uma conta com <strong>{sentTo}</strong>, enviamos agora um link para criar
               uma nova senha. Ele vale por 1 hora.
             </p>
-            <p className="mt-2 text-emerald-900/80">
+            <p className="text-muted-foreground mt-2">
               Não chegou em alguns minutos? Veja a caixa de spam ou promoções.
             </p>
           </div>

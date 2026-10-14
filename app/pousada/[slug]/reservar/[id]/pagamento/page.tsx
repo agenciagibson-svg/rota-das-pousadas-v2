@@ -16,7 +16,7 @@ import {
   type PixPayment,
 } from '@/features/pagamentos/services/pix.service'
 import { PixPaymentPanel } from '@/features/pagamentos/components/pix-payment-panel'
-import { formatBRL } from '@/lib/format'
+import { formatBRL, formatDateTime, formatISODate } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -24,21 +24,6 @@ export const metadata: Metadata = {
 }
 
 export const dynamic = 'force-dynamic'
-
-function formatDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
 
 /** Pendente com prazo vencido (fora do render, por pureza do React). */
 function isDeadlinePassed(booking: Booking): boolean {
@@ -123,7 +108,7 @@ export default async function PagamentoReservaPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pt-28 pb-24">
+      <main id="conteudo" tabIndex={-1} className="pt-28 pb-24">
         <Container className="max-w-2xl">
           <Breadcrumb
             items={[
@@ -134,21 +119,19 @@ export default async function PagamentoReservaPage({
           />
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-foreground font-serif text-2xl font-semibold sm:text-3xl">
-              Reserva {booking.code}
-            </h1>
+            <h1 className="text-h1 text-foreground">Reserva {booking.code}</h1>
             <Badge variant={awaitingApproval ? 'goldSoft' : status.variant}>
               {awaitingApproval ? 'Aguardando aprovação' : status.label}
             </Badge>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">{booking.pousadaName}</p>
 
-          <Card radius="3xl" className="shadow-card mt-6 p-6">
+          <Card radius="3xl" border={false} className="shadow-floating mt-6 p-6 lg:p-8">
             <div className="text-muted-foreground space-y-1.5 text-sm">
               <div className="flex items-center gap-1.5">
                 <CalendarCheck className="size-4" />
-                {formatDate(booking.checkin)} - {formatDate(booking.checkout)} · {booking.nights}{' '}
-                {booking.nights === 1 ? 'noite' : 'noites'}
+                {formatISODate(booking.checkin)} – {formatISODate(booking.checkout)} ·{' '}
+                {booking.nights} {booking.nights === 1 ? 'noite' : 'noites'}
               </div>
               <div className="flex items-center gap-1.5">
                 <Users className="size-4" />
@@ -157,7 +140,7 @@ export default async function PagamentoReservaPage({
             </div>
 
             <div className="border-border mt-5 space-y-1.5 border-t pt-4 text-sm">
-              <div className="text-muted-foreground flex justify-between">
+              <div className="text-muted-foreground flex justify-between tabular-nums">
                 <span>Estadia</span>
                 <span>{formatBRL(booking.subtotal)}</span>
               </div>
@@ -183,7 +166,7 @@ export default async function PagamentoReservaPage({
               {erro === 'pagamento' && awaitingPayment && (
                 <div
                   role="alert"
-                  className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900"
+                  className="border-ipe/50 bg-ipe/15 text-foreground mb-4 rounded-2xl border p-4 text-sm"
                 >
                   Não conseguimos abrir o pagamento agora. Tente de novo em instantes.
                 </div>
@@ -208,7 +191,7 @@ export default async function PagamentoReservaPage({
                   {payOnline && (
                     <div>
                       {showPix && (
-                        <p className="text-muted-foreground mb-2 text-center text-xs font-semibold tracking-wide uppercase">
+                        <p className="text-muted-foreground mb-2 text-center text-sm font-medium">
                           ou pague com cartão
                         </p>
                       )}
@@ -216,8 +199,8 @@ export default async function PagamentoReservaPage({
                         href={payHref}
                         rel="nofollow"
                         className={buttonVariants({
-                          size: 'lg',
-                          variant: showPix ? 'outline' : 'default',
+                          size: 'pill-lg',
+                          variant: showPix ? 'outline' : 'accent',
                           className: 'w-full',
                         })}
                       >
@@ -226,21 +209,21 @@ export default async function PagamentoReservaPage({
                           ? 'Cartão de crédito (Mercado Pago)'
                           : 'Pagar agora com Mercado Pago'}
                       </a>
-                      <p className="text-muted-foreground mt-2 text-center text-xs">
+                      <p className="text-muted-foreground mt-2 text-center text-sm">
                         Você será redirecionado para o ambiente seguro do Mercado Pago.
                       </p>
                     </div>
                   )}
                   {booking.paymentDueAt && (
-                    <p className="text-muted-foreground text-center text-xs">
+                    <p className="text-muted-foreground text-center text-sm">
                       Suas datas ficam guardadas até {formatDateTime(booking.paymentDueAt)}.
                     </p>
                   )}
                 </div>
               ) : deadlinePassed ? (
-                <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
+                <div className="border-ipe/50 bg-ipe/15 text-foreground rounded-2xl border p-4 text-sm">
                   <div className="flex items-start gap-2">
-                    <Clock3 className="mt-0.5 size-4 shrink-0 text-orange-600" />
+                    <Clock3 className="mt-0.5 size-4 shrink-0" />
                     <div>
                       <p className="font-medium">O prazo de pagamento desta reserva terminou.</p>
                       <p className="mt-1">
@@ -251,13 +234,13 @@ export default async function PagamentoReservaPage({
                   </div>
                   <Link
                     href={`/pousada/${slug}/reservar`}
-                    className={buttonVariants({ size: 'lg', className: 'mt-4 w-full' })}
+                    className={buttonVariants({ size: 'pill', className: 'mt-4 w-full' })}
                   >
                     Fazer nova reserva
                   </Link>
                 </div>
               ) : awaitingPayment ? (
-                <div className="border-border bg-secondary/40 flex items-start gap-2 rounded-2xl border p-4 text-sm">
+                <div className="bg-secondary flex items-start gap-2 rounded-2xl p-4 text-sm">
                   <Clock3 className="text-foreground mt-0.5 size-4 shrink-0" />
                   <div className="text-muted-foreground">
                     <p className="text-foreground font-medium">
@@ -275,7 +258,7 @@ export default async function PagamentoReservaPage({
                   </div>
                 </div>
               ) : (
-                <div className="border-border bg-secondary/40 flex items-start gap-2 rounded-2xl border p-4 text-sm">
+                <div className="bg-secondary flex items-start gap-2 rounded-2xl p-4 text-sm">
                   <CheckCircle2 className="text-foreground mt-0.5 size-4 shrink-0" />
                   <div className="text-muted-foreground">
                     <p className="text-foreground font-medium">{statusNote(booking).title}</p>
@@ -287,7 +270,10 @@ export default async function PagamentoReservaPage({
           </Card>
 
           <p className="text-muted-foreground mt-6 text-center text-sm">
-            <Link href="/minhas-reservas" className="text-primary font-semibold hover:underline">
+            <Link
+              href="/minhas-reservas"
+              className="text-foreground font-semibold underline-offset-4 hover:underline"
+            >
               Ver minhas reservas
             </Link>
           </p>

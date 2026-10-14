@@ -17,6 +17,7 @@ import { DEFAULT_EMERGENCY } from '../info'
 import { daysBetween, hourLabel, shortDate } from '../dates'
 import type { StayCtx } from './stay-context'
 import { tipMapsUrl } from './stay-home'
+import { ThemeChoice } from './stay-theme'
 import { Pill, RoundButton, SectionHead, TwoTone, amenityIcon, cx, tipIcon } from './stay-ui'
 
 function Row({
@@ -33,15 +34,15 @@ function Row({
   multiline?: boolean
 }) {
   return (
-    <li className="flex items-center gap-3 py-3 [&+&]:border-t [&+&]:border-[#e6e6e2]">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f4f4f2]">
+    <li className="[&+&]:border-border flex items-center gap-3 py-3 [&+&]:border-t">
+      <span className="bg-app-soft grid size-10 shrink-0 place-items-center rounded-full">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[11.5px] text-[#9a9a96]">{label}</p>
+        <p className="text-muted-foreground text-[11.5px]">{label}</p>
         <p
           className={cx(
-            'mt-px text-[13.5px] font-bold tracking-[-0.01em]',
+            'mt-px text-[13.5px] font-bold',
             multiline && 'font-semibold whitespace-pre-line',
           )}
         >
@@ -79,7 +80,7 @@ export function StayDetails(ctx: StayCtx) {
           <ArrowLeft className="size-[18px]" />
         </RoundButton>
         <div className="min-w-0 flex-1">
-          <p className="text-[11.5px] text-[#9a9a96]">Reserva {booking.code}</p>
+          <p className="text-muted-foreground text-[11.5px]">Reserva {booking.code}</p>
           <p className="truncate text-[14.5px] font-bold">Sua hospedagem</p>
         </div>
       </div>
@@ -89,43 +90,39 @@ export function StayDetails(ctx: StayCtx) {
         className="mt-5 mb-4 px-0.5 text-[28px] leading-[1.1]"
       />
 
-      <section className="rounded-[30px] bg-[#1e1e1e] p-4 text-white">
+      <section className="bg-app-strong text-neblina rounded-[30px] p-4">
         <div className="flex items-center gap-3.5">
-          <span className="bg-sunset grid size-[76px] shrink-0 place-items-center rounded-[22px]">
+          <span className="bg-ipe text-breu grid size-[76px] shrink-0 place-items-center rounded-[22px]">
             <BedDouble className="size-9" strokeWidth={1.6} />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] text-[#a3a3a0]">Acomodação</p>
-            <p className="text-[17px] leading-tight font-bold tracking-[-0.02em]">
-              {booking.roomName}
-            </p>
+            <p className="text-liquen text-[11px]">Acomodação</p>
+            <p className="font-display text-[17px] leading-tight font-medium">{booking.roomName}</p>
             <div className="mt-2">
               <Pill tone="gray">{guests}</Pill>
             </div>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[20px] bg-[#2b2b29] px-3.5 py-3">
+        <div className="bg-neblina/10 mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[20px] px-3.5 py-3">
           <div>
-            <p className="text-[11px] text-[#a3a3a0]">Check-in</p>
+            <p className="text-liquen text-[11px]">Check-in</p>
             <p className="mt-0.5 text-sm font-bold">{shortDate(booking.checkin)}</p>
-            <p className="text-[11px] text-[#a3a3a0]">
-              a partir das {hourLabel(pousada.checkinTime)}
-            </p>
+            <p className="text-liquen text-[11px]">a partir das {hourLabel(pousada.checkinTime)}</p>
           </div>
           <Pill tone="white">{plural(nights, 'noite', 'noites')}</Pill>
           <div className="text-right">
-            <p className="text-[11px] text-[#a3a3a0]">Check-out</p>
+            <p className="text-liquen text-[11px]">Check-out</p>
             <p className="mt-0.5 text-sm font-bold">{shortDate(booking.checkout)}</p>
-            <p className="text-[11px] text-[#a3a3a0]">até {hourLabel(pousada.checkoutTime)}</p>
+            <p className="text-liquen text-[11px]">até {hourLabel(pousada.checkoutTime)}</p>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-2 text-[12.5px]">
           {booking.balanceDue > 0 ? (
-            <span className="text-amber-300">
+            <span className="text-ipe">
               Falta pagar {formatBRL(booking.balanceDue)} das diárias
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-emerald-300">
+            <span className="text-neblina flex items-center gap-1.5">
               <Check className="size-3.5" strokeWidth={3} /> Diárias pagas ·{' '}
               {formatBRL(booking.total)}
             </span>
@@ -133,7 +130,7 @@ export function StayDetails(ctx: StayCtx) {
           <button
             type="button"
             onClick={() => ctx.go('conta')}
-            className="bg-sunset shrink-0 rounded-full px-3.5 py-2 text-xs font-bold text-white"
+            className="bg-ipe text-breu shrink-0 rounded-full px-3.5 py-2 text-xs font-bold"
           >
             Consumo
           </button>
@@ -149,7 +146,7 @@ export function StayDetails(ctx: StayCtx) {
               return (
                 <span
                   key={a}
-                  className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-semibold"
+                  className="bg-card flex items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-semibold"
                 >
                   <Icon className="size-4" /> {a}
                 </span>
@@ -162,7 +159,7 @@ export function StayDetails(ctx: StayCtx) {
       <div id="info" className="scroll-mt-4">
         <SectionHead title="Informações" />
       </div>
-      <ul className="rounded-[26px] bg-white px-3.5">
+      <ul className="bg-card rounded-[26px] px-3.5">
         {(info.wifiName || info.wifiPassword) && (
           <Row
             icon={<Wifi className="size-[17px]" />}
@@ -173,7 +170,7 @@ export function StayDetails(ctx: StayCtx) {
                 <button
                   type="button"
                   onClick={() => ctx.copy(info.wifiPassword, 'Senha do Wi-Fi copiada')}
-                  className="shrink-0 rounded-full bg-[#1e1e1e] px-3 py-2 text-xs font-bold text-white"
+                  className="bg-app-action text-app-on-action shrink-0 rounded-full px-3 py-2 text-xs font-bold"
                 >
                   Copiar
                 </button>
@@ -221,18 +218,18 @@ export function StayDetails(ctx: StayCtx) {
       <div id="chegar" className="scroll-mt-4">
         <SectionHead title="Como chegar" />
       </div>
-      <div className="overflow-hidden rounded-[28px] bg-white p-2">
+      <div className="bg-card overflow-hidden rounded-[28px] p-2">
         <div
           aria-hidden
-          className="relative h-[124px] rounded-[22px] bg-[#e9eee4] bg-[linear-gradient(35deg,transparent_46%,#fff_46%_50%,transparent_50%),linear-gradient(-20deg,transparent_60%,#fff_60%_63%,transparent_63%),radial-gradient(circle_at_20%_70%,#cfe3c8_0_18%,transparent_19%),radial-gradient(circle_at_80%_25%,#cfe3c8_0_14%,transparent_15%)]"
+          className="bg-secondary relative h-[124px] rounded-[22px] bg-[linear-gradient(35deg,transparent_46%,var(--card)_46%_50%,transparent_50%),linear-gradient(-20deg,transparent_60%,var(--card)_60%_63%,transparent_63%),radial-gradient(circle_at_20%_70%,var(--pedra)_0_18%,transparent_19%),radial-gradient(circle_at_80%_25%,var(--pedra)_0_14%,transparent_15%)]"
         >
-          <span className="bg-sunset absolute top-1/2 left-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-white shadow-[0_0_0_8px_rgba(249,115,22,0.18)]">
+          <span className="bg-ipe text-breu ring-ipe/25 absolute top-1/2 left-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full ring-8">
             <BedDouble className="size-[18px]" />
           </span>
         </div>
         <div className="px-2 pt-3 pb-1">
           <p className="text-sm font-bold">{pousada.name}</p>
-          <p className="text-[11.5px] text-[#9a9a96]">
+          <p className="text-muted-foreground text-[11.5px]">
             {address || `${pousada.city}/${pousada.state}`}
           </p>
         </div>
@@ -241,7 +238,7 @@ export function StayDetails(ctx: StayCtx) {
             href={ctx.mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-[#1e1e1e] py-3 text-center text-[12.5px] font-bold text-white"
+            className="bg-app-action text-app-on-action rounded-full py-3 text-center text-[12.5px] font-bold"
           >
             Google Maps
           </a>
@@ -249,7 +246,7 @@ export function StayDetails(ctx: StayCtx) {
             href={ctx.wazeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-[#f4f4f2] py-3 text-center text-[12.5px] font-bold"
+            className="bg-app-soft rounded-full py-3 text-center text-[12.5px] font-bold"
           >
             Waze
           </a>
@@ -261,27 +258,27 @@ export function StayDetails(ctx: StayCtx) {
           <div id="regiao" className="scroll-mt-4">
             <SectionHead title="Dicas da região" />
           </div>
-          <ul className="rounded-[26px] bg-white px-3.5">
+          <ul className="bg-card rounded-[26px] px-3.5">
             {info.localTips.map((t, i) => {
               const Icon = tipIcon(t.kind)
               return (
-                <li key={`${t.name}-${i}`} className="[&+&]:border-t [&+&]:border-[#e6e6e2]">
+                <li key={`${t.name}-${i}`} className="[&+&]:border-border [&+&]:border-t">
                   <a
                     href={tipMapsUrl(t.name, pousada.city, pousada.state)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 py-3"
                   >
-                    <span className="text-sunset grid size-10 shrink-0 place-items-center rounded-full bg-[#fff0e6]">
+                    <span className="text-app-ink bg-ipe/25 grid size-10 shrink-0 place-items-center rounded-full">
                       <Icon className="size-[17px]" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11.5px] text-[#9a9a96]">
+                      <p className="text-muted-foreground text-[11.5px]">
                         {[t.kind, t.distance].filter(Boolean).join(' · ')}
                       </p>
                       <p className="text-[13.5px] font-bold">{t.name}</p>
                     </div>
-                    <span className="grid size-7 place-items-center rounded-full bg-[#f4f4f2]">
+                    <span className="bg-app-soft grid size-7 place-items-center rounded-full">
                       <ChevronRight className="size-3.5" />
                     </span>
                   </a>
@@ -298,18 +295,21 @@ export function StayDetails(ctx: StayCtx) {
           <a
             key={`${e.label}-${i}`}
             href={`tel:${e.phone.replace(/[^\d+]/g, '')}`}
-            className="rounded-[22px] bg-white px-2 py-3.5 text-center"
+            className="bg-card rounded-[22px] px-2 py-3.5 text-center"
           >
-            <p className="truncate text-[17px] font-extrabold tracking-[-0.02em]">{e.phone}</p>
-            <p className="truncate text-[11px] text-[#9a9a96]">{e.label}</p>
+            <p className="font-display truncate text-[17px] font-medium">{e.phone}</p>
+            <p className="text-muted-foreground truncate text-[11px]">{e.label}</p>
           </a>
         ))}
       </div>
 
+      <SectionHead title="Aparência" aside="Vale só neste aparelho" />
+      <ThemeChoice />
+
       {pousada.cancellationPolicy && (
-        <details className="mt-3 rounded-[22px] bg-white px-4 py-3 text-[13px]">
+        <details className="bg-card mt-3 rounded-[22px] px-4 py-3 text-[13px]">
           <summary className="cursor-pointer font-bold">Política de cancelamento</summary>
-          <p className="mt-2 whitespace-pre-line text-[#4a4a48]">{pousada.cancellationPolicy}</p>
+          <p className="text-app-ink-2 mt-2 whitespace-pre-line">{pousada.cancellationPolicy}</p>
         </details>
       )}
 
@@ -320,10 +320,10 @@ export function StayDetails(ctx: StayCtx) {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 flex h-14 w-full items-center justify-between rounded-full bg-[#1e1e1e] pr-2 pl-5 text-[14.5px] font-bold text-white"
+          className="bg-app-action text-app-on-action mt-4 flex h-14 w-full items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
         >
           Fazer check-out expresso
-          <span className="bg-sunset grid size-[42px] place-items-center rounded-full">
+          <span className="bg-ipe text-breu grid size-[42px] place-items-center rounded-full">
             <ArrowRight className="size-4" />
           </span>
         </a>

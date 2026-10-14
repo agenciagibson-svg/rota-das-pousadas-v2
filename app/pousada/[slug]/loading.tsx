@@ -4,9 +4,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PousadaLoading() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pb-24">
+      <main id="conteudo" tabIndex={-1} className="pb-24">
         <Container className="pt-28">
           <div className="grid grid-cols-1 gap-2 md:h-[520px] md:grid-cols-4 md:grid-rows-2">
             <Skeleton className="h-64 rounded-3xl md:col-span-2 md:row-span-2 md:h-full" />

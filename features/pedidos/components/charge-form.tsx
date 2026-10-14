@@ -92,9 +92,7 @@ export function ChargeForm({
     <div className="space-y-4">
       {!fixedBookingId && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Reserva
-          </span>
+          <span className="text-foreground text-sm font-medium">Reserva</span>
           {bookings && bookings.length > 0 ? (
             <select
               value={bookingId}

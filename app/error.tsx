@@ -21,10 +21,15 @@ export default function RootError({
     <div className="bg-background flex min-h-screen items-center justify-center px-5">
       <EmptyState
         size="lg"
+        as="h1"
         icon={AlertTriangle}
         title="Algo saiu da rota"
         description="Encontramos um erro inesperado. Tente novamente em instantes."
-        action={<Button onClick={reset}>Tentar novamente</Button>}
+        action={
+          <Button size="lg" onClick={reset}>
+            Tentar novamente
+          </Button>
+        }
       />
     </div>
   )

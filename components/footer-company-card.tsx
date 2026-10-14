@@ -3,53 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
-import { ArrowUpRight, BriefcaseBusiness, Leaf, Mail, Newspaper, ScrollText } from 'lucide-react'
-
-const companyLinks = [
-  {
-    label: 'História',
-    href: '#',
-    icon: ScrollText,
-    title: 'A rota nasce das pousadas com alma',
-    detail:
-      'Uma marca feita para valorizar hospedagens independentes, destinos brasileiros e viagens com mais significado.',
-    step: 'origem',
-  },
-  {
-    label: 'Sustentabilidade',
-    href: '#',
-    icon: Leaf,
-    title: 'Turismo que respeita o lugar',
-    detail:
-      'Curadoria para destacar pousadas conectadas com natureza, comunidade local e operação responsável.',
-    step: 'impacto',
-  },
-  {
-    label: 'Imprensa',
-    href: '#',
-    icon: Newspaper,
-    title: 'Uma nova vitrine para o turismo nacional',
-    detail:
-      'Materiais, releases e dados da plataforma para contar a expansão da Rota das Pousadas.',
-    step: 'voz',
-  },
-  {
-    label: 'Carreiras',
-    href: '#',
-    icon: BriefcaseBusiness,
-    title: 'Gente construindo tecnologia com hospitalidade',
-    detail: 'Produto, operação, marketing e IA trabalhando para aproximar pousadas e viajantes.',
-    step: 'time',
-  },
-  {
-    label: 'Contato',
-    href: 'mailto:agenciagibson@gmail.com',
-    icon: Mail,
-    title: 'Fale com a Rota das Pousadas',
-    detail: 'Parcerias, suporte, imprensa e oportunidades podem começar por uma mensagem simples.',
-    step: 'conversa',
-  },
-]
+import { ArrowUpRight } from 'lucide-react'
+import { companyLinks } from '@/components/footer-links'
 
 export function FooterCompanyCard() {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -57,13 +12,13 @@ export function FooterCompanyCard() {
   const ActiveIcon = active.icon
 
   return (
-    <div className="border-linen/10 bg-linen/[0.06] shadow-floating rounded-2xl border p-4">
+    <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-linen text-sm font-semibold">Rota das Pousadas</h4>
+          <h2 className="text-linen text-sm font-semibold">Rota das Pousadas</h2>
           <p className="text-linen/55 mt-1 text-xs leading-relaxed">Mapa da marca</p>
         </div>
-        <span className="border-linen/15 text-linen/60 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-wide uppercase">
+        <span className="border-linen/15 text-linen/60 rounded-full border px-3 py-1 text-xs font-semibold">
           Brasil
         </span>
       </div>
@@ -81,7 +36,7 @@ export function FooterCompanyCard() {
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
                 aria-label={`Abrir ${item.label}`}
-                className={`relative z-10 flex size-7 items-center justify-center rounded-full border transition-all ${
+                className={`relative z-10 flex size-7 items-center justify-center rounded-full border transition ${
                   selected
                     ? 'border-gold bg-gold text-stone-deep'
                     : 'border-linen/20 bg-stone-deep text-linen/45 hover:text-linen'
@@ -100,11 +55,11 @@ export function FooterCompanyCard() {
           transition={{ duration: 0.22 }}
           className="mt-5"
         >
-          <span className="text-gold inline-flex items-center gap-2 text-xs font-semibold">
+          <span className="text-ipe inline-flex items-center gap-2 text-xs font-semibold">
             <ActiveIcon className="size-4" />
             {active.step}
           </span>
-          <p className="text-linen mt-3 font-serif text-xl leading-tight font-semibold text-pretty">
+          <p className="text-linen font-display mt-3 text-xl leading-tight font-medium text-pretty">
             {active.title}
           </p>
           <p className="text-linen/62 mt-3 min-h-16 text-sm leading-relaxed">{active.detail}</p>
@@ -122,7 +77,7 @@ export function FooterCompanyCard() {
               onMouseEnter={() => setActiveIndex(index)}
               onFocus={() => setActiveIndex(index)}
               onClick={() => setActiveIndex(index)}
-              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-all ${
+              className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
                 selected
                   ? 'border-linen/35 bg-linen text-stone-deep'
                   : 'border-linen/10 text-linen/65 hover:border-linen/25 hover:text-linen'

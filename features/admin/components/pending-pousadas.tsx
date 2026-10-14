@@ -12,7 +12,7 @@ export function PendingPousadas({ items }: { items: PendingPousada[] }) {
   const [error, setError] = useState<string | null>(null)
 
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhuma pousada aguardando aprovação.</p>
+    return <p className="text-muted-foreground text-sm">Nenhuma pousada aguardando aprovação.</p>
   }
 
   function run(
@@ -33,10 +33,13 @@ export function PendingPousadas({ items }: { items: PendingPousada[] }) {
   return (
     <div className="space-y-2">
       {items.map((p) => (
-        <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl bg-secondary/50 p-3">
+        <div
+          key={p.id}
+          className="bg-secondary/50 flex items-center justify-between gap-3 rounded-xl p-3"
+        >
           <div className="min-w-0">
-            <div className="truncate font-medium text-foreground">{p.name}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="text-foreground truncate font-medium">{p.name}</div>
+            <div className="text-muted-foreground flex items-center gap-1 text-xs">
               <MapPin className="size-3" /> {p.city}, {p.state}
             </div>
           </div>
@@ -44,21 +47,21 @@ export function PendingPousadas({ items }: { items: PendingPousada[] }) {
             <button
               disabled={pending}
               onClick={() => run(rejectPousadaAction, p.id)}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
+              className="border-border text-foreground hover:bg-secondary rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
             >
               Rejeitar
             </button>
             <button
               disabled={pending}
               onClick={() => run(approvePousadaAction, p.id)}
-              className="rounded-lg bg-ocean px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-all hover:brightness-105 disabled:opacity-50"
+              className="bg-ocean text-primary-foreground rounded-lg px-3 py-1.5 text-xs font-semibold transition hover:brightness-105 disabled:opacity-50"
             >
               Aprovar
             </button>
           </div>
         </div>
       ))}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </div>
   )
 }

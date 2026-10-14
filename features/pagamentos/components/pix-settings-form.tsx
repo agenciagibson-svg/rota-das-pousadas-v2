@@ -76,7 +76,7 @@ export function PixSettingsForm({
               ({initial.holderName}).
             </p>
             {saved && (
-              <p className="flex items-center gap-1.5 text-emerald-700">
+              <p className="text-success flex items-center gap-1.5">
                 <CheckCircle2 className="size-4" /> Chave salva.
               </p>
             )}
@@ -104,10 +104,7 @@ export function PixSettingsForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-3 flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="keyType"
-          className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase"
-        >
+        <label htmlFor="keyType" className="text-foreground text-sm font-medium">
           Tipo de chave
         </label>
         <select

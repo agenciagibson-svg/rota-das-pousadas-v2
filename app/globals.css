@@ -4,7 +4,8 @@
 @import '../styles/tokens.css';
 @import '../styles/typography.css';
 
-@custom-variant dark (&:is(.dark *));
+/* `dark:` vale dentro de `.dark` e do app da estadia em tema escuro. */
+@custom-variant dark (&:is(.dark *, [data-theme='dark'], [data-theme='dark'] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -49,8 +50,30 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  /* Marca out/2026: Figtree no texto, Funnel Display nos títulos. As duas
+   * são sem serifa; `font-serif` continua existindo como apelido de
+   * `font-display` porque o app inteiro usa essa classe nos títulos. */
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-funnel-display), var(--font-figtree), ui-sans-serif, sans-serif;
+  --font-serif: var(--font-display);
+
+  --color-ipe: var(--ipe);
+  --color-breu: var(--breu);
+  --color-grafite: var(--grafite);
+  --color-liquen: var(--liquen);
+  --color-pedra: var(--pedra);
+  --color-neblina: var(--neblina);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  /* App da estadia: tokens com tema claro e escuro (ver bloco `[data-theme]`). */
+  --color-app: var(--app-bg);
+  --color-app-soft: var(--app-soft);
+  --color-app-ink: var(--app-ink);
+  --color-app-ink-2: var(--app-ink-2);
+  --color-app-strong: var(--app-strong);
+  --color-app-action: var(--app-action);
+  --color-app-on-action: var(--app-on-action);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -64,57 +87,136 @@
   color-scheme: light;
   --radius: 0.9rem;
 
-  /* Backgrounds inspired by sand, stone and linen */
-  --background: #f8f6f1;
-  --foreground: #1f2420;
+  /* Paleta da marca (docs/Marca.md). Ipê é o único acento: ação de reserva
+   * e busca, e o ponto da logo. Nunca use Ipê como cor de texto no claro. */
+  --ipe: #f4b42a;
+  --breu: #0f1716;
+  --grafite: #4f5955;
+  --liquen: #a9b3ae;
+  --pedra: #c9d0cc;
+  --neblina: #eef1ef;
+
+  --background: #eef1ef;
+  --foreground: #0f1716;
   --card: #ffffff;
-  --card-foreground: #1f2420;
+  --card-foreground: #0f1716;
   --popover: #ffffff;
-  --popover-foreground: #1f2420;
+  --popover-foreground: #0f1716;
 
-  /* Forest green primary */
-  --primary: #0f766e;
-  --primary-foreground: #f8f6f1;
+  /* Botões e superfícies de destaque em Breu */
+  --primary: #0f1716;
+  --primary-foreground: #eef1ef;
 
-  --secondary: #eee9df;
-  --secondary-foreground: #34302a;
+  --secondary: #e2e7e4;
+  --secondary-foreground: #0f1716;
 
-  --muted: #efece4;
-  --muted-foreground: #6b6459;
+  --muted: #e5e9e7;
+  --muted-foreground: #4f5955;
 
-  /* Sunset orange as interactive accent */
-  --accent: #f97316;
-  --accent-foreground: #ffffff;
+  /* Ipê: o acento de ação (texto Breu por cima, contraste 9,9:1) */
+  --accent: #f4b42a;
+  --accent-foreground: #0f1716;
 
-  --destructive: #c0492f;
+  --destructive: #b3412a;
 
-  --border: #e4ddd0;
-  --input: #e4ddd0;
-  --ring: #0f766e;
+  /* Cor de estado (não de marca): só para confirmações — pagamento aprovado,
+   * reserva confirmada. Atenção usa Ipê suave; erro usa destructive. */
+  --success: #2f6a4f;
+  --success-foreground: #eef1ef;
 
-  /* Brand tokens */
-  --forest: #0f766e;
-  --ocean: #2563eb;
-  --sunset: #f97316;
-  --gold: #d4af37;
-  --sand: #efe7d8;
-  --linen: #f8f6f1;
-  --stone-deep: #1f2420;
+  --border: #d5dbd8;
+  --input: #c9d0cc;
+  --ring: #0f1716;
 
-  --chart-1: #0f766e;
-  --chart-2: #2563eb;
-  --chart-3: #f97316;
-  --chart-4: #d4af37;
-  --chart-5: #6b6459;
+  /* Nomes antigos dos tokens de marca, remapeados para a paleta nova. O
+   * laranja `sunset` saiu: o app da estadia agora usa Ipê com texto Breu. */
+  --forest: #0f1716;
+  --ocean: #4f5955;
+  --sunset: #f4b42a;
+  --gold: #f4b42a;
+  --sand: #e2e7e4;
+  --linen: #eef1ef;
+  --stone-deep: #0f1716;
+
+  --chart-1: #0f1716;
+  --chart-2: #4f5955;
+  --chart-3: #f4b42a;
+  --chart-4: #a9b3ae;
+  --chart-5: #c9d0cc;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #1f2420;
-  --sidebar-primary: #0f766e;
-  --sidebar-primary-foreground: #f8f6f1;
-  --sidebar-accent: #efece4;
-  --sidebar-accent-foreground: #34302a;
-  --sidebar-border: #e4ddd0;
-  --sidebar-ring: #0f766e;
+  --sidebar-foreground: #0f1716;
+  --sidebar-primary: #0f1716;
+  --sidebar-primary-foreground: #eef1ef;
+  --sidebar-accent: #e5e9e7;
+  --sidebar-accent-foreground: #0f1716;
+  --sidebar-border: #d5dbd8;
+  --sidebar-ring: #0f1716;
+
+  /* Varinha do concierge: o único ponto multicolorido do site (pedido do
+   * cliente). Começa no Ipê e passa por coral, magenta, anil e menta. */
+  --wand-1: #f4b42a;
+  --wand-2: #ff6b4a;
+  --wand-3: #e0439b;
+  --wand-4: #5b6cff;
+  --wand-5: #2fc4a0;
+
+  /* App da estadia, tema claro = a marca como sempre foi. */
+  --app-bg: #eef1ef;
+  --app-soft: #eef1ef;
+  --app-ink: #0f1716;
+  --app-ink-2: #4f5955;
+  /* Superfície forte (cartão da chave, conta, barra de abas): Breu. */
+  --app-strong: #0f1716;
+  /* Botões principais (enviar pedido, adicionar): Breu com texto Neblina. */
+  --app-action: #0f1716;
+  --app-on-action: #eef1ef;
+}
+
+/*
+ * App da estadia em tema escuro: segue o celular ou a escolha do hóspede
+ * (`features/estadia/components/stay-theme.tsx`). Fundo Breu, cartões um
+ * degrau acima, botões principais claros e o Ipê continua o único acento.
+ * Os tokens semânticos (card, borda, texto) mudam só dentro do app.
+ */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #0f1716;
+  --foreground: #eef1ef;
+  --card: #18221f;
+  --card-foreground: #eef1ef;
+  --popover: #18221f;
+  --popover-foreground: #eef1ef;
+  --primary: #eef1ef;
+  --primary-foreground: #0f1716;
+  --secondary: #26322e;
+  --secondary-foreground: #eef1ef;
+  --muted: #1d2825;
+  --muted-foreground: #a9b3ae;
+  --destructive: #ec8f7a;
+  --border: #2c3834;
+  --input: #3a4743;
+  --ring: #eef1ef;
+  /* Linhas e estrelas vazias: Pedra escurecida para não brilhar no escuro. */
+  --pedra: #3a4743;
+
+  --app-bg: #0f1716;
+  --app-soft: #26322e;
+  --app-ink: #eef1ef;
+  --app-ink-2: #a9b3ae;
+  --app-strong: #1f2c28;
+  --app-action: #eef1ef;
+  --app-on-action: #0f1716;
+}
+
+/* Fundo da página atrás do app (rolagem elástica do iPhone) acompanha o tema. */
+html:has([data-stay-app]) body {
+  background: var(--app-bg);
+}
+html:has([data-stay-app][data-theme='dark']),
+html:has([data-stay-app][data-theme='dark']) body {
+  background: #0f1716;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -125,24 +227,133 @@
     @apply bg-background text-foreground;
   }
   ::selection {
-    background: var(--forest);
-    color: var(--linen);
+    background: var(--ipe);
+    color: var(--breu);
+  }
+  /* Toque: sem o atraso do duplo toque e com um realce discreto em Ipê. */
+  html {
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--ipe) 22%, transparent);
+  }
+  /* Alvo do "Pular para o conteúdo": recebe o foco sem desenhar contorno. */
+  main:focus {
+    outline: none;
+  }
+  a,
+  button,
+  [role='button'],
+  input,
+  label,
+  select,
+  summary,
+  textarea {
+    touch-action: manipulation;
   }
 }
 
 @layer utilities {
+  /* Vidro claro: Branco 72%, desfoque 18px (docs/Marca.md). */
   .glass {
-    background: color-mix(in oklab, white 62%, transparent);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    background: color-mix(in oklab, white 72%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
   }
+  /* Vidro escuro sobre foto: Breu 45%, desfoque 18px, borda branca 18%. */
   .glass-dark {
-    background: color-mix(in oklab, #12100c 34%, transparent);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    background: color-mix(in oklab, var(--breu) 45%, transparent);
+    border-color: color-mix(in oklab, white 18%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
   }
   .text-balance {
     text-wrap: balance;
+  }
+  /* Faíscas da varinha do concierge piscando em tempos diferentes. */
+  .magic-wand-spark {
+    animation: wand-spark 1.8s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .magic-wand-spark-2 {
+    animation-delay: 0.6s;
+  }
+  .magic-wand-spark-3 {
+    animation-delay: 1.2s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .magic-wand-spark {
+      animation: none;
+    }
+  }
+  /* Selo da varinha no chat: anel multicolor girando (as cores da varinha). */
+  .concierge-wand-badge {
+    background: var(--background);
+    isolation: isolate;
+  }
+  .concierge-wand-badge::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--wand-angle, 0deg),
+      var(--wand-1),
+      var(--wand-2),
+      var(--wand-3),
+      var(--wand-4),
+      var(--wand-5),
+      var(--wand-1)
+    );
+    animation: wand-ring 4s linear infinite;
+  }
+  .concierge-wand-badge::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--card);
+  }
+  /* Três pontos de "digitando". */
+  .concierge-typing {
+    display: inline-flex;
+    gap: 3px;
+  }
+  .concierge-typing i {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: wand-spark 1.2s ease-in-out infinite;
+  }
+  .concierge-typing i:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .concierge-typing i:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .concierge-wand-badge::before,
+    .concierge-typing i {
+      animation: none;
+    }
+  }
+  /* Título sobre foto: sombra larga e macia, só para destacar as letras. */
+  .text-legible {
+    text-shadow: 0 2px 28px color-mix(in oklab, var(--breu) 55%, transparent);
+  }
+  /* Véu do hero: desfoque + escurecimento que somem em degradê para cima. */
+  .hero-text-veil {
+    background: linear-gradient(
+      to top,
+      color-mix(in oklab, var(--breu) 55%, transparent),
+      color-mix(in oklab, var(--breu) 20%, transparent) 60%,
+      transparent
+    );
+    backdrop-filter: blur(10px) saturate(115%);
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    mask-image: linear-gradient(to top, black 55%, transparent);
+    -webkit-mask-image: linear-gradient(to top, black 55%, transparent);
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -157,9 +368,23 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Cabeçalho fixo e barras presas ao pé (reserva no celular, menu do app da
+   estadia) não podem cobrir a âncora nem o elemento que recebe o foco. */
+html:has([data-site-header]) {
+  scroll-padding-top: 6rem;
+}
+@media (max-width: 1023px) {
+  html:has([data-bottom-bar]) {
+    scroll-padding-bottom: 6.5rem;
+  }
+}
+
+/* `clip` (e não `hidden`) corta a rolagem horizontal sem transformar o body
+   num contêiner de rolagem — com `hidden`, `position: sticky` (abas da
+   pousada, card de reserva, título do FAQ) deixava de grudar. */
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
 }
 
@@ -172,5 +397,29 @@ body {
   select,
   textarea {
     font-size: 16px;
+  }
+}
+
+@property --wand-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes wand-ring {
+  to {
+    --wand-angle: 360deg;
+  }
+}
+
+@keyframes wand-spark {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
   }
 }

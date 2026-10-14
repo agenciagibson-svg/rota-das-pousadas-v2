@@ -1,14 +1,21 @@
 import type { MetadataRoute } from 'next'
 import { siteConfig } from '@/lib/seo'
 
-export default function manifest(): MetadataRoute.Manifest {
-  return {
+/**
+ * Manifesto do site, em `/site.webmanifest`. Não use `app/manifest.ts` nem uma
+ * rota `app/manifest.webmanifest`: o Next trata os dois como manifesto da raiz
+ * e ele vence o `metadata.manifest` de qualquer layout — o app da estadia
+ * ficava com o manifesto do site e, na tela de início, abria a home em vez do
+ * app. O link vem de `baseMetadata` (lib/seo.ts).
+ */
+export function GET() {
+  const manifest: MetadataRoute.Manifest = {
     name: siteConfig.name,
     short_name: siteConfig.shortName,
     description: siteConfig.description,
     start_url: '/',
     display: 'standalone',
-    background_color: '#f8f6f1',
+    background_color: '#eef1ef',
     theme_color: siteConfig.themeColor,
     lang: 'pt-BR',
     icons: [
@@ -19,4 +26,10 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   }
+  return new Response(JSON.stringify(manifest), {
+    headers: {
+      'Content-Type': 'application/manifest+json; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  })
 }

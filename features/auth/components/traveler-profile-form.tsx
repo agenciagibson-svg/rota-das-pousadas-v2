@@ -26,7 +26,7 @@ type Props = {
 
 const selectClass =
   'rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-3 focus:ring-ring/20'
-const labelClass = 'text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'
+const labelClass = 'text-sm font-medium text-foreground'
 
 function Section({
   title,
@@ -372,7 +372,7 @@ export function TravelerProfileForm({ initial, email, storedDocumentLabel }: Pro
         <p
           role="status"
           className={`flex items-center gap-2 rounded-2xl p-4 text-sm font-medium ${
-            saved.length === 0 ? 'bg-emerald-50 text-emerald-900' : 'bg-amber-50 text-amber-900'
+            saved.length === 0 ? 'bg-success/10 text-success' : 'bg-ipe/20 text-foreground'
           }`}
         >
           <CheckCircle2 className="size-5 shrink-0" />

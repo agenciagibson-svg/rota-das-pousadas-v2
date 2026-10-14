@@ -41,6 +41,8 @@ export type Pousada = {
   tags: string[]
   description: string
   instagram: string
+  /** Hóspedes por acomodação (modo demonstração; no banco vem das acomodações). */
+  maxGuests?: number
   /**
    * Campos reais abaixo (existem no banco desde a 0010, editáveis pelo
    * proprietário em `/dashboard/configuracoes`) — opcionais porque o modo

@@ -58,9 +58,7 @@ function SelectField({
       : [{ value: defaultValue, label: defaultValue }, ...options]
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-        {label}
-      </span>
+      <span className="text-foreground text-sm font-medium">{label}</span>
       <select name={name} defaultValue={defaultValue} className={SELECT_CLASS}>
         {all.map((o) => (
           <option key={o.value} value={o.value}>
@@ -247,9 +245,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
 
       <div className="grid gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Tags
-          </span>
+          <span className="text-foreground text-sm font-medium">Tags</span>
           <input
             name="tags"
             defaultValue={settings.tags.join(', ')}
@@ -260,9 +256,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Descrição pública
-          </span>
+          <span className="text-foreground text-sm font-medium">Descrição pública</span>
           <textarea
             name="description"
             defaultValue={settings.description}
@@ -275,14 +269,12 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Regras da casa
-          </span>
+          <span className="text-foreground text-sm font-medium">Regras da casa</span>
           <textarea
             name="houseRules"
             defaultValue={settings.houseRules}
             rows={4}
-            placeholder="Ex.: silêncio após 22h, pets sob consulta..."
+            placeholder="Ex.: silêncio após 22h, pets sob consulta…"
             className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
           />
           {fieldErrors.houseRules && (
@@ -291,9 +283,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Política de cancelamento
-          </span>
+          <span className="text-foreground text-sm font-medium">Política de cancelamento</span>
           <textarea
             name="cancellationPolicy"
             defaultValue={settings.cancellationPolicy}
@@ -314,7 +304,7 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
         </div>
         <Button type="submit" size="lg" disabled={isPending}>
           <Save className="size-4" />
-          {isPending ? 'Salvando...' : 'Salvar configurações'}
+          {isPending ? 'Salvando…' : 'Salvar configurações'}
         </Button>
       </div>
     </form>

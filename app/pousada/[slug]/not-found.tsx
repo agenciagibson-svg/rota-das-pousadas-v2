@@ -9,9 +9,14 @@ export default function PousadaNotFound() {
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="flex min-h-[70vh] items-center justify-center px-5">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="flex min-h-[70vh] items-center justify-center px-5"
+      >
         <EmptyState
           size="lg"
+          as="h1"
           icon={MapPinOff}
           title="Pousada não encontrada"
           description="Este refúgio não existe mais ou o endereço está incorreto. Explore outros destinos na nossa curadoria."

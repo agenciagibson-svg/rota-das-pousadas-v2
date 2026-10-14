@@ -75,9 +75,7 @@ export function InviteMemberForm() {
       {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
       <div className="flex flex-col gap-1.5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Papel
-          </span>
+          <span className="text-foreground text-sm font-medium">Papel</span>
           <select
             name="role"
             defaultValue="recepcionista"
@@ -99,7 +97,7 @@ export function InviteMemberForm() {
       </div>
       <Button type="submit" disabled={isPending}>
         <UserPlus className="size-4" />
-        {isPending ? 'Convidando...' : 'Convidar'}
+        {isPending ? 'Convidando…' : 'Convidar'}
       </Button>
       {error && (
         <p role="alert" className="text-destructive text-sm font-medium sm:basis-full">

@@ -106,8 +106,8 @@ export default async function ReservarPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
-      <main className="pt-28 pb-24">
-        <Container className="max-w-3xl">
+      <main id="conteudo" tabIndex={-1} className="pt-28 pb-24">
+        <Container className="max-w-5xl">
           <Breadcrumb
             items={[
               { label: 'Pousadas', href: '/#pousadas' },
@@ -116,31 +116,32 @@ export default async function ReservarPage({
             ]}
           />
 
-          <div className="mt-6 grid gap-8 md:grid-cols-[1fr_1.1fr]">
-            <Card radius="3xl" className="overflow-hidden p-0">
+          <div className="mt-6 grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
+            {/* A pousada escolhida, para o hóspede saber o que está reservando. */}
+            <Card radius="3xl" border={false} className="overflow-hidden md:sticky md:top-28">
               <div className="relative aspect-[4/3]">
                 <Image
                   src={pousada.image || '/placeholder.svg'}
                   alt={pousada.name}
                   fill
-                  sizes="40vw"
+                  sizes="(max-width: 768px) 100vw, 40vw"
                   className="object-cover"
                 />
               </div>
-              <div className="p-5">
-                <h1 className="text-foreground font-serif text-xl font-semibold">{pousada.name}</h1>
-                <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-3 text-sm">
+              <div className="p-5 lg:p-6">
+                <h1 className="text-h2 text-foreground">{pousada.name}</h1>
+                <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-3 text-base">
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="size-4" />
                     {pousada.city}, {pousada.state}
                   </span>
-                  <span className="text-foreground inline-flex items-center gap-1 font-semibold">
-                    <Star className="fill-gold text-gold size-4" />
+                  <span className="text-foreground inline-flex items-center gap-1 font-semibold tabular-nums">
+                    <Star className="fill-ipe text-ipe size-4" />
                     {pousada.rating.toFixed(1)}
                   </span>
                 </div>
-                <p className="mt-3 text-sm">
-                  <span className="text-foreground text-lg font-semibold">
+                <p className="mt-3 text-base">
+                  <span className="text-foreground text-xl font-semibold tabular-nums">
                     {formatPrice(offer?.nightly ?? pousada.pricePerNight)}
                   </span>
                   <span className="text-muted-foreground"> / diária</span>
@@ -148,18 +149,18 @@ export default async function ReservarPage({
               </div>
             </Card>
 
-            <Card radius="3xl" className="shadow-card p-6">
-              <h2 className="text-foreground font-serif text-lg font-semibold">Sua reserva</h2>
-              <p className="text-muted-foreground mt-1 text-sm">
+            <Card radius="3xl" border={false} className="shadow-floating p-6 lg:p-8">
+              <h2 className="text-h2 text-foreground">Sua reserva</h2>
+              <p className="text-muted-foreground mt-1 text-base">
                 Escolha as datas e a quantidade de hóspedes.
               </p>
               {problem && (
                 <StaleDatesNotice>
                   <div
                     role="alert"
-                    className="mt-4 flex gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900"
+                    className="border-ipe/50 bg-ipe/15 text-foreground mt-4 flex gap-3 rounded-2xl border p-4 text-sm"
                   >
-                    <CalendarX2 className="mt-0.5 size-5 shrink-0 text-orange-600" />
+                    <CalendarX2 className="mt-0.5 size-5 shrink-0" />
                     <p>
                       <strong>{problemMessage[problem].title}</strong>{' '}
                       {problemMessage[problem].body}
@@ -168,11 +169,11 @@ export default async function ReservarPage({
                 </StaleDatesNotice>
               )}
               {offer && missingProfile.length > 0 ? (
-                <div className="border-primary/20 bg-primary/5 mt-5 rounded-2xl border p-5 text-sm">
+                <div className="bg-secondary mt-5 rounded-2xl p-5 text-sm">
                   <div className="flex items-start gap-3">
-                    <IdCard className="text-primary mt-0.5 size-5 shrink-0" />
+                    <IdCard className="text-foreground mt-0.5 size-5 shrink-0" />
                     <div>
-                      <p className="text-foreground font-semibold">
+                      <p className="text-foreground text-base font-semibold">
                         Complete seu cadastro para reservar
                       </p>
                       <p className="text-muted-foreground mt-1">
@@ -183,7 +184,7 @@ export default async function ReservarPage({
                   </div>
                   <Link
                     href={completeProfileHref}
-                    className={buttonVariants({ size: 'lg', className: 'mt-4 w-full' })}
+                    className={buttonVariants({ size: 'pill', className: 'mt-4 w-full' })}
                   >
                     Completar cadastro
                   </Link>
@@ -201,8 +202,8 @@ export default async function ReservarPage({
                   />
                 </div>
               ) : (
-                <div className="bg-secondary/60 mt-5 rounded-2xl p-5 text-sm">
-                  <p className="font-semibold">Reserva online indisponível no momento.</p>
+                <div className="bg-secondary mt-5 rounded-2xl p-5 text-sm">
+                  <p className="text-base font-semibold">Reserva online indisponível no momento.</p>
                   <p className="text-muted-foreground mt-1">
                     Esta pousada ainda não tem acomodações abertas para reserva pelo site. Fale
                     direto com ela pela página da pousada.
@@ -212,8 +213,11 @@ export default async function ReservarPage({
             </Card>
           </div>
 
-          <p className="text-muted-foreground mt-6 text-center text-sm">
-            <Link href={`/pousada/${slug}`} className="text-primary font-semibold hover:underline">
+          <p className="text-muted-foreground mt-8 text-center text-sm">
+            <Link
+              href={`/pousada/${slug}`}
+              className="text-foreground font-semibold underline-offset-4 hover:underline"
+            >
               ← Voltar para a pousada
             </Link>
           </p>

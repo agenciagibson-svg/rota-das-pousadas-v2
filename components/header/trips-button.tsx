@@ -49,6 +49,7 @@ export function TripsButton({
         onClick={() => setOpen((v) => !v)}
         aria-label={count ? `Minhas viagens — ${count} aguardando pagamento` : 'Minhas viagens'}
         aria-expanded={open}
+        aria-controls="minhas-viagens"
         className={cn(
           'relative flex size-10 items-center justify-center rounded-full border transition-colors',
           solid
@@ -65,9 +66,14 @@ export function TripsButton({
       </button>
 
       {open && (
-        <div className="border-border bg-card absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl">
+        <div
+          id="minhas-viagens"
+          role="region"
+          aria-label="Minhas viagens"
+          className="border-border bg-card absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl"
+        >
           <div className="border-border border-b px-4 py-3">
-            <p className="font-serif text-base font-semibold">Minhas viagens</p>
+            <p className="font-display text-base font-medium">Minhas viagens</p>
             <p className="text-muted-foreground text-xs">
               {count ? `${count} aguardando pagamento` : 'Nada pendente por aqui'}
             </p>
@@ -85,16 +91,18 @@ export function TripsButton({
                         {shortDate(t.checkin)} a {shortDate(t.checkout)} · {t.code}
                       </p>
                     </div>
-                    <span className="text-primary text-sm font-bold">{brl(t.total)}</span>
+                    <span className="text-primary text-sm font-bold tabular-nums">
+                      {brl(t.total)}
+                    </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     {t.awaitingApproval ? (
-                      <span className="flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                      <span className="bg-secondary text-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
                         <Clock className="size-3" /> Pix em análise
                       </span>
                     ) : (
                       left && (
-                        <span className="flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                        <span className="bg-ipe/20 text-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
                           <Clock className="size-3" /> Pague em {left}
                         </span>
                       )

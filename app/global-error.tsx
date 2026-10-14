@@ -26,8 +26,8 @@ export default function GlobalError({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#f8f6f1',
-          color: '#1f2420',
+          backgroundColor: '#eef1ef',
+          color: '#0f1716',
           fontFamily: 'system-ui, sans-serif',
           textAlign: 'center',
           padding: 24,
@@ -35,15 +35,15 @@ export default function GlobalError({
       >
         <div style={{ maxWidth: 420 }}>
           <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>Algo saiu da rota</h1>
-          <p style={{ color: '#6b6459', marginTop: 8 }}>
+          <p style={{ color: '#4f5955', marginTop: 8 }}>
             Ocorreu um erro crítico. Recarregue a página para continuar.
           </p>
           <button
             onClick={reset}
             style={{
               marginTop: 20,
-              backgroundColor: '#0f766e',
-              color: '#f8f6f1',
+              backgroundColor: '#0f1716',
+              color: '#eef1ef',
               border: 0,
               borderRadius: 9999,
               padding: '10px 20px',

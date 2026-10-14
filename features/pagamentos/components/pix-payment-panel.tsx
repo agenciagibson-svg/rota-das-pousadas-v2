@@ -125,10 +125,10 @@ export function PixPaymentPanel({
     return (
       <div
         role="status"
-        className="rounded-2xl border border-sky-200 bg-sky-50 p-5 text-sm text-sky-950"
+        className="border-border bg-secondary text-foreground rounded-2xl border p-5 text-sm"
       >
         <div className="flex items-start gap-3">
-          <Clock3 className="mt-0.5 size-5 shrink-0 text-sky-600" />
+          <Clock3 className="text-foreground mt-0.5 size-5 shrink-0" />
           <div>
             <p className="font-semibold">Comprovante enviado — aguardando aprovação da pousada</p>
             <p className="mt-1">
@@ -136,7 +136,7 @@ export function PixPaymentPanel({
               e-mail assim que isso acontecer. Suas datas continuam guardadas.
             </p>
             {proof?.fileName && !justSent && (
-              <p className="mt-2 text-xs text-sky-900/70">Arquivo: {proof.fileName}</p>
+              <p className="text-muted-foreground mt-2 text-xs">Arquivo: {proof.fileName}</p>
             )}
           </div>
         </div>
@@ -144,7 +144,7 @@ export function PixPaymentPanel({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="mt-3 text-xs font-semibold text-sky-800 underline"
+            className="text-foreground mt-3 text-xs font-semibold underline"
             disabled={uploading}
           >
             {uploading ? 'Enviando…' : 'Enviei o arquivo errado — trocar comprovante'}
@@ -157,7 +157,11 @@ export function PixPaymentPanel({
           className="hidden"
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
-        {error && <p className="text-destructive mt-2 text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-destructive mt-2 text-sm font-medium">
+            {error}
+          </p>
+        )}
       </div>
     )
   }
@@ -165,13 +169,13 @@ export function PixPaymentPanel({
   if (!pix.available || !canPay || !pix.copiaECola || !pix.qrSvg) return null
 
   return (
-    <div className="min-w-0 rounded-2xl border-2 border-emerald-500/60 bg-emerald-50/40 p-4 sm:p-5">
+    <div className="border-success/40 bg-card min-w-0 rounded-2xl border-2 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-2 font-semibold text-emerald-950">
-          <QrCode className="size-5 text-emerald-600" />
+        <p className="text-foreground flex items-center gap-2 font-semibold">
+          <QrCode className="text-success size-5" />
           Pagar com Pix
         </p>
-        <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
+        <span className="bg-success text-success-foreground rounded-full px-2.5 py-1 text-xs font-bold">
           Recomendado
         </span>
       </div>
@@ -181,8 +185,8 @@ export function PixPaymentPanel({
       </p>
 
       {rejected && proof?.rejectionReason && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
-          <XCircle className="mt-0.5 size-4 shrink-0 text-orange-600" />
+        <div className="border-ipe/50 bg-ipe/15 text-foreground mt-3 flex items-start gap-2 rounded-xl border p-3 text-sm">
+          <XCircle className="text-foreground mt-0.5 size-4 shrink-0" />
           <p>
             <strong>A pousada não confirmou o comprovante anterior:</strong>{' '}
             {proof.rejectionReason.replace(/[.\s]+$/, '')}. Envie outro comprovante ou pague de
@@ -192,7 +196,7 @@ export function PixPaymentPanel({
       )}
 
       {partial && (
-        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+        <p className="border-ipe/50 bg-ipe/15 text-foreground mt-3 rounded-xl border p-3 text-sm">
           <strong>A pousada confirmou parte do pagamento.</strong> Falta pagar {brl(pix.amount)}{' '}
           para confirmar a reserva. Depois, envie o novo comprovante aqui.
         </p>
@@ -200,14 +204,14 @@ export function PixPaymentPanel({
 
       <div className="mt-4 grid gap-5 sm:grid-cols-[180px_1fr] sm:items-center">
         <div
-          className="mx-auto w-44 rounded-xl border border-emerald-200 bg-white p-2 sm:w-full"
+          className="border-border mx-auto w-44 rounded-xl border bg-white p-2 sm:w-full"
           aria-label="QR Code do Pix"
           role="img"
           // SVG gerado no servidor pela biblioteca de QR Code a partir do copia e cola.
           dangerouslySetInnerHTML={{ __html: pix.qrSvg }}
         />
         <div className="min-w-0 space-y-2 text-sm">
-          <p className="text-foreground text-2xl font-semibold">{brl(pix.amount)}</p>
+          <p className="text-foreground text-2xl font-semibold tabular-nums">{brl(pix.amount)}</p>
           <p className="text-muted-foreground">
             Para: <strong className="text-foreground">{pix.holderName}</strong>
           </p>
@@ -221,9 +225,7 @@ export function PixPaymentPanel({
       </div>
 
       <div className="mt-4">
-        <p className="text-muted-foreground mb-1 text-[11px] font-semibold tracking-wide uppercase">
-          Pix copia e cola
-        </p>
+        <p className="text-muted-foreground mb-1 text-sm font-medium">Pix copia e cola</p>
         <div className="flex gap-2">
           <input
             readOnly
@@ -234,12 +236,12 @@ export function PixPaymentPanel({
           />
           <Button type="button" onClick={() => void copy()} className="shrink-0">
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            {copied ? 'Copiado!' : 'Copiar'}
+            <span aria-live="polite">{copied ? 'Copiado!' : 'Copiar'}</span>
           </Button>
         </div>
       </div>
 
-      <div className="mt-5 border-t border-emerald-200 pt-4">
+      <div className="border-border mt-5 border-t pt-4">
         <p className="text-sm font-semibold">Já pagou? Envie o comprovante</p>
         <p className="text-muted-foreground mt-0.5 text-xs">
           Foto ou print da tela do banco, ou o PDF. A pousada confere e confirma a reserva.
@@ -261,7 +263,11 @@ export function PixPaymentPanel({
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}
           {uploading ? 'Enviando comprovante…' : 'Enviar comprovante do Pix'}
         </Button>
-        {error && <p className="text-destructive mt-2 text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-destructive mt-2 text-sm font-medium">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   )

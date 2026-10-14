@@ -63,10 +63,13 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const [detail, setDetail] = useState<StayMenuItem | null>(null)
   const [detailQty, setDetailQty] = useState(1)
   const [bagOpen, setBagOpen] = useState(false)
+  const closeDetail = useCallback(() => setDetail(null), [])
+  const closeBag = useCallback(() => setBagOpen(false), [])
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSent, setReviewSent] = useState(false)
+  const [reviewSending, setReviewSending] = useState(false)
   const lastStatus = useRef<Map<string, string> | null>(null)
 
   const services = useMemo(() => stay.menu.filter((m) => m.category === 'servicos'), [stay.menu])
@@ -140,13 +143,25 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
     return () => clearTimeout(t)
   }, [toast])
 
+  // A aba aberta fica na URL (?aba=): voltar e recarregar mantêm onde a pessoa estava.
+  useEffect(() => {
+    const aba = new URLSearchParams(window.location.search).get('aba')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lê a URL só depois de hidratar
+    if (aba && TABS.some((t) => t.id === aba)) setTab(aba as StayTab)
+  }, [])
+
   const go = useCallback((next: StayTab, anchor?: string) => {
     setDetail(null)
     setBagOpen(false)
     setTab(next)
+    const url = new URL(window.location.href)
+    if (next === 'inicio') url.searchParams.delete('aba')
+    else url.searchParams.set('aba', next)
+    window.history.replaceState(null, '', url)
     requestAnimationFrame(() => {
       const el = anchor ? document.getElementById(anchor) : null
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
       else window.scrollTo({ top: 0 })
     })
   }, [])
@@ -206,7 +221,9 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
       setReviewError('Escolha de 1 a 5 estrelas.')
       return
     }
+    setReviewSending(true)
     const res = await submitStayReviewAction({ bookingId: booking.id, rating, text: reviewText })
+    setReviewSending(false)
     if (!res.ok) setReviewError(res.error)
     else {
       setReviewSent(true)
@@ -247,8 +264,12 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const detailCanAdd = !!detail && detail.available && !orderBlockedReason && detailRoom > 0
 
   return (
-    <div className={cx('min-h-dvh text-[#1e1e1e]', APP_BG)}>
-      <main className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-44">
+    <div className={cx('text-app-ink min-h-dvh', APP_BG)}>
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="mx-auto max-w-lg px-[18px] pt-[max(16px,env(safe-area-inset-top))] pb-44"
+      >
         {tab === 'inicio' && <StayHome {...ctx} />}
         {tab === 'estadia' && <StayDetails {...ctx} />}
         {tab === 'pedir' && <StayMenu {...ctx} openBag={() => setBagOpen(true)} />}
@@ -263,11 +284,12 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
               setText: setReviewText,
               error: reviewError,
               sent: reviewSent,
+              sending: reviewSending,
               submit: () => void submitReview(),
             }}
           />
         )}
-        <p className="pt-8 text-center text-xs text-[#9a9a96]">
+        <p className="text-muted-foreground pt-8 text-center text-xs">
           <Link href="/minhas-reservas" className="underline">
             Minhas reservas
           </Link>{' '}
@@ -276,7 +298,52 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
       </main>
 
       {/* Detalhe do item */}
-      <Sheet open={!!detail} label={detail ? detail.name : 'Item'}>
+      <Sheet
+        open={!!detail}
+        label={detail ? detail.name : 'Item'}
+        onClose={closeDetail}
+        footer={
+          detail && detailCanAdd ? (
+            <div className="from-app absolute inset-x-0 bottom-0 bg-gradient-to-t from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
+              <div className="mx-auto flex max-w-lg items-center gap-2.5">
+                <div className="bg-card flex items-center gap-1 rounded-full p-[5px]">
+                  <button
+                    type="button"
+                    aria-label="Menos"
+                    onClick={() => setDetailQty((q) => Math.max(1, q - 1))}
+                    className="bg-app-soft grid size-[38px] place-items-center rounded-full"
+                  >
+                    <Minus className="size-3.5" strokeWidth={2.8} />
+                  </button>
+                  <span className="min-w-6 text-center font-bold">{detailQty}</span>
+                  <button
+                    type="button"
+                    aria-label="Mais"
+                    onClick={() => setDetailQty((q) => Math.min(detailRoom, q + 1))}
+                    className="bg-app-soft grid size-[38px] place-items-center rounded-full"
+                  >
+                    <Plus className="size-3.5" strokeWidth={2.8} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    change(detail, detailQty)
+                    setToast(`${detailQty}× ${detail.name} na sacola`)
+                    setDetail(null)
+                  }}
+                  className="bg-app-action text-app-on-action flex h-[50px] flex-1 items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold"
+                >
+                  Adicionar
+                  <span className="bg-ipe text-breu rounded-full px-3.5 py-2 text-[13.5px]">
+                    {formatBRL(detail.price * detailQty)}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : null
+        }
+      >
         {detail && (
           <>
             <RoundButton label="Voltar" onClick={() => setDetail(null)}>
@@ -290,30 +357,30 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                 alt={detail.name}
               />
             </div>
-            <div className="-mt-2 rounded-[30px] bg-white p-[18px]">
+            <div className="bg-card -mt-2 rounded-[30px] p-[18px]">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-[22px] leading-tight font-extrabold tracking-[-0.03em]">
+                <h2 className="font-display text-[22px] leading-tight font-medium">
                   {detail.name}
                 </h2>
-                <span className="text-sunset text-[22px] font-extrabold tracking-[-0.03em] whitespace-nowrap">
+                <span className="text-app-ink font-display text-[22px] font-medium whitespace-nowrap">
                   {detail.price === 0 ? 'Cortesia' : formatBRL(detail.price)}
                 </span>
               </div>
               {detail.description && (
-                <p className="mt-1.5 text-[12.5px] leading-relaxed text-[#9a9a96]">
+                <p className="text-muted-foreground mt-1.5 text-[12.5px] leading-relaxed">
                   {detail.description}
                 </p>
               )}
-              <div className="mt-4 flex justify-between border-y border-[#e6e6e2] py-3 text-xs text-[#4a4a48]">
+              <div className="border-border text-app-ink-2 mt-4 flex justify-between border-y py-3 text-xs">
                 <span>Entrega no quarto</span>
                 <span>{booking.roomName}</span>
                 <span>Vai para a conta</span>
               </div>
               {!detail.available && (
-                <p className="mt-3 text-sm font-bold text-[#9a9a96]">Esgotado no momento.</p>
+                <p className="text-muted-foreground mt-3 text-sm font-bold">Esgotado no momento.</p>
               )}
               {orderBlockedReason && (
-                <p className="mt-3 rounded-[18px] bg-[#fff0e6] p-3 text-[12.5px] text-[#9a3412]">
+                <p className="bg-ipe/15 text-app-ink mt-3 rounded-[18px] p-3 text-[12.5px]">
                   {orderBlockedReason}
                 </p>
               )}
@@ -321,81 +388,42 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
           </>
         )}
       </Sheet>
-      {detail && detailCanAdd && (
-        <div className="fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-[#f4f4f2] from-70% to-transparent px-[18px] pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
-          <div className="mx-auto flex max-w-lg items-center gap-2.5">
-            <div className="flex items-center gap-1 rounded-full bg-white p-[5px]">
-              <button
-                type="button"
-                aria-label="Menos"
-                onClick={() => setDetailQty((q) => Math.max(1, q - 1))}
-                className="grid size-[38px] place-items-center rounded-full bg-[#f4f4f2]"
-              >
-                <Minus className="size-3.5" strokeWidth={2.8} />
-              </button>
-              <span className="min-w-6 text-center font-extrabold">{detailQty}</span>
-              <button
-                type="button"
-                aria-label="Mais"
-                onClick={() => setDetailQty((q) => Math.min(detailRoom, q + 1))}
-                className="grid size-[38px] place-items-center rounded-full bg-[#f4f4f2]"
-              >
-                <Plus className="size-3.5" strokeWidth={2.8} />
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                change(detail, detailQty)
-                setToast(`${detailQty}× ${detail.name} na sacola`)
-                setDetail(null)
-              }}
-              className="flex h-[50px] flex-1 items-center justify-between rounded-full bg-[#1e1e1e] pr-2 pl-5 text-[14.5px] font-bold text-white"
-            >
-              Adicionar
-              <span className="bg-sunset rounded-full px-3.5 py-2 text-[13.5px]">
-                {formatBRL(detail.price * detailQty)}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Sacola */}
-      <Sheet open={bagOpen} label="Sua sacola">
+      <Sheet open={bagOpen} label="Sua sacola" onClose={closeBag}>
         <div className="flex items-center gap-2.5">
           <RoundButton label="Voltar" onClick={() => setBagOpen(false)}>
             <ArrowLeft className="size-[18px]" />
           </RoundButton>
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] text-[#9a9a96]">Entrega em</p>
+            <p className="text-muted-foreground text-[11.5px]">Entrega em</p>
             <p className="truncate text-[14.5px] font-bold">{booking.roomName}</p>
           </div>
         </div>
-        <h2 className="mt-5 mb-4 px-0.5 text-[28px] leading-[1.1] tracking-[-0.035em]">
-          <span className="font-extrabold">Sua</span> <span className="text-[#b3b3ae]">sacola</span>
+        <h2 className="font-display mt-5 mb-4 px-0.5 text-[28px] leading-[1.1] tracking-[-0.01em]">
+          <span className="font-medium">Sua</span>{' '}
+          <span className="text-app-ink-2 font-light">sacola</span>
         </h2>
         {cartLines.length === 0 ? (
-          <p className="rounded-[24px] bg-white p-5 text-center text-[13px] text-[#9a9a96]">
+          <p className="bg-card text-muted-foreground rounded-[24px] p-5 text-center text-[13px]">
             A sacola está vazia.
           </p>
         ) : (
           <>
-            <ul className="rounded-[26px] bg-white px-3.5">
+            <ul className="bg-card rounded-[26px] px-3.5">
               {cartLines.map(([id, q]) => {
                 const item = stay.menu.find((m) => m.id === id)
                 if (!item) return null
                 return (
                   <li
                     key={id}
-                    className="flex items-center gap-3 py-3 [&+&]:border-t [&+&]:border-[#e6e6e2]"
+                    className="[&+&]:border-border flex items-center gap-3 py-3 [&+&]:border-t"
                   >
                     <ItemVisual photoUrl={item.photoUrl} category={item.category} size={52} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13.5px] font-bold">{item.name}</p>
-                      <p className="text-xs text-[#9a9a96]">{formatBRL(item.price * q)}</p>
+                      <p className="text-muted-foreground text-xs">{formatBRL(item.price * q)}</p>
                     </div>
-                    <div className="flex items-center gap-1 rounded-full bg-[#1e1e1e] p-[3px] text-white">
+                    <div className="bg-app-action text-app-on-action flex items-center gap-1 rounded-full p-[3px]">
                       <button
                         type="button"
                         aria-label={q === 1 ? `Remover ${item.name}` : `Menos ${item.name}`}
@@ -408,13 +436,13 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                           <Minus className="size-3.5" strokeWidth={2.8} />
                         )}
                       </button>
-                      <span className="min-w-3.5 text-center text-[13px] font-extrabold">{q}</span>
+                      <span className="min-w-3.5 text-center text-[13px] font-bold">{q}</span>
                       <button
                         type="button"
                         aria-label={`Mais ${item.name}`}
                         disabled={q >= item.maxQuantity}
                         onClick={() => change(item, 1)}
-                        className="bg-sunset grid size-7 place-items-center rounded-full disabled:opacity-40"
+                        className="bg-ipe text-breu grid size-7 place-items-center rounded-full disabled:opacity-40"
                       >
                         <Plus className="size-3.5" strokeWidth={2.8} />
                       </button>
@@ -430,19 +458,19 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
               rows={2}
               placeholder="Alguma observação? (ex.: bem gelada, deixar na porta)"
               aria-label="Observação do pedido"
-              className="mt-3 w-full resize-none rounded-[20px] bg-white px-4 py-3 text-[13px] outline-none placeholder:text-[#9a9a96]"
+              className="bg-card placeholder:text-muted-foreground focus-visible:ring-ipe/60 mt-3 w-full resize-none rounded-[20px] px-4 py-3 text-[13px] outline-none focus-visible:ring-2"
             />
-            <p className="mt-2 px-1 text-xs text-[#9a9a96]">
+            <p className="text-muted-foreground mt-2 px-1 text-xs">
               Vai para a conta da estadia e é pago no check-out.
               {stay.info.ordersHours ? ` Pedidos ${stay.info.ordersHours}.` : ''}
             </p>
             {orderError && (
-              <p role="alert" className="mt-2 text-sm font-medium text-red-600">
+              <p role="alert" className="text-destructive mt-2 text-sm font-medium">
                 {orderError}
               </p>
             )}
             {orderBlockedReason ? (
-              <p className="mt-3 rounded-[18px] bg-[#fff0e6] p-3 text-[12.5px] text-[#9a3412]">
+              <p className="bg-ipe/15 text-app-ink mt-3 rounded-[18px] p-3 text-[12.5px]">
                 {orderBlockedReason}
               </p>
             ) : (
@@ -450,10 +478,10 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                 type="button"
                 disabled={sending}
                 onClick={() => void sendCart()}
-                className="mt-4 flex h-14 w-full items-center justify-between rounded-full bg-[#1e1e1e] pr-2 pl-5 text-[14.5px] font-bold text-white disabled:opacity-60"
+                className="bg-app-action text-app-on-action mt-4 flex h-14 w-full items-center justify-between rounded-full pr-2 pl-5 text-[14.5px] font-bold disabled:opacity-60"
               >
                 {sending ? 'Enviando…' : 'Enviar pedido'}
-                <span className="bg-sunset rounded-full px-4 py-2.5 text-[13.5px]">
+                <span className="bg-ipe text-breu rounded-full px-4 py-2.5 text-[13.5px]">
                   {formatBRL(cartTotal)}
                 </span>
               </button>
@@ -467,39 +495,41 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
           <button
             type="button"
             onClick={() => setBagOpen(true)}
-            className="bg-sunset mx-auto flex w-full max-w-[calc(512px-36px)] items-center gap-2.5 rounded-full py-1.5 pr-1.5 pl-2 text-left text-white shadow-[0_14px_28px_-14px_rgba(249,115,22,0.9)]"
+            className="bg-ipe text-breu shadow-floating mx-auto flex w-full max-w-[calc(512px-36px)] items-center gap-2.5 rounded-full py-1.5 pr-1.5 pl-2 text-left"
           >
-            <span className="grid size-[38px] place-items-center rounded-full bg-white/20 font-extrabold">
+            <span className="bg-breu/10 grid size-[38px] place-items-center rounded-full font-bold">
               {cartCount}
             </span>
             <span className="flex-1 text-xs leading-tight">
               Sua sacola
               <b className="block text-[15px]">{formatBRL(cartTotal)}</b>
             </span>
-            <span className="rounded-full bg-white px-4 py-2.5 text-[13.5px] font-bold text-[#1e1e1e]">
+            <span className="bg-app-action text-app-on-action rounded-full px-4 py-2.5 text-[13.5px] font-bold">
               Ver sacola
             </span>
           </button>
         </div>
       )}
 
-      {toast && (
-        <div
-          role="status"
-          className="fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[60] flex justify-center px-4"
-        >
-          <p className="rounded-full bg-[#1e1e1e] px-4 py-2.5 text-[12.5px] font-semibold text-white shadow-lg">
+      {/* Região sempre montada: o leitor de tela anuncia quando o texto entra. */}
+      <div
+        role="status"
+        className="pointer-events-none fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[60] flex justify-center px-4"
+      >
+        {toast && (
+          <p className="bg-app-action text-app-on-action rounded-full px-4 py-2.5 text-[12.5px] font-semibold shadow-lg">
             {toast}
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {!detail && !bagOpen && (
         <nav
+          data-bottom-bar
           aria-label="Menu do app"
           className="fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-30 flex justify-center"
         >
-          <div className="flex gap-1.5 rounded-full bg-[#1e1e1e] p-1.5 shadow-[0_16px_30px_-12px_rgba(0,0,0,0.5)]">
+          <div className="bg-app-strong shadow-floating flex gap-1.5 rounded-full p-1.5 dark:ring-1 dark:ring-white/10">
             {TABS.map((t) => {
               const Icon = t.icon
               const active = tab === t.id
@@ -509,17 +539,17 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
                   key={t.id}
                   type="button"
                   onClick={() => go(t.id)}
-                  aria-label={t.label}
+                  aria-label={badge > 0 ? `${t.label} (${badge})` : t.label}
                   aria-current={active ? 'page' : undefined}
                   title={t.label}
                   className={cx(
-                    'relative grid size-[50px] place-items-center rounded-full text-white transition',
-                    active ? 'bg-sunset' : 'bg-[#2e2e2c]',
+                    'relative grid size-[50px] place-items-center rounded-full transition',
+                    active ? 'bg-ipe text-breu' : 'bg-neblina/10 text-neblina',
                   )}
                 >
                   <Icon className="size-5" />
                   {badge > 0 && (
-                    <span className="text-sunset absolute top-0.5 right-0.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-white px-1 text-[10px] font-extrabold">
+                    <span className="text-breu bg-neblina absolute top-0.5 right-0.5 grid h-[17px] min-w-[17px] place-items-center rounded-full px-1 text-[10px] font-bold">
                       {badge}
                     </span>
                   )}

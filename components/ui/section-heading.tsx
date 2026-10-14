@@ -1,36 +1,47 @@
 import type { ReactNode } from 'react'
+import { Marker } from '@/components/brand/logo'
 import { cn } from '@/lib/utils'
 
 /**
- * The eyebrow + serif title (+ optional description) block that opens
- * every landing section. Standardizes typography and spacing so all
- * sections stay visually consistent.
+ * Rótulo + título (+ descrição opcional) que abre as seções. O rótulo vem em
+ * frase normal, precedido pelo marcador da marca (o mesmo "o" da logo), e o
+ * título usa a escala oficial em Funnel Display. `tone="dark"` para seções
+ * sobre fundo Breu.
  */
 export function SectionHeading({
   eyebrow,
   title,
   description,
   className,
+  tone = 'light',
   as: Title = 'h2',
 }: {
   eyebrow?: string
   title: ReactNode
   description?: ReactNode
   className?: string
+  tone?: 'light' | 'dark'
   as?: 'h1' | 'h2' | 'h3'
 }) {
+  const dark = tone === 'dark'
   return (
     <div className={cn('max-w-2xl', className)}>
       {eyebrow && (
-        <span className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+        <span className={cn('text-overline inline-flex items-center gap-2', dark && 'text-liquen')}>
+          <Marker className={dark ? 'text-neblina' : 'text-foreground'} />
           {eyebrow}
         </span>
       )}
-      <Title className="mt-3 text-balance font-serif text-3xl font-semibold leading-tight text-foreground sm:text-5xl">
+      <Title className={cn('text-h1 mt-3', dark ? 'text-neblina' : 'text-foreground')}>
         {title}
       </Title>
       {description && (
-        <p className="mt-4 max-w-lg text-pretty text-sm leading-relaxed text-muted-foreground">
+        <p
+          className={cn(
+            'mt-4 max-w-lg text-base leading-relaxed text-pretty',
+            dark ? 'text-liquen' : 'text-muted-foreground',
+          )}
+        >
           {description}
         </p>
       )}

@@ -138,9 +138,7 @@ export function RoomForm({
         {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
         <div className="flex flex-col gap-1.5">
           <label className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Categoria
-            </span>
+            <span className="text-foreground text-sm font-medium">Categoria</span>
             <select
               name="categoryId"
               aria-invalid={fieldErrors.categoryId ? true : undefined}
@@ -208,9 +206,7 @@ export function RoomForm({
       </div>
 
       <div>
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Configuração de camas
-        </span>
+        <span className="text-foreground text-sm font-medium">Configuração de camas</span>
         <div className="mt-1.5 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {BED_TYPES.map((b) => (
             <Input
@@ -255,9 +251,7 @@ export function RoomForm({
 
       {amenities.length > 0 && (
         <div>
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Comodidades
-          </span>
+          <span className="text-foreground text-sm font-medium">Comodidades</span>
           <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-2">
             {amenities.map((a) => (
               <label key={a.id} className="text-foreground flex items-center gap-2 text-sm">

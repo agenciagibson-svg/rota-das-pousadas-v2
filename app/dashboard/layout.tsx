@@ -2,7 +2,9 @@ import type { ReactNode } from 'react'
 import { resolveTenantAccess } from '@/lib/auth/tenant-context'
 import { listPousadaNamesByIds } from '@/repositories/memberships.repository'
 import { getMyPendingInvites } from '@/server/queries'
+import { isSupabaseConfigured } from '@/lib/env'
 import {
+  DemoModeScreen,
   NoMembershipScreen,
   InvitedOnlyScreen,
   SuspendedScreen,
@@ -25,6 +27,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   switch (state.status) {
     case 'unauthenticated':
+      // Preview sem banco: não existe login — oferece a demonstração do painel.
+      if (!isSupabaseConfigured()) return <DemoModeScreen />
+      return <NoMembershipScreen />
     case 'no_membership':
       return <NoMembershipScreen />
 

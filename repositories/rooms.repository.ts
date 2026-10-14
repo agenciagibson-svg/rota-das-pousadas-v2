@@ -1,6 +1,14 @@
 import 'server-only'
+import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import type { AccommodationStatus, BedConfigItem, HousekeepingRoom, ManagedRoom, RoomOperationalStatus } from '@/features/acomodacoes/types'
+import { getPousadaRepository } from './pousadas.repository'
+import type {
+  AccommodationStatus,
+  BedConfigItem,
+  HousekeepingRoom,
+  ManagedRoom,
+  RoomOperationalStatus,
+} from '@/features/acomodacoes/types'
 
 export type NewRoom = {
   pousadaId: string
@@ -97,7 +105,10 @@ function mapRoom(r: RoomRow, amenityIds: string[], hideBasePrice: boolean): Mana
   }
 }
 
-export async function listRoomsByPousada(pousadaId: string, hideBasePrice = false): Promise<ManagedRoom[]> {
+export async function listRoomsByPousada(
+  pousadaId: string,
+  hideBasePrice = false,
+): Promise<ManagedRoom[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('rooms')
@@ -121,9 +132,15 @@ export async function listRoomsByPousada(pousadaId: string, hideBasePrice = fals
   return rows.map((r) => mapRoom(r, amenitiesByRoom.get(r.id) ?? [], hideBasePrice))
 }
 
-export async function getRoomById(id: string): Promise<{ id: string; pousadaId: string; status: AccommodationStatus } | null> {
+export async function getRoomById(
+  id: string,
+): Promise<{ id: string; pousadaId: string; status: AccommodationStatus } | null> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from('rooms').select('id, pousada_id, status').eq('id', id).maybeSingle()
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('id, pousada_id, status')
+    .eq('id', id)
+    .maybeSingle()
   if (error) throw error
   if (!data) return null
   return { id: data.id, pousadaId: data.pousada_id, status: data.status }
@@ -192,7 +209,11 @@ export async function updateRoom(id: string, row: UpdateRoom): Promise<void> {
 }
 
 /** Inativação/reativação CADASTRAL — nunca exclusão física (preserva histórico). */
-export async function setRoomStatus(id: string, status: AccommodationStatus, updatedBy: string): Promise<void> {
+export async function setRoomStatus(
+  id: string,
+  status: AccommodationStatus,
+  updatedBy: string,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from('rooms')
@@ -206,12 +227,18 @@ export async function setRoomAmenities(roomId: string, amenityIds: string[]): Pr
   const { error: delError } = await supabase.from('room_amenities').delete().eq('room_id', roomId)
   if (delError) throw delError
   if (amenityIds.length === 0) return
-  const { error } = await supabase.from('room_amenities').insert(amenityIds.map((amenity_id) => ({ room_id: roomId, amenity_id })))
+  const { error } = await supabase
+    .from('room_amenities')
+    .insert(amenityIds.map((amenity_id) => ({ room_id: roomId, amenity_id })))
   if (error) throw error
 }
 
 /** Status OPERACIONAL — via RPC (único caminho aberto também à Governança). */
-export async function updateRoomOperationalStatus(pousadaId: string, roomId: string, status: RoomOperationalStatus): Promise<void> {
+export async function updateRoomOperationalStatus(
+  pousadaId: string,
+  roomId: string,
+  status: RoomOperationalStatus,
+): Promise<void> {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.rpc('update_room_operational_status', {
     p_pousada_id: pousadaId,
@@ -229,7 +256,9 @@ export async function updateRoomOperationalStatus(pousadaId: string, roomId: str
  */
 export async function listRoomsForHousekeeping(pousadaId: string): Promise<HousekeepingRoom[]> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.rpc('list_rooms_for_housekeeping', { p_pousada_id: pousadaId })
+  const { data, error } = await supabase.rpc('list_rooms_for_housekeeping', {
+    p_pousada_id: pousadaId,
+  })
   if (error) throw new Error(error.message)
   const rows = (data ?? []) as {
     id: string
@@ -270,6 +299,25 @@ export type BookableRoom = {
 }
 
 /**
+ * Modo demonstração (sem Supabase): a mesma acomodação padrão que o banco cria
+ * para toda pousada nova (migrations 0004/0005), com a diária da pousada de
+ * exemplo. Só para a página da pousada abrir no preview — reservar de verdade
+ * continua exigindo o banco.
+ */
+async function demoBookableRoom(slug: string): Promise<BookableRoom | null> {
+  const pousada = await getPousadaRepository().findBySlug(slug)
+  if (!pousada) return null
+  return {
+    pousadaId: pousada.id ?? pousada.slug,
+    roomId: `demo-${pousada.slug}`,
+    name: 'Acomodação principal',
+    description: 'Acomodação padrão da pousada.',
+    nightly: pousada.pricePerNight,
+    capacity: pousada.maxGuests ?? 4,
+  }
+}
+
+/**
  * Resolve a acomodação reservável (mais barata) de uma pousada publicada, a
  * partir do slug. Única porta ao banco para leitura de rooms neste fluxo.
  */
@@ -279,7 +327,13 @@ export type BookableRoom = {
  * barata via a projeção pública `list_public_rooms` — nunca expõe
  * internal_notes, status operacional ou colunas administrativas.
  */
-export async function getBookableRoomBySlug(slug: string, checkin?: string, checkout?: string, guests = 1): Promise<BookableRoom | null> {
+export async function getBookableRoomBySlug(
+  slug: string,
+  checkin?: string,
+  checkout?: string,
+  guests = 1,
+): Promise<BookableRoom | null> {
+  if (!isSupabaseConfigured()) return demoBookableRoom(slug)
   const supabase = await createSupabaseServerClient()
 
   const { data: pousada, error } = await supabase
@@ -291,7 +345,12 @@ export async function getBookableRoomBySlug(slug: string, checkin?: string, chec
   if (error) throw error
   if (!pousada) return null
 
-  const { data: rpcRows, error: roomError } = await supabase.rpc('list_bookable_rooms', { p_slug: slug, p_checkin: checkin, p_checkout: checkout, p_guests: guests })
+  const { data: rpcRows, error: roomError } = await supabase.rpc('list_bookable_rooms', {
+    p_slug: slug,
+    p_checkin: checkin,
+    p_checkout: checkout,
+    p_guests: guests,
+  })
   if (roomError) throw new Error(roomError.message)
   const rooms = (rpcRows ?? []) as {
     id: string

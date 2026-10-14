@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 import { cn } from '@/lib/utils'
 
 const panelBySide = {
@@ -19,7 +20,7 @@ const roundBySide = {
   bottom: 'rounded-t-3xl',
 } as const
 
-/** Slide-in panel anchored to any edge. Portal + Escape + scroll lock. */
+/** Slide-in panel anchored to any edge. Portal + Escape + scroll lock + focus trap. */
 export function Drawer({
   open,
   onClose,
@@ -37,6 +38,8 @@ export function Drawer({
 }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, open && mounted)
 
   useEffect(() => {
     if (!open) return
@@ -53,20 +56,42 @@ export function Drawer({
   if (!mounted || !open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="absolute inset-0 bg-stone-deep/40 backdrop-blur-sm" aria-hidden="true" onClick={onClose} />
-      <div className={cn('absolute border-border bg-card p-6 shadow-2xl shadow-stone-deep/20', panelBySide[side], roundBySide[side], className)}>
-        <div className="flex items-center justify-between">
-          {title ? <h2 className="font-serif text-lg font-semibold text-foreground">{title}</h2> : <span />}
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-40"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <div
+        className="bg-stone-deep/40 absolute inset-0 backdrop-blur-sm"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div
+        className={cn(
+          // Coluna flexível: o corpo rola dentro do limite de altura da gaveta.
+          'border-border bg-card shadow-stone-deep/20 absolute flex flex-col p-6 shadow-2xl',
+          panelBySide[side],
+          roundBySide[side],
+          className,
+        )}
+      >
+        <div className="flex shrink-0 items-center justify-between">
+          {title ? (
+            <h2 className="font-display text-foreground text-lg font-medium">{title}</h2>
+          ) : (
+            <span />
+          )}
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="text-muted-foreground hover:bg-secondary hover:text-foreground flex size-11 items-center justify-center rounded-full transition-colors"
           >
             <X className="size-5" />
           </button>
         </div>
-        <div className="mt-4 overflow-y-auto">{children}</div>
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
       </div>
     </div>,
     document.body,

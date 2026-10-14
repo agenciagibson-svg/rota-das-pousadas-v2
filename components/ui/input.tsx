@@ -32,35 +32,38 @@ export function Input({
   return (
     <div className={cn('flex flex-col gap-1.5', wrapperClassName)}>
       {label && (
-        <label
-          htmlFor={inputId}
-          className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
-        >
+        <label htmlFor={inputId} className="text-foreground text-sm font-medium">
           {label}
         </label>
       )}
       <div
         className={cn(
-          'flex items-center gap-2 rounded-xl border border-input bg-card px-3.5 py-2.5 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20',
-          error && 'border-destructive focus-within:border-destructive focus-within:ring-destructive/20',
+          'border-input bg-card focus-within:border-foreground focus-within:ring-ipe/60 flex min-h-12 items-center gap-2 rounded-2xl border px-4 transition-colors duration-(--motion-hover) focus-within:ring-2',
+          error &&
+            'border-destructive focus-within:border-destructive focus-within:ring-destructive/20',
         )}
       >
-        {iconStart && <span className="shrink-0 text-muted-foreground">{iconStart}</span>}
+        {iconStart && <span className="text-muted-foreground shrink-0">{iconStart}</span>}
         <input
           id={inputId}
           name={name}
+          // E-mail não passa pelo corretor ortográfico (Web Interface Guidelines).
+          spellCheck={props.type === 'email' ? false : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            'w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70',
+            'text-foreground placeholder:text-muted-foreground w-full bg-transparent py-2.5 text-sm outline-none',
             className,
           )}
           {...props}
         />
-        {iconEnd && <span className="shrink-0 text-muted-foreground">{iconEnd}</span>}
+        {iconEnd && <span className="text-muted-foreground shrink-0">{iconEnd}</span>}
       </div>
       {(hint || error) && (
-        <p id={describedBy} className={cn('text-xs', error ? 'text-destructive' : 'text-muted-foreground')}>
+        <p
+          id={describedBy}
+          className={cn('text-xs', error ? 'text-destructive' : 'text-muted-foreground')}
+        >
           {error ?? hint}
         </p>
       )}

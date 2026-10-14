@@ -132,9 +132,7 @@ export function DestinationForm({
       </div>
 
       <div>
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Estações em destaque
-        </span>
+        <span className="text-foreground text-sm font-medium">Estações em destaque</span>
         <div className="mt-1.5 flex flex-wrap gap-3">
           {SEASON_OPTIONS.map((season) => (
             <label key={season} className="text-foreground flex items-center gap-1.5 text-sm">

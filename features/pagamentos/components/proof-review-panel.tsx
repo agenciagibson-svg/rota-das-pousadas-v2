@@ -163,7 +163,7 @@ export function ProofReviewPanel({
             {p.status === 'submitted' && canReview && (
               <div className="mt-4 space-y-3">
                 {dueAt && (
-                  <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  <p className="bg-ipe/15 text-foreground flex items-start gap-2 rounded-xl px-3 py-2 text-sm">
                     <Clock className="mt-0.5 size-4 shrink-0" />
                     <span>
                       Analise até <strong>{when(dueAt)}</strong>. Depois disso a reserva é cancelada
@@ -188,7 +188,7 @@ export function ProofReviewPanel({
                     {(() => {
                       const v = parseBRL(typed(p))
                       return v !== null && v < p.amount ? (
-                        <span className="block text-xs text-amber-800">
+                        <span className="text-foreground block text-xs">
                           Pagamento parcial: a reserva continua aguardando {brl(p.amount - v)} e o
                           hóspede recebe um aviso para pagar o restante.
                         </span>

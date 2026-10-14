@@ -22,8 +22,8 @@ export default async function ResetPasswordPage({
   const forgotHref = audience === 'hospede' ? '/esqueci-senha' : `/esqueci-senha?para=${audience}`
 
   return (
-    <Card radius="3xl" className="shadow-card p-8">
-      <h1 className="text-foreground font-serif text-3xl font-semibold">Criar nova senha</h1>
+    <Card radius="3xl" border={false} className="p-6 sm:p-8">
+      <h1 className="text-h1 text-foreground">Criar nova senha</h1>
       {validToken ? (
         <>
           <p className="text-muted-foreground mt-2 text-base">

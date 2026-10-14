@@ -15,8 +15,8 @@ export default async function SignupPage({
   const { next } = await searchParams
 
   return (
-    <Card radius="3xl" className="shadow-card p-8">
-      <h1 className="text-foreground font-serif text-3xl font-semibold">Crie sua conta</h1>
+    <Card radius="3xl" border={false} className="p-6 sm:p-8">
+      <h1 className="text-h1 text-foreground">Crie sua conta</h1>
       <p className="text-muted-foreground mt-2 text-base">
         Comece a planejar sua próxima rota pelo Brasil.
       </p>

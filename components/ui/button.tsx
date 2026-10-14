@@ -3,8 +3,8 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
-const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+const buttonVariantsBase = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -18,19 +18,32 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
+        // Marca out/2026 (docs/Marca.md): Ipê só no caminho até a reserva/busca.
+        accent: 'bg-accent text-accent-foreground hover:brightness-105',
+        // Sobre foto: vidro escuro com texto claro.
+        glass:
+          'border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground backdrop-blur-md hover:bg-primary-foreground/20',
+        // Claro sobre fundo Breu ou foto.
+        inverse: 'bg-neblina text-breu hover:bg-card',
       },
       size: {
         default:
           'h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: 'h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
+        // Ação principal de formulário: pílula de 48px (marca out/2026).
+        lg: 'h-12 gap-2 rounded-full px-6 text-sm font-semibold has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5',
         icon: 'size-8',
         'icon-xs':
           "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         'icon-sm':
           'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
         'icon-lg': 'size-9',
+        // Pílulas da marca: alvo de toque de 48px ou mais nas ações principais.
+        'pill-sm': 'h-9 gap-1.5 rounded-full px-4 text-xs font-semibold',
+        pill: 'h-12 gap-2 rounded-full px-5 text-sm font-semibold',
+        'pill-lg': 'h-14 gap-2 rounded-full px-7 text-base font-semibold',
+        'icon-pill': 'size-12 rounded-full',
       },
     },
     defaultVariants: {
@@ -40,16 +53,27 @@ const buttonVariants = cva(
   },
 )
 
+type ButtonVariantProps = Parameters<typeof buttonVariantsBase>[0]
+
+/**
+ * Classes do botão já resolvidas pelo `cn()`: quem usa direto num `<Link>`
+ * (sem passar por `cn`) recebe o raio e a altura do tamanho escolhido, não os
+ * da base — `rounded-full` das pílulas não disputa com `rounded-lg`.
+ */
+function buttonVariants(props?: ButtonVariantProps): string {
+  return cn(buttonVariantsBase(props))
+}
+
 function Button({
   className,
   variant = 'default',
   size = 'default',
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariantsBase>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariantsBase({ variant, size, className }))}
       {...props}
     />
   )

@@ -78,15 +78,15 @@ export function PaymentAlerts({
       {openProofs.length > 0 && (
         <section
           aria-labelledby="pix-pendentes"
-          className="rounded-2xl border border-amber-300 bg-amber-50 p-4"
+          className="border-ipe/50 bg-ipe/15 rounded-2xl border p-4"
         >
-          <h2 id="pix-pendentes" className="flex items-center gap-2 font-semibold text-amber-950">
+          <h2 id="pix-pendentes" className="text-foreground flex items-center gap-2 font-semibold">
             <Clock className="size-4" />
             {openProofs.length === 1
               ? '1 comprovante Pix para aprovar'
               : `${openProofs.length} comprovantes Pix para aprovar`}
           </h2>
-          <ul className="mt-2 space-y-1 text-sm text-amber-950">
+          <ul className="text-foreground mt-2 space-y-1 text-sm">
             {openProofs.map((p) => (
               <li key={p.bookingId}>
                 <Link

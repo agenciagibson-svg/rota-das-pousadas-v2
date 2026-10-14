@@ -81,9 +81,7 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
       {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
       <div className="flex flex-col gap-1.5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Acomodação
-          </span>
+          <span className="text-foreground text-sm font-medium">Acomodação</span>
           <select
             name="roomId"
             aria-invalid={fieldErrors.roomId ? true : undefined}
@@ -109,9 +107,7 @@ function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => v
       {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
       <div className="flex flex-col gap-1.5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Tipo
-          </span>
+          <span className="text-foreground text-sm font-medium">Tipo</span>
           <select
             name="blockType"
             aria-invalid={fieldErrors.blockType ? true : undefined}

@@ -131,7 +131,7 @@ export function BillingOverview({
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-foreground font-serif text-lg font-semibold">
+          <h3 className="text-foreground font-display text-lg font-medium">
             Projeção de fluxo de caixa
           </h3>
           <p className="text-muted-foreground text-sm">
@@ -151,7 +151,7 @@ export function BillingOverview({
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-foreground font-serif text-lg font-semibold">Contas a receber</h3>
+            <h3 className="text-foreground font-display text-lg font-medium">Contas a receber</h3>
             <p className="text-muted-foreground text-sm">
               {receivables.length} assinatura(s) não cancelada(s)
             </p>
@@ -214,7 +214,7 @@ export function BillingOverview({
 
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-foreground font-serif text-lg font-semibold">Faturas recentes</h3>
+          <h3 className="text-foreground font-display text-lg font-medium">Faturas recentes</h3>
           <p className="text-muted-foreground text-sm">
             Últimas {recentInvoices.length} cobrança(s)
           </p>

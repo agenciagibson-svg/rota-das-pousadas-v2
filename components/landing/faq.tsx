@@ -43,27 +43,29 @@ const faqs = [
 
 export function Faq() {
   return (
-    <section className="bg-secondary/40 py-20 lg:py-28">
-      <Container>
+    <section className="bg-card py-16 lg:py-24">
+      <Container className="grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-16">
         <Reveal>
           <SectionHeading
             eyebrow="Perguntas frequentes"
             title="Antes de reservar, tire suas dúvidas"
-            className="mx-auto max-w-2xl text-center"
+            className="lg:sticky lg:top-28"
           />
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="border-border bg-card mx-auto mt-10 max-w-3xl rounded-3xl border px-6 sm:px-8">
-            <Accordion type="single">
-              {faqs.map((faq, index) => (
-                <AccordionItem key={faq.question} value={String(index)}>
-                  <AccordionTrigger className="py-5 text-base">{faq.question}</AccordionTrigger>
-                  <AccordionContent className="pb-5 text-base">{faq.answer}</AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
+          <Accordion type="single" className="border-border border-y">
+            {faqs.map((faq, index) => (
+              <AccordionItem key={faq.question} value={String(index)}>
+                <AccordionTrigger className="py-5 text-left text-lg font-semibold">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5 text-base leading-relaxed">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </Reveal>
       </Container>
     </section>

@@ -172,7 +172,7 @@ export function OwnerDashboardView({
           className={`mb-5 rounded-2xl border p-4 text-sm ${
             pousadaStatus === 'reprovada'
               ? 'border-destructive/30 bg-destructive/5 text-destructive'
-              : 'border-gold/40 bg-gold/10 text-[color:#8a6d0f]'
+              : 'border-ipe/50 bg-ipe/15 text-foreground'
           }`}
         >
           {pousadaStatus === 'reprovada'
@@ -429,14 +429,14 @@ export function OwnerDashboardView({
             </span>
             {occupancy === null || occupancy.availableNights === 0 ? (
               <>
-                <h2 className="mt-4 font-serif text-xl font-semibold">Divulgue sua pousada</h2>
+                <h2 className="font-display mt-4 text-xl font-medium">Divulgue sua pousada</h2>
                 <p className="text-linen/70 mt-2 text-sm leading-relaxed">
                   Materiais prontos para publicar nas suas redes e responder a quem pede orçamento.
                 </p>
               </>
             ) : freeNightsAhead > 0 ? (
               <>
-                <h2 className="mt-4 font-serif text-xl font-semibold">
+                <h2 className="font-display mt-4 text-xl font-medium">
                   {freeNightsAhead === 1 ? '1 diária livre' : `${freeNightsAhead} diárias livres`}
                 </h2>
                 <p className="text-linen/70 mt-2 text-sm leading-relaxed">
@@ -446,7 +446,7 @@ export function OwnerDashboardView({
               </>
             ) : (
               <>
-                <h2 className="mt-4 font-serif text-xl font-semibold">Semana cheia</h2>
+                <h2 className="font-display mt-4 text-xl font-medium">Semana cheia</h2>
                 <p className="text-linen/70 mt-2 text-sm leading-relaxed">
                   Todas as diárias dos próximos 7 dias estão ocupadas. Bom momento para trabalhar as
                   datas mais adiante.
@@ -455,7 +455,7 @@ export function OwnerDashboardView({
             )}
             <Link
               href="/dashboard/marketing"
-              className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all hover:brightness-105"
+              className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition hover:brightness-105"
             >
               Abrir marketing
               <ArrowUpRight className="size-4" />

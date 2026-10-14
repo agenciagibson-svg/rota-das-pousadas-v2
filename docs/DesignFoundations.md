@@ -131,21 +131,27 @@ encapsulado em `Container`/`Section`. Grids de conteúdo devem se alinhar a
 
 ## 7. Tipografia
 
-Fontes: **Fraunces** (serif — display/títulos) e **Manrope** (sans — corpo/rótulos).
-Hierarquia como classes utilitárias (`styles/typography.css`):
+Fontes (marca out/2026, `docs/Marca.md`): **Funnel Display** (sem serifa —
+display/títulos; classe `font-display`, e `font-serif` continua como apelido) e
+**Figtree** (corpo/rótulos). Títulos leves e abertos: nada de 700/800 nem
+espaçamento apertado. Hierarquia como classes utilitárias (`styles/typography.css`):
 
-| Estilo | Classe | Fonte | Tamanho (mobile → desktop) | Peso |
+| Estilo | Classe | Fonte | Tamanho (mobile → desktop) | Peso · espaçamento |
 |---|---|---|---|---|
-| Display XL | `text-display-xl` | serif | 36 → 60 → 72px | 600 |
-| Display L | `text-display-l` | serif | 30 → 48px | 600 |
-| H1 | `text-h1` | serif | 30 → 48px | 600 |
-| H2 | `text-h2` | serif | 24 → 36px | 600 |
-| H3 | `text-h3` | serif | 20px | 600 |
+| Display XL | `text-display-xl` | display | 40 → 56 → 80px | 500 · -1% (2ª linha do hero em `font-light`) |
+| Display L | `text-display-l` | display | 32 → 40 → 48px | 500 · -0,5% a -1% |
+| H1 | `text-h1` | display | 28 → 40px | 500 · -0,5% a -1% |
+| H2 | `text-h2` | display | 24 → 32px | 500 · -0,5% |
+| H3 | `text-h3` | display | 20px | 600 · 0 |
 | H4 | `text-h4` | sans | 16px | 600 |
 | Body L | `text-body-l` | sans | 18px | 400 |
 | Body | `text-body` | sans | 14px | 400 |
 | Caption | `text-caption` | sans | 12px | 400 (muted) |
-| Overline | `text-overline` | sans | 14px, uppercase, tracking 0.2em | 600 (primary) |
+| Overline | `text-overline` | sans | 14px, frase normal (sem caixa alta) | 600 (muted) |
+
+Rótulos de seção usam `SectionHeading`, que põe o marcador da marca (`Marker`,
+o "o" da logo) antes do texto. Ao combinar uma classe da escala com uma cor via
+`cn()`, as duas ficam (o `lib/utils.ts` registra a escala no tailwind-merge).
 
 ```tsx
 <h1 className="text-display-l">Onde o Brasil respira mais fundo</h1>

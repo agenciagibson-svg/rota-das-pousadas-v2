@@ -15,18 +15,23 @@ export const dynamic = 'force-dynamic'
 
 export default function NotFound() {
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center px-5">
+    <main
+      id="conteudo"
+      tabIndex={-1}
+      className="bg-background flex min-h-screen items-center justify-center px-5"
+    >
       <EmptyState
         size="lg"
+        as="h1"
         icon={Compass}
         title="Página não encontrada"
         description="A rota que você procura não existe ou foi movida. Vamos recomeçar do início."
         action={
-          <Link href="/" className={buttonVariants()}>
+          <Link href="/" className={buttonVariants({ size: 'lg' })}>
             Voltar para o início
           </Link>
         }
       />
-    </div>
+    </main>
   )
 }

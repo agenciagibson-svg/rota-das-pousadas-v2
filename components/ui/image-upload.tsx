@@ -98,11 +98,7 @@ export function ImageUpload({
 
   return (
     <div className="flex flex-col gap-1.5">
-      {label && (
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          {label}
-        </span>
-      )}
+      {label && <span className="text-foreground text-sm font-medium">{label}</span>}
 
       <div className="flex flex-wrap gap-3">
         {value.map((url, index) => (

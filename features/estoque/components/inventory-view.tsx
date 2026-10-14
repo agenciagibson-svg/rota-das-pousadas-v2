@@ -69,7 +69,7 @@ function MovementRow({ m, showItem }: { m: InventoryMovement; showItem: boolean 
         </p>
       </div>
       <div className="shrink-0 text-right">
-        <div className={`font-semibold ${positive ? 'text-emerald-700' : 'text-foreground'}`}>
+        <div className={`font-semibold ${positive ? 'text-success' : 'text-foreground'}`}>
           {positive ? '+' : '−'}
           {formatQty(Math.abs(m.quantity))}
         </div>
@@ -165,16 +165,16 @@ export function InventoryView({
           type="button"
           onClick={() => setOnlyLow((v) => !v)}
           className={`rounded-2xl border p-5 text-left transition-colors ${
-            low.length > 0 ? 'border-amber-300 bg-amber-50' : 'border-border bg-card'
+            low.length > 0 ? 'border-ipe/50 bg-ipe/15' : 'border-border bg-card'
           }`}
         >
           <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
-            {low.length > 0 && <AlertTriangle className="size-4 text-amber-600" />}
+            {low.length > 0 && <AlertTriangle className="text-foreground size-4" />}
             Acabando
           </div>
           <div className="text-foreground mt-2 text-3xl font-semibold">{low.length}</div>
           {low.length > 0 && (
-            <div className="mt-1 text-xs text-amber-800">
+            <div className="text-foreground mt-1 text-xs">
               {onlyLow ? 'Mostrando só estes' : 'Toque para ver'}
             </div>
           )}
@@ -321,12 +321,12 @@ export function InventoryView({
                       {item.trackStock ? (
                         <>
                           <div
-                            className={`font-semibold ${lowStock ? 'text-amber-700' : 'text-foreground'}`}
+                            className={`font-semibold ${lowStock ? 'text-foreground' : 'text-foreground'}`}
                           >
                             {qtyWithUnit(item.quantity, item.unit)}
                           </div>
                           <div
-                            className={`text-xs ${lowStock ? 'text-amber-700' : 'text-muted-foreground'}`}
+                            className={`text-xs ${lowStock ? 'text-foreground' : 'text-muted-foreground'}`}
                           >
                             {lowStock ? 'acabando' : `mín. ${formatQty(item.minQuantity)}`}
                           </div>

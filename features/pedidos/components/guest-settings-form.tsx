@@ -32,9 +32,7 @@ function ListField({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-        {label}
-      </span>
+      <span className="text-foreground text-sm font-medium">{label}</span>
       <textarea
         name={name}
         defaultValue={defaultValue}
@@ -119,9 +117,7 @@ export function GuestSettingsForm({ initial }: { initial: GuestSettings }) {
         hint="Só aparece para o hóspede a partir do dia do check-in."
       />
       <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Recados para o hóspede
-        </span>
+        <span className="text-foreground text-sm font-medium">Recados para o hóspede</span>
         <textarea
           name="guestInfo"
           defaultValue={initial.guestInfo}

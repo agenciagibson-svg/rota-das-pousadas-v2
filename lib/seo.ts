@@ -2,7 +2,10 @@ import type { Metadata } from 'next'
 import type { Pousada } from '@/types'
 
 function cleanUrl(value: string): string {
-  return value.replace(/^\uFEFF/, '').trim().replace(/\/$/, '')
+  return value
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .replace(/\/$/, '')
 }
 
 /**
@@ -17,7 +20,7 @@ export const siteConfig = {
     'O maior ecossistema digital de pousadas do Brasil. Encontre refúgios exclusivos na serra, praia, cachoeiras e natureza. Toda grande viagem começa por uma rota.',
   url: cleanUrl(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rotadaspousadas.com.br'),
   locale: 'pt_BR',
-  themeColor: '#0F766E',
+  themeColor: '#0F1716',
   ogImage: '/images/hero.png',
   twitter: '@rotadaspousadas',
 } as const
@@ -36,7 +39,16 @@ export const baseMetadata: Metadata = {
   description: siteConfig.description,
   applicationName: siteConfig.name,
   generator: 'Next.js',
-  keywords: ['pousadas', 'viagem', 'Brasil', 'serra', 'praia', 'ecoturismo', 'refúgios', 'hospedagem'],
+  keywords: [
+    'pousadas',
+    'viagem',
+    'Brasil',
+    'serra',
+    'praia',
+    'ecoturismo',
+    'refúgios',
+    'hospedagem',
+  ],
   authors: [{ name: siteConfig.name }],
   creator: siteConfig.name,
   alternates: { canonical: '/' },
@@ -68,7 +80,7 @@ export const baseMetadata: Metadata = {
     ],
     apple: [{ url: '/apple-icon.png' }],
   },
-  manifest: '/manifest.webmanifest',
+  manifest: '/site.webmanifest',
 }
 
 /** Per-pousada metadata for the detail route. */

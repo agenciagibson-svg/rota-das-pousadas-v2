@@ -26,23 +26,21 @@ function Steps({ status }: { status: GuestOrder['status'] }) {
               <span
                 className={cx(
                   'grid size-[22px] shrink-0 place-items-center rounded-full',
-                  done && 'bg-[#1e1e1e] text-white',
-                  now && 'bg-sunset text-white shadow-[0_0_0_4px_#fff0e6]',
-                  !done && !now && 'bg-[#ededea]',
+                  done && 'bg-app-action text-app-on-action',
+                  now && 'bg-ipe text-breu ring-ipe/30 ring-4',
+                  !done && !now && 'bg-secondary',
                 )}
               >
                 {done && <Check className="size-3" strokeWidth={3.5} />}
               </span>
               {i < 3 && (
-                <span
-                  className={cx('mx-1 h-0.5 flex-1', i < s ? 'bg-[#1e1e1e]' : 'bg-[#ededea]')}
-                />
+                <span className={cx('mx-1 h-0.5 flex-1', i < s ? 'bg-app-ink' : 'bg-secondary')} />
               )}
             </div>
           )
         })}
       </div>
-      <div className="mt-1.5 flex justify-between text-[10.5px] text-[#9a9a96]">
+      <div className="text-muted-foreground mt-1.5 flex justify-between text-[10.5px]">
         <span>Recebido</span>
         <span>Preparando</span>
         <span>Entregue</span>
@@ -62,41 +60,41 @@ export function StayAccount(ctx: StayCtx & { cancel: (o: GuestOrder) => void }) 
           <ArrowLeft className="size-[18px]" />
         </RoundButton>
         <div className="min-w-0 flex-1">
-          <p className="text-[11.5px] text-[#9a9a96]">Conta de consumo</p>
+          <p className="text-muted-foreground text-[11.5px]">Conta de consumo</p>
           <p className="truncate text-[14.5px] font-bold">Paga no check-out</p>
         </div>
       </div>
       <TwoTone strong="Sua" light="conta" className="mt-5 mb-4 px-0.5 text-[28px] leading-[1.1]" />
 
-      <section className="rounded-[30px] bg-[#1e1e1e] p-5 text-white">
-        <p className="text-xs text-[#a3a3a0]">A pagar no check-out</p>
-        <p className="mt-1 text-[38px] leading-none font-extrabold tracking-[-0.04em]">
+      <section className="bg-app-strong text-neblina rounded-[30px] p-5">
+        <p className="text-liquen text-xs">A pagar no check-out</p>
+        <p className="font-display mt-1 text-[38px] leading-none font-medium">
           <span className="mr-1 align-top text-base">R$</span>
           {Number(intPart).toLocaleString('pt-BR')},{cents}
         </p>
         <div className="mt-4 grid grid-cols-3 gap-1.5">
-          <div className="rounded-2xl bg-[#2b2b29] p-2.5">
-            <p className="text-[10.5px] text-[#a3a3a0]">Consumido</p>
+          <div className="bg-neblina/10 rounded-2xl p-2.5">
+            <p className="text-liquen text-[10.5px]">Consumido</p>
             <p className="mt-0.5 text-[13px] font-bold">{formatBRL(consumption.delivered)}</p>
           </div>
-          <div className="rounded-2xl bg-[#2b2b29] p-2.5">
-            <p className="text-[10.5px] text-[#a3a3a0]">Pago</p>
+          <div className="bg-neblina/10 rounded-2xl p-2.5">
+            <p className="text-liquen text-[10.5px]">Pago</p>
             <p className="mt-0.5 text-[13px] font-bold">{formatBRL(consumption.paid)}</p>
           </div>
           <div
             className={cx(
               'rounded-2xl p-2.5',
-              consumption.balance > 0 ? 'bg-sunset' : 'bg-emerald-600',
+              consumption.balance > 0 ? 'bg-ipe text-breu' : 'bg-success text-neblina',
             )}
           >
-            <p className="text-[10.5px] text-white/80">Falta</p>
+            <p className="text-[10.5px] opacity-80">Falta</p>
             <p className="mt-0.5 text-[13px] font-bold">
               {consumption.balance > 0 ? formatBRL(consumption.balance) : 'Nada'}
             </p>
           </div>
         </div>
         {consumption.open > 0 && (
-          <p className="mt-3 text-[11.5px] text-[#a3a3a0]">
+          <p className="text-liquen mt-3 text-[11.5px]">
             + {formatBRL(consumption.open)} em pedidos ainda não entregues.
           </p>
         )}
@@ -104,37 +102,37 @@ export function StayAccount(ctx: StayCtx & { cancel: (o: GuestOrder) => void }) 
 
       <SectionHead title="Pedidos" aside="Pix, cartão ou dinheiro" />
       {ctx.orders.length === 0 ? (
-        <p className="rounded-[24px] bg-white p-5 text-center text-[13px] text-[#9a9a96]">
+        <p className="bg-card text-muted-foreground rounded-[24px] p-5 text-center text-[13px]">
           Nenhum pedido ainda.
         </p>
       ) : (
         <ul className="space-y-2.5">
           {ctx.orders.map((o) => (
-            <li key={o.id} className="rounded-[24px] bg-white p-3.5">
+            <li key={o.id} className="bg-card rounded-[24px] p-3.5">
               <div className="flex items-center gap-2.5">
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f4f4f2]">
+                <span className="bg-app-soft grid size-10 shrink-0 place-items-center rounded-full">
                   <ShoppingBag className="size-[17px]" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px] font-bold">
                     {o.lines.map((l) => `${l.quantity}× ${l.name}`).join(', ')}
                   </p>
-                  <p className="text-[11.5px] text-[#9a9a96]">
+                  <p className="text-muted-foreground text-[11.5px]">
                     {formatDateTime(o.createdAt)} · {ORDER_STATUS_LABEL[o.status]}
                     {o.source === 'equipe' ? ' · lançado pela equipe' : ''}
                   </p>
                 </div>
                 <span
                   className={cx(
-                    'text-[14.5px] font-extrabold whitespace-nowrap',
-                    o.status === 'cancelado' && 'text-[#9a9a96] line-through',
+                    'text-[14.5px] font-bold whitespace-nowrap',
+                    o.status === 'cancelado' && 'text-muted-foreground line-through',
                   )}
                 >
                   {formatBRL(o.total)}
                 </span>
               </div>
               {o.status === 'cancelado' ? (
-                <p className="mt-2 text-[12px] text-[#9a9a96]">
+                <p className="text-muted-foreground mt-2 text-[12px]">
                   Pedido cancelado{o.cancelReason ? `: ${o.cancelReason}` : '.'}
                 </p>
               ) : (
@@ -144,7 +142,7 @@ export function StayAccount(ctx: StayCtx & { cancel: (o: GuestOrder) => void }) 
                 <button
                   type="button"
                   onClick={() => ctx.cancel(o)}
-                  className="mt-3 text-xs font-bold text-red-600"
+                  className="text-destructive mt-3 text-xs font-bold"
                 >
                   Cancelar pedido
                 </button>
@@ -153,7 +151,7 @@ export function StayAccount(ctx: StayCtx & { cancel: (o: GuestOrder) => void }) 
           ))}
         </ul>
       )}
-      <p className="mt-4 px-2 text-center text-[11.5px] text-[#9a9a96]">
+      <p className="text-muted-foreground mt-4 px-2 text-center text-[11.5px]">
         O consumo é pago na recepção, no check-out. A diária é cobrada à parte.
       </p>
     </>

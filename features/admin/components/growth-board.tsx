@@ -34,17 +34,17 @@ const money = (v: number) => formatBRL(v).replace(/,00$/, '')
 
 const STAGE_CLS: Record<GrowthStage, string> = {
   a_oferecer: 'bg-secondary text-foreground',
-  oferecido: 'bg-sky-50 text-sky-800',
-  interessado: 'bg-amber-50 text-amber-900',
-  aceito: 'bg-violet-50 text-violet-800',
-  campanha_ativa: 'bg-emerald-50 text-emerald-800',
+  oferecido: 'bg-secondary text-foreground',
+  interessado: 'bg-ipe/20 text-foreground',
+  aceito: 'bg-breu text-neblina',
+  campanha_ativa: 'bg-success/10 text-success',
   encerrado: 'bg-secondary text-muted-foreground',
-  recusado: 'bg-red-50 text-red-800',
+  recusado: 'bg-destructive/10 text-destructive',
 }
 
 const REC_STYLE: Record<Recommendation, { cls: string; icon: typeof Rocket }> = {
   trafego: { cls: 'bg-ocean/10 text-ocean', icon: Megaphone },
-  arrumar_perfil: { cls: 'bg-amber-50 text-amber-900', icon: Wrench },
+  arrumar_perfil: { cls: 'bg-ipe/20 text-foreground', icon: Wrench },
   acompanhar: { cls: 'bg-secondary text-foreground', icon: CheckCircle2 },
 }
 
@@ -62,11 +62,11 @@ function Pill({ className, children }: { className: string; children: React.Reac
 }
 
 function Delta({ v }: { v: number | null }) {
-  if (v === null) return <span className="text-xs font-semibold text-sky-700">novo</span>
+  if (v === null) return <span className="text-foreground text-xs font-semibold">novo</span>
   if (v === 0) return <span className="text-muted-foreground text-xs">0%</span>
   return (
     <span
-      className={`text-xs font-semibold tabular-nums ${v > 0 ? 'text-emerald-700' : 'text-red-700'}`}
+      className={`text-xs font-semibold tabular-nums ${v > 0 ? 'text-success' : 'text-destructive'}`}
     >
       {v > 0 ? '+' : ''}
       {v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}%
@@ -106,7 +106,7 @@ export function GrowthBoardView({
       label: 'Pediram ajuda pelo painel',
       value: summary.askedHelp,
       icon: BellRing,
-      tone: summary.askedHelp ? 'text-amber-700' : '',
+      tone: summary.askedHelp ? 'text-foreground' : '',
     },
     { label: 'Prontas para tráfego pago', value: summary.toOffer, icon: Megaphone },
     { label: 'Precisam arrumar o perfil', value: summary.fixProfile, icon: Wrench },
@@ -136,7 +136,7 @@ export function GrowthBoardView({
           </button>
         ))}
         {summary.contactsDue > 0 && (
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+          <span className="bg-ipe/15 text-foreground ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold">
             <CalendarClock className="size-3.5" /> {summary.contactsDue} contato(s) para hoje ou
             atrasados
           </span>
@@ -155,9 +155,7 @@ export function GrowthBoardView({
 
       {/* Funil */}
       <Card className="p-5">
-        <p className="text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase">
-          Funil da oferta
-        </p>
+        <p className="text-foreground mb-3 text-sm font-semibold">Funil da oferta</p>
         <div className="flex flex-wrap gap-2">
           {GROWTH_STAGES.map((s, idx) => (
             <button
@@ -181,7 +179,7 @@ export function GrowthBoardView({
 
       {campaigns.length > 0 && (
         <Card className="p-6">
-          <h3 className="text-foreground font-serif text-lg font-semibold">
+          <h3 className="text-foreground font-display text-lg font-medium">
             Resultado das campanhas
           </h3>
           <p className="text-muted-foreground mb-4 text-sm">
@@ -256,7 +254,7 @@ function CampaignCard({ item }: { item: GrowthItem }) {
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-muted-foreground text-left text-[11px] uppercase">
+            <tr className="text-muted-foreground text-left text-xs font-medium">
               <th className="py-1 font-semibold">Janela</th>
               <th className="py-1 text-right font-semibold">Reservas antes → depois</th>
               <th className="py-1 text-right font-semibold">Volume antes → depois</th>
@@ -290,7 +288,7 @@ function CampaignCard({ item }: { item: GrowthItem }) {
           <>
             {' '}
             · cada R$ 1 investido trouxe{' '}
-            <strong className={last.returnMultiple >= 1 ? 'text-emerald-700' : 'text-red-700'}>
+            <strong className={last.returnMultiple >= 1 ? 'text-success' : 'text-destructive'}>
               R$ {last.returnMultiple.toLocaleString('pt-BR')}
             </strong>{' '}
             a mais em reservas
@@ -318,13 +316,13 @@ function GrowthRow({ item, today }: { item: GrowthItem; today: string }) {
             <span className="text-foreground font-semibold">{row.name}</span>
             <Pill className={STAGE_CLS[stage]}>{STAGE_LABEL[stage]}</Pill>
             {asked && (
-              <Pill className="bg-amber-100 text-amber-900">
+              <Pill className="bg-ipe/25 text-foreground">
                 <BellRing className="size-3" /> Pediu ajuda{' '}
                 {o?.ownerInterestAt ? `em ${formatDateTime(o.ownerInterestAt)}` : ''}
               </Pill>
             )}
             {due && (
-              <Pill className="bg-red-50 text-red-800">
+              <Pill className="bg-destructive/10 text-destructive">
                 <CalendarClock className="size-3" /> Retorno {formatISODate(o!.nextContact!)}
               </Pill>
             )}
@@ -340,7 +338,7 @@ function GrowthRow({ item, today }: { item: GrowthItem; today: string }) {
         <div className="flex w-28 items-center gap-2" title={`Prioridade ${d.priority} de 100`}>
           <span className="bg-secondary h-1.5 flex-1 overflow-hidden rounded-full">
             <span
-              className={`block h-full rounded-full ${d.priority >= 60 ? 'bg-red-500' : d.priority >= 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+              className={`block h-full rounded-full ${d.priority >= 60 ? 'bg-destructive' : d.priority >= 30 ? 'bg-ipe/150' : 'bg-success/100'}`}
               style={{ width: `${Math.max(4, d.priority)}%` }}
             />
           </span>
@@ -354,14 +352,18 @@ function GrowthRow({ item, today }: { item: GrowthItem; today: string }) {
       <div className="border-border grid gap-6 border-t p-4 lg:grid-cols-2">
         <div className="space-y-4">
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase">Diagnóstico</p>
+            <p className="text-foreground text-sm font-semibold">Diagnóstico</p>
             <p className="text-foreground mt-1 text-sm">{d.reason}</p>
             {d.issues.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {d.issues.map((iss) => (
                   <Pill
                     key={iss.key}
-                    className={iss.blocks ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-900'}
+                    className={
+                      iss.blocks
+                        ? 'bg-destructive/10 text-destructive'
+                        : 'bg-ipe/20 text-foreground'
+                    }
                   >
                     {iss.blocks && <AlertTriangle className="size-3" />} {iss.label}
                   </Pill>
@@ -403,7 +405,7 @@ function ContactBox({ item, wa }: { item: GrowthItem; wa: string | null }) {
   const p = item.profile
   return (
     <div className="border-border rounded-xl border p-3">
-      <p className="text-muted-foreground text-xs font-semibold uppercase">Contato</p>
+      <p className="text-foreground text-sm font-semibold">Contato</p>
       <p className="text-foreground mt-1 text-sm">
         {p?.ownerName || 'Proprietário sem nome'}
         {p?.ownerEmail && <span className="text-muted-foreground"> · {p.ownerEmail}</span>}
@@ -420,7 +422,7 @@ function ContactBox({ item, wa }: { item: GrowthItem; wa: string | null }) {
             href={`${wa}?text=${encodeURIComponent(item.offerText)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
+            className="bg-success text-success-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold"
           >
             <MessageCircle className="size-3.5" /> Abrir no WhatsApp
           </a>
@@ -495,9 +497,7 @@ function OpportunityForm({ item }: { item: GrowthItem }) {
 
   return (
     <div className="border-border rounded-xl border p-3">
-      <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
-        Oferta de tráfego pago
-      </p>
+      <p className="text-foreground mb-2 text-sm font-semibold">Oferta de tráfego pago</p>
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="grid gap-1 text-xs">
           <span className="text-muted-foreground">Etapa</span>
@@ -587,7 +587,7 @@ function OpportunityForm({ item }: { item: GrowthItem }) {
         {msg && (
           <span
             role={msg.ok ? 'status' : 'alert'}
-            className={`text-xs font-medium ${msg.ok ? 'text-emerald-700' : 'text-red-700'}`}
+            className={`text-xs font-medium ${msg.ok ? 'text-success' : 'text-destructive'}`}
           >
             {msg.text}
           </span>
@@ -628,7 +628,7 @@ function Timeline({ item }: { item: GrowthItem }) {
   }
   return (
     <div className="border-border rounded-xl border p-3">
-      <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase">Histórico</p>
+      <p className="text-foreground mb-2 text-sm font-semibold">Histórico</p>
       <textarea
         id={`note-${item.row.id}`}
         value={text}
@@ -656,7 +656,7 @@ function Timeline({ item }: { item: GrowthItem }) {
           Adicionar nota
         </button>
         {err && (
-          <span role="alert" className="text-xs font-medium text-red-700">
+          <span role="alert" className="text-destructive text-xs font-medium">
             {err}
           </span>
         )}

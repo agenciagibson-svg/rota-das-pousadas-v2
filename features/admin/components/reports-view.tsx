@@ -57,12 +57,12 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const POUSADA_STATUS: Record<PousadaStatus, { label: string; cls: string }> = {
-  crescendo: { label: 'Crescendo', cls: 'bg-emerald-50 text-emerald-800' },
+  crescendo: { label: 'Crescendo', cls: 'bg-success/10 text-success' },
   estavel: { label: 'Estável', cls: 'bg-secondary text-foreground' },
-  caindo: { label: 'Caindo', cls: 'bg-amber-50 text-amber-900' },
-  sem_resultado: { label: 'Sem reservas', cls: 'bg-red-50 text-red-800' },
-  nova: { label: 'Nova', cls: 'bg-sky-50 text-sky-800' },
-  sem_quartos: { label: 'Sem acomodação', cls: 'bg-red-50 text-red-800' },
+  caindo: { label: 'Caindo', cls: 'bg-ipe/20 text-foreground' },
+  sem_resultado: { label: 'Sem reservas', cls: 'bg-destructive/10 text-destructive' },
+  nova: { label: 'Nova', cls: 'bg-secondary text-foreground' },
+  sem_quartos: { label: 'Sem acomodação', cls: 'bg-destructive/10 text-destructive' },
 }
 
 const money = (v: number) => formatBRL(v).replace(/,00$/, '')
@@ -99,7 +99,7 @@ function CsvButton({ onClick }: { onClick: () => void }) {
 function Delta({ value, invert = false }: { value: number | null; invert?: boolean }) {
   if (value === null)
     return (
-      <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-semibold text-sky-800">
+      <span className="bg-secondary text-foreground rounded-md px-1.5 py-0.5 text-[11px] font-semibold">
         novo
       </span>
     )
@@ -114,7 +114,7 @@ function Delta({ value, invert = false }: { value: number | null; invert?: boole
   return (
     <span
       className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${
-        good ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+        good ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
       }`}
     >
       <Icon className="size-3" />
@@ -136,7 +136,7 @@ function SectionTitle({
   return (
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h3 className="text-foreground font-serif text-lg font-semibold">{title}</h3>
+        <h3 className="text-foreground font-display text-lg font-medium">{title}</h3>
         {hint && <p className="text-muted-foreground text-sm">{hint}</p>}
       </div>
       {action}
@@ -197,13 +197,13 @@ function Th({
 }) {
   return (
     <th
-      className={`text-muted-foreground px-3 py-2 text-[11px] font-semibold tracking-wide whitespace-nowrap uppercase ${right ? 'text-right' : 'text-left'}`}
+      className={`text-muted-foreground px-3 py-2 text-xs font-semibold whitespace-nowrap ${right ? 'text-right' : 'text-left'}`}
     >
       {onClick ? (
         <button
           type="button"
           onClick={onClick}
-          className={`uppercase ${active ? 'text-foreground underline underline-offset-4' : ''}`}
+          className={active ? 'text-foreground underline underline-offset-4' : undefined}
         >
           {children}
         </button>
@@ -345,7 +345,7 @@ export function ReportsView({ data }: { data: ReportData }) {
           <strong className="text-foreground">{kpis.pousadasWithSales}</strong> venderam no período
         </span>
         <span className="inline-flex items-center gap-1">
-          <Star className="size-3.5 fill-amber-400 text-amber-400" />
+          <Star className="fill-ipe text-ipe size-3.5" />
           {kpis.rating.value !== null ? (
             <>
               nota média{' '}
@@ -440,7 +440,8 @@ export function ReportsView({ data }: { data: ReportData }) {
               label: STATUS_LABEL[s.key] ?? s.key,
               value: s.count,
               hint: `${s.share}%`,
-              color: s.key === 'cancelled' || s.key === 'no_show' ? '#c2410c' : undefined,
+              color:
+                s.key === 'cancelled' || s.key === 'no_show' ? 'var(--destructive)' : undefined,
             }))}
             format={(v) => num(v)}
           />
@@ -457,7 +458,7 @@ export function ReportsView({ data }: { data: ReportData }) {
             {data.alerts.map((a, i) => (
               <li key={i} className="flex items-start gap-3 py-2.5">
                 <AlertTriangle
-                  className={`mt-0.5 size-4 shrink-0 ${a.kind === 'sem_quartos' || a.kind === 'sem_resultado' ? 'text-red-600' : 'text-amber-600'}`}
+                  className={`mt-0.5 size-4 shrink-0 ${a.kind === 'sem_quartos' || a.kind === 'sem_resultado' ? 'text-destructive' : 'text-foreground'}`}
                 />
                 <span>
                   <strong className="text-foreground">{a.pousada}</strong>
@@ -643,7 +644,7 @@ function RegionSection({ data, suffix }: { data: ReportData; suffix: string }) {
                     <td className="text-foreground px-3 py-2 font-medium whitespace-nowrap">
                       <span
                         className="mr-2 inline-block size-2 rounded-sm"
-                        style={{ background: r.region ? REGION_COLOR[r.region] : '#a3a3a3' }}
+                        style={{ background: r.region ? REGION_COLOR[r.region] : 'var(--liquen)' }}
                       />
                       {r.label}
                     </td>
@@ -763,9 +764,7 @@ function PousadaSection({ data, suffix }: { data: ReportData; suffix: string }) 
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <p className="text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase">
-            Top 10 em volume
-          </p>
+          <p className="text-foreground mb-3 text-sm font-semibold">Top 10 em volume</p>
           <HBars
             rows={top.map((p) => ({
               key: p.id,

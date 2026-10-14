@@ -148,10 +148,7 @@ export function ReservationsCalendar({
     <div>
       {rooms.length > 1 && (
         <div className="mb-4">
-          <label
-            htmlFor="cal-room"
-            className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase"
-          >
+          <label htmlFor="cal-room" className="text-foreground text-sm font-medium">
             Quarto
           </label>
           <select
@@ -219,7 +216,7 @@ export function ReservationsCalendar({
                 d.status === 'free' && canClick && 'hover:bg-secondary',
                 d.status === 'booked' && 'bg-primary/15 text-primary cursor-not-allowed',
                 d.status === 'blocked' && 'bg-destructive/10 text-destructive line-through',
-                d.status === 'partial' && 'bg-amber-100 text-amber-900',
+                d.status === 'partial' && 'bg-ipe/25 text-foreground',
               )}
             >
               {d.day}
@@ -240,7 +237,7 @@ export function ReservationsCalendar({
             'mt-3 rounded-lg px-3 py-2 text-sm',
             message.tone === 'error'
               ? 'bg-destructive/10 text-destructive'
-              : 'bg-emerald-50 text-emerald-800',
+              : 'bg-success/10 text-success',
           )}
         >
           {message.text}
@@ -254,7 +251,7 @@ export function ReservationsCalendar({
         </span>
         {roomId === ALL && rooms.length > 1 && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-3 rounded bg-amber-100" /> Parcial (ocupados/total)
+            <span className="bg-ipe/25 size-3 rounded" /> Parcial (ocupados/total)
           </span>
         )}
         <span className="inline-flex items-center gap-1.5">

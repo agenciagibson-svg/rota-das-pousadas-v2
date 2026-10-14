@@ -1,98 +1,115 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'motion/react'
-import { Search, MapPin, Calendar, Users, Sparkles, ArrowRight, Shuffle } from 'lucide-react'
-import { addDaysToISODate, isoDateInTimeZone } from '@/lib/dates'
-import { SearchField } from '@/components/ui/search-field'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { ArrowRight, Pause, Play, Shuffle, Sparkles } from 'lucide-react'
+import type { Pousada } from '@/types'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Container } from '@/components/ui/container'
+import { duration, easing } from '@/lib/design-tokens'
+import { cn } from '@/lib/utils'
+import { HeroFeaturedCard } from './hero-featured-card'
+import { HeroSearchBar, HeroSearchSheet } from './hero-search'
+import {
+  addDays,
+  getCurrentBrazilSeason,
+  nextSeason,
+  seasonImages,
+  seasonOrder,
+  seasons,
+  surpriseRoutes,
+  todayIso,
+  type SeasonKey,
+} from './seasons'
 
-type SeasonKey = 'verao' | 'outono' | 'inverno' | 'primavera'
+const ease = [...easing.standard] as [number, number, number, number]
 
-const seasons: Record<
-  SeasonKey,
-  {
-    label: string
-    headline: string
-    sub: string
-    tags: string[]
-    image: string
-    alt: string
-  }
-> = {
-  verao: {
-    label: 'Verão',
-    headline: 'Águas cristalinas e dias infinitos',
-    sub: 'Praias, piscinas, cachoeiras e esportes aquáticos esperam por você.',
-    tags: ['Praia', 'Piscina', 'Cachoeiras', 'Ilhas'],
-    image: '/images/noronha.png',
-    alt: 'Praia brasileira com mar azul para viagens de verao',
-  },
-  outono: {
-    label: 'Outono',
-    headline: 'Tons dourados e o ritmo bom do campo',
-    sub: 'Fazendas, vinhedos e trilhas sob a luz mais bonita do ano.',
-    tags: ['Fazenda', 'Vinhos', 'Trilhas', 'Natureza'],
-    image: '/images/canastra.png',
-    alt: 'Paisagem de serra e natureza para viagens de outono',
-  },
-  inverno: {
-    label: 'Inverno',
-    headline: 'Lareiras acesas e refúgios de serra',
-    sub: 'Chalés, vinhos e destinos de montanha para aquecer a alma.',
-    tags: ['Chalés', 'Lareira', 'Serra', 'Vinhos'],
-    image: '/images/gramado.png',
-    alt: 'Destino de inverno com arquitetura aconchegante na serra',
-  },
-  primavera: {
-    label: 'Primavera',
-    headline: 'A natureza floresce, e você também',
-    sub: 'Ecoturismo, jardins e pousadas em meio ao verde renascido.',
-    tags: ['Ecoturismo', 'Flores', 'Natureza', 'Bem-estar'],
-    image: '/images/hero.png',
-    alt: 'Pousada em meio a natureza verde ao nascer do sol',
-  },
+/** Tempo de cada estação na tela antes de girar para a próxima. */
+const ROTATE_MS = 7000
+/** Depois de escolher uma estação na mão, ela fica parada por este tempo. */
+const HOLD_AFTER_PICK_MS = 20000
+
+/** Alguém digitando na busca ou com a gaveta de busca aberta: não troca nada. */
+function isUserBusy(): boolean {
+  const el = document.activeElement
+  if (!el || el === document.body) return false
+  return Boolean(el.closest('input, textarea, select, [role="dialog"], [data-hero-hold]'))
 }
 
-const surpriseRoutes: Record<SeasonKey, string[]> = {
-  verao: ['Praia', 'Piscina', 'Cachoeiras', 'Noronha', 'Capitólio', 'Bonito'],
-  outono: ['Natureza', 'Fazenda', 'Trilhas', 'Canastra', 'Vista', 'Ecoturismo'],
-  inverno: ['Serra', 'Lareira', 'Chalés', 'Gramado', 'Monte Verde', 'Românticos'],
-  primavera: ['Ecoturismo', 'Flores', 'Natureza', 'Bem-estar', 'Bonito', 'Canastra'],
-}
-
-function getCurrentBrazilSeason(date = new Date()): SeasonKey {
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const numericDate = month * 100 + day
-
-  if (numericDate >= 1221 || numericDate < 320) return 'verao'
-  if (numericDate >= 320 && numericDate < 621) return 'outono'
-  if (numericDate >= 621 && numericDate < 923) return 'inverno'
-  return 'primavera'
-}
-
-/** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
-function todayIso(): string {
-  return isoDateInTimeZone(new Date())
-}
-
-export function Hero() {
+/**
+ * Hero da home viva: a foto da estação ocupa a tela, o texto e a busca
+ * flutuam por cima em vidro, e o Ipê marca a ação de buscar.
+ */
+export function Hero({ featured }: { featured?: Pousada }) {
   const router = useRouter()
   const [season, setSeason] = useState<SeasonKey>(() => getCurrentBrazilSeason())
   const current = seasons[season]
-  const today = todayIso()
-  const tomorrow = addDaysToISODate(today, 1)
-  const dayAfterTomorrow = addDaysToISODate(today, 2)
+  // Foto da vez em cada estação; -1 = estação ainda não exibida. Cada nova
+  // volta pela estação mostra a foto seguinte.
+  const [photoIndex, setPhotoIndex] = useState<Record<SeasonKey, number>>(() => ({
+    verao: -1,
+    outono: -1,
+    inverno: -1,
+    primavera: -1,
+    [season]: 0,
+  }))
+  const [paused, setPaused] = useState(false)
+  const [hovering, setHovering] = useState(false)
+  // Estação escolhida na mão fica parada um tempo antes de voltar a girar.
+  const [held, setHeld] = useState(false)
+  // Muda quando a troca foi adiada (alguém digitando): agenda de novo.
+  const [retry, setRetry] = useState(0)
+  const reduceMotion = useReducedMotion()
+
+  const photos = seasonImages[season]
+  const photo = photos[Math.max(0, photoIndex[season]) % photos.length]!
+  const upcomingSeason = nextSeason(season)
+  const upcomingPhotos = seasonImages[upcomingSeason]
+  const upcomingPhoto = upcomingPhotos[(photoIndex[upcomingSeason] + 1) % upcomingPhotos.length]!
+
+  const goTo = useCallback((key: SeasonKey) => {
+    setPhotoIndex((prev) => ({ ...prev, [key]: prev[key] + 1 }))
+    setSeason(key)
+  }, [])
+
+  function pickSeason(key: SeasonKey) {
+    setHeld(true)
+    setRetry((n) => n + 1)
+    if (key !== season) goTo(key)
+  }
+
+  // Estações girando sozinhas. Para quando a pessoa pausa, prefere menos
+  // movimento, está com o mouse sobre a busca ou digitando nela.
+  const autoRotate = !paused && !reduceMotion && !hovering
+  useEffect(() => {
+    if (!autoRotate) return
+    const timer = window.setTimeout(
+      () => {
+        if (held) {
+          setHeld(false)
+          return
+        }
+        if (document.hidden || isUserBusy()) {
+          setRetry((n) => n + 1)
+          return
+        }
+        goTo(nextSeason(season))
+      },
+      held ? HOLD_AFTER_PICK_MS : ROTATE_MS,
+    )
+    return () => window.clearTimeout(timer)
+  }, [autoRotate, season, held, retry, goTo])
 
   function openSurpriseRoute() {
     const options = surpriseRoutes[season]
     const query = options[Math.floor(Math.random() * options.length)]
+    const tomorrow = addDays(todayIso(), 1)
     const params = new URLSearchParams({
       busca: query,
       checkin: tomorrow,
-      checkout: dayAfterTomorrow,
+      checkout: addDays(tomorrow, 1),
       hospedes: '2',
       temporada: season,
       surpresa: '1',
@@ -100,158 +117,121 @@ export function Hero() {
     router.push(`/pousadas?${params.toString()}`)
   }
 
+  const actions = (
+    <div className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3">
+      <Button type="button" onClick={openSurpriseRoute} variant="glass" size="pill">
+        <Shuffle className="size-4" />
+        Rota surpresa
+      </Button>
+      <a
+        href="#destinos"
+        className={cn(
+          buttonVariants({ variant: 'link', size: 'pill' }),
+          'text-primary-foreground px-0',
+        )}
+      >
+        Explorar destinos em destaque
+        <ArrowRight className="size-4" />
+      </a>
+    </div>
+  )
+
   return (
-    <section className="relative min-h-[100svh] w-full overflow-hidden">
-      <AnimatePresence mode="wait">
+    <section className="bg-breu text-primary-foreground relative isolate min-h-[100svh] w-full overflow-hidden">
+      <AnimatePresence initial={false}>
         <motion.div
-          key={current.image}
-          initial={{ opacity: 0, scale: 1.02 }}
+          key={photo.src}
+          initial={{ opacity: 0, scale: 1.04 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.01 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0"
+          exit={{ opacity: 0 }}
+          transition={{ duration: duration.reveal * 1.6, ease }}
+          className="absolute inset-0 -z-20"
         >
           <Image
-            src={current.image}
-            alt={current.alt}
+            src={photo.src}
+            alt={photo.alt}
             fill
-            priority
+            priority={photo.src === seasonImages[getCurrentBrazilSeason()][0]!.src}
             sizes="100vw"
             className="object-cover"
           />
         </motion.div>
       </AnimatePresence>
-      <div className="from-stone-deep/50 via-stone-deep/25 to-stone-deep/80 absolute inset-0 bg-gradient-to-b" />
+      {/* Pré-carrega a próxima foto para a troca não piscar o fundo escuro. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-30 opacity-0">
+        <Image src={upcomingPhoto.src} alt="" fill sizes="100vw" className="object-cover" />
+      </div>
+      {/* Sombra só onde há texto: topo (cabeçalho) e base (título e busca). */}
+      <div className="from-breu/55 via-breu/5 to-breu/85 absolute inset-0 -z-10 bg-gradient-to-b" />
+      <div className="from-breu/50 absolute inset-0 -z-10 hidden bg-gradient-to-r to-transparent to-60% lg:block" />
+      {/* Véu desfocado atrás do título: recifes, trilhas e galhos da foto não
+          disputam com as letras. Some para cima em degradê, sem corte. */}
+      <div className="hero-text-veil absolute inset-x-0 bottom-0 -z-10 h-[68%] lg:h-[62%]" />
 
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-5 pt-32 pb-10 lg:px-8 lg:pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-6 flex flex-wrap items-center gap-2"
-        >
-          <span className="bg-primary-foreground/10 text-primary-foreground mr-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur">
-            <Sparkles className="text-gold size-3.5" />
+      {featured && <HeroFeaturedCard pousada={featured} />}
+
+      <Container className="flex min-h-[100svh] flex-col justify-end pt-28 pb-8 lg:pb-12">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-primary-foreground/80 inline-flex shrink-0 items-center gap-1.5 pr-1 text-xs font-semibold">
+            <Sparkles className="text-ipe size-3.5" />
             Home viva
           </span>
-          {(Object.keys(seasons) as SeasonKey[]).map((key) => (
-            <button
+          {seasonOrder.map((key) => (
+            <Button
               key={key}
               type="button"
-              onClick={() => setSeason(key)}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                season === key
-                  ? 'bg-primary-foreground text-stone-deep'
-                  : 'bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20'
-              }`}
+              aria-pressed={season === key}
+              onClick={() => pickSeason(key)}
+              variant={season === key ? 'inverse' : 'glass'}
+              size="pill-sm"
             >
               {seasons[key].label}
-            </button>
+            </Button>
           ))}
-        </motion.div>
+          {!reduceMotion && (
+            <Button
+              type="button"
+              variant="glass"
+              size="icon-pill"
+              onClick={() => setPaused((value) => !value)}
+              aria-pressed={paused}
+              aria-label={paused ? 'Continuar a troca das estações' : 'Pausar a troca das estações'}
+              className="size-9"
+            >
+              {paused ? <Play className="size-3.5" /> : <Pause className="size-3.5" />}
+            </Button>
+          )}
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.div
             key={season}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-3xl"
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: duration.reveal, ease }}
+            className="max-w-4xl"
           >
-            <h1 className="text-primary-foreground font-serif text-4xl leading-[1.05] font-semibold text-balance sm:text-6xl lg:text-7xl">
-              {current.headline}
+            <h1 className="text-display-xl text-legible">
+              <span className="block">{current.headline[0]}</span>
+              <span className="block font-light">{current.headline[1]}</span>
             </h1>
-            <p className="text-primary-foreground/85 mt-5 max-w-xl text-base leading-relaxed text-pretty sm:text-lg">
+            <p className="text-body-l text-primary-foreground/90 text-legible mt-5 max-w-xl text-pretty">
               {current.sub}
             </p>
           </motion.div>
         </AnimatePresence>
 
-        <motion.form
-          action="/pousadas"
-          method="get"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="glass border-primary-foreground/20 shadow-stone-deep/30 mt-8 rounded-3xl border p-2.5 shadow-2xl"
+        <div
+          className="mt-8"
+          onPointerEnter={() => setHovering(true)}
+          onPointerLeave={() => setHovering(false)}
         >
-          <input type="hidden" name="temporada" value={season} />
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.25fr_0.95fr_0.95fr_0.8fr_auto]">
-            <SearchField
-              icon={<MapPin className="text-primary size-4" />}
-              label="Destino"
-              name="busca"
-              placeholder="Cidade, pousada ou estilo"
-              autoComplete="off"
-            />
-            <SearchField
-              icon={<Calendar className="text-primary size-4" />}
-              label="Check-in"
-              name="checkin"
-              type="date"
-              min={today}
-              defaultValue={tomorrow}
-            />
-            <SearchField
-              icon={<Calendar className="text-primary size-4" />}
-              label="Check-out"
-              name="checkout"
-              type="date"
-              min={dayAfterTomorrow}
-              defaultValue={dayAfterTomorrow}
-            />
-            <SearchField
-              icon={<Users className="text-primary size-4" />}
-              label="Hóspedes"
-              name="hospedes"
-              type="number"
-              min={1}
-              max={12}
-              defaultValue={2}
-            />
-            <button
-              type="submit"
-              className="group bg-accent text-accent-foreground flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-all hover:brightness-105 md:px-7"
-            >
-              <Search className="size-4" />
-              Encontrar meu refúgio
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 px-2 pt-3 pb-1">
-            <span className="text-foreground/60 text-xs font-medium">Sugestões da estação:</span>
-            {current.tags.map((tag) => (
-              <button
-                key={tag}
-                type="submit"
-                name="busca"
-                value={tag}
-                className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </motion.form>
-
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            onClick={openSurpriseRoute}
-            className="bg-primary-foreground text-stone-deep hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all"
-          >
-            <Shuffle className="size-4" />
-            Rota surpresa
-          </button>
-          <a
-            href="#destinos"
-            className="text-primary-foreground/80 hover:text-primary-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors"
-          >
-            Explorar destinos em destaque
-            <ArrowRight className="size-4" />
-          </a>
+          <HeroSearchBar season={season} tags={current.tags} trailing={actions} />
+          <HeroSearchSheet season={season} tags={current.tags} />
+          <div className="mt-5 lg:hidden">{actions}</div>
         </div>
-      </div>
+      </Container>
     </section>
   )
 }

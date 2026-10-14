@@ -36,9 +36,9 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
         disabled={isPending}
       >
         <XCircle className="size-3.5" />
-        {isPending ? 'Cancelando...' : 'Cancelar'}
+        {isPending ? 'Cancelando…' : 'Cancelar'}
       </Button>
-      {error && <span className="text-xs font-medium text-destructive">{error}</span>}
+      {error && <span className="text-destructive text-xs font-medium">{error}</span>}
     </div>
   )
 }

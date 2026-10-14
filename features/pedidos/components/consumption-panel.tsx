@@ -131,10 +131,10 @@ export function ConsumptionPanel({
           <div className="text-muted-foreground text-xs">Pago</div>
           <div className="text-foreground font-semibold">{formatBRL(summary.paid)}</div>
         </div>
-        <div className={`rounded-xl p-3 ${summary.balance > 0 ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+        <div className={`rounded-xl p-3 ${summary.balance > 0 ? 'bg-ipe/15' : 'bg-success/10'}`}>
           <div className="text-muted-foreground text-xs">Falta pagar</div>
           <div
-            className={`font-semibold ${summary.balance > 0 ? 'text-amber-800' : 'text-emerald-700'}`}
+            className={`font-semibold ${summary.balance > 0 ? 'text-foreground' : 'text-success'}`}
           >
             {summary.balance > 0 ? formatBRL(summary.balance) : 'Nada ✓'}
           </div>
@@ -170,9 +170,7 @@ export function ConsumptionPanel({
 
       {data.payments.length > 0 && (
         <div className="mt-3 border-t pt-3">
-          <p className="text-muted-foreground text-xs font-semibold uppercase">
-            Pagamentos do consumo
-          </p>
+          <p className="text-foreground text-sm font-semibold">Pagamentos do consumo</p>
           <ul className="mt-1 space-y-1 text-sm">
             {data.payments.map((p) => (
               <li
@@ -285,9 +283,7 @@ export function ConsumptionPanel({
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Valor (R$)
-            </span>
+            <span className="text-foreground text-sm font-medium">Valor (R$)</span>
             <input
               type="number"
               inputMode="decimal"
@@ -299,9 +295,7 @@ export function ConsumptionPanel({
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-              Forma
-            </span>
+            <span className="text-foreground text-sm font-medium">Forma</span>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as ConsumptionPayment['method'])}

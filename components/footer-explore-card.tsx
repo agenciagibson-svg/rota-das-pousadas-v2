@@ -3,89 +3,39 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'motion/react'
-import { ArrowUpRight, Compass, Hotel, Map, Route, Sparkles, Tags } from 'lucide-react'
-
-const routes = [
-  {
-    label: 'Destinos',
-    href: '/#destinos',
-    image: '/images/canastra.png',
-    icon: Map,
-    kicker: 'Comece pelo mapa',
-    title: 'Serra, praia ou cerrado?',
-    detail: 'Passe pelas paisagens e deixe a rota apontar para o tipo de viagem que combina com o seu momento.',
-    tone: 'text-gold',
-  },
-  {
-    label: 'Experiências',
-    href: '/#experiencias',
-    image: '/images/experience.png',
-    icon: Sparkles,
-    kicker: 'Escolha pelo clima',
-    title: 'Natureza, luxo, romance ou aventura.',
-    detail: 'A navegação sai do comum: primeiro a sensação da viagem, depois a pousada ideal.',
-    tone: 'text-accent',
-  },
-  {
-    label: 'Pousadas',
-    href: '/pousadas',
-    image: '/images/pousada-1.png',
-    icon: Hotel,
-    kicker: 'Veja a sequência completa',
-    title: 'Todas as pousadas em uma trilha visual.',
-    detail: 'Abra qualquer pousada para ver o slide de fotos e reservar logo abaixo.',
-    tone: 'text-primary',
-  },
-  {
-    label: 'Ofertas',
-    href: '/pousadas',
-    image: '/images/capitolio.png',
-    icon: Tags,
-    kicker: 'Próxima camada',
-    title: 'Datas boas merecem ofertas vivas.',
-    detail: 'A base já leva para as pousadas; depois encaixamos preços dinâmicos por temporada.',
-    tone: 'text-sunset',
-  },
-  {
-    label: 'Roteiros',
-    href: '/#editorial',
-    image: '/images/jalapao.png',
-    icon: Route,
-    kicker: 'Monte uma jornada',
-    title: 'Uma rota, várias pousadas, zero planilha.',
-    detail: 'A ideia é evoluir para roteiros combinados, com pernoites sugeridos e distâncias inteligentes.',
-    tone: 'text-ocean',
-  },
-]
+import { motion, useReducedMotion } from 'motion/react'
+import { ArrowUpRight, Compass } from 'lucide-react'
+import { routes } from '@/components/footer-links'
 
 export function FooterExploreCard() {
   const [activeIndex, setActiveIndex] = useState(0)
   const active = routes[activeIndex]
   const ActiveIcon = active.icon
+  // O traçado da rota "se desenha"; com movimento reduzido, aparece pronto.
+  const reduceMotion = useReducedMotion()
 
   function spinRoute() {
     setActiveIndex((current) => (current + 1) % routes.length)
   }
 
   return (
-    <div className="rounded-2xl border border-linen/10 bg-linen/[0.06] p-4 shadow-floating">
+    <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h4 className="text-sm font-semibold text-linen">Explorar</h4>
-          <p className="mt-1 text-xs leading-relaxed text-linen/55">Bussola de rotas interativa</p>
+          <h2 className="text-linen text-sm font-semibold">Explorar</h2>
+          <p className="text-linen/55 mt-1 text-xs leading-relaxed">Bussola de rotas interativa</p>
         </div>
         <button
           type="button"
           onClick={spinRoute}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-linen/15 text-linen transition-colors hover:bg-linen hover:text-stone-deep"
+          className="border-linen/15 text-linen hover:bg-linen hover:text-stone-deep flex size-10 shrink-0 items-center justify-center rounded-full border transition-colors"
           aria-label="Girar bussola de rotas"
         >
           <Compass className="size-5" />
         </button>
       </div>
 
-      <div className="relative mt-4 overflow-hidden rounded-xl border border-linen/10 bg-stone-deep">
+      <div className="border-linen/10 bg-stone-deep relative mt-4 overflow-hidden rounded-xl border">
         <div className="relative aspect-[5/3] min-h-44">
           <Image
             key={active.image}
@@ -95,16 +45,16 @@ export function FooterExploreCard() {
             sizes="(max-width: 1024px) 100vw, 300px"
             className="object-cover opacity-75 transition-opacity duration-[var(--motion-page)]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(31,36,32,0.08),rgba(31,36,32,0.88))]" />
+          <div className="from-breu/10 to-breu/90 absolute inset-0 bg-gradient-to-b" />
           <svg className="absolute inset-0 size-full" viewBox="0 0 320 190" aria-hidden="true">
             <motion.path
               key={active.label}
               d="M22 148 C84 82, 126 174, 176 88 S260 34, 298 116"
               fill="none"
-              stroke="rgba(248,246,241,0.82)"
+              className="stroke-neblina/80"
               strokeLinecap="round"
               strokeWidth="3"
-              initial={{ pathLength: 0, opacity: 0 }}
+              initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             />
@@ -114,7 +64,8 @@ export function FooterExploreCard() {
                 cx={x}
                 cy={[148, 88, 116][index]}
                 r="5"
-                fill="rgb(248,246,241)"
+                // O último ponto é a chegada: Ipê, como o ponto da logo.
+                className={index === 2 ? 'fill-ipe' : 'fill-neblina'}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.12 + index * 0.08 }}
@@ -126,7 +77,7 @@ export function FooterExploreCard() {
               <ActiveIcon className="size-4" />
               {active.kicker}
             </span>
-            <p className="mt-2 text-pretty font-serif text-xl font-semibold leading-tight text-linen">
+            <p className="text-linen font-display mt-2 text-xl leading-tight font-medium text-pretty">
               {active.title}
             </p>
           </div>
@@ -145,7 +96,8 @@ export function FooterExploreCard() {
               onMouseEnter={() => setActiveIndex(index)}
               onFocus={() => setActiveIndex(index)}
               aria-label={`Explorar ${route.label}`}
-              className={`flex h-11 items-center justify-center rounded-xl border transition-all ${
+              aria-pressed={selected}
+              className={`flex h-11 items-center justify-center rounded-xl border transition ${
                 selected
                   ? 'border-linen/35 bg-linen text-stone-deep'
                   : 'border-linen/10 text-linen/55 hover:border-linen/25 hover:text-linen'
@@ -157,11 +109,13 @@ export function FooterExploreCard() {
         })}
       </div>
 
-      <p className="mt-4 min-h-12 text-sm leading-relaxed text-linen/65">{active.detail}</p>
+      <p aria-live="polite" className="text-linen/65 mt-4 min-h-12 text-sm leading-relaxed">
+        {active.detail}
+      </p>
 
       <Link
         href={active.href}
-        className="mt-4 inline-flex w-full items-center justify-between rounded-xl bg-linen px-4 py-3 text-sm font-semibold text-stone-deep transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="bg-linen text-stone-deep hover:bg-accent hover:text-accent-foreground mt-4 inline-flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors"
       >
         Abrir {active.label}
         <ArrowUpRight className="size-4" />
