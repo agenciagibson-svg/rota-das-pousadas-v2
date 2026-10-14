@@ -2,6 +2,7 @@ import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { listMyBookingRows } from '@/repositories/bookings.repository'
 import {
   cancelGuestOrderRpc,
   getGuestStayRpc,
@@ -30,32 +31,21 @@ export async function listMyStays(): Promise<MyStay[]> {
   if (!user) return []
   const supabase = await createSupabaseServerClient()
   const recent = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10)
-  const { data, error } = await supabase
-    .from('bookings')
-    .select('id, code, pousada_id, room_id, checkin, checkout, status')
-    .eq('guest_id', user.id)
-    .in('status', ['confirmed', 'checked_in', 'checked_out'])
-    .gte('checkout', recent)
-    .order('checkin', { ascending: true })
-  if (error) throw new Error(error.message)
-  const rows = data ?? []
+  // O hóspede não lê `bookings` direto (0085) — só pela RPC, com colunas de hóspede.
+  const rows = (await listMyBookingRows())
+    .filter((r) => ['confirmed', 'checked_in', 'checked_out'].includes(r.status))
+    .filter((r) => r.checkout >= recent)
+    .sort((a, b) => a.checkin.localeCompare(b.checkin))
   const pousadaIds = [...new Set(rows.map((r) => r.pousada_id))]
-  const roomIds = [...new Set(rows.map((r) => r.room_id))]
-  const [{ data: pousadas }, { data: rooms }] = await Promise.all([
-    pousadaIds.length
-      ? supabase.from('pousadas').select('id, name').in('id', pousadaIds)
-      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-    roomIds.length
-      ? supabase.from('rooms').select('id, name').in('id', roomIds)
-      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-  ])
+  const { data: pousadas } = pousadaIds.length
+    ? await supabase.from('pousadas').select('id, name').in('id', pousadaIds)
+    : { data: [] as { id: string; name: string }[] }
   const pName = new Map((pousadas ?? []).map((p) => [p.id, p.name]))
-  const rName = new Map((rooms ?? []).map((r) => [r.id, r.name]))
   return rows.map((r) => ({
     id: r.id,
     code: r.code,
     pousadaName: pName.get(r.pousada_id) ?? 'Pousada',
-    roomName: rName.get(r.room_id) ?? 'Acomodação',
+    roomName: r.room_name ?? 'Acomodação',
     checkin: r.checkin,
     checkout: r.checkout,
     status: r.status,
@@ -101,12 +91,7 @@ export async function submitReview(bookingId: string, rating: number, text: stri
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login.')
   const supabase = await createSupabaseServerClient()
-  const { data: b } = await supabase
-    .from('bookings')
-    .select('pousada_id')
-    .eq('id', bookingId)
-    .eq('guest_id', user.id)
-    .maybeSingle()
+  const [b] = await listMyBookingRows(bookingId)
   if (!b) throw new Error('Reserva não encontrada.')
   const { error } = await supabase.from('reviews').insert({
     pousada_id: b.pousada_id,

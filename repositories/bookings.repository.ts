@@ -18,6 +18,7 @@ import type {
   FnrhData,
 } from '@/features/reservas/types'
 import { orNull } from '@/lib/supabase/rpc-args'
+import type { Database } from '@/lib/supabase/database.types'
 
 export type CreateBookingParams = {
   pousadaId: string
@@ -248,36 +249,39 @@ export async function setBookingCompanionsRpc(
 }
 
 // ----------------------------------------------------------------------------
-// Leitura do lado do hóspede (/minhas-reservas) — nunca seleciona colunas
-// internas (internal_notes, cancellation_reason, no_show_reason): a RLS de
-// SELECT já é a mesma para hóspede/equipe operacional (não filtra coluna),
-// então a garantia real de que o hóspede nunca veja essas colunas vem de
-// nunca incluí-las no `select()` usado aqui (decisão registrada na Entrega
-// do Ciclo 4, item 5/9).
+// Leitura do lado do hóspede (/minhas-reservas, pagamento, app da estadia).
+// O hóspede NÃO lê `bookings`/`rooms` direto (0085): a RLS dessas tabelas é só
+// da equipe, porque a linha tem campos internos (notas, motivo de no-show,
+// comissão…). A RPC `list_my_bookings` devolve só as colunas de hóspede das
+// reservas do próprio usuário logado — o filtro por dono é do banco, não daqui.
 // ----------------------------------------------------------------------------
-const GUEST_BOOKING_COLUMNS =
-  'id, code, pousada_id, room_id, checkin, checkout, guests, subtotal, fee, discount, surcharge, total, balance_due, status, origin, payment_due_at, cancellation_reason, created_at'
+export type MyBookingRow = Database['public']['Functions']['list_my_bookings']['Returns'][number]
 
-export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
+export async function listMyBookingRows(bookingId?: string): Promise<MyBookingRow[]> {
   const supabase = await createSupabaseServerClient()
-
-  const { data: rows, error } = await supabase
-    .from('bookings')
-    .select(GUEST_BOOKING_COLUMNS)
-    .eq('guest_id', guestId)
-    .order('created_at', { ascending: false })
+  const { data, error } = await supabase.rpc(
+    'list_my_bookings',
+    bookingId ? { p_booking_id: bookingId } : {},
+  )
   if (error) throw error
-  if (!rows || rows.length === 0) return []
+  return data ?? []
+}
 
+/**
+ * Reservas do usuário logado. `guestId` fica na assinatura por compatibilidade
+ * com os chamadores, mas quem decide de quem são as reservas é a sessão (RPC).
+ */
+export async function listBookingsByGuest(_guestId: string): Promise<Booking[]> {
+  const rows = await listMyBookingRows()
+  if (rows.length === 0) return []
+
+  const supabase = await createSupabaseServerClient()
   const pousadaIds = [...new Set(rows.map((r) => r.pousada_id))]
   const { data: pousadas } = await supabase
     .from('pousadas')
     .select('id, slug, name, image, city, state')
     .in('id', pousadaIds)
   const byId = new Map((pousadas ?? []).map((p) => [p.id, p]))
-  const roomIds = [...new Set(rows.map((r) => r.room_id))]
-  const { data: rooms } = await supabase.from('rooms').select('id, name').in('id', roomIds)
-  const roomById = new Map((rooms ?? []).map((room) => [room.id, room]))
   const pendingIds = rows.filter((r) => r.status === 'pending').map((r) => r.id)
   const awaitingApproval = await listMyBookingIdsAwaitingApproval(pendingIds)
 
@@ -289,7 +293,7 @@ export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
       pousadaSlug: p?.slug ?? '',
       pousadaName: p?.name ?? 'Pousada',
       pousadaImage: p?.image ?? '/placeholder.svg',
-      roomName: roomById.get(r.room_id)?.name ?? 'Acomodação',
+      roomName: r.room_name ?? 'Acomodação',
       city: p?.city ?? '',
       state: p?.state ?? '',
       checkin: r.checkin,
@@ -313,16 +317,9 @@ export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
 
 export async function getBookingByGuest(
   bookingId: string,
-  guestId: string,
+  _guestId: string,
 ): Promise<{ id: string; status: BookingStatus; paymentDueAt: string | null } | null> {
-  const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('bookings')
-    .select('id, status, payment_due_at')
-    .eq('id', bookingId)
-    .eq('guest_id', guestId)
-    .maybeSingle()
-  if (error) throw error
+  const [data] = await listMyBookingRows(bookingId)
   if (!data) return null
   return { id: data.id, status: data.status as BookingStatus, paymentDueAt: data.payment_due_at }
 }
@@ -344,18 +341,9 @@ export type BookingForCheckout = {
 
 export async function getBookingForCheckout(
   bookingId: string,
-  guestId: string,
+  _guestId: string,
 ): Promise<BookingForCheckout | null> {
-  const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('bookings')
-    .select(
-      'id, code, pousada_id, status, total, fee, guest_name, guest_email, balance_due, payment_due_at',
-    )
-    .eq('id', bookingId)
-    .eq('guest_id', guestId)
-    .maybeSingle()
-  if (error) throw error
+  const [data] = await listMyBookingRows(bookingId)
   if (!data) return null
   return {
     id: data.id,

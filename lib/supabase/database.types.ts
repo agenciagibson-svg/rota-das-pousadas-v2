@@ -3125,6 +3125,32 @@ export type Database = {
         Args: { p_pousada_id: string }
         Returns: { legal_name: string; tax_id: string; notification_email: string }[]
       }
+      list_my_bookings: {
+        Args: { p_booking_id?: string }
+        Returns: {
+          id: string
+          code: string
+          pousada_id: string
+          room_id: string
+          room_name: string | null
+          checkin: string
+          checkout: string
+          guests: number | null
+          subtotal: number
+          fee: number
+          discount: number
+          surcharge: number
+          total: number
+          balance_due: number
+          status: Database['public']['Enums']['booking_status']
+          origin: Database['public']['Enums']['booking_origin']
+          payment_due_at: string | null
+          cancellation_reason: string | null
+          guest_name: string | null
+          guest_email: string | null
+          created_at: string
+        }[]
+      }
       list_pousada_reviews: {
         Args: { p_pousada_id: string }
         Returns: {

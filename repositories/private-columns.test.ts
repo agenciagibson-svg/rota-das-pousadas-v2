@@ -55,3 +55,17 @@ describe('colunas privadas fora da leitura direta', () => {
     })
   }
 })
+
+/**
+ * 0085: a RLS de `bookings` é só da equipe. Consulta direta filtrando pelo
+ * hóspede (`.eq('guest_id', …)`) volta vazia em produção — o hóspede lê a
+ * própria reserva pela RPC `list_my_bookings` (`listMyBookingRows`).
+ */
+describe('hóspede lê reserva só pela RPC', () => {
+  it('nenhuma consulta direta filtra bookings por guest_id', () => {
+    const offenders = ROOTS.flatMap(sources).filter((file) =>
+      /\.eq\(\s*'guest_id'/.test(readFileSync(file, 'utf8')),
+    )
+    expect(offenders.map((f) => relative(process.cwd(), f))).toEqual([])
+  })
+})
