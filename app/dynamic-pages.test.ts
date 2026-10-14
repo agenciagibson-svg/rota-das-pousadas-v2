@@ -19,6 +19,7 @@ const DYNAMIC_SIGNALS = [
   /await params/,
   /getCurrentUser|requireOwnerDashboard|requireAdmin/,
   /\b(cookies|headers)\(\)/,
+  /await connection\(\)/,
 ]
 
 function pages(dir: string): string[] {

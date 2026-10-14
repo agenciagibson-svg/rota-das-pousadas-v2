@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest'
 // Supabase (que lança "Your project's URL and Key are required…").
 vi.mock('@/lib/env', () => ({
   isSupabaseConfigured: () => false,
+  // Fora de produção: o modo demonstração pode usar os dados de exemplo.
+  assertNotMockInProduction: () => {},
   publicEnv: { siteUrl: 'http://localhost:3000', supabaseUrl: '', supabaseAnonKey: '' },
 }))
 const createClient = vi.hoisted(() => vi.fn())

@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 // de exemplo em vez de exigir login e uma reserva confirmada.
 vi.mock('@/lib/env', () => ({
   isSupabaseConfigured: () => false,
+  // Fora de produção: o modo demonstração pode usar os dados de exemplo.
+  assertNotMockInProduction: () => {},
   publicEnv: { siteUrl: 'http://localhost:3000', supabaseUrl: '', supabaseAnonKey: '' },
 }))
 const createClient = vi.hoisted(() => vi.fn())
