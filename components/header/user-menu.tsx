@@ -81,7 +81,7 @@ export function UserMenu({ user, solid }: { user: HeaderUser; solid: boolean }) 
       </button>
 
       {open && (
-        <div className="border-border bg-card absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border shadow-2xl">
+        <div className="border-border bg-card text-foreground absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border shadow-2xl">
           <div className="border-border flex items-center gap-3 border-b px-4 py-3">
             <span className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold">
               {user.initials}
