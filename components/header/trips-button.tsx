@@ -70,7 +70,7 @@ export function TripsButton({
           id="minhas-viagens"
           role="region"
           aria-label="Minhas viagens"
-          className="border-border bg-card absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl"
+          className="border-border bg-card text-foreground absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border shadow-2xl"
         >
           <div className="border-border border-b px-4 py-3">
             <p className="font-display text-base font-medium">Minhas viagens</p>
