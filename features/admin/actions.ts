@@ -39,9 +39,12 @@ import {
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
   const { slug } = await createPousadaAsAdmin(input)
   revalidatePath('/admin')
+  revalidatePath('/admin/pousadas')
   revalidatePath('/')
   revalidatePath('/sitemap.xml')
-  return { slug, redirectTo: `/pousada/${slug}` as const }
+  // Rascunho não tem página pública (daria 404): volta para a lista do admin.
+  const redirectTo = input.publishNow ? `/pousada/${slug}` : '/admin/pousadas'
+  return { slug, redirectTo }
 })
 
 export const approvePousadaAction = createAction(pousadaIdSchema, async ({ id }) => {

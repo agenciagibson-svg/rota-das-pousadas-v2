@@ -23,6 +23,10 @@ const STATUS_LABEL: Record<string, string> = {
 function nextAction(status: string): { label: string; target: string } | null {
   if (status === 'publicada') return { label: 'Suspender', target: 'suspensa' }
   if (status === 'suspensa') return { label: 'Reativar', target: 'publicada' }
+  // Rascunho cadastrado pela equipe (ou aprovado/reprovado) só saía do lugar
+  // pelo fluxo do dono; sem dono vinculado ficava preso.
+  if (status === 'rascunho' || status === 'aprovada' || status === 'reprovada')
+    return { label: 'Publicar', target: 'publicada' }
   return null
 }
 
