@@ -81,7 +81,7 @@ export function PlatformTeam({ initialTeam }: { initialTeam: PlatformTeamMember[
           Atribuir papel de plataforma
         </h3>
         <p className="text-muted-foreground mt-1 text-sm">
-          A pessoa precisa já ter conta na plataforma (criada em /entrar). Atribuir um papel novo a
+          A pessoa precisa já ter conta na plataforma (criada em /cadastro). Atribuir um papel novo a
           quem já tem substitui o anterior.
         </p>
         <div className="mt-3 flex flex-wrap items-end gap-3">

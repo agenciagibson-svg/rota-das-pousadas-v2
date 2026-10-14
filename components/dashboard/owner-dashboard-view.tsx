@@ -13,6 +13,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import Link from 'next/link'
+import { APP_TIME_ZONE } from '@/lib/format'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { AreaChart, BarChart, Donut } from '@/components/dashboard/charts'
@@ -28,6 +29,20 @@ import type {
   ReviewSummary,
   WeeklyDailies,
 } from '@/features/dashboard/metrics'
+
+/** Saudação pela hora de Brasília (o servidor roda em UTC). */
+function greetingForNow(now: Date = new Date()): string {
+  const hour = Number(
+    new Intl.DateTimeFormat('pt-BR', {
+      hour: 'numeric',
+      hourCycle: 'h23',
+      timeZone: APP_TIME_ZONE,
+    }).format(now),
+  )
+  if (hour >= 5 && hour < 12) return 'Bom dia'
+  if (hour >= 12 && hour < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
 
 /**
  * View (client) do painel do proprietário. Recebe apenas dados serializáveis do
@@ -163,7 +178,7 @@ export function OwnerDashboardView({
       nav={ownerDashboardNav('overview')}
       brandLabel={pousadaName}
       brandSub="Painel do proprietário"
-      title={`Bom dia, ${firstName}`}
+      title={`${greetingForNow()}, ${firstName}`}
       subtitle="Aqui está o resumo da sua pousada."
       user={{ name: displayName, role: 'Proprietário' }}
     >
@@ -177,7 +192,11 @@ export function OwnerDashboardView({
         >
           {pousadaStatus === 'reprovada'
             ? 'Sua pousada foi reprovada na curadoria. Revise as informações e fale com o suporte.'
-            : 'Sua pousada está em análise pela nossa curadoria. Você já pode preparar tudo; ela ficará visível no site após a aprovação.'}
+            : pousadaStatus === 'suspensa'
+              ? 'Sua pousada está suspensa e não aparece no site. Fale com o suporte da Rota.'
+              : pousadaStatus === 'rascunho'
+                ? 'Sua pousada ainda não está no ar. Prepare acomodações, fotos e preços; a equipe da Rota publica depois de revisar.'
+                : 'Sua pousada está em análise pela nossa curadoria. Você já pode preparar tudo; ela ficará visível no site após a aprovação.'}
         </div>
       )}
       {alertsSlot}
