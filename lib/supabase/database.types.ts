@@ -3125,6 +3125,14 @@ export type Database = {
         Args: { p_pousada_id: string }
         Returns: { legal_name: string; tax_id: string; notification_email: string }[]
       }
+      register_booking_payment: {
+        Args: { p_booking_id: string; p_amount: number; p_method: string; p_note?: string }
+        Returns: Json
+      }
+      reverse_booking_payment: {
+        Args: { p_payment_id: string; p_reason: string }
+        Returns: Json
+      }
       list_my_bookings: {
         Args: { p_booking_id?: string }
         Returns: {

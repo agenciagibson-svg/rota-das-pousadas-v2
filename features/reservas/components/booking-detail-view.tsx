@@ -23,6 +23,8 @@ import {
   ProofReviewPanel,
   type ProofForReview,
 } from '@/features/pagamentos/components/proof-review-panel'
+import { BookingPaymentsPanel } from '@/features/pagamentos/components/booking-payments-panel'
+import type { BookingPayments } from '@/features/pagamentos/services/booking-payment.service'
 
 const fmtDate = formatISODate
 const fmtDateTime = formatDateTime
@@ -34,6 +36,7 @@ export function BookingDetailView({
   proofs = [],
   consumption = null,
   sellable = [],
+  payments = null,
 }: {
   displayName: string
   pousadaName: string
@@ -42,6 +45,8 @@ export function BookingDetailView({
   /** Conta de consumo (0078) — `null` para quem não vê valores. */
   consumption?: BookingConsumption | null
   sellable?: SellableItem[]
+  /** Pagamentos da diária (0086) — `null` para quem não vê valores. */
+  payments?: BookingPayments | null
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = !isFinalStatus(booking.status)
@@ -235,6 +240,18 @@ export function BookingDetailView({
                   Prazo de pagamento: {fmtDateTime(booking.paymentDueAt)}
                 </p>
               )}
+            {payments && (
+              <BookingPaymentsPanel
+                bookingId={booking.id}
+                balanceDue={booking.balanceDue}
+                acceptsPayment={['pending', 'confirmed', 'checked_in', 'checked_out'].includes(
+                  booking.status,
+                )}
+                payments={payments.payments}
+                canRegister={payments.canRegister}
+                canReverse={payments.canReverse}
+              />
+            )}
           </Card>
 
           <Card className="p-6">

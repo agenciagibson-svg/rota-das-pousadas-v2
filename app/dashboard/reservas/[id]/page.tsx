@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getCurrentUser, getOwnerPousada, getOwnerReservationDetail } from '@/server/queries'
 import { BookingDetailView } from '@/features/reservas/components/booking-detail-view'
 import { listBookingProofsForStaff } from '@/features/pagamentos/services/pix.service'
+import { getBookingPaymentsForStaff } from '@/features/pagamentos/services/booking-payment.service'
 import {
   getBookingConsumption,
   listSellableItems,
@@ -34,7 +35,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   }
   if (!booking) notFound()
 
-  const [pousada, proofs, consumption, sellable] = await Promise.all([
+  const [pousada, proofs, consumption, sellable, payments] = await Promise.all([
     getOwnerPousada(),
     listBookingProofsForStaff(booking.id).catch(() => []),
     // Conta de consumo não pode derrubar a página da reserva.
@@ -43,6 +44,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       return null
     }),
     listSellableItems().catch(() => []),
+    // Pagamentos da diária também não podem derrubar a página.
+    getBookingPaymentsForStaff(booking.id).catch((e) => {
+      console.error('[dashboard] pagamentos da reserva', e)
+      return null
+    }),
   ])
   const displayName = user?.name || user?.email || 'Proprietário'
   return (
@@ -53,6 +59,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       proofs={proofs}
       consumption={consumption}
       sellable={sellable}
+      payments={payments}
     />
   )
 }

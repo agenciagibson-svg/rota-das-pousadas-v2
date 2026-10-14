@@ -41,13 +41,22 @@ export function TripsButton({
   }, [])
 
   const count = pendingTrips.length
+  const toPay = pendingTrips.filter((t) => !t.awaitingApproval).length
+  const inReview = count - toPay
+  // Comprovante Pix enviado não é "aguardando pagamento": a pousada está conferindo.
+  const summary = [
+    toPay ? `${toPay} aguardando pagamento` : null,
+    inReview ? `${inReview} em análise pela pousada` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={count ? `Minhas viagens — ${count} aguardando pagamento` : 'Minhas viagens'}
+        aria-label={count ? `Minhas viagens — ${summary}` : 'Minhas viagens'}
         aria-expanded={open}
         aria-controls="minhas-viagens"
         className={cn(
@@ -75,7 +84,7 @@ export function TripsButton({
           <div className="border-border border-b px-4 py-3">
             <p className="font-display text-base font-medium">Minhas viagens</p>
             <p className="text-muted-foreground text-xs">
-              {count ? `${count} aguardando pagamento` : 'Nada pendente por aqui'}
+              {count ? summary : 'Nada pendente por aqui'}
             </p>
           </div>
 

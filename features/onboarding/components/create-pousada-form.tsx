@@ -20,7 +20,7 @@ export function CreatePousadaForm() {
     formState: { errors, isSubmitting },
   } = useForm<CreatePousadaInput>({
     resolver: zodResolver(createPousadaSchema),
-    defaultValues: { name: '', city: '', state: '', description: '', pricePerNight: 0 },
+    defaultValues: { name: '', city: '', state: '', description: '' },
   })
 
   async function onSubmit(values: CreatePousadaInput) {
