@@ -3121,6 +3121,22 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: { email: string }[]
       }
+      get_pousada_private_settings: {
+        Args: { p_pousada_id: string }
+        Returns: { legal_name: string; tax_id: string; notification_email: string }[]
+      }
+      list_pousada_reviews: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          id: string
+          booking_id: string
+          author_id: string
+          rating: number
+          text: string
+          response: string | null
+          created_at: string
+        }[]
+      }
       review_payment_proof: {
         Args: { p_proof_id: string; p_approve: boolean; p_reason?: string; p_amount?: number }
         Returns: Json

@@ -1,11 +1,9 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import type { Database } from '@/lib/supabase/database.types'
+import { PUBLIC_POUSADA_COLUMNS, type PublicPousadaRow } from '@/repositories/pousadas.repository'
 import type { Pousada } from '@/types'
 
-type PousadaRow = Database['public']['Tables']['pousadas']['Row']
-
-function rowToPousada(row: PousadaRow): Pousada {
+function rowToPousada(row: PublicPousadaRow): Pousada {
   return {
     slug: row.slug,
     name: row.name,
@@ -114,7 +112,7 @@ export async function listFavoritePousadas(userId: string): Promise<Pousada[]> {
   const ids = favorites.map((favorite) => favorite.pousada_id)
   const { data: pousadas, error: pousadasError } = await supabase
     .from('pousadas')
-    .select('*')
+    .select(PUBLIC_POUSADA_COLUMNS)
     .in('id', ids)
     .eq('status', 'publicada')
   if (pousadasError) throw pousadasError

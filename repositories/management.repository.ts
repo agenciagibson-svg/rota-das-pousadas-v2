@@ -53,19 +53,28 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
   const { data, error } = await supabase
     .from('pousadas')
     .select(
-      'id, slug, name, legal_name, tax_id, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, notification_email, house_rules, cancellation_policy',
+      'id, slug, name, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, house_rules, cancellation_policy',
     )
     .eq('id', pousadaId)
     .maybeSingle()
   if (error) throw error
   if (!data) return null
 
+  // CPF/CNPJ, razão social e e-mail de notificação não são legíveis pela
+  // tabela (0084) — só membros da pousada e a plataforma, por esta RPC.
+  const { data: privateRows, error: privateError } = await supabase.rpc(
+    'get_pousada_private_settings',
+    { p_pousada_id: pousadaId },
+  )
+  if (privateError) throw privateError
+  const priv = privateRows?.[0]
+
   return {
     id: data.id,
     slug: data.slug,
     name: data.name,
-    legalName: data.legal_name,
-    taxId: data.tax_id,
+    legalName: priv?.legal_name ?? '',
+    taxId: priv?.tax_id ?? '',
     city: data.city,
     state: data.state,
     country: data.country,
@@ -82,7 +91,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
     checkoutTime: data.checkout_time,
     contactPhone: data.contact_phone,
     whatsapp: data.whatsapp,
-    notificationEmail: data.notification_email,
+    notificationEmail: priv?.notification_email ?? '',
     houseRules: data.house_rules,
     cancellationPolicy: data.cancellation_policy,
   }

@@ -65,7 +65,22 @@ const mockRepository: PousadaRepository = {
 // ---------------------------------------------------------------------------
 type PousadaRow = Database['public']['Tables']['pousadas']['Row']
 
-function rowToPousada(r: PousadaRow): Pousada {
+/**
+ * Colunas da vitrine — as únicas que `anon`/`authenticated` podem ler da
+ * tabela `pousadas` (0084). CPF/CNPJ, razão social, e-mail de notificação e
+ * id do dono ficam fora; o painel lê esses campos pela RPC
+ * `get_pousada_private_settings`. Nunca use `.select('*')` em `pousadas`:
+ * a consulta é recusada pelo banco.
+ */
+export const PUBLIC_POUSADA_COLUMNS =
+  'id, slug, name, city, state, destination_id, image, gallery, rating, reviews, price_per_night, tags, description, status, created_at, updated_at, checkin_time, checkout_time, contact_phone, house_rules, cancellation_policy, tenant_status, whatsapp, address, country, timezone, currency, language, instagram, cep'
+
+export type PublicPousadaRow = Omit<
+  PousadaRow,
+  'owner_id' | 'notification_email' | 'legal_name' | 'tax_id'
+>
+
+function rowToPousada(r: PublicPousadaRow): Pousada {
   return {
     slug: r.slug,
     name: r.name,
@@ -80,9 +95,9 @@ function rowToPousada(r: PousadaRow): Pousada {
     description: r.description,
     instagram: r.instagram,
     // Campos abaixo faltam quando a linha vem de `search_public_pousadas`
-    // (RPC de busca, que só seleciona as colunas da vitrine) — `undefined`
-    // nesse caso é esperado, e a página de detalhe (que usa `.select('*')`
-    // de verdade) é a única que precisa deles.
+    // (RPC de busca, que só traz as colunas do card) — `undefined`
+    // nesse caso é esperado, e a página de detalhe (que lê as colunas
+    // da vitrine de verdade) é a única que precisa deles.
     id: r.id,
     address: r.address,
     cep: r.cep,
@@ -109,7 +124,7 @@ const supabaseRepository: PousadaRepository = {
     })
     if (error) throw error
     const result = data as {
-      items: PousadaRow[]
+      items: PublicPousadaRow[]
       total: number
       page: number
       pageSize: number
@@ -121,7 +136,7 @@ const supabaseRepository: PousadaRepository = {
     const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from('pousadas')
-      .select('*')
+      .select(PUBLIC_POUSADA_COLUMNS)
       .eq('slug', slug)
       .eq('status', 'publicada')
       .maybeSingle()
@@ -139,7 +154,7 @@ const supabaseRepository: PousadaRepository = {
     const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from('pousadas')
-      .select('*')
+      .select(PUBLIC_POUSADA_COLUMNS)
       .eq('status', 'publicada')
       .neq('slug', slug)
       .limit(limit)

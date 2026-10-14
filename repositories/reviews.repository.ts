@@ -17,11 +17,11 @@ export type OwnerReviewRow = {
 
 export async function listReviewsByPousada(pousadaId: string): Promise<OwnerReviewRow[]> {
   const supabase = await createSupabaseServerClient()
-  const { data: reviews, error } = await supabase
-    .from('reviews')
-    .select('id, booking_id, author_id, rating, text, response, created_at')
-    .eq('pousada_id', pousadaId)
-    .order('created_at', { ascending: false })
+  // Autor e reserva não são públicos (0084): o painel lê pela RPC, que
+  // confere se quem pede é da equipe desta pousada (ou da plataforma).
+  const { data: reviews, error } = await supabase.rpc('list_pousada_reviews', {
+    p_pousada_id: pousadaId,
+  })
   if (error) throw error
   if (!reviews || reviews.length === 0) return []
 
