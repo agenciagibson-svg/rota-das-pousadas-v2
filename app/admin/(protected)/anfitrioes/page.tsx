@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { listHostsAdmin } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
+import { formatDate } from '@/lib/format'
 
 export const metadata: Metadata = {
   title: 'Anfitriões — Admin',
@@ -52,9 +53,7 @@ export default async function AdminAnfitrioesPage() {
                         {h.pousadaName}
                       </Link>
                     </td>
-                    <td className="text-muted-foreground py-2.5">
-                      {new Date(h.createdAt).toLocaleDateString('pt-BR')}
-                    </td>
+                    <td className="text-muted-foreground py-2.5">{formatDate(h.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

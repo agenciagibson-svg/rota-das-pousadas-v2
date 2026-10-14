@@ -7,18 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import type { LoginAttemptRow } from '../types'
+import { formatDateTime } from '@/lib/format'
 
 /** Mesmo teto de falhas usado pelo bloqueio de login (`assert_login_not_locked`, 0053). */
 const LOCKOUT_THRESHOLD = 5
 
+/** Data e hora no fuso de Brasília (igual no servidor e no navegador). */
 function fmtDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
+  return formatDateTime(iso)
 }
 
 /**

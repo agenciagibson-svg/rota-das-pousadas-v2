@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { assignPlatformRoleAction, revokePlatformRoleAction } from '../actions'
 import type { PlatformTeamMember, PlatformRoleValue } from '../types'
+import { formatDate } from '@/lib/format'
 
 const ROLE_LABEL: Record<PlatformRoleValue, string> = {
   suporte: 'Suporte',
@@ -23,12 +24,9 @@ const ROLE_OPTIONS: PlatformRoleValue[] = [
   'master',
 ]
 
+/** Data no fuso de Brasília (igual no servidor e no navegador). */
 function fmtDate(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(iso))
+  return formatDate(iso)
 }
 
 /**
