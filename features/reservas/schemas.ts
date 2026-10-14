@@ -161,7 +161,7 @@ export const companionSchema = z.object({
   hasSpecialNeeds: z.boolean(),
   birthDate: z.string().trim().optional().or(z.literal('')),
   documentType: z.string().trim().optional().or(z.literal('')),
-  documentNumber: z.string().trim().optional().or(z.literal('')),
+  documentNumber: z.string().trim().max(50, 'Documento muito longo.').optional().or(z.literal('')),
   operationalNotes: z.string().trim().max(500).optional().or(z.literal('')),
 })
 

@@ -19,3 +19,17 @@ export const publicEnv = {
 export function isSupabaseConfigured(): boolean {
   return Boolean(publicEnv.supabaseUrl && publicEnv.supabaseAnonKey)
 }
+
+/**
+ * Sem as credenciais do Supabase os repositórios caem nos dados de exemplo de
+ * `lib/data.ts` — útil em desenvolvimento e nos testes. Em produção isso seria
+ * uma vitrine de pousadas FICTÍCIAS no ar por causa de uma variável faltando;
+ * melhor a página quebrar e o erro aparecer no deploy.
+ */
+export function assertNotMockInProduction(): void {
+  if (process.env.VERCEL_ENV === 'production' && !isSupabaseConfigured()) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY ausentes em produção — o site não exibe dados de exemplo.',
+    )
+  }
+}

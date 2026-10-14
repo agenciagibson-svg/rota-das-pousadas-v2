@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/termos' },
 }
 
+/**
+ * Renderização por requisição, como o resto do site: a CSP estrita de
+ * `proxy.ts` depende de um nonce por requisição. Pré-renderizada no build, a
+ * página saía sem nonce e o navegador bloqueava os scripts do próprio Next
+ * (menu e links do cabeçalho paravam de responder). Ver app/not-found.tsx.
+ */
+export const dynamic = 'force-dynamic'
+
 const email = <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>
 
 const sections: LegalSection[] = [

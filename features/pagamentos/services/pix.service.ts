@@ -15,17 +15,18 @@ import { getBookingNotificationContextRpc } from '@/repositories/bookings.reposi
 import {
   claimPaymentReviewsToNotify,
   getBookingPixInstructionsRpc,
-  listOpenPaymentReviews,
-  listOpenProofDeadlines,
-  resolvePaymentReviewRpc,
-  type OpenPaymentReview,
-  type OpenProofDeadline,
   getPixSettingsForPousada,
   getPousadaAlertEmails,
+  listOpenPaymentReviews,
+  listOpenProofDeadlines,
   listProofsForBooking,
+  releasePaymentReviewsNotification,
+  resolvePaymentReviewRpc,
   reviewPaymentProofRpc,
   savePixSettingsRpc,
   submitPaymentProofRpc,
+  type OpenPaymentReview,
+  type OpenProofDeadline,
   type PixSettings,
   type ProofSummary,
   type StaffProof,
@@ -38,6 +39,7 @@ import type {
   ReviewProofInput,
   SubmitProofInput,
 } from '../pix'
+import { reportError } from '@/lib/observability/report-error'
 
 // ---------------------------------------------------------------------------
 // Pousada: configurar a chave
@@ -218,9 +220,15 @@ export async function resolvePaymentReview(input: ResolveReviewInput): Promise<v
 /**
  * Avisa a equipe das pousadas sobre casos novos na fila. Chamada pelo cron
  * diário e logo depois de cada webhook do Mercado Pago. Nunca lança.
+ *
+ * `notified` conta só os casos em que pelo menos um e-mail saiu de verdade.
+ * Os que tinham destinatário e nenhum envio deu certo voltam para a fila e são
+ * tentados de novo na próxima rodada (`failed`). Caso sem nenhum e-mail de
+ * aviso cadastrado não tem para quem mandar: fica só no painel da pousada.
  */
-export async function notifyPaymentReviews(): Promise<{ notified: number }> {
+export async function notifyPaymentReviews(): Promise<{ notified: number; failed: number }> {
   let notified = 0
+  const toRetry: string[] = []
   try {
     const items = await claimPaymentReviewsToNotify()
     for (const item of items) {
@@ -228,10 +236,13 @@ export async function notifyPaymentReviews(): Promise<{ notified: number }> {
         const ctx = await getBookingNotificationContextRpc(item.bookingId)
         if (!ctx) continue
         const staff = await getPousadaAlertEmails(item.bookingId)
+        if (staff.length === 0) continue
         const email = paymentReviewAlertEmail(ctx, item.kind, item.amount)
-        await Promise.all(staff.map((to) => sendEmail({ to, ...email })))
-        notified += 1
+        const sent = await Promise.all(staff.map((to) => sendEmail({ to, ...email })))
+        if (sent.some(Boolean)) notified += 1
+        else toRetry.push(item.reviewId)
       } catch (error) {
+        toRetry.push(item.reviewId)
         console.error('[pix] falha ao avisar caso de revisão', {
           reviewId: item.reviewId,
           error: String(error),
@@ -240,6 +251,24 @@ export async function notifyPaymentReviews(): Promise<{ notified: number }> {
     }
   } catch (error) {
     console.error('[pix] falha ao buscar casos de revisão', { error: String(error) })
+    await reportError(error, { where: 'pix:payment-review-alert' })
   }
-  return { notified }
+  if (toRetry.length > 0) {
+    console.error(
+      `[pix] ${toRetry.length} aviso(s) de pagamento para revisar não saíram — voltam para a fila.`,
+    )
+    try {
+      await releasePaymentReviewsNotification(toRetry)
+    } catch (error) {
+      console.error('[pix] falha ao devolver avisos à fila', { error: String(error) })
+    }
+    // Dinheiro parado sem ninguém avisado: precisa aparecer para quem opera a plataforma.
+    await reportError(
+      new Error(`${toRetry.length} aviso(s) de pagamento para revisar não saíram`),
+      {
+        where: 'pix:payment-review-alert',
+      },
+    )
+  }
+  return { notified, failed: toRetry.length }
 }

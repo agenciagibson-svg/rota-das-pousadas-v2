@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import '@/lib/validation/zod-pt'
 import Link from 'next/link'
 import { MailCheck } from 'lucide-react'
 import { forgotPasswordSchema, type ForgotPasswordInput } from '../schemas'

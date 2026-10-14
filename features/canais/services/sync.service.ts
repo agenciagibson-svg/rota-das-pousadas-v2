@@ -193,40 +193,70 @@ export async function syncOneFeed(
   }
 }
 
+/** Feeds em paralelo por rodada: baixo para não martelar a OTA, suficiente para não enfileirar. */
+const SYNC_CONCURRENCY = 4
 /**
- * Sincroniza todos os feeds habilitados, um a um.
- *
- * Sequencial de propósito: o volume por pousada é pequeno, então paralelizar
- * aqui só multiplicaria o risco de bater em limite de requisição da OTA para
- * ganhar segundos que ninguém está esperando.
- *
- * Cadência real (corrigido em 21/09/2026 — o comentário aqui dizia "a cada 15
- * minutos", que nunca bateu com `vercel.json`): o cron roda 1x/dia
- * (`0 6 * * *`), porque o plano Hobby da Vercel só permite disparo diário por
- * cron job — rodar de fato a cada 15 min exige Vercel Pro. Isso deixa uma
- * janela de até ~24h em que uma reserva feita direto no Airbnb/Booking pode
- * não bloquear o calendário aqui a tempo (risco de overbooking). Decisão
- * pendente: aceitar o risco (o volume do piloto é baixo) ou migrar pra Pro.
+ * A rota do cron tem `maxDuration = 60`. Depois deste tempo a rodada para de
+ * COMEÇAR feeds novos e termina os que estão em andamento (cada um leva no
+ * máximo `FEED_TIMEOUT_MS`).
  */
-export async function syncAllFeeds(deps?: Partial<SyncDeps>): Promise<{
+const SYNC_BUDGET_MS = 40_000
+
+/**
+ * Sincroniza os feeds habilitados.
+ *
+ * Antes era um por vez, sem limite de tempo: com timeout de 15 s por feed,
+ * bastavam 4 feeds lentos para a função estourar os 60 s e os últimos nunca
+ * sincronizarem — sem erro nenhum aparecer. Agora roda poucos em paralelo e
+ * respeita um orçamento de tempo. O que não coube fica em `skipped` e entra
+ * primeiro na próxima rodada, porque `list_channel_feeds_to_import` devolve os
+ * feeds do mais antigo para o mais recente (`last_sync_at`).
+ *
+ * Cadência: o cron roda 1x/dia (`0 6 * * *` em `vercel.json`) porque o plano
+ * Hobby da Vercel só permite disparo diário. Isso deixa até ~24h em que uma
+ * reserva feita no Airbnb/Booking pode não bloquear o calendário aqui (risco
+ * de overbooking). Com Vercel Pro, trocar o agendamento para a cada 15 minutos.
+ */
+export async function syncAllFeeds(
+  deps?: Partial<SyncDeps> & { budgetMs?: number; now?: () => number },
+): Promise<{
   total: number
   ok: number
   failed: number
+  skipped: number
   results: ChannelSyncResult[]
 }> {
   const resolved: SyncDeps = {
     fetchFeed: deps?.fetchFeed ?? fetchFeedText,
     apply: deps?.apply ?? ((p) => applySyncRpc(p)),
   }
+  const now = deps?.now ?? Date.now
+  const deadline = now() + (deps?.budgetMs ?? SYNC_BUDGET_MS)
   const feeds = await listFeedsToImport()
-  const results: ChannelSyncResult[] = []
-  for (const feed of feeds) {
-    results.push(await syncOneFeed(feed, resolved))
+  // Guardado por posição: o relatório sai na ordem dos feeds, não na de chegada.
+  const slots: (ChannelSyncResult | undefined)[] = new Array(feeds.length)
+  let next = 0
+
+  async function worker() {
+    while (next < feeds.length && now() < deadline) {
+      const index = next++
+      slots[index] = await syncOneFeed(feeds[index], resolved)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(SYNC_CONCURRENCY, feeds.length) }, worker))
+  const results = slots.filter((r): r is ChannelSyncResult => r !== undefined)
+
+  const skipped = feeds.length - results.length
+  if (skipped > 0) {
+    console.warn(
+      `[canais] rodada sem tempo para ${skipped} de ${feeds.length} feeds — ficam para a próxima.`,
+    )
   }
   return {
-    total: results.length,
+    total: feeds.length,
     ok: results.filter((r) => r.status === 'ok').length,
     failed: results.filter((r) => r.status === 'error').length,
+    skipped,
     results,
   }
 }

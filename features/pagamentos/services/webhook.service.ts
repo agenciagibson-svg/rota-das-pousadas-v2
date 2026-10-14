@@ -88,6 +88,19 @@ function mapMpStatus(status: MpPayment['status']): PaymentStatus {
 }
 
 /**
+ * A reserva do aviso não tem (mais) conta Mercado Pago conectada — a pousada
+ * desconectou, ou a reserva não existe. Não adianta o Mercado Pago tentar de
+ * novo: a rota responde 200 `ignored` em vez de 503 (que gerava dias de
+ * reenvio do mesmo aviso).
+ */
+export class NoPaymentAccountError extends Error {
+  constructor(bookingId: string) {
+    super(`Reserva ${bookingId} sem conta de pagamento conectada — notificação ignorada.`)
+    this.name = 'NoPaymentAccountError'
+  }
+}
+
+/**
  * Processa uma notificação já com a assinatura verificada. `bookingId` vem
  * do query param do `notification_url` (ver checkout.service.ts) — é o que
  * permite saber de qual pousada é o token ANTES de reconsultar o pagamento
@@ -98,11 +111,7 @@ export async function processPaymentNotification(params: {
   mpPaymentId: string
 }): Promise<void> {
   const context = await getPousadaPaymentContextForWebhook(params.bookingId)
-  if (!context) {
-    throw new Error(
-      `Reserva ${params.bookingId} sem conta de pagamento conectada — notificação ignorada.`,
-    )
-  }
+  if (!context) throw new NoPaymentAccountError(params.bookingId)
 
   const sellerAccessToken = decryptToken(context.accessTokenEncrypted)
   const payment = await getPaymentById(params.mpPaymentId, sellerAccessToken)

@@ -22,7 +22,11 @@ export async function GET(request: NextRequest) {
     await completeConnection({ code, state })
     settingsUrl.searchParams.set('mp', 'connected')
   } catch (error) {
-    console.error('[mercadopago:callback]', error)
+    // Só a mensagem: o objeto de erro pode carregar a resposta do Mercado Pago.
+    console.error(
+      '[mercadopago:callback] conexão falhou:',
+      error instanceof Error ? error.message.slice(0, 300) : 'erro desconhecido',
+    )
     settingsUrl.searchParams.set('mp', 'error')
   }
 

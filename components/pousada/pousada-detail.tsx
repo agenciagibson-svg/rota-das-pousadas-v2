@@ -21,7 +21,7 @@ import {
   MessageCircle,
   Navigation,
 } from 'lucide-react'
-import { isoDateInTimeZone } from '@/lib/dates'
+import { addDaysToISODate, isoDateInTimeZone } from '@/lib/dates'
 import type { Pousada } from '@/lib/data'
 import { Reveal } from '@/components/reveal'
 import { Badge } from '@/components/ui/badge'
@@ -50,12 +50,6 @@ function formatReviewDate(iso: string): string {
 /** Dígitos puros de um telefone BR ("(34) 99999-0000" -> "34999990000"). */
 function onlyDigits(value: string): string {
   return value.replace(/\D/g, '')
-}
-
-function addDays(date: string, days: number): string {
-  const next = new Date(`${date}T00:00:00Z`)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next.toISOString().slice(0, 10)
 }
 
 /** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
@@ -100,13 +94,13 @@ export function PousadaDetail({
   const [active, setActive] = useState(0)
   const [shared, setShared] = useState(false)
   const [checkin, setCheckin] = useState(() => {
-    const fallback = addDays(todayIso(), 1)
+    const fallback = addDaysToISODate(todayIso(), 1)
     return isIsoDate(initialBooking?.checkin) && initialBooking.checkin >= todayIso()
       ? initialBooking.checkin
       : fallback
   })
   const [checkout, setCheckout] = useState(() => {
-    const fallback = addDays(checkin, 2)
+    const fallback = addDaysToISODate(checkin, 2)
     return isIsoDate(initialBooking?.checkout) && initialBooking.checkout > checkin
       ? initialBooking.checkout
       : fallback
@@ -520,7 +514,7 @@ export function PousadaDetail({
                     onChange={(event) => {
                       const nextCheckin = event.target.value
                       setCheckin(nextCheckin)
-                      if (checkout <= nextCheckin) setCheckout(addDays(nextCheckin, 1))
+                      if (checkout <= nextCheckin) setCheckout(addDaysToISODate(nextCheckin, 1))
                     }}
                     className="text-foreground mt-1 w-full bg-transparent text-sm font-medium outline-none"
                   />
@@ -532,7 +526,7 @@ export function PousadaDetail({
                   <input
                     type="date"
                     value={checkout}
-                    min={addDays(checkin, 1)}
+                    min={addDaysToISODate(checkin, 1)}
                     onChange={(event) => setCheckout(event.target.value)}
                     className="text-foreground mt-1 w-full bg-transparent text-sm font-medium outline-none"
                   />

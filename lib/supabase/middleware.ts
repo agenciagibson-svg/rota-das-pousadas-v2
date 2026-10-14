@@ -2,7 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
-import type { Database } from './database.types'
 import { publicEnv } from '@/lib/env'
 
 type CookieToSet = {
@@ -40,7 +39,8 @@ export async function updateSession(
 
   let response = NextResponse.next(nextInit())
 
-  const supabase = createServerClient<Database, 'public', any>(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
+  // Sem genérico de banco: aqui só a sessão (`auth`) é usada. Ver lib/supabase/server.ts.
+  const supabase = createServerClient(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll()
@@ -48,7 +48,9 @@ export async function updateSession(
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
         response = NextResponse.next(nextInit())
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        )
       },
     },
   })

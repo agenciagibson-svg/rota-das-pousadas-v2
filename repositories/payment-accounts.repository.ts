@@ -1,5 +1,6 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { orNull } from '@/lib/supabase/rpc-args'
 
 export type PaymentAccountRow = {
   pousadaId: string
@@ -73,9 +74,9 @@ export async function savePaymentAccountRpc(p: SavePaymentAccountParams): Promis
     p_mp_user_id: p.mpUserId,
     p_access_token: p.accessTokenEncrypted,
     p_refresh_token: p.refreshTokenEncrypted,
-    p_public_key: p.publicKey,
+    p_public_key: orNull(p.publicKey),
     p_live_mode: p.liveMode,
-    p_expires_at: p.expiresAt,
+    p_expires_at: orNull(p.expiresAt),
   })
   if (error) throw new Error(error.message)
 }

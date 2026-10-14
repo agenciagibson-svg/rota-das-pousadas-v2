@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowUpRight, CalendarDays, Clock, Flame, Sparkles, Tag } from 'lucide-react'
-import { isoDateInTimeZone } from '@/lib/dates'
+import { addDaysToISODate, isoDateInTimeZone } from '@/lib/dates'
 import { Reveal } from '@/components/reveal'
 
 type SeasonKey = 'verao' | 'outono' | 'inverno' | 'primavera'
@@ -187,12 +187,6 @@ function getCurrentBrazilSeason(date = new Date()): SeasonKey {
   return 'primavera'
 }
 
-function addDays(date: string, days: number): string {
-  const next = new Date(`${date}T00:00:00Z`)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next.toISOString().slice(0, 10)
-}
-
 /** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
 function todayIso(): string {
   return isoDateInTimeZone(new Date())
@@ -200,8 +194,8 @@ function todayIso(): string {
 
 function offerHref(season: SeasonKey, search: string) {
   const today = todayIso()
-  const checkin = addDays(today, 7)
-  const checkout = addDays(checkin, 2)
+  const checkin = addDaysToISODate(today, 7)
+  const checkout = addDaysToISODate(checkin, 2)
   const params = new URLSearchParams({
     busca: search,
     checkin,

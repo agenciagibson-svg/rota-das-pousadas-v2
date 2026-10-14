@@ -16,6 +16,7 @@ import {
 import { PAYMENT_METHOD_LABEL, type ConsumptionPayment } from '@/features/pedidos/types'
 import type { FinanceSummary, Transaction } from '@/features/financeiro/types'
 import type { CreateExpenseInput } from '@/features/financeiro/schemas'
+import { reportError } from '@/lib/observability/report-error'
 
 export type FinanceData = {
   summary: FinanceSummary
@@ -59,9 +60,17 @@ export async function getFinance(): Promise<FinanceData> {
   const [reservations, expenses, consumption, consumptionPayments] = await Promise.all([
     listReservationsByPousada(pousada.id),
     listExpensesByPousada(pousada.id),
-    // Consumo (0078) não pode derrubar o Financeiro se algo falhar.
-    consumptionTotalsByPousada(pousada.id).catch(() => []),
-    listConsumptionPaymentsByPousada(pousada.id, 200).catch(() => []),
+    // Consumo (0078) não pode derrubar o Financeiro se algo falhar — mas a falha
+    // tem de aparecer para a equipe da plataforma, senão o resumo sai sem o
+    // consumo e ninguém fica sabendo.
+    consumptionTotalsByPousada(pousada.id).catch(async (error) => {
+      await reportError(error, { where: 'financeiro:consumo-totais' })
+      return []
+    }),
+    listConsumptionPaymentsByPousada(pousada.id, 200).catch(async (error) => {
+      await reportError(error, { where: 'financeiro:consumo-pagamentos' })
+      return []
+    }),
   ])
   const codeById = new Map(reservations.map((r) => [r.id, r]))
 
@@ -99,7 +108,8 @@ export async function getFinance(): Promise<FinanceData> {
       return {
         id: `c-${p.id}`,
         kind: 'receita' as const,
-        description: `Consumo ${r ? `· Reserva ${r.code} · ${r.guestName}` : ''} (${
+        // 0083: estorno é um lançamento negativo.
+        description: `${Number(p.amount) < 0 ? 'Estorno de consumo' : 'Consumo'} ${r ? `· Reserva ${r.code} · ${r.guestName}` : ''} (${
           PAYMENT_METHOD_LABEL[p.method as ConsumptionPayment['method']] ?? p.method
         })`,
         amount: Number(p.amount),

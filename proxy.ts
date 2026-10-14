@@ -22,6 +22,14 @@ const CONNECT_SRC = [
 ]
 
 /**
+ * Cloudflare Turnstile (CAPTCHA do pedido de orçamento): o `api.js` é
+ * carregado pelo `next/script` depois da hidratação e abre um iframe do mesmo
+ * domínio. Sem estas duas liberações a CSP bloqueava o widget, o token saía
+ * vazio e TODO pedido de orçamento era recusado.
+ */
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
+
+/**
  * CSP estrita em TODO o site desde 21/09/2026 — `script-src 'self'
  * 'nonce-…'`, sem `unsafe-inline`. Script inline injetado sem o nonce não
  * executa: é a contenção real de XSS.
@@ -58,7 +66,8 @@ function contentSecurityPolicy(nonce: string): string {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
-    `script-src 'self' 'nonce-${nonce}'`,
+    `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN}`,
+    `frame-src ${TURNSTILE_ORIGIN}`,
     `connect-src ${CONNECT_SRC.join(' ')}`,
     'upgrade-insecure-requests',
   ].join('; ')

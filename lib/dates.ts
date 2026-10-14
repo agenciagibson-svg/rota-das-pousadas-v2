@@ -43,6 +43,16 @@ export function isoDateInTimeZone(date: Date, timeZone: string = DEFAULT_TIMEZON
   }
 }
 
+/**
+ * Soma dias a uma data civil (YYYY-MM-DD) e devolve outra data civil. A conta é
+ * feita em UTC de propósito: a entrada não tem hora, então não há fuso a errar.
+ */
+export function addDaysToISODate(date: string, days: number): string {
+  const next = new Date(`${date}T00:00:00Z`)
+  next.setUTCDate(next.getUTCDate() + days)
+  return next.toISOString().slice(0, 10)
+}
+
 /** Nome de fuso IANA reconhecido (ex.: `America/Sao_Paulo`)? Texto livre como "Brasília" não é. */
 export function isValidTimeZone(timeZone: string): boolean {
   if (!timeZone) return false

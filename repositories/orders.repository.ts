@@ -174,17 +174,49 @@ export async function listConsumptionPayments(bookingId: string): Promise<Consum
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('consumption_payments')
-    .select('id, amount, method, note, created_at')
+    .select('id, amount, method, note, created_at, reverses_id')
     .eq('booking_id', bookingId)
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
-  return (data ?? []).map((p) => ({
+  const rows = data ?? []
+  // 0083: estorno é um lançamento negativo que aponta para o pagamento original.
+  const reversedIds = new Set(rows.map((p) => p.reverses_id).filter(Boolean))
+  return rows.map((p) => ({
     id: p.id,
     amount: Number(p.amount),
     method: p.method as ConsumptionPayment['method'],
     note: p.note,
     createdAt: p.created_at,
+    isReversal: p.reverses_id !== null,
+    reversed: reversedIds.has(p.id),
   }))
+}
+
+/** Pousada e reserva de um pagamento de consumo (a RLS já restringe à equipe). */
+export async function getConsumptionPaymentRef(
+  paymentId: string,
+): Promise<{ pousadaId: string; bookingId: string } | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('consumption_payments')
+    .select('pousada_id, booking_id')
+    .eq('id', paymentId)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? { pousadaId: data.pousada_id, bookingId: data.booking_id } : null
+}
+
+/** Estorna um pagamento de consumo (0083): lançamento negativo + auditoria. */
+export async function reverseConsumptionPaymentRpc(
+  paymentId: string,
+  reason: string,
+): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('reverse_consumption_payment', {
+    p_payment_id: paymentId,
+    p_reason: reason,
+  })
+  if (error) throw new Error(error.message)
 }
 
 export async function registerConsumptionPaymentRpc(
@@ -302,31 +334,23 @@ export async function cancelGuestOrderRpc(orderId: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-/** Por reserva: quanto foi consumido (pedidos entregues) e quanto já foi pago. */
+/**
+ * Por reserva: quanto foi consumido (pedidos entregues) e quanto já foi pago.
+ * Somado no banco (`consumption_totals_by_pousada`, 0083): lendo as linhas e
+ * somando aqui, os totais passavam a errar em silêncio depois de 1000 linhas,
+ * que é o teto de uma resposta da API.
+ */
 export async function consumptionTotalsByPousada(
   pousadaId: string,
 ): Promise<{ bookingId: string; delivered: number; paid: number }[]> {
   const supabase = await createSupabaseServerClient()
-  const [orders, payments] = await Promise.all([
-    supabase
-      .from('guest_orders')
-      .select('booking_id, total')
-      .eq('pousada_id', pousadaId)
-      .eq('status', 'entregue'),
-    supabase.from('consumption_payments').select('booking_id, amount').eq('pousada_id', pousadaId),
-  ])
-  if (orders.error) throw new Error(orders.error.message)
-  if (payments.error) throw new Error(payments.error.message)
-  const map = new Map<string, { delivered: number; paid: number }>()
-  for (const o of orders.data ?? []) {
-    const cur = map.get(o.booking_id) ?? { delivered: 0, paid: 0 }
-    cur.delivered += Number(o.total)
-    map.set(o.booking_id, cur)
-  }
-  for (const p of payments.data ?? []) {
-    const cur = map.get(p.booking_id) ?? { delivered: 0, paid: 0 }
-    cur.paid += Number(p.amount)
-    map.set(p.booking_id, cur)
-  }
-  return [...map.entries()].map(([bookingId, v]) => ({ bookingId, ...v }))
+  const { data, error } = await supabase.rpc('consumption_totals_by_pousada', {
+    p_pousada_id: pousadaId,
+  })
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row) => ({
+    bookingId: row.booking_id,
+    delivered: Number(row.delivered),
+    paid: Number(row.paid),
+  }))
 }

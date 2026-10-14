@@ -13,6 +13,10 @@ import { AcomodacoesTabs } from './acomodacoes-tabs'
 import { AVAILABILITY_REASON_LABEL } from './status-labels'
 import { checkAvailabilityAction } from '../actions'
 import type { AccommodationCategory, AvailabilityResult } from '../types'
+import { QUERY_FAILED_MESSAGE, formErrorMessage } from '@/lib/forms'
+
+/** Campos com lugar na tela para mostrar o erro; o resto vai para a mensagem geral. */
+const VISIBLE_FIELDS = ['checkin', 'checkout', 'adults', 'children', 'categoryId']
 
 export function AvailabilityView({
   displayName,
@@ -25,6 +29,7 @@ export function AvailabilityView({
 }) {
   const [results, setResults] = useState<AvailabilityResult[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [pending, setPending] = useState(false)
   const [queried, setQueried] = useState<string | null>(null)
 
@@ -34,28 +39,38 @@ export function AvailabilityView({
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     setError(null)
+    setFieldErrors({})
     setPending(true)
-    const result = await checkAvailabilityAction({
-      checkin: String(formData.get('checkin') ?? ''),
-      checkout: String(formData.get('checkout') ?? ''),
-      adults: Number(formData.get('adults') ?? 1),
-      children: Number(formData.get('children') ?? 0),
-      pets: formData.get('pets') === 'on',
-      categoryId: String(formData.get('categoryId') ?? ''),
-    })
-    setPending(false)
-    if (!result.ok) {
-      setError(result.error)
+    // try/finally: se a action lançar (queda de rede), o botão não fica travado.
+    try {
+      const result = await checkAvailabilityAction({
+        checkin: String(formData.get('checkin') ?? ''),
+        checkout: String(formData.get('checkout') ?? ''),
+        adults: Number(formData.get('adults') ?? 1),
+        children: Number(formData.get('children') ?? 0),
+        pets: formData.get('pets') === 'on',
+        categoryId: String(formData.get('categoryId') ?? ''),
+      })
+      if (!result.ok) {
+        const errors = result.fieldErrors ?? {}
+        setFieldErrors(errors)
+        setError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
+        setResults(null)
+        return
+      }
+      setResults(result.data)
+      const fmt = (v: FormDataEntryValue | null) =>
+        String(v ?? '')
+          .split('-')
+          .reverse()
+          .join('/')
+      setQueried(`${fmt(formData.get('checkin'))} → ${fmt(formData.get('checkout'))}`)
+    } catch {
+      setError(QUERY_FAILED_MESSAGE)
       setResults(null)
-      return
+    } finally {
+      setPending(false)
     }
-    setResults(result.data)
-    const fmt = (v: FormDataEntryValue | null) =>
-      String(v ?? '')
-        .split('-')
-        .reverse()
-        .join('/')
-    setQueried(`${fmt(formData.get('checkin'))} → ${fmt(formData.get('checkout'))}`)
   }
 
   const available = results?.filter((r) => r.available) ?? []
@@ -78,6 +93,7 @@ export function AvailabilityView({
             <Input
               label="Entrada"
               name="checkin"
+              error={fieldErrors.checkin}
               type="date"
               required
               wrapperClassName="sm:col-span-1"
@@ -85,6 +101,7 @@ export function AvailabilityView({
             <Input
               label="Saída"
               name="checkout"
+              error={fieldErrors.checkout}
               type="date"
               required
               wrapperClassName="sm:col-span-1"
@@ -92,6 +109,7 @@ export function AvailabilityView({
             <Input
               label="Adultos"
               name="adults"
+              error={fieldErrors.adults}
               type="number"
               min={1}
               defaultValue={2}
@@ -100,6 +118,7 @@ export function AvailabilityView({
             <Input
               label="Crianças"
               name="children"
+              error={fieldErrors.children}
               type="number"
               min={0}
               defaultValue={0}
@@ -113,22 +132,31 @@ export function AvailabilityView({
                 <input type="checkbox" name="pets" /> Com pet
               </span>
             </label>
-            <label className="flex flex-col gap-1.5 sm:col-span-1">
-              <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-                Categoria
-              </span>
-              <select
-                name="categoryId"
-                className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"
-              >
-                <option value="">Todas</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
+            <div className="flex flex-col gap-1.5 sm:col-span-1">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+                  Categoria
+                </span>
+                <select
+                  name="categoryId"
+                  aria-invalid={fieldErrors.categoryId ? true : undefined}
+                  className="border-input bg-card text-foreground aria-invalid:border-destructive rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+                >
+                  <option value="">Todas</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {fieldErrors.categoryId && (
+                <p role="alert" className="text-destructive text-xs">
+                  {fieldErrors.categoryId}
+                </p>
+              )}
+            </div>
             <div className="sm:col-span-3 xl:col-span-6">
               <Button type="submit" disabled={pending}>
                 <Search className="size-4" />
@@ -136,7 +164,11 @@ export function AvailabilityView({
               </Button>
             </div>
           </form>
-          {error && <p className="text-destructive mt-3 text-sm font-medium">{error}</p>}
+          {error && (
+            <p role="alert" className="text-destructive mt-3 text-sm font-medium">
+              {error}
+            </p>
+          )}
         </Card>
 
         {results !== null && queried && (

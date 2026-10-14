@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import '@/lib/validation/zod-pt'
 import { useRouter } from 'next/navigation'
 import { createPousadaSchema, type CreatePousadaInput } from '../schemas'
 import { createPousadaAction } from '../actions'
@@ -35,10 +36,27 @@ export function CreatePousadaForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-      <Input label="Nome da pousada" placeholder="Ex.: Refúgio das Nuvens" error={errors.name?.message} {...register('name')} />
+      <Input
+        label="Nome da pousada"
+        placeholder="Ex.: Refúgio das Nuvens"
+        error={errors.name?.message}
+        {...register('name')}
+      />
       <div className="grid grid-cols-[1fr_auto] gap-3">
-        <Input label="Cidade" placeholder="Ex.: Monte Verde" error={errors.city?.message} {...register('city')} />
-        <Input label="UF" placeholder="MG" maxLength={2} className="w-20 uppercase" error={errors.state?.message} {...register('state')} />
+        <Input
+          label="Cidade"
+          placeholder="Ex.: Monte Verde"
+          error={errors.city?.message}
+          {...register('city')}
+        />
+        <Input
+          label="UF"
+          placeholder="MG"
+          maxLength={2}
+          className="w-20 uppercase"
+          error={errors.state?.message}
+          {...register('state')}
+        />
       </div>
       <Input
         label="Diária (R$)"
@@ -55,11 +73,11 @@ export function CreatePousadaForm() {
         error={errors.description?.message}
         {...register('description')}
       />
-      {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
+      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
       <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Enviando…' : 'Enviar para análise'}
       </Button>
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-center text-xs">
         Sua pousada passará por uma curadoria antes de ficar visível no site.
       </p>
     </form>

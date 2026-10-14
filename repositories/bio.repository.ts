@@ -2,6 +2,7 @@ import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import type { LinkReport, QuoteRequest, QuoteRequestStatus } from '@/features/bio/types'
+import { orNull } from '@/lib/supabase/rpc-args'
 
 type QuoteRow = {
   id: string
@@ -61,10 +62,10 @@ export async function recordLinkEvent(p: {
     await supabase.rpc('record_link_event', {
       p_pousada_id: p.pousadaId,
       p_event: p.event,
-      p_checkin: p.checkin ?? null,
-      p_checkout: p.checkout ?? null,
-      p_guests: p.guests ?? null,
-      p_available_count: p.availableCount ?? null,
+      p_checkin: orNull(p.checkin ?? null),
+      p_checkout: orNull(p.checkout ?? null),
+      p_guests: orNull(p.guests ?? null),
+      p_available_count: orNull(p.availableCount ?? null),
     })
   } catch {
     // Silêncio deliberado — ver comentário acima.
@@ -101,14 +102,17 @@ export async function createQuoteRequestRpc(p: {
   message: string
   consent: boolean
 }): Promise<{ status: string; id: string }> {
-  const supabase = await createSupabaseServerClient()
+  // 0083: a RPC só aceita `service_role`. Quem chama é sempre o servidor,
+  // depois do CAPTCHA (`submitQuoteRequest`) — com `anon` um robô chamava a
+  // RPC direto na API e pulava a verificação.
+  const supabase = createSupabaseServiceRoleClient()
   const { data, error } = await supabase.rpc('create_quote_request', {
     p_pousada_id: p.pousadaId,
     p_name: p.name,
     p_phone: p.phone,
-    p_email: p.email,
-    p_checkin: p.checkin,
-    p_checkout: p.checkout,
+    p_email: p.email ?? undefined,
+    p_checkin: p.checkin ?? undefined,
+    p_checkout: p.checkout ?? undefined,
     p_adults: p.adults,
     p_children: p.children,
     p_pets: p.pets,
@@ -184,8 +188,8 @@ export async function listBookableRooms(
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc('list_bookable_rooms', {
     p_slug: slug,
-    p_checkin: checkin,
-    p_checkout: checkout,
+    p_checkin: orNull(checkin),
+    p_checkout: orNull(checkout),
     p_guests: guests,
   })
   if (error) throw new Error(error.message)

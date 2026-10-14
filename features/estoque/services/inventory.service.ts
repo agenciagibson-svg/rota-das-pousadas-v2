@@ -1,6 +1,6 @@
 import 'server-only'
-import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
-import { can, type Action, type Role } from '@/lib/auth/rbac'
+import { can, type Role } from '@/lib/auth/rbac'
+import { requireCapability } from '@/lib/auth/require-capability'
 import {
   getInventoryItem,
   listInventoryItems,
@@ -12,14 +12,6 @@ import {
 import type { InventoryItem, InventoryMovement } from '../types'
 import type { inventoryItemSchema, movementSchema } from '../schemas'
 import type { z } from 'zod'
-
-async function requireCapability(action: Action): Promise<{ pousadaId: string; role: Role }> {
-  const pousadaId = await getActivePousadaId()
-  if (!pousadaId) throw new Error('Nenhuma pousada ativa selecionada.')
-  const role = await getActiveTenantRole()
-  if (!role || !can(role, action)) throw new Error('Seu perfil não tem acesso a esta ação.')
-  return { pousadaId, role }
-}
 
 /** O que cada papel pode fazer na tela (espelha as RPCs de 0078). */
 export type InventoryPermissions = {

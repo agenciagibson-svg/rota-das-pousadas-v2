@@ -11,6 +11,13 @@ import { Faq } from '@/components/landing/faq'
 import { Editorial } from '@/components/landing/editorial'
 import { getDestinations, getExperiences, getPousadas } from '@/server/queries'
 
+/**
+ * Renderização por requisição, explícita. Com o Supabase configurado a página
+ * já era dinâmica (as consultas leem cookies); sem ele (dados de exemplo) o
+ * Next a pré-renderizava no build, sem o nonce que a CSP de `proxy.ts` exige.
+ */
+export const dynamic = 'force-dynamic'
+
 export default async function Page() {
   // Fluxo obrigatório: Server Component → Server Query → Service → Repository.
   const [destinations, experiences, pousadas] = await Promise.all([

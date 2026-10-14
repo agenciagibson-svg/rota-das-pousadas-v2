@@ -16,7 +16,7 @@ import {
 } from './services/inventory.service'
 
 export const saveInventoryItemAction = createAction(inventoryItemSchema, async (input) => {
-  const id = await saveItem(inventoryItemSchema.parse(input))
+  const id = await saveItem(input)
   revalidatePath('/dashboard/estoque')
   return { id }
 })
@@ -28,7 +28,7 @@ export const setInventoryItemActiveAction = createAction(itemActiveSchema, async
 })
 
 export const registerMovementAction = createAction(movementSchema, async (input) => {
-  const res = await registerMovement(movementSchema.parse(input))
+  const res = await registerMovement(input)
   revalidatePath('/dashboard/estoque')
   if (res.expenseCreated) revalidatePath('/dashboard/financeiro')
   return res

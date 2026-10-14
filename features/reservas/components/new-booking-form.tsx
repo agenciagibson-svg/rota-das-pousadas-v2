@@ -11,28 +11,73 @@ import { calculateBookingPrice } from '../pricing'
 import type { ManagedRoom, AvailabilityResult } from '@/features/acomodacoes/types'
 import { ORIGIN_LABEL } from '@/features/gestao/components/origin-labels'
 import type { BookingOrigin } from '../types'
-import { keepValuesOnSubmit } from '@/lib/forms'
+import {
+  QUERY_FAILED_MESSAGE,
+  SAVE_FAILED_MESSAGE,
+  formErrorMessage,
+  keepValuesOnSubmit,
+} from '@/lib/forms'
 import { formatBRL } from '@/lib/format'
 
 const inputClass =
-  'w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring'
+  'w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring aria-invalid:border-destructive'
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string
+  error?: string
+  children: React.ReactNode
+}) {
+  // O erro fica fora do <label> para não entrar no nome acessível do campo.
   return (
-    <label className="block">
-      <span className="text-muted-foreground mb-1 block text-xs font-medium">{label}</span>
-      {children}
-    </label>
+    <div>
+      <label className="block">
+        <span className="text-muted-foreground mb-1 block text-xs font-medium">{label}</span>
+        {children}
+      </label>
+      {error && (
+        <p role="alert" className="text-destructive mt-1 text-xs">
+          {error}
+        </p>
+      )}
+    </div>
   )
 }
 
 const ORIGINS = Object.keys(ORIGIN_LABEL) as BookingOrigin[]
+
+/** Campos com lugar na tela para mostrar o erro; o resto vai para a mensagem geral. */
+const VISIBLE_FIELDS = [
+  'checkin',
+  'checkout',
+  'adults',
+  'children',
+  'infants',
+  'guestFullName',
+  'guestEmail',
+  'guestPhone',
+  'nightlyRate',
+  'discount',
+  'surcharge',
+  'servicesAmount',
+  'origin',
+  'externalChannelName',
+  'externalCode',
+  'expectedArrivalTime',
+  'specialRequests',
+  'internalNotes',
+  'initialStatus',
+]
 
 export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [checkin, setCheckin] = useState('')
   const [checkout, setCheckout] = useState('')
@@ -61,6 +106,7 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
 
   function runAvailabilityCheck() {
     setError(null)
+    setFieldErrors({})
     setResults(null)
     setSelectedRoomId(null)
     if (!checkin || !checkout) {
@@ -69,13 +115,21 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
     }
     setChecking(true)
     startTransition(async () => {
-      const result = await checkAvailabilityAction({ checkin, checkout, adults, children, pets })
-      setChecking(false)
-      if (!result.ok) {
-        setError(result.error)
-        return
+      // try/finally: se a action lançar (queda de rede), o botão não fica travado.
+      try {
+        const result = await checkAvailabilityAction({ checkin, checkout, adults, children, pets })
+        if (!result.ok) {
+          const errors = result.fieldErrors ?? {}
+          setFieldErrors(errors)
+          setError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
+          return
+        }
+        setResults(result.data)
+      } catch {
+        setError(QUERY_FAILED_MESSAGE)
+      } finally {
+        setChecking(false)
       }
-      setResults(result.data)
     })
   }
 
@@ -91,37 +145,45 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
       return
     }
     setError(null)
+    setFieldErrors({})
     startTransition(async () => {
-      const result = await createBookingAdminAction({
-        roomId: selectedRoomId,
-        checkin,
-        checkout,
-        adults,
-        children,
-        infants,
-        pets,
-        guestFullName: String(formData.get('guestFullName') || ''),
-        guestEmail: String(formData.get('guestEmail') || ''),
-        guestPhone: String(formData.get('guestPhone') || ''),
-        origin: String(formData.get('origin') || 'balcao') as BookingOrigin,
-        externalChannelName: String(formData.get('externalChannelName') || ''),
-        externalCode: String(formData.get('externalCode') || ''),
-        nightlyRate,
-        discount,
-        surcharge,
-        servicesAmount,
-        expectedArrivalTime: String(formData.get('expectedArrivalTime') || ''),
-        specialRequests: String(formData.get('specialRequests') || ''),
-        internalNotes: String(formData.get('internalNotes') || ''),
-        initialStatus: String(formData.get('initialStatus') || 'quote') as
-          'quote' | 'pending' | 'confirmed',
-      })
-      if (!result.ok) {
-        setError(result.error)
-        return
+      // Sem o try/catch, uma queda de rede derrubava a tela no error boundary.
+      try {
+        const result = await createBookingAdminAction({
+          roomId: selectedRoomId,
+          checkin,
+          checkout,
+          adults,
+          children,
+          infants,
+          pets,
+          guestFullName: String(formData.get('guestFullName') || ''),
+          guestEmail: String(formData.get('guestEmail') || ''),
+          guestPhone: String(formData.get('guestPhone') || ''),
+          origin: String(formData.get('origin') || 'balcao') as BookingOrigin,
+          externalChannelName: String(formData.get('externalChannelName') || ''),
+          externalCode: String(formData.get('externalCode') || ''),
+          nightlyRate,
+          discount,
+          surcharge,
+          servicesAmount,
+          expectedArrivalTime: String(formData.get('expectedArrivalTime') || ''),
+          specialRequests: String(formData.get('specialRequests') || ''),
+          internalNotes: String(formData.get('internalNotes') || ''),
+          initialStatus: String(formData.get('initialStatus') || 'quote') as
+            'quote' | 'pending' | 'confirmed',
+        })
+        if (!result.ok) {
+          const errors = result.fieldErrors ?? {}
+          setFieldErrors(errors)
+          setError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
+          return
+        }
+        router.push(`/dashboard/reservas/${result.data.id}`)
+        router.refresh()
+      } catch {
+        setError(SAVE_FAILED_MESSAGE)
       }
-      router.push(`/dashboard/reservas/${result.data.id}`)
-      router.refresh()
     })
   }
 
@@ -130,45 +192,50 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
       <Card className="p-5">
         <h2 className="text-foreground font-semibold">1. Período e hóspedes</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-5">
-          <Field label="Check-in">
+          <Field label="Check-in" error={fieldErrors.checkin}>
             <input
               type="date"
               value={checkin}
+              aria-invalid={fieldErrors.checkin ? true : undefined}
               onChange={(e) => setCheckin(e.target.value)}
               className={inputClass}
             />
           </Field>
-          <Field label="Check-out">
+          <Field label="Check-out" error={fieldErrors.checkout}>
             <input
               type="date"
               value={checkout}
+              aria-invalid={fieldErrors.checkout ? true : undefined}
               onChange={(e) => setCheckout(e.target.value)}
               className={inputClass}
             />
           </Field>
-          <Field label="Adultos">
+          <Field label="Adultos" error={fieldErrors.adults}>
             <input
               type="number"
               min={1}
               value={adults}
+              aria-invalid={fieldErrors.adults ? true : undefined}
               onChange={(e) => setAdults(Number(e.target.value))}
               className={inputClass}
             />
           </Field>
-          <Field label="Crianças">
+          <Field label="Crianças" error={fieldErrors.children}>
             <input
               type="number"
               min={0}
               value={children}
+              aria-invalid={fieldErrors.children ? true : undefined}
               onChange={(e) => setChildren(Number(e.target.value))}
               className={inputClass}
             />
           </Field>
-          <Field label="Bebês">
+          <Field label="Bebês" error={fieldErrors.infants}>
             <input
               type="number"
               min={0}
               value={infants}
+              aria-invalid={fieldErrors.infants ? true : undefined}
               onChange={(e) => setInfants(Number(e.target.value))}
               className={inputClass}
             />
@@ -233,14 +300,28 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
           <Card className="p-5">
             <h2 className="text-foreground font-semibold">3. Hóspede responsável</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <Field label="Nome completo">
-                <input name="guestFullName" required className={inputClass} />
+              <Field label="Nome completo" error={fieldErrors.guestFullName}>
+                <input
+                  name="guestFullName"
+                  aria-invalid={fieldErrors.guestFullName ? true : undefined}
+                  required
+                  className={inputClass}
+                />
               </Field>
-              <Field label="E-mail">
-                <input name="guestEmail" type="email" className={inputClass} />
+              <Field label="E-mail" error={fieldErrors.guestEmail}>
+                <input
+                  name="guestEmail"
+                  aria-invalid={fieldErrors.guestEmail ? true : undefined}
+                  type="email"
+                  className={inputClass}
+                />
               </Field>
-              <Field label="Telefone">
-                <input name="guestPhone" className={inputClass} />
+              <Field label="Telefone" error={fieldErrors.guestPhone}>
+                <input
+                  name="guestPhone"
+                  aria-invalid={fieldErrors.guestPhone ? true : undefined}
+                  className={inputClass}
+                />
               </Field>
             </div>
             <p className="text-muted-foreground mt-2 text-xs">
@@ -252,38 +333,42 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
           <Card className="p-5">
             <h2 className="text-foreground font-semibold">4. Valores</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-4">
-              <Field label="Diária (R$)">
+              <Field label="Diária (R$)" error={fieldErrors.nightlyRate}>
                 <input
                   type="number"
                   min={0}
                   value={nightlyRate}
+                  aria-invalid={fieldErrors.nightlyRate ? true : undefined}
                   onChange={(e) => setNightlyRate(Number(e.target.value))}
                   className={inputClass}
                 />
               </Field>
-              <Field label="Desconto (R$)">
+              <Field label="Desconto (R$)" error={fieldErrors.discount}>
                 <input
                   type="number"
                   min={0}
                   value={discount}
+                  aria-invalid={fieldErrors.discount ? true : undefined}
                   onChange={(e) => setDiscount(Number(e.target.value))}
                   className={inputClass}
                 />
               </Field>
-              <Field label="Acréscimo (R$)">
+              <Field label="Acréscimo (R$)" error={fieldErrors.surcharge}>
                 <input
                   type="number"
                   min={0}
                   value={surcharge}
+                  aria-invalid={fieldErrors.surcharge ? true : undefined}
                   onChange={(e) => setSurcharge(Number(e.target.value))}
                   className={inputClass}
                 />
               </Field>
-              <Field label="Serviços previstos (R$)">
+              <Field label="Serviços previstos (R$)" error={fieldErrors.servicesAmount}>
                 <input
                   type="number"
                   min={0}
                   value={servicesAmount}
+                  aria-invalid={fieldErrors.servicesAmount ? true : undefined}
                   onChange={(e) => setServicesAmount(Number(e.target.value))}
                   className={inputClass}
                 />
@@ -327,8 +412,13 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
           <Card className="p-5">
             <h2 className="text-foreground font-semibold">5. Origem e observações</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <Field label="Origem">
-                <select name="origin" defaultValue="balcao" className={inputClass}>
+              <Field label="Origem" error={fieldErrors.origin}>
+                <select
+                  name="origin"
+                  aria-invalid={fieldErrors.origin ? true : undefined}
+                  defaultValue="balcao"
+                  className={inputClass}
+                >
                   {ORIGINS.map((o) => (
                     <option key={o} value={o}>
                       {ORIGIN_LABEL[o]}
@@ -336,36 +426,71 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
                   ))}
                 </select>
               </Field>
-              <Field label="Canal externo (se aplicável)">
-                <input name="externalChannelName" className={inputClass} />
+              <Field label="Canal externo (se aplicável)" error={fieldErrors.externalChannelName}>
+                <input
+                  name="externalChannelName"
+                  aria-invalid={fieldErrors.externalChannelName ? true : undefined}
+                  className={inputClass}
+                />
               </Field>
-              <Field label="Código externo (se aplicável)">
-                <input name="externalCode" className={inputClass} />
+              <Field label="Código externo (se aplicável)" error={fieldErrors.externalCode}>
+                <input
+                  name="externalCode"
+                  aria-invalid={fieldErrors.externalCode ? true : undefined}
+                  className={inputClass}
+                />
               </Field>
             </div>
             <div className="mt-3 grid gap-3">
-              <Field label="Horário previsto de chegada">
-                <input name="expectedArrivalTime" placeholder="ex.: 18:00" className={inputClass} />
+              <Field label="Horário previsto de chegada" error={fieldErrors.expectedArrivalTime}>
+                <input
+                  name="expectedArrivalTime"
+                  aria-invalid={fieldErrors.expectedArrivalTime ? true : undefined}
+                  placeholder="ex.: 18:00"
+                  className={inputClass}
+                />
               </Field>
-              <Field label="Solicitações especiais do hóspede">
-                <textarea name="specialRequests" rows={2} className={inputClass} />
+              <Field label="Solicitações especiais do hóspede" error={fieldErrors.specialRequests}>
+                <textarea
+                  name="specialRequests"
+                  aria-invalid={fieldErrors.specialRequests ? true : undefined}
+                  rows={2}
+                  className={inputClass}
+                />
               </Field>
-              <Field label="Observações internas (nunca visível ao hóspede)">
-                <textarea name="internalNotes" rows={2} className={inputClass} />
+              <Field
+                label="Observações internas (nunca visível ao hóspede)"
+                error={fieldErrors.internalNotes}
+              >
+                <textarea
+                  name="internalNotes"
+                  aria-invalid={fieldErrors.internalNotes ? true : undefined}
+                  rows={2}
+                  className={inputClass}
+                />
               </Field>
             </div>
           </Card>
 
           <Card className="p-5">
             <h2 className="text-foreground font-semibold">6. Revisão e confirmação</h2>
-            <Field label="Salvar como">
-              <select name="initialStatus" defaultValue="quote" className={inputClass}>
+            <Field label="Salvar como" error={fieldErrors.initialStatus}>
+              <select
+                name="initialStatus"
+                aria-invalid={fieldErrors.initialStatus ? true : undefined}
+                defaultValue="quote"
+                className={inputClass}
+              >
                 <option value="quote">Cotação</option>
                 <option value="pending">Pendente (aguardando pagamento)</option>
                 <option value="confirmed">Confirmada</option>
               </select>
             </Field>
-            {error && <p className="text-destructive mt-3 text-sm font-medium">{error}</p>}
+            {error && (
+              <p role="alert" className="text-destructive mt-3 text-sm font-medium">
+                {error}
+              </p>
+            )}
             <div className="mt-4">
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Criando…' : 'Criar reserva'}
@@ -375,7 +500,11 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
         </form>
       )}
 
-      {!selectedRoom && error && <p className="text-destructive text-sm font-medium">{error}</p>}
+      {!selectedRoom && error && (
+        <p role="alert" className="text-destructive text-sm font-medium">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

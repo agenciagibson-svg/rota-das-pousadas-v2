@@ -32,8 +32,7 @@ const activitySchema = z.object({
   body: z.string().trim().min(1, 'Escreva a anotação.').max(1000, 'Use no máximo 1000 caracteres.'),
 })
 
-export const saveOpportunityAction = createAction(opportunitySchema, async (parsed) => {
-  const input = opportunitySchema.parse(parsed)
+export const saveOpportunityAction = createAction(opportunitySchema, async (input) => {
   if (input.stage === 'campanha_ativa' && !input.campaignStart) {
     throw new Error('Informe a data de início da campanha.')
   }
@@ -42,8 +41,7 @@ export const saveOpportunityAction = createAction(opportunitySchema, async (pars
   return { ok: true as const }
 })
 
-export const addActivityAction = createAction(activitySchema, async (parsed) => {
-  const input = activitySchema.parse(parsed)
+export const addActivityAction = createAction(activitySchema, async (input) => {
   await addActivity(input.pousadaId, input.kind, input.body)
   revalidatePath('/admin/plano-de-acao')
   return { ok: true as const }

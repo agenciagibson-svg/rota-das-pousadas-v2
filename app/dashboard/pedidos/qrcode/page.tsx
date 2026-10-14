@@ -4,6 +4,9 @@ import { getOwnerPousada } from '@/server/queries'
 import { getOrdersScreen } from '@/features/pedidos/services/orders.service'
 import { PrintButton } from '@/features/reservas/components/print-button'
 
+// Painel é sempre por requisição (sessão + nonce da CSP).
+export const dynamic = 'force-dynamic'
+
 /** Folha para imprimir e deixar no quarto. */
 export default async function PedidosQrPage() {
   if (await sectionDenied('pedidos')) return <NoSectionAccess section="pedidos" title="Pedidos" />

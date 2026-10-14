@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { verifyTurnstileToken } from './turnstile'
 
 const ORIGINAL_SECRET = process.env.TURNSTILE_SECRET_KEY
@@ -7,10 +7,33 @@ afterEach(() => {
   vi.unstubAllGlobals()
   if (ORIGINAL_SECRET === undefined) delete process.env.TURNSTILE_SECRET_KEY
   else process.env.TURNSTILE_SECRET_KEY = ORIGINAL_SECRET
+  vi.unstubAllEnvs()
 })
 
 describe('verifyTurnstileToken', () => {
-  it('deixa passar sem checar nada quando TURNSTILE_SECRET_KEY não está configurada', async () => {
+  it('recusa em produção quando TURNSTILE_SECRET_KEY não está configurada', async () => {
+    delete process.env.TURNSTILE_SECRET_KEY
+    vi.stubEnv('NODE_ENV', 'production')
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(verifyTurnstileToken('qualquer', null)).resolves.toBe(false)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(error).toHaveBeenCalled()
+    error.mockRestore()
+  })
+
+  it('preview com banco próprio pode desligar de propósito com TURNSTILE_DISABLED=true', async () => {
+    delete process.env.TURNSTILE_SECRET_KEY
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('TURNSTILE_DISABLED', 'true')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await expect(verifyTurnstileToken('', null)).resolves.toBe(true)
+    warn.mockRestore()
+  })
+
+  it('fora de produção, deixa passar sem checar quando TURNSTILE_SECRET_KEY não está configurada', async () => {
     delete process.env.TURNSTILE_SECRET_KEY
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)

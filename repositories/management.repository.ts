@@ -14,6 +14,9 @@ import type {
   OwnerPousadaSettings,
   OwnerReservation,
 } from '@/features/gestao/types'
+import type { Database } from '@/lib/supabase/database.types'
+
+type BookingOriginColumn = Database['public']['Enums']['booking_origin']
 
 const OCCUPYING: BookingStatus[] = ['pending', 'confirmed', 'checked_in']
 
@@ -67,7 +70,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
     state: data.state,
     country: data.country,
     address: data.address,
-    cep: data.cep,
+    cep: data.cep ?? '',
     image: data.image,
     gallery: data.gallery ?? [],
     description: data.description,
@@ -174,7 +177,8 @@ export async function listReservationsByPousada(
     .order('checkin', { ascending: true })
 
   if (filters.status) query = query.eq('status', filters.status)
-  if (filters.origin) query = query.eq('origin', filters.origin)
+  // O filtro chega da URL já validado pelo schema da tela (enum de origens).
+  if (filters.origin) query = query.eq('origin', filters.origin as BookingOriginColumn)
   if (filters.roomId) query = query.eq('room_id', filters.roomId)
   if (filters.guestName) query = query.ilike('guest_name', `%${filters.guestName}%`)
   if (filters.pendingPaymentOnly) query = query.eq('status', 'pending')
@@ -212,7 +216,7 @@ export async function listReservationsByPousada(
     checkin: r.checkin,
     checkout: r.checkout,
     nights: nightsBetween(r.checkin, r.checkout),
-    guests: r.guests,
+    guests: r.guests ?? 0,
     subtotal: Number(r.subtotal),
     fee: Number(r.fee),
     total: Number(r.total),

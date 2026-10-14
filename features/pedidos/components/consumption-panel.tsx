@@ -6,8 +6,10 @@ import { Plus, Receipt } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { formatBRL, formatDateTime } from '@/lib/format'
-import { registerConsumptionPaymentAction } from '../actions'
+import { cn } from '@/lib/utils'
+import { registerConsumptionPaymentAction, reverseConsumptionPaymentAction } from '../actions'
 import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL, type ConsumptionPayment } from '../types'
 import type { BookingConsumption, SellableItem } from '../services/orders.service'
 import { ChargeForm } from './charge-form'
@@ -32,6 +34,9 @@ export function ConsumptionPanel({
   const [method, setMethod] = useState<ConsumptionPayment['method']>('pix')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [reversing, setReversing] = useState<ConsumptionPayment | null>(null)
+  const [reason, setReason] = useState('')
+  const [reverseError, setReverseError] = useState<string | null>(null)
   const { summary } = data
   const visibleOrders = data.orders.filter((o) => o.status !== 'cancelado')
 
@@ -54,6 +59,26 @@ export function ConsumptionPanel({
       router.refresh()
     } catch {
       setError('Não foi possível registrar. Tente de novo.')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function reverse() {
+    if (!reversing) return
+    setReverseError(null)
+    setPending(true)
+    try {
+      const res = await reverseConsumptionPaymentAction({ paymentId: reversing.id, reason })
+      if (!res.ok) {
+        setReverseError(res.fieldErrors?.reason ?? res.error)
+        return
+      }
+      setReversing(null)
+      setReason('')
+      router.refresh()
+    } catch {
+      setReverseError('Não foi possível estornar. Tente de novo.')
     } finally {
       setPending(false)
     }
@@ -150,11 +175,44 @@ export function ConsumptionPanel({
           </p>
           <ul className="mt-1 space-y-1 text-sm">
             {data.payments.map((p) => (
-              <li key={p.id} className="flex justify-between gap-3">
-                <span className="text-muted-foreground">
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
+              >
+                <span className="text-muted-foreground flex flex-wrap items-center gap-2">
                   {formatDateTime(p.createdAt)} · {PAYMENT_METHOD_LABEL[p.method]}
+                  {p.isReversal && (
+                    <Badge variant="destructiveSoft" size="sm">
+                      Estorno
+                    </Badge>
+                  )}
+                  {p.reversed && (
+                    <Badge variant="outline" size="sm">
+                      Estornado
+                    </Badge>
+                  )}
                 </span>
-                <span className="text-foreground">{formatBRL(p.amount)}</span>
+                <span className="flex items-center gap-2">
+                  <span className={cn('text-foreground', p.reversed && 'line-through')}>
+                    {formatBRL(p.amount)}
+                  </span>
+                  {data.canReversePayment && !p.isReversal && !p.reversed && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setReverseError(null)
+                        setReason('')
+                        setReversing(p)
+                      }}
+                    >
+                      Estornar
+                    </Button>
+                  )}
+                </span>
+                {p.isReversal && p.note && (
+                  <span className="text-muted-foreground w-full text-xs">{p.note}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -174,6 +232,39 @@ export function ConsumptionPanel({
             onDone={() => setCharging(false)}
           />
         )}
+      </Dialog>
+
+      <Dialog
+        open={reversing !== null}
+        onClose={() => setReversing(null)}
+        title="Estornar pagamento"
+        description={
+          reversing
+            ? `${formatBRL(reversing.amount)} em ${PAYMENT_METHOD_LABEL[reversing.method]}. O valor volta para "Falta pagar" e o estorno fica registrado.`
+            : undefined
+        }
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setReversing(null)}>
+              Voltar
+            </Button>
+            <Button variant="destructive" disabled={pending} onClick={() => void reverse()}>
+              {pending ? 'Estornando…' : 'Estornar pagamento'}
+            </Button>
+          </>
+        }
+      >
+        <Textarea
+          name="reverse-reason"
+          label="Motivo do estorno"
+          rows={3}
+          maxLength={190}
+          placeholder="Ex.: valor digitado errado"
+          hint="Fica registrado na conta de consumo desta reserva."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          error={reverseError ?? undefined}
+        />
       </Dialog>
 
       <Dialog

@@ -1,10 +1,12 @@
 ﻿import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
 import {
+  NoPaymentAccountError,
   verifyWebhookSignature,
   processPaymentNotification,
 } from '@/features/pagamentos/services/webhook.service'
 import { notifyPaymentReviews } from '@/features/pagamentos/services/pix.service'
+import { reportError } from '@/lib/observability/report-error'
 
 const notificationSchema = z.object({
   type: z.string(),
@@ -47,8 +49,21 @@ export async function POST(request: NextRequest) {
     // Pagamento que caiu em reserva cancelada/estornado entra na fila (0082): avisa já.
     await notifyPaymentReviews()
     return NextResponse.json({ ok: true })
-  } catch {
-    console.error('[mercadopago:webhook] processamento falhou', { bookingId: booking.data, dataId })
+  } catch (error) {
+    // Assinatura já conferida: sem conta conectada não há o que reprocessar.
+    if (error instanceof NoPaymentAccountError) {
+      console.warn('[mercadopago:webhook] reserva sem conta conectada — aviso ignorado', {
+        bookingId: booking.data,
+        dataId,
+      })
+      return NextResponse.json({ ignored: true })
+    }
+    console.error('[mercadopago:webhook] processamento falhou', {
+      bookingId: booking.data,
+      dataId,
+      reason: error instanceof Error ? error.message.slice(0, 300) : 'erro desconhecido',
+    })
+    await reportError(error, { where: 'webhook:mercadopago' })
     return NextResponse.json({ error: 'processing_failed' }, { status: 503 })
   }
 }

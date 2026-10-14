@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto'
 import { syncAllFeeds } from '@/features/canais/services/sync.service'
+import { reportError } from '@/lib/observability/report-error'
 
 /**
  * Rodada de importação dos calendários das OTAs.
@@ -37,7 +38,9 @@ export async function GET(request: Request) {
     // problema é o feed de um cliente.
     return Response.json(report, { status: 200 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Falha inesperada.'
-    return Response.json({ error: message }, { status: 500 })
+    // Detalhe só no log e no Sentry — a resposta não devolve mensagem técnica.
+    console.error('[cron] canais falhou', error instanceof Error ? error.message : String(error))
+    await reportError(error, { where: 'cron:canais' })
+    return Response.json({ error: 'Falha inesperada.' }, { status: 500 })
   }
 }

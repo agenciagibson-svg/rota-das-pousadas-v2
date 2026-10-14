@@ -70,6 +70,10 @@ try {
   }
   sql(readFileSync(`${root}/supabase/tests/priorities.sql`, 'utf8'))
   console.log('Disponibilidade, pagamentos e isolamento: OK')
+  // 0083: papéis de plataforma, trava de login, Pix, estoque/consumo. Depende
+  // dos dados criados por priorities.sql, então roda logo depois.
+  sql(readFileSync(`${root}/supabase/tests/security-0083.sql`, 'utf8'))
+  console.log('Segurança 0083: OK')
   const concurrentBooking = readFileSync(`${root}/supabase/tests/concurrent-booking.sql`, 'utf8')
   const bookings = await Promise.all([
     sqlAsync(concurrentBooking.replaceAll('CONCURRENT_CODE', 'RACE-A')),

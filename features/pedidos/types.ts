@@ -42,6 +42,10 @@ export type ConsumptionPayment = {
   method: 'pix' | 'dinheiro' | 'cartao_credito' | 'cartao_debito' | 'outro'
   note: string
   createdAt: string
+  /** Lançamento de estorno (valor negativo) de outro pagamento. */
+  isReversal: boolean
+  /** Pagamento que já foi estornado — não pode ser estornado de novo. */
+  reversed: boolean
 }
 
 export type GuestSettings = {

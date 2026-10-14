@@ -2273,6 +2273,7 @@ export type Database = {
           method: string
           note: string
           pousada_id: string
+          reverses_id: string | null
         }
         Insert: {
           amount: number
@@ -2283,6 +2284,7 @@ export type Database = {
           method: string
           note?: string
           pousada_id: string
+          reverses_id?: string | null
         }
         Update: {
           amount?: number
@@ -2293,6 +2295,7 @@ export type Database = {
           method?: string
           note?: string
           pousada_id?: string
+          reverses_id?: string | null
         }
         Relationships: []
       }
@@ -2682,6 +2685,25 @@ export type Database = {
         Args: { p_pousada_id: string }
         Returns: string
       }
+      booking_can_pay_online: { Args: { p_booking_id: string }; Returns: boolean }
+      consumption_totals_by_pousada: {
+        Args: { p_pousada_id: string }
+        Returns: { booking_id: string; delivered: number; paid: number }[]
+      }
+      release_payment_reviews_notification: { Args: { p_review_ids: string[] }; Returns: number }
+      list_booking_guests_pending_document_backfill: {
+        Args: { p_limit?: number }
+        Returns: { id: string; document_number: string }[]
+      }
+      apply_booking_guest_document_backfill: {
+        Args: { p_booking_guest_id: string; p_document_number_encrypted: string }
+        Returns: undefined
+      }
+      reverse_consumption_payment: {
+        Args: { p_payment_id: string; p_reason: string }
+        Returns: Json
+      }
+      payment_proof_upload_allowed: { Args: { object_name: string }; Returns: boolean }
       register_consumption_payment: {
         Args: { p_booking_id: string; p_amount: number; p_method: string; p_note?: string }
         Returns: Json
@@ -2734,7 +2756,7 @@ export type Database = {
           target_user_id: string
         }[]
       }
-      assert_login_not_locked: { Args: { p_email: string }; Returns: undefined }
+      assert_login_not_locked: { Args: { p_email: string; p_ip?: string }; Returns: undefined }
       assert_room_available_for_booking: {
         Args: {
           p_adults: number

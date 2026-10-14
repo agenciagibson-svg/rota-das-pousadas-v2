@@ -10,6 +10,7 @@ import type {
   PlatformTeamMember,
   PlatformRoleValue,
 } from '@/features/admin/types'
+import { orNull } from '@/lib/supabase/rpc-args'
 
 export type PousadaStatus = Enums<'pousada_status'>
 
@@ -222,7 +223,9 @@ export async function listAuditLog(filter: AuditLogFilter = {}): Promise<AuditLo
   if (error) throw error
   return (data ?? []).map((r) => ({
     id: r.id,
-    actorName: r.profiles?.[0]?.full_name ?? null,
+    // `profiles` é relação para um (autor do evento): objeto, não lista. Lido como
+    // lista, o nome do autor nunca aparecia na tela de auditoria.
+    actorName: r.profiles?.full_name ?? null,
     action: r.action,
     targetTable: r.target_table,
     targetId: r.target_id,
@@ -251,7 +254,7 @@ export async function listLoginAttempts(
 ): Promise<LoginAttemptRow[]> {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc('list_login_attempts', {
-    p_email: filter.email?.trim() || null,
+    p_email: orNull(filter.email?.trim() || null),
     p_limit: filter.limit ?? 200,
   })
   if (error) throw error

@@ -1,7 +1,7 @@
 import 'server-only'
 import type { ListQuery, Paginated, Pousada } from '@/types'
 import { pousadas as mockData } from '@/lib/data'
-import { isSupabaseConfigured } from '@/lib/env'
+import { assertNotMockInProduction, isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseStaticClient } from '@/lib/supabase/static'
 import type { Database } from '@/lib/supabase/database.types'
@@ -150,6 +150,7 @@ const supabaseRepository: PousadaRepository = {
 
 /** Resolve a implementação conforme o ambiente. */
 export function getPousadaRepository(): PousadaRepository {
+  assertNotMockInProduction()
   return isSupabaseConfigured() ? supabaseRepository : mockRepository
 }
 
@@ -170,9 +171,9 @@ export type NewPousadaAdmin = {
 
 /**
  * Cadastro de pousada pelo admin (equipe da plataforma), sem proprietário
- * vinculado ainda. RLS `pousadas_insert` já libera `auth_is_platform_admin()`
- * — autorização de negócio (quem pode cadastrar) é responsabilidade do
- * Service (`assertCanCreate`).
+ * vinculado ainda. A RLS `pousadas_insert` (0083) só aceita comercial/master
+ * (`auth_can_manage_pousadas_platform()`), o mesmo recorte do Service
+ * (`assertCanCreate`). O dono cadastra pela RPC `create_pousada`.
  */
 export async function insertPousadaAsAdmin(
   input: NewPousadaAdmin,

@@ -14,6 +14,7 @@
     "test:db": "node scripts/test-database.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "audit:prod": "pnpm audit --prod",
     "prepare": "husky"
   },
   "dependencies": {

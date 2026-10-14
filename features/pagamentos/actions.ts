@@ -36,6 +36,9 @@ export const savePixSettingsAction = createAction(pixSettingsSchema, async (inpu
 export const submitPaymentProofAction = createAction(submitProofSchema, async (input) => {
   await submitPaymentProof(input)
   revalidatePath('/minhas-reservas')
+  // O comprovante aparece na fila "Comprovantes Pix para aprovar" do painel.
+  revalidatePath('/dashboard/reservas')
+  revalidatePath('/dashboard')
   return { ok: true as const }
 })
 

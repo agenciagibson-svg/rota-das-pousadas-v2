@@ -2,7 +2,12 @@ import 'server-only'
 import { listMyBookingIdsAwaitingApproval } from './pix.repository'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
-import { safeDecryptDocumentNumber } from '@/lib/crypto/document-cipher'
+import {
+  encryptDocumentNumber,
+  isUnreadableStoredDocument,
+  readStoredDocumentNumber,
+  safeDecryptDocumentNumber,
+} from '@/lib/crypto/document-cipher'
 import { nightsBetween } from '@/features/reservas/pricing'
 import type {
   Booking,
@@ -12,6 +17,7 @@ import type {
   BookingStatus,
   FnrhData,
 } from '@/features/reservas/types'
+import { orNull } from '@/lib/supabase/rpc-args'
 
 export type CreateBookingParams = {
   pousadaId: string
@@ -66,14 +72,14 @@ export async function createBookingRpc(
     p_total: p.total,
     p_status: p.status,
     p_origin: p.origin,
-    p_traveler_user_id: p.travelerUserId ?? null,
-    p_external_channel_name: p.externalChannelName ?? null,
-    p_external_code: p.externalCode ?? null,
-    p_expected_commission: p.expectedCommission ?? null,
-    p_expected_arrival_time: p.expectedArrivalTime ?? null,
+    p_traveler_user_id: orNull(p.travelerUserId ?? null),
+    p_external_channel_name: orNull(p.externalChannelName ?? null),
+    p_external_code: orNull(p.externalCode ?? null),
+    p_expected_commission: orNull(p.expectedCommission ?? null),
+    p_expected_arrival_time: orNull(p.expectedArrivalTime ?? null),
     p_special_requests: p.specialRequests ?? '',
     p_internal_notes: p.internalNotes ?? '',
-    p_payment_due_at: p.paymentDueAt ?? null,
+    p_payment_due_at: orNull(p.paymentDueAt ?? null),
   })
   if (error) throw new Error(error.message)
   const result = data as { id: string; code: string }
@@ -123,7 +129,7 @@ export async function updateBookingRpc(p: UpdateBookingParams): Promise<{ versio
     p_services_amount: p.servicesAmount,
     p_total: p.total,
     p_origin: p.origin,
-    p_expected_arrival_time: p.expectedArrivalTime ?? null,
+    p_expected_arrival_time: orNull(p.expectedArrivalTime ?? null),
     p_special_requests: p.specialRequests ?? '',
     p_internal_notes: p.internalNotes ?? '',
   })
@@ -140,9 +146,20 @@ export async function setBookingStatusRpc(
   const { error } = await supabase.rpc('set_booking_status', {
     p_booking_id: bookingId,
     p_new_status: status,
-    p_reason: reason ?? null,
+    p_reason: orNull(reason ?? null),
   })
   if (error) throw new Error(error.message)
+}
+
+/**
+ * A pousada da reserva tem conta Mercado Pago conectada? Responde só para o
+ * dono da reserva (0083) — qualquer outro usuário recebe `false`.
+ */
+export async function bookingCanPayOnlineRpc(bookingId: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('booking_can_pay_online', { p_booking_id: bookingId })
+  if (error) throw new Error(error.message)
+  return data === true
 }
 
 export async function expirePendingBookingRpc(bookingId: string): Promise<void> {
@@ -163,6 +180,35 @@ export async function expireOverduePendingBookingsRpc(): Promise<{ expired: numb
   const { data, error } = await supabase.rpc('expire_overdue_pending_bookings')
   if (error) throw new Error(error.message)
   return data as { expired: number }
+}
+
+/** Pousada de uma reserva (a RLS só devolve o que o usuário pode ver). */
+export async function getBookingPousadaId(bookingId: string): Promise<string | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('pousada_id')
+    .eq('id', bookingId)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data?.pousada_id ?? null
+}
+
+/** Há documento de acompanhante desta reserva que este ambiente não consegue decifrar? */
+export async function hasUnreadableCompanionDocuments(bookingId: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('booking_guests')
+    .select('document_number')
+    .eq('booking_id', bookingId)
+    .not('document_number', 'is', null)
+  if (error) throw new Error(error.message)
+  return (data ?? []).some((row) => isUnreadableStoredDocument(row.document_number))
+}
+
+function encryptCompanionDocument(value: string | null | undefined): string | null {
+  const plain = value?.trim()
+  return plain ? encryptDocumentNumber(plain) : null
 }
 
 export async function setBookingCompanionsRpc(
@@ -187,7 +233,9 @@ export async function setBookingCompanionsRpc(
     hasSpecialNeeds: c.hasSpecialNeeds ?? false,
     birthDate: c.birthDate ?? null,
     documentType: c.documentType ?? null,
-    documentNumber: c.documentNumber ?? null,
+    // 0083 (LGPD): o documento do acompanhante vai cifrado para o banco, como
+    // o do responsável (0058). A RPC só repassa o valor para a coluna.
+    documentNumber: encryptCompanionDocument(c.documentNumber),
     operationalNotes: c.operationalNotes ?? '',
   }))
   const { data, error } = await supabase.rpc('set_booking_companions', {
@@ -246,7 +294,7 @@ export async function listBookingsByGuest(guestId: string): Promise<Booking[]> {
       state: p?.state ?? '',
       checkin: r.checkin,
       checkout: r.checkout,
-      guests: r.guests,
+      guests: r.guests ?? 0,
       nights: nightsBetween(r.checkin, r.checkout),
       subtotal: Number(r.subtotal),
       fee: Number(r.fee),
@@ -363,7 +411,7 @@ export async function getBookingDetailById(
     hasSpecialNeeds: c.has_special_needs,
     birthDate: c.birth_date,
     documentType: c.document_type,
-    documentNumber: c.document_number,
+    documentNumber: readStoredDocumentNumber(c.document_number),
     operationalNotes: c.operational_notes,
   }))
 
@@ -487,7 +535,7 @@ export async function getBookingFnrhData(
       fullName: c.full_name,
       guestType: c.guest_type as BookingCompanion['guestType'],
       documentType: c.document_type,
-      documentNumber: c.document_number,
+      documentNumber: readStoredDocumentNumber(c.document_number),
       birthDate: c.birth_date,
     })),
   }

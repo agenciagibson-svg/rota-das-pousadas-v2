@@ -23,9 +23,11 @@ import {
 import { EmptyState } from '@/components/ui/empty-state'
 import { ExpenseForm } from './expense-form'
 import type { FinanceSummary, Transaction } from '../types'
+import { formatBRL } from '@/lib/format'
 
+/** Sempre com centavos: despesas e consumo têm valores quebrados (0083). */
 function brl(n: number): string {
-  return 'R$ ' + n.toLocaleString('pt-BR')
+  return formatBRL(n)
 }
 
 function fmtDate(iso: string): string {
@@ -202,7 +204,9 @@ export function FinanceView({
                         <TableCell
                           className={`text-right font-semibold ${t.kind === 'receita' ? 'text-primary' : 'text-accent'}`}
                         >
-                          {t.kind === 'receita' ? '+' : '−'} {brl(t.amount)}
+                          {/* Estorno de consumo é receita com valor negativo. */}
+                          {t.kind === 'receita' && t.amount >= 0 ? '+' : '−'}{' '}
+                          {brl(Math.abs(t.amount))}
                         </TableCell>
                         {canManageExpenses && (
                           <TableCell className="text-right">

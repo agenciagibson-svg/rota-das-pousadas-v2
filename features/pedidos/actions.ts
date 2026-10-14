@@ -1,18 +1,19 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import type { ZodType, z } from 'zod'
 import { createAction } from '@/actions/create-action'
 import {
   chargeSchema,
   consumptionPaymentSchema,
   guestSettingsSchema,
   orderStatusSchema,
+  reverseConsumptionPaymentSchema,
 } from './schemas'
 import {
   changeOrderStatus,
   chargeConsumption,
   registerConsumptionPayment,
+  reverseConsumptionPayment,
   saveOwnerGuestSettings,
 } from './services/orders.service'
 
@@ -26,8 +27,7 @@ export const setOrderStatusAction = createAction(orderStatusSchema, async (input
   return { ok: true as const }
 })
 
-export const chargeConsumptionAction = createAction(chargeSchema, async (raw) => {
-  const input = chargeSchema.parse(raw)
+export const chargeConsumptionAction = createAction(chargeSchema, async (input) => {
   const res = await chargeConsumption(input.bookingId, input.items, input.note)
   revalidatePath('/dashboard/pedidos')
   revalidatePath('/dashboard/estoque')
@@ -37,8 +37,7 @@ export const chargeConsumptionAction = createAction(chargeSchema, async (raw) =>
 
 export const registerConsumptionPaymentAction = createAction(
   consumptionPaymentSchema,
-  async (raw) => {
-    const input = consumptionPaymentSchema.parse(raw)
+  async (input) => {
     await registerConsumptionPayment(input.bookingId, input.amount, input.method, input.note)
     revalidatePath(`/dashboard/reservas/${input.bookingId}`)
     revalidatePath('/dashboard/financeiro')
@@ -46,11 +45,18 @@ export const registerConsumptionPaymentAction = createAction(
   },
 )
 
-// O schema transforma as listas (texto → JSON). createAction já valida e entrega
-// o resultado transformado — não validar de novo (as listas já viraram arrays).
-const guestSettingsInput: ZodType<unknown> = guestSettingsSchema
-export const saveGuestSettingsAction = createAction(guestSettingsInput, async (parsed) => {
-  const input = parsed as z.output<typeof guestSettingsSchema>
+export const reverseConsumptionPaymentAction = createAction(
+  reverseConsumptionPaymentSchema,
+  async (input) => {
+    const { bookingId } = await reverseConsumptionPayment(input.paymentId, input.reason)
+    revalidatePath(`/dashboard/reservas/${bookingId}`)
+    revalidatePath('/dashboard/financeiro')
+    return { ok: true as const }
+  },
+)
+
+// O schema transforma as listas (texto → JSON); o handler já recebe o resultado.
+export const saveGuestSettingsAction = createAction(guestSettingsSchema, async (input) => {
   await saveOwnerGuestSettings(input)
   revalidatePath('/dashboard/configuracoes')
   return { ok: true as const }

@@ -2,6 +2,10 @@ import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { Role } from '@/lib/auth/rbac'
 import type { MembershipStatus } from '@/features/auth/types'
+import type { Database } from '@/lib/supabase/database.types'
+
+/** Papéis de pousada aceitos pelo banco (`user_role`). O Service só deixa chegar aqui um papel de tenant. */
+type TenantRoleColumn = Database['public']['Enums']['user_role']
 
 export type MembershipRow = {
   id: string
@@ -109,7 +113,7 @@ export async function inviteMembership(input: {
   const { error } = await supabase.rpc('invite_membership', {
     p_pousada_id: input.pousadaId,
     p_email: input.email,
-    p_role: input.role,
+    p_role: input.role as TenantRoleColumn,
   })
   if (error) throw new Error(error.message)
 }
@@ -131,7 +135,7 @@ export async function updateMembershipRole(
   const { error } = await supabase.rpc('update_member_role', {
     p_pousada_id: pousadaId,
     p_membership_id: id,
-    p_role: role,
+    p_role: role as TenantRoleColumn,
   })
   if (error) throw new Error(error.message)
 }

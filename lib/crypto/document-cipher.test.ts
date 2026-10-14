@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import {
   encryptDocumentNumber,
   decryptDocumentNumber,
   hashDocumentNumberForLookup,
   documentNumberLast4,
+  readStoredDocumentNumber,
 } from './document-cipher'
 
 beforeAll(() => {
@@ -67,5 +68,35 @@ describe('document-cipher', () => {
 
   it('last4 de documento com menos de 4 caracteres retorna o que houver', () => {
     expect(documentNumberLast4('AB')).toBe('AB')
+  })
+
+  it('readStoredDocumentNumber decifra o que foi gravado cifrado', () => {
+    expect(readStoredDocumentNumber(encryptDocumentNumber('AB123456'))).toBe('AB123456')
+  })
+
+  it('readStoredDocumentNumber devolve como está o valor antigo, em texto puro', () => {
+    expect(readStoredDocumentNumber('123.456.789-00')).toBe('123.456.789-00')
+    expect(readStoredDocumentNumber('MG-12.345.678')).toBe('MG-12.345.678')
+    expect(readStoredDocumentNumber(null)).toBeNull()
+    expect(readStoredDocumentNumber('')).toBeNull()
+  })
+
+  it('readStoredDocumentNumber não devolve o texto cifrado quando ele não decifra', () => {
+    const tampered = encryptDocumentNumber('123.456.789-00').replace(/.$/, (c) =>
+      c === 'A' ? 'B' : 'A',
+    )
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const result = readStoredDocumentNumber(tampered)
+    error.mockRestore()
+    expect(result === null || result === '123.456.789-00').toBe(true)
+    expect(result).not.toBe(tampered)
+  })
+
+  it('usa a chave nova quando o segredo muda (cache por segredo)', () => {
+    const encrypted = encryptDocumentNumber('999')
+    process.env.PAYMENT_TOKENS_ENCRYPTION_KEY = 'outra-chave'
+    expect(() => decryptDocumentNumber(encrypted)).toThrow()
+    process.env.PAYMENT_TOKENS_ENCRYPTION_KEY = 'test-key-only-for-vitest'
+    expect(decryptDocumentNumber(encrypted)).toBe('999')
   })
 })

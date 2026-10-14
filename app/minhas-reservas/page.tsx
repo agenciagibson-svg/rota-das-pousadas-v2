@@ -27,6 +27,7 @@ import {
   parseMpReturnStatus,
 } from '@/features/pagamentos/components/payment-return-banner'
 import { formatBRL } from '@/lib/format'
+import { isoDateInTimeZone } from '@/lib/dates'
 
 export const metadata: Metadata = {
   title: 'Minhas reservas',
@@ -71,7 +72,9 @@ export default async function MyBookingsPage({
   // Volta do Mercado Pago (`?pago=<id>&status=...`): destaque do resultado no topo.
   const returned = query.pago ? bookings.find((b) => b.id === query.pago) : undefined
   const mpStatus = parseMpReturnStatus(query.collection_status ?? query.status)
-  const today = new Date().toISOString().slice(0, 10)
+  // Dia civil no Brasil: em UTC, depois das 21h já seria "amanhã" e a reserva
+  // com saída hoje sumia das próximas viagens.
+  const today = isoDateInTimeZone(new Date())
   const activeBookings = bookings.filter((booking) => isActiveStatus(booking.status))
   const pendingBookings = bookings.filter(
     (booking) =>

@@ -9,10 +9,19 @@ import {
   setBookingCompanionsSchema,
   updateBookingSchema,
 } from './schemas'
-import { cancelMyBooking, createAdminBooking, createBooking } from './services/bookings.service'
-import { updateBookingRpc, setBookingCompanionsRpc } from '@/repositories/bookings.repository'
-import { requireCapability } from '@/features/acomodacoes/services/access'
-import { calculateBookingPrice } from './pricing'
+import {
+  cancelMyBooking,
+  createAdminBooking,
+  createBooking,
+  setAdminBookingCompanions,
+  updateAdminBooking,
+} from './services/bookings.service'
+
+/** A reserva do hóspede também muda o que a pousada vê no painel. */
+function revalidatePanelBookings() {
+  revalidatePath('/dashboard/reservas')
+  revalidatePath('/dashboard')
+}
 
 /**
  * Cria uma reserva. Valida por Zod (createAction), delega a regra ao Service e
@@ -21,6 +30,7 @@ import { calculateBookingPrice } from './pricing'
 export const createBookingAction = createAction(createBookingSchema, async (input) => {
   const { id, code } = await createBooking(input)
   revalidatePath('/minhas-reservas')
+  revalidatePanelBookings()
   return { code, redirectTo: `/pousada/${input.pousadaSlug}/reservar/${id}/pagamento` }
 })
 
@@ -28,6 +38,7 @@ export const createBookingAction = createAction(createBookingSchema, async (inpu
 export const cancelBookingAction = createAction(cancelBookingSchema, async (input) => {
   await cancelMyBooking(input.bookingId)
   revalidatePath('/minhas-reservas')
+  revalidatePanelBookings()
   return { ok: true as const }
 })
 
@@ -38,44 +49,19 @@ export const createBookingAdminAction = createAction(createBookingAdminSchema, a
   return { id, code }
 })
 
-/** Edição administrativa — sempre com `version` (concorrência otimista, ver 0034). */
+/** Edição administrativa — regra e autorização no Service (`updateAdminBooking`). */
 export const updateBookingAction = createAction(updateBookingSchema, async (input) => {
-  await requireCapability('booking:manage')
-  const price = calculateBookingPrice(input.nightlyRate, input.checkin, input.checkout, {
-    discount: input.discount,
-    surcharge: input.surcharge,
-    servicesAmount: input.servicesAmount,
-  })
-  const result = await updateBookingRpc({
-    bookingId: input.bookingId,
-    version: input.version,
-    roomId: input.roomId,
-    responsibleGuestId: input.guestId,
-    checkin: input.checkin,
-    checkout: input.checkout,
-    adults: input.adults,
-    children: input.children,
-    infants: input.infants,
-    pets: input.pets,
-    subtotal: price.subtotal,
-    fee: price.fee,
-    discount: price.discount,
-    surcharge: price.surcharge,
-    servicesAmount: price.servicesAmount,
-    total: price.total,
-    origin: input.origin,
-    expectedArrivalTime: input.expectedArrivalTime || null,
-    specialRequests: input.specialRequests || '',
-    internalNotes: input.internalNotes || '',
-  })
+  const result = await updateAdminBooking(input)
   revalidatePath(`/dashboard/reservas/${input.bookingId}`)
   revalidatePath('/dashboard/reservas')
   return { version: result.version }
 })
 
-export const setBookingCompanionsAction = createAction(setBookingCompanionsSchema, async (input) => {
-  await requireCapability('booking:manage')
-  const result = await setBookingCompanionsRpc(input.bookingId, input.version, input.companions)
-  revalidatePath(`/dashboard/reservas/${input.bookingId}`)
-  return { version: result.version }
-})
+export const setBookingCompanionsAction = createAction(
+  setBookingCompanionsSchema,
+  async (input) => {
+    const result = await setAdminBookingCompanions(input)
+    revalidatePath(`/dashboard/reservas/${input.bookingId}`)
+    return { version: result.version }
+  },
+)

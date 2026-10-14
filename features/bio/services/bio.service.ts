@@ -1,8 +1,7 @@
 import 'server-only'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
-import { can, type Action } from '@/lib/auth/rbac'
+import { requireCapability } from '@/lib/auth/require-capability'
 import { verifyTurnstileToken } from '@/lib/turnstile'
 import {
   createQuoteRequestRpc,
@@ -19,14 +18,6 @@ import type { LinkReport, QuoteRequest } from '../types'
  * `auth_has_guest_access` da 0030, que é o que a RLS da 0046 usa — as duas
  * precisam concordar.
  */
-async function requireCapability(action: Action): Promise<{ pousadaId: string }> {
-  const pousadaId = await getActivePousadaId()
-  if (!pousadaId) throw new Error('Nenhuma pousada ativa selecionada.')
-  const role = await getActiveTenantRole()
-  if (!role || !can(role, action)) throw new Error('Você não tem permissão para esta ação.')
-  return { pousadaId }
-}
-
 export async function getLinkReport(input: ReportRangeInput): Promise<LinkReport> {
   const { pousadaId } = await requireCapability('link:report:view')
   return getLinkReportRpc(pousadaId, input.days)

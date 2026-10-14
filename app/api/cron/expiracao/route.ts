@@ -3,6 +3,7 @@ import { expireOverduePendingBookings } from '@/features/reservas/services/expir
 import { purgeStaleQuoteRequests } from '@/features/bio/services/bio.service'
 import { sendCheckinReminders } from '@/features/reservas/services/checkin-reminders.service'
 import { notifyPaymentReviews } from '@/features/pagamentos/services/pix.service'
+import { reportError } from '@/lib/observability/report-error'
 
 /**
  * Rodada diária de manutenção: expira pré-reserva vencida, purga pedido de
@@ -44,23 +45,25 @@ export async function GET(request: Request) {
     // Depois da expiração: reservas que caíram com comprovante em análise
     // entram na fila de revisão (0082) e a pousada é avisada por e-mail.
     const paymentReviews = await notifyPaymentReviews()
+    const failures: Promise<void>[] = []
     const out = (r: PromiseSettledResult<unknown>, name: string) => {
       if (r.status === 'fulfilled') return r.value
       console.error(`[cron] ${name} falhou`, String(r.reason))
+      failures.push(reportError(r.reason, { where: `cron:${name}` }))
       return { error: 'falhou' }
     }
     const failed = [bookings, quoteRequests, checkinReminders].some((r) => r.status === 'rejected')
-    return Response.json(
-      {
-        bookings: out(bookings, 'expiracao'),
-        quoteRequests: out(quoteRequests, 'orcamentos'),
-        checkinReminders: out(checkinReminders, 'lembretes'),
-        paymentReviews,
-      },
-      { status: failed ? 500 : 200 },
-    )
+    const body = {
+      bookings: out(bookings, 'expiracao'),
+      quoteRequests: out(quoteRequests, 'orcamentos'),
+      checkinReminders: out(checkinReminders, 'lembretes'),
+      paymentReviews,
+    }
+    await Promise.all(failures)
+    return Response.json(body, { status: failed ? 500 : 200 })
   } catch (error) {
     console.error('[cron] expiracao falhou', String(error))
+    await reportError(error, { where: 'cron:expiracao' })
     return Response.json({ error: 'Falha inesperada.' }, { status: 500 })
   }
 }

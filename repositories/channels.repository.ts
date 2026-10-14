@@ -9,6 +9,7 @@ import type {
   ChannelSyncStatus,
 } from '@/features/canais/types'
 import { publicEnv } from '@/lib/env'
+import { orNull } from '@/lib/supabase/rpc-args'
 
 /** Monta a URL pública do feed a partir do token — o token nunca sai daqui cru. */
 function exportUrlFor(token: string): string {
@@ -77,7 +78,7 @@ export async function saveChannelRpc(p: {
     p_room_id: p.roomId,
     p_provider: p.provider,
     p_label: p.label,
-    p_import_url: p.importUrl,
+    p_import_url: orNull(p.importUrl),
     p_export_token: p.exportToken,
   })
   if (error) throw new Error(error.message)

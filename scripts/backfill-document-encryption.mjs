@@ -1,8 +1,8 @@
-// Backfill único (migration 0058): cifra o document_number em claro dos
-// hóspedes já cadastrados, calcula o hash de busca e os últimos 4 dígitos
-// pra mascarar na listagem.
+// Backfill (migrations 0058 e 0083): cifra o document_number em claro dos
+// hóspedes já cadastrados (com hash de busca e últimos 4 dígitos) e, desde a
+// 0083, o documento dos acompanhantes (`booking_guests`).
 //
-// Roda UMA VEZ, depois que a migration 0058 já foi aplicada em produção
+// Roda depois que a migration correspondente já foi aplicada em produção
 // (`npx supabase db push`). Idempotente: pode rodar de novo sem medo — a RPC
 // `apply_document_backfill` só toca linha que ainda não tem
 // `document_number_hash` preenchido.
@@ -43,14 +43,19 @@ function getHashKey() {
   return scryptSync(CIPHER_SECRET, 'rota-das-pousadas-document-hash', 32)
 }
 function normalizeDocumentNumber(plain) {
-  return plain.trim().toUpperCase().replace(/[.\-/\s]/g, '')
+  return plain
+    .trim()
+    .toUpperCase()
+    .replace(/[.\-/\s]/g, '')
 }
 function encryptDocumentNumber(plain) {
   const iv = randomBytes(IV_LENGTH)
   const cipher = createCipheriv(ALGORITHM, getCipherKey(), iv)
   const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()])
   const authTag = cipher.getAuthTag()
-  return [iv.toString('base64'), authTag.toString('base64'), ciphertext.toString('base64')].join(':')
+  return [iv.toString('base64'), authTag.toString('base64'), ciphertext.toString('base64')].join(
+    ':',
+  )
 }
 function hashDocumentNumberForLookup(plain) {
   return createHmac('sha256', getHashKey()).update(normalizeDocumentNumber(plain)).digest('hex')
@@ -67,9 +72,12 @@ let totalOk = 0
 let totalFail = 0
 
 for (;;) {
-  const { data: rows, error: listError } = await supabase.rpc('list_guests_pending_document_backfill', {
-    p_limit: 200,
-  })
+  const { data: rows, error: listError } = await supabase.rpc(
+    'list_guests_pending_document_backfill',
+    {
+      p_limit: 200,
+    },
+  )
   if (listError) {
     console.error('Falha ao listar hóspedes pendentes:', listError.message)
     process.exit(1)
@@ -99,5 +107,52 @@ for (;;) {
   console.log(`Lote processado: +${rows.length} (acumulado ok=${totalOk}, falha=${totalFail})`)
 }
 
-console.log(`Backfill concluído. Hóspedes cifrados com sucesso: ${totalOk}. Falhas: ${totalFail}.`)
-if (totalFail > 0) process.exit(1)
+console.log(`Hóspedes: cifrados com sucesso ${totalOk}, falhas ${totalFail}.`)
+
+// --- Acompanhantes (migration 0083) -----------------------------------------
+// `booking_guests.document_number` passou a ser gravado cifrado pelo app; aqui
+// entram as linhas antigas, ainda em texto puro. Sem hash nem últimos 4: o
+// documento do acompanhante só aparece na ficha da reserva (FNRH), nunca em
+// busca ou listagem.
+let companionsOk = 0
+let companionsFail = 0
+const companionFailures = new Set()
+
+for (;;) {
+  const { data: rows, error: listError } = await supabase.rpc(
+    'list_booking_guests_pending_document_backfill',
+    // Lote grande: linhas que falharam continuam pendentes e voltam na lista;
+    // com lote pequeno, um punhado de falhas no começo escondia o resto.
+    { p_limit: 2000 },
+  )
+  if (listError) {
+    console.error('Falha ao listar acompanhantes pendentes:', listError.message)
+    process.exit(1)
+  }
+  // Linhas que falharam continuam "pendentes" e voltariam para sempre no laço.
+  const pending = (rows ?? []).filter((row) => !companionFailures.has(row.id))
+  if (pending.length === 0) break
+
+  for (const row of pending) {
+    const plain = (row.document_number ?? '').trim()
+    try {
+      const { error: applyError } = await supabase.rpc('apply_booking_guest_document_backfill', {
+        p_booking_guest_id: row.id,
+        p_document_number_encrypted: encryptDocumentNumber(plain),
+      })
+      if (applyError) throw new Error(applyError.message)
+      companionsOk += 1
+    } catch (err) {
+      companionsFail += 1
+      companionFailures.add(row.id)
+      console.error(`Falha no acompanhante ${row.id}:`, err instanceof Error ? err.message : err)
+    }
+  }
+  console.log(
+    `Lote de acompanhantes: +${pending.length} (ok=${companionsOk}, falha=${companionsFail})`,
+  )
+}
+
+console.log(`Acompanhantes: cifrados com sucesso ${companionsOk}, falhas ${companionsFail}.`)
+console.log('Backfill concluído.')
+if (totalFail > 0 || companionsFail > 0) process.exit(1)

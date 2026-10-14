@@ -307,6 +307,19 @@ export async function resolvePaymentReviewRpc(reviewId: string, resolution: stri
   if (error) throw new Error(error.message)
 }
 
+/**
+ * Devolve à fila os casos cujo e-mail não saiu (0083). `claim_...` marca como
+ * avisado antes do envio; sem isto, um SMTP fora do ar apagava o alerta.
+ */
+export async function releasePaymentReviewsNotification(reviewIds: string[]): Promise<void> {
+  if (reviewIds.length === 0) return
+  const supabase = createSupabaseServiceRoleClient()
+  const { error } = await supabase.rpc('release_payment_reviews_notification', {
+    p_review_ids: reviewIds,
+  })
+  if (error) throw new Error(error.message)
+}
+
 /** Cron/webhook: casos novos ainda sem aviso (marca como avisados). Só service_role. */
 export async function claimPaymentReviewsToNotify(): Promise<
   { reviewId: string; bookingId: string; kind: PaymentReviewKind; amount: number }[]

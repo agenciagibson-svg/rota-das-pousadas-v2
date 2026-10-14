@@ -154,9 +154,13 @@ export const createPlatformExpenseSchema = z.object({
   description: z.string().trim().min(2, 'Descreva a despesa.').max(120),
   amount: z.coerce
     .number({ invalid_type_error: 'Informe o valor.' })
-    .int()
-    .min(1, 'Informe o valor.')
-    .max(10_000_000),
+    .min(0.01, 'Informe o valor.')
+    .max(10_000_000)
+    // Centavos: no máximo 2 casas (a coluna é numeric(14,2) desde a 0083).
+    .refine(
+      (v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6,
+      'Use no máximo 2 casas decimais.',
+    ),
   category: platformExpenseCategorySchema,
   dueDate: z
     .string()

@@ -49,6 +49,25 @@ export async function isPousadaFavorite(userId: string, slug: string): Promise<b
   return Boolean(data)
 }
 
+/**
+ * Garante o favorito, sem alternar. `upsert` com `ignoreDuplicates`: dois
+ * envios ao mesmo tempo (duplo clique, duas abas) terminam os dois com a
+ * pousada salva — com "confere e alterna", o segundo desfazia o primeiro.
+ */
+export async function addPousadaFavorite(userId: string, slug: string): Promise<void> {
+  const pousadaId = await getPublishedPousadaIdBySlug(slug)
+  if (!pousadaId) throw new Error('Pousada não encontrada.')
+
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase
+    .from('favorites')
+    .upsert(
+      { user_id: userId, pousada_id: pousadaId },
+      { onConflict: 'user_id,pousada_id', ignoreDuplicates: true },
+    )
+  if (error) throw error
+}
+
 export async function togglePousadaFavorite(
   userId: string,
   slug: string,
@@ -75,7 +94,9 @@ export async function togglePousadaFavorite(
     return { favorite: false }
   }
 
-  const { error } = await supabase.from('favorites').insert({ user_id: userId, pousada_id: pousadaId })
+  const { error } = await supabase
+    .from('favorites')
+    .insert({ user_id: userId, pousada_id: pousadaId })
   if (error) throw error
   return { favorite: true }
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import '@/lib/validation/zod-pt'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { signupSchema, type SignupInput } from '../schemas'

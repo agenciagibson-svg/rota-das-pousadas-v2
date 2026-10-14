@@ -7,14 +7,23 @@ import {
   createBookingRpc,
   getBookingByGuest,
   getBookingNotificationContextRpc,
+  getBookingPousadaId,
+  hasUnreadableCompanionDocuments,
   listBookingsByGuest,
+  setBookingCompanionsRpc,
   setBookingStatusRpc,
+  updateBookingRpc,
 } from '@/repositories/bookings.repository'
 import { ensureTravelerGuestRpc, upsertGuestRpc } from '@/repositories/guests.repository'
 import { calculateBookingPrice } from '@/features/reservas/pricing'
 import { sendEmail } from '@/lib/email/mailer'
 import { bookingRequestReceivedEmail } from '@/lib/email/templates'
-import type { CreateBookingInput, CreateBookingAdminInput } from '@/features/reservas/schemas'
+import type {
+  CreateBookingInput,
+  CreateBookingAdminInput,
+  SetBookingCompanionsInput,
+  UpdateBookingInput,
+} from '@/features/reservas/schemas'
 import type { Booking } from '@/features/reservas/types'
 
 function generateBookingCode(): string {
@@ -183,6 +192,70 @@ export async function createAdminBooking(
     internalNotes: input.internalNotes || '',
     paymentDueAt: input.initialStatus === 'pending' ? paymentDueAt() : null,
   })
+}
+
+/**
+ * O papel é conferido na pousada ATIVA (cookie); a reserva vem do formulário.
+ * Sem esta checagem, quem tem `booking:manage` na pousada A e acesso mais
+ * fraco na B conseguia mandar o id de uma reserva da B. A RPC repete a
+ * conferência no banco — as duas barreiras precisam concordar.
+ */
+async function requireBookingInActivePousada(bookingId: string, pousadaId: string): Promise<void> {
+  if ((await getBookingPousadaId(bookingId)) !== pousadaId) {
+    throw new Error('Reserva não encontrada nesta pousada.')
+  }
+}
+
+/** Edição administrativa — sempre com `version` (concorrência otimista, ver 0034). */
+export async function updateAdminBooking(input: UpdateBookingInput): Promise<{ version: number }> {
+  const { pousadaId } = await requireCapability('booking:manage')
+  await requireBookingInActivePousada(input.bookingId, pousadaId)
+
+  // Preço sempre recalculado no servidor a partir da diária informada.
+  const price = calculateBookingPrice(input.nightlyRate, input.checkin, input.checkout, {
+    discount: input.discount,
+    surcharge: input.surcharge,
+    servicesAmount: input.servicesAmount,
+  })
+  return updateBookingRpc({
+    bookingId: input.bookingId,
+    version: input.version,
+    roomId: input.roomId,
+    responsibleGuestId: input.guestId,
+    checkin: input.checkin,
+    checkout: input.checkout,
+    adults: input.adults,
+    children: input.children,
+    infants: input.infants,
+    pets: input.pets,
+    subtotal: price.subtotal,
+    fee: price.fee,
+    discount: price.discount,
+    surcharge: price.surcharge,
+    servicesAmount: price.servicesAmount,
+    total: price.total,
+    origin: input.origin,
+    expectedArrivalTime: input.expectedArrivalTime || null,
+    specialRequests: input.specialRequests || '',
+    internalNotes: input.internalNotes || '',
+  })
+}
+
+/** Acompanhantes da reserva (ficha de hóspedes). O documento vai cifrado (0083). */
+export async function setAdminBookingCompanions(
+  input: SetBookingCompanionsInput,
+): Promise<{ version: number }> {
+  const { pousadaId } = await requireCapability('booking:manage')
+  await requireBookingInActivePousada(input.bookingId, pousadaId)
+  // A RPC apaga e regrava todas as linhas. Se algum documento já salvo não
+  // decifra neste ambiente, o formulário abriu com ele vazio — salvar agora
+  // apagaria o original sem ninguém perceber.
+  if (await hasUnreadableCompanionDocuments(input.bookingId)) {
+    throw new Error(
+      'Não foi possível ler os documentos já salvos desta reserva. Para não perder esses dados, a alteração foi bloqueada — fale com o suporte da Rota.',
+    )
+  }
+  return setBookingCompanionsRpc(input.bookingId, input.version, input.companions)
 }
 
 /** Reservas do usuário autenticado (vazio se anônimo). */

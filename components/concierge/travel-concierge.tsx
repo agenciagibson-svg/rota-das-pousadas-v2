@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils'
 import type { Pousada } from '@/types'
 import { prepareCatalog, recommendPousadas } from '@/features/concierge'
 import { formatPrice } from '@/lib/format'
+import { isoDateInTimeZone } from '@/lib/dates'
 
 type Mood = 'romance' | 'familia' | 'aventura' | 'descanso'
 type Budget = 'economico' | 'conforto' | 'premium'
@@ -107,8 +108,8 @@ function buildSearchHref({
 
   const params = new URLSearchParams({
     busca: destination || moods.find((item) => item.key === mood)?.terms[0] || 'Natureza',
-    checkin: checkin.toISOString().slice(0, 10),
-    checkout: checkout.toISOString().slice(0, 10),
+    checkin: isoDateInTimeZone(checkin),
+    checkout: isoDateInTimeZone(checkout),
     hospedes: String(guests),
     concierge: '1',
   })

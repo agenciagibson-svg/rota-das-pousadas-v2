@@ -1,6 +1,7 @@
 import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import {
+  addPousadaFavorite,
   isPousadaFavorite,
   listFavoritePousadas,
   togglePousadaFavorite,
@@ -17,6 +18,13 @@ export async function toggleFavorite(slug: string): Promise<{ favorite: boolean 
   const user = await getCurrentUser()
   if (!user) throw new Error('Entre na sua conta para salvar favoritos.')
   return togglePousadaFavorite(user.id, slug)
+}
+
+/** Garante que a pousada está nos favoritos (não desfaz se já estiver). */
+export async function ensureFavorite(slug: string): Promise<void> {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Entre na sua conta para salvar favoritos.')
+  await addPousadaFavorite(user.id, slug)
 }
 
 export async function listMyFavorites(): Promise<Pousada[]> {

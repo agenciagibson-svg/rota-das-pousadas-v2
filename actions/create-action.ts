@@ -1,7 +1,10 @@
 import 'server-only'
-import type { ZodType } from 'zod'
+// Mensagens padrão do Zod em português (regras sem mensagem própria no schema).
+import '@/lib/validation/zod-pt'
+import type { z, ZodTypeAny } from 'zod'
 import type { ActionResult } from '@/types'
 import { ok, fail } from './index'
+import { redact, reportError } from '@/lib/observability/report-error'
 
 const GENERIC_ERROR = 'Não foi possível concluir agora. Tente de novo em instantes.'
 
@@ -39,7 +42,8 @@ function describe(error: unknown) {
     return {
       message: typeof e.message === 'string' ? e.message : JSON.stringify(error),
       code: e.code,
-      details: e.details,
+      // `details` do Postgres pode repetir o valor digitado ("Key (email)=(...)").
+      details: typeof e.details === 'string' ? redact(e.details) : undefined,
       hint: e.hint,
     }
   }
@@ -63,9 +67,12 @@ export function userMessage(error: unknown): string {
  *     return bookingService.create(input) // regra de negócio no Service
  *   })
  */
-export function createAction<Input, Output>(
-  schema: ZodType<Input>,
-  handler: (input: Input) => Promise<Output>,
+export function createAction<Schema extends ZodTypeAny, Output>(
+  schema: Schema,
+  // O handler recebe a SAÍDA do schema (já com `.default()` e `.transform()`
+  // aplicados). Antes o tipo era o de entrada, e várias actions validavam de
+  // novo só para acertar o tipo.
+  handler: (input: z.output<Schema>) => Promise<Output>,
 ) {
   return async (raw: unknown): Promise<ActionResult<Output>> => {
     const parsed = schema.safeParse(raw)
@@ -82,10 +89,14 @@ export function createAction<Input, Output>(
       const data = await handler(parsed.data)
       return ok(data)
     } catch (error) {
-      // Aparece nos logs da Vercel (Functions). Sentry pode entrar aqui depois.
+      // Aparece nos logs da Vercel (Functions).
       // Não loga o input: pode ter CPF, e-mail e telefone.
       console.error('[action] falhou', describe(error))
-      return fail(userMessage(error))
+      const message = userMessage(error)
+      // Só falha técnica vai para o Sentry. Mensagem de regra de negócio
+      // ("quarto indisponível") é uso normal, não defeito.
+      if (message === GENERIC_ERROR) await reportError(error, { where: 'action' })
+      return fail(message)
     }
   }
 }

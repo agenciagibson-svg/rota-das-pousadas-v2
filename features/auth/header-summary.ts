@@ -1,5 +1,6 @@
 import type { SessionUser } from './types'
 import type { Booking } from '@/features/reservas/types'
+import { isoDateInTimeZone } from '@/lib/dates'
 
 /**
  * Resumo do usuário logado para o cabeçalho do site (menu do usuário e ícone
@@ -62,7 +63,7 @@ export function buildHeaderSummary(
   if (!user) return { user: null }
   const fullName = user.name?.trim() || ''
   const firstName = fullName.split(/\s+/)[0] || user.email.split('@')[0]
-  const today = now.toISOString().slice(0, 10)
+  const today = isoDateInTimeZone(now)
 
   const pendingTrips = bookings
     .filter(

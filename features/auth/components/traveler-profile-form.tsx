@@ -3,6 +3,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import '@/lib/validation/zod-pt'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Loader2, Lock } from 'lucide-react'
 import { Input } from '@/components/ui/input'

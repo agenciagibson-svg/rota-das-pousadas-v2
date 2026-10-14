@@ -34,7 +34,9 @@ describe('syncOneFeed', () => {
       expect.objectContaining({
         calendarId: 'cal-1',
         status: 'ok',
-        events: [expect.objectContaining({ uid: 'abc', startsOn: '2026-10-01', endsOn: '2026-10-05' })],
+        events: [
+          expect.objectContaining({ uid: 'abc', startsOn: '2026-10-01', endsOn: '2026-10-05' }),
+        ],
       }),
     )
   })
@@ -106,5 +108,56 @@ describe('syncAllFeeds', () => {
     mocks.listFeeds.mockResolvedValue([])
     const report = await syncAllFeeds({ apply: vi.fn(), fetchFeed: vi.fn() })
     expect(report).toMatchObject({ total: 0, ok: 0, failed: 0 })
+  })
+
+  it('roda poucos feeds em paralelo, nunca todos de uma vez', async () => {
+    mocks.listFeeds.mockResolvedValue(
+      Array.from({ length: 10 }, (_, i) => ({
+        calendarId: `c${i}`,
+        importUrl: `https://x.test/${i}.ics`,
+      })),
+    )
+    let running = 0
+    let peak = 0
+    const report = await syncAllFeeds({
+      apply: vi.fn().mockResolvedValue({ status: 'ok' }),
+      fetchFeed: async () => {
+        running += 1
+        peak = Math.max(peak, running)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        running -= 1
+        return UM_EVENTO
+      },
+    })
+    expect(report).toMatchObject({ total: 10, ok: 10, skipped: 0 })
+    expect(peak).toBeGreaterThan(1)
+    expect(peak).toBeLessThanOrEqual(4)
+  })
+
+  it('sem tempo, deixa o resto para a próxima rodada em vez de estourar o limite', async () => {
+    mocks.listFeeds.mockResolvedValue(
+      Array.from({ length: 12 }, (_, i) => ({
+        calendarId: `c${i}`,
+        importUrl: `https://x.test/${i}.ics`,
+      })),
+    )
+    let clock = 0
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const report = await syncAllFeeds({
+      apply: vi.fn().mockResolvedValue({ status: 'ok' }),
+      // Cada feed "leva" 15 s; o orçamento é de 40 s.
+      fetchFeed: async () => {
+        clock += 15_000
+        return UM_EVENTO
+      },
+      now: () => clock,
+      budgetMs: 40_000,
+    })
+    warn.mockRestore()
+    expect(report.total).toBe(12)
+    expect(report.skipped).toBeGreaterThan(0)
+    expect(report.ok + report.skipped).toBe(12)
+    // Os primeiros da fila (mais antigos) são os que rodam.
+    expect(report.results[0].calendarId).toBe('c0')
   })
 })

@@ -1,7 +1,7 @@
 import 'server-only'
 import type { Destination, Experience, Season } from '@/types'
 import { destinations as mockDestinations, experiences as mockExperiences } from '@/lib/data'
-import { isSupabaseConfigured } from '@/lib/env'
+import { assertNotMockInProduction, isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/supabase/database.types'
 import type { AdminDestinationRow } from '@/features/admin/types'
@@ -96,6 +96,7 @@ const supabaseRepository: DestinationRepository = {
 }
 
 export function getDestinationRepository(): DestinationRepository {
+  assertNotMockInProduction()
   return isSupabaseConfigured() ? supabaseRepository : mockRepository
 }
 

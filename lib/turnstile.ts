@@ -2,16 +2,26 @@ import 'server-only'
 
 /**
  * Verificação server-side do Cloudflare Turnstile (CAPTCHA do formulário
- * público de orçamento — `create_quote_request` só tinha rate limit por
- * telefone, sem nada contra um robô trocando de número a cada envio).
+ * público de orçamento).
  *
- * `TURNSTILE_SECRET_KEY` ainda não configurada = verificação DESLIGADA (skip,
- * com aviso no log) — não bloqueia o formulário público antes de Gibson criar
- * o site em https://dash.cloudflare.com/?to=/:account/turnstile e configurar
- * a env var. Assim que a chave existir, passa a exigir e validar o token de
- * verdade.
+ * Sem `TURNSTILE_SECRET_KEY`:
+ *  - em qualquer build de produção (`NODE_ENV=production`: Vercel Production
+ *    e Preview, `next start`) a verificação FALHA — o formulário não aceita
+ *    envio sem CAPTCHA. Antes passava direto (fail-open): bastava a variável
+ *    sumir num deploy, ou um Preview apontar para o banco de produção, para o
+ *    formulário ficar aberto a robôs sem ninguém ver;
+ *  - em desenvolvimento e nos testes a verificação é pulada, com aviso no log;
+ *  - um ambiente de preview com banco PRÓPRIO pode desligar de propósito com
+ *    `TURNSTILE_DISABLED=true`.
+ *
+ * As variáveis estão documentadas no `.env.example`. A CSP de `proxy.ts`
+ * libera o script e o iframe de `challenges.cloudflare.com`.
  */
 let warnedMissingSecret = false
+
+function mustVerify(): boolean {
+  return process.env.NODE_ENV === 'production' && process.env.TURNSTILE_DISABLED !== 'true'
+}
 
 export async function verifyTurnstileToken(
   token: string,
@@ -19,9 +29,15 @@ export async function verifyTurnstileToken(
 ): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
   if (!secret) {
+    if (mustVerify()) {
+      console.error(
+        '[turnstile] TURNSTILE_SECRET_KEY ausente em produção — pedidos de orçamento estão sendo recusados.',
+      )
+      return false
+    }
     if (!warnedMissingSecret) {
       console.warn(
-        '[turnstile] TURNSTILE_SECRET_KEY não configurada — verificação de CAPTCHA desligada.',
+        '[turnstile] TURNSTILE_SECRET_KEY não configurada — verificação de CAPTCHA desligada neste ambiente.',
       )
       warnedMissingSecret = true
     }
@@ -42,8 +58,8 @@ export async function verifyTurnstileToken(
     const data = (await response.json()) as { success?: boolean }
     return data.success === true
   } catch {
-    // Cloudflare fora do ar não pode travar o formulário inteiro — mas isso
-    // é raro o bastante para não virar uma porta de bypass em massa.
+    // Cloudflare fora do ar: recusa. É raro, e aceitar sem verificação viraria
+    // a porta de entrada dos robôs justamente quando não dá para conferir.
     return false
   }
 }

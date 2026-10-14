@@ -26,7 +26,7 @@ import { createBlockAction, cancelBlockAction } from '../actions'
 import { blockTimeStatus, formatBlockPeriod } from '../block-time'
 import type { ManagedRoom, RoomBlock, RoomBlockType } from '../types'
 import type { ActionResult } from '@/types'
-import { keepValuesOnSubmit } from '@/lib/forms'
+import { SAVE_FAILED_MESSAGE, formErrorMessage, keepValuesOnSubmit } from '@/lib/forms'
 
 const BLOCK_TYPES: RoomBlockType[] = [
   'maintenance',
@@ -38,74 +38,121 @@ const BLOCK_TYPES: RoomBlockType[] = [
   'other',
 ]
 
+/** Campos com lugar na tela para mostrar o erro; o resto vai para a mensagem geral. */
+const VISIBLE_FIELDS = ['roomId', 'blockType', 'startsAt', 'endsAt', 'reason', 'notes']
+
 function NewBlockForm({ rooms, onDone }: { rooms: ManagedRoom[]; onDone: () => void }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [pending, setPending] = useState(false)
 
   async function onSubmit(formData: FormData) {
     setError(null)
+    setFieldErrors({})
     setPending(true)
-    const result = await createBlockAction({
-      roomId: String(formData.get('roomId') ?? ''),
-      blockType: String(formData.get('blockType') ?? 'other') as RoomBlockType,
-      startsAt: String(formData.get('startsAt') ?? ''),
-      endsAt: String(formData.get('endsAt') ?? ''),
-      reason: String(formData.get('reason') ?? ''),
-      notes: String(formData.get('notes') ?? ''),
-    })
-    setPending(false)
-    if (!result.ok) {
-      setError(result.error)
-      return
+    // try/finally: se a action lançar (queda de rede), o botão não fica travado.
+    try {
+      const result = await createBlockAction({
+        roomId: String(formData.get('roomId') ?? ''),
+        blockType: String(formData.get('blockType') ?? 'other') as RoomBlockType,
+        startsAt: String(formData.get('startsAt') ?? ''),
+        endsAt: String(formData.get('endsAt') ?? ''),
+        reason: String(formData.get('reason') ?? ''),
+        notes: String(formData.get('notes') ?? ''),
+      })
+      if (!result.ok) {
+        const errors = result.fieldErrors ?? {}
+        setFieldErrors(errors)
+        setError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
+        return
+      }
+      router.refresh()
+      onDone()
+    } catch {
+      setError(SAVE_FAILED_MESSAGE)
+    } finally {
+      setPending(false)
     }
-    router.refresh()
-    onDone()
   }
 
   return (
     <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
-      <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Acomodação
-        </span>
-        <select
-          name="roomId"
-          required
-          className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"
-        >
-          <option value="">Selecione…</option>
-          {rooms
-            .filter((r) => r.status === 'active')
-            .map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
+      {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            Acomodação
+          </span>
+          <select
+            name="roomId"
+            aria-invalid={fieldErrors.roomId ? true : undefined}
+            required
+            className="border-input bg-card text-foreground aria-invalid:border-destructive rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+          >
+            <option value="">Selecione…</option>
+            {rooms
+              .filter((r) => r.status === 'active')
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        {fieldErrors.roomId && (
+          <p role="alert" className="text-destructive text-xs">
+            {fieldErrors.roomId}
+          </p>
+        )}
+      </div>
+      {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            Tipo
+          </span>
+          <select
+            name="blockType"
+            aria-invalid={fieldErrors.blockType ? true : undefined}
+            className="border-input bg-card text-foreground aria-invalid:border-destructive rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+          >
+            {BLOCK_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {BLOCK_TYPE_LABEL[t]}
               </option>
             ))}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Tipo
-        </span>
-        <select
-          name="blockType"
-          className="border-input bg-card text-foreground rounded-xl border px-3.5 py-2.5 text-sm outline-none"
-        >
-          {BLOCK_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {BLOCK_TYPE_LABEL[t]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="Início" name="startsAt" type="datetime-local" required />
-        <Input label="Fim" name="endsAt" type="datetime-local" required />
+          </select>
+        </label>
+        {fieldErrors.blockType && (
+          <p role="alert" className="text-destructive text-xs">
+            {fieldErrors.blockType}
+          </p>
+        )}
       </div>
-      <Textarea label="Motivo" name="reason" rows={2} required />
-      <Textarea label="Observações (opcional)" name="notes" rows={2} />
-      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Início"
+          name="startsAt"
+          error={fieldErrors.startsAt}
+          type="datetime-local"
+          required
+        />
+        <Input
+          label="Fim"
+          name="endsAt"
+          error={fieldErrors.endsAt}
+          type="datetime-local"
+          required
+        />
+      </div>
+      <Textarea label="Motivo" name="reason" error={fieldErrors.reason} rows={2} required />
+      <Textarea label="Observações (opcional)" name="notes" error={fieldErrors.notes} rows={2} />
+      {error && (
+        <p role="alert" className="text-destructive text-sm font-medium">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancelar
@@ -162,14 +209,18 @@ export function BlocksView({
   function run(promise: Promise<ActionResult<unknown>>) {
     setError(null)
     setPending(true)
-    promise.then((result) => {
-      setPending(false)
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      router.refresh()
-    })
+    promise
+      .then((result) => {
+        if (!result.ok) {
+          // Aqui não há campo na tela: os erros de validação vão todos na mensagem geral.
+          setError([result.error, ...new Set(Object.values(result.fieldErrors ?? {}))].join(' '))
+          return
+        }
+        router.refresh()
+      })
+      .catch(() => setError(SAVE_FAILED_MESSAGE))
+      // finally: se a action lançar (queda de rede), os botões não ficam travados.
+      .finally(() => setPending(false))
   }
 
   function confirmCancel() {
@@ -222,7 +273,11 @@ export function BlocksView({
             </Button>
           )}
         </div>
-        {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-destructive text-sm font-medium">
+            {error}
+          </p>
+        )}
 
         <Card className="p-4">
           {filtered.length === 0 ? (

@@ -12,12 +12,20 @@ import { randomBytes, createCipheriv, createDecipheriv, scryptSync } from 'node:
 const ALGORITHM = 'aes-256-gcm'
 const IV_LENGTH = 12
 
+// A derivação (`scryptSync`) é cara de propósito; a chave só depende do segredo.
+let cachedKey: { secret: string; key: Buffer } | null = null
+
 function getKey(): Buffer {
   const secret = process.env.PAYMENT_TOKENS_ENCRYPTION_KEY
   if (!secret) {
-    throw new Error('PAYMENT_TOKENS_ENCRYPTION_KEY não configurada — não é possível cifrar tokens de pagamento.')
+    throw new Error(
+      'PAYMENT_TOKENS_ENCRYPTION_KEY não configurada — não é possível cifrar tokens de pagamento.',
+    )
   }
-  return scryptSync(secret, 'rota-das-pousadas-payment-tokens', 32)
+  if (cachedKey?.secret === secret) return cachedKey.key
+  const key = scryptSync(secret, 'rota-das-pousadas-payment-tokens', 32)
+  cachedKey = { secret, key }
+  return key
 }
 
 /** Retorna `iv:authTag:ciphertext`, tudo em base64. */
@@ -26,7 +34,9 @@ export function encryptToken(plain: string): string {
   const cipher = createCipheriv(ALGORITHM, getKey(), iv)
   const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()])
   const authTag = cipher.getAuthTag()
-  return [iv.toString('base64'), authTag.toString('base64'), ciphertext.toString('base64')].join(':')
+  return [iv.toString('base64'), authTag.toString('base64'), ciphertext.toString('base64')].join(
+    ':',
+  )
 }
 
 export function decryptToken(encoded: string): string {
@@ -36,6 +46,9 @@ export function decryptToken(encoded: string): string {
   }
   const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(ivB64, 'base64'))
   decipher.setAuthTag(Buffer.from(authTagB64, 'base64'))
-  const plain = Buffer.concat([decipher.update(Buffer.from(ciphertextB64, 'base64')), decipher.final()])
+  const plain = Buffer.concat([
+    decipher.update(Buffer.from(ciphertextB64, 'base64')),
+    decipher.final(),
+  ])
   return plain.toString('utf8')
 }

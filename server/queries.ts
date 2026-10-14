@@ -15,7 +15,6 @@ import * as destinations from '@/services/destinations.service'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
-import { getPousadaPaymentContextForWebhook } from '@/repositories/payments.repository'
 import {
   listMyBookings,
   getBookableRoom as bookableRoom,
@@ -55,7 +54,11 @@ import {
   getLinkReport as linkReport,
   listQuoteRequests as quoteRequests,
 } from '@/features/bio/services/bio.service'
-import { getBookingDetailById, getBookingFnrhData } from '@/repositories/bookings.repository'
+import {
+  bookingCanPayOnlineRpc,
+  getBookingDetailById,
+  getBookingFnrhData,
+} from '@/repositories/bookings.repository'
 import { getPousadaSettings } from '@/repositories/management.repository'
 import { createCheckoutPreference } from '@/features/pagamentos/services/checkout.service'
 import { requireCapability } from '@/features/acomodacoes/services/access'
@@ -119,13 +122,11 @@ export const getBookingCheckout = cache((bookingId: string) => createCheckoutPre
 /**
  * A pousada desta reserva recebe on-line (conta Mercado Pago conectada)?
  * Só decide qual botão mostrar — o link de pagamento em si é criado apenas
- * no clique, em `/pousada/[slug]/reservar/[id]/pagar`. Chamar só depois de
- * conferir que a reserva é do usuário logado.
+ * no clique, em `/pousada/[slug]/reservar/[id]/pagar`. A RPC
+ * `booking_can_pay_online` (0083) só responde `true` para o dono da reserva,
+ * com a sessão do próprio usuário — sem service_role no caminho de render.
  */
-export const getCanPayOnline = cache(async (bookingId: string) => {
-  const context = await getPousadaPaymentContextForWebhook(bookingId)
-  return Boolean(context?.accessTokenEncrypted)
-})
+export const getCanPayOnline = cache((bookingId: string) => bookingCanPayOnlineRpc(bookingId))
 
 /** Gestão (PMS): pousada gerida, reservas e calendário do proprietário. */
 export const getOwnerPousada = cache(() => ownerPousada())

@@ -1,19 +1,16 @@
 import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
-import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
-import { can, type Action } from '@/lib/auth/rbac'
+import { requireCapability as requireTenantCapability } from '@/lib/auth/require-capability'
+import type { Action } from '@/lib/auth/rbac'
 import { listGuestsByPousada, getGuestById, upsertGuestRpc } from '@/repositories/guests.repository'
 import type { GuestFilters } from '@/features/hospedes/schemas'
 import type { GuestDetail, GuestListItem } from '@/features/hospedes/types'
 
+/** Usuário autenticado + papel na pousada ativa (guarda única em lib/auth). */
 async function requireCapability(action: Action) {
   const user = await getCurrentUser()
   if (!user) throw new Error('Não autenticado.')
-  const pousadaId = await getActivePousadaId()
-  if (!pousadaId) throw new Error('Nenhuma pousada ativa selecionada.')
-  const role = await getActiveTenantRole()
-  if (!role || !can(role, action)) throw new Error('Você não tem permissão para esta ação.')
-  return { user, pousadaId, role }
+  return { user, ...(await requireTenantCapability(action)) }
 }
 
 export async function listGuests(filters: GuestFilters = {}): Promise<GuestListItem[]> {

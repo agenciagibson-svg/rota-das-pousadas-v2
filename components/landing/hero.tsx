@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, MapPin, Calendar, Users, Sparkles, ArrowRight, Shuffle } from 'lucide-react'
-import { isoDateInTimeZone } from '@/lib/dates'
+import { addDaysToISODate, isoDateInTimeZone } from '@/lib/dates'
 import { SearchField } from '@/components/ui/search-field'
 
 type SeasonKey = 'verao' | 'outono' | 'inverno' | 'primavera'
@@ -73,12 +73,6 @@ function getCurrentBrazilSeason(date = new Date()): SeasonKey {
   return 'primavera'
 }
 
-function addDays(date: string, days: number): string {
-  const next = new Date(`${date}T00:00:00Z`)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next.toISOString().slice(0, 10)
-}
-
 /** Hoje em Brasília: em UTC a data do site virava a de amanhã às 21h. */
 function todayIso(): string {
   return isoDateInTimeZone(new Date())
@@ -89,8 +83,8 @@ export function Hero() {
   const [season, setSeason] = useState<SeasonKey>(() => getCurrentBrazilSeason())
   const current = seasons[season]
   const today = todayIso()
-  const tomorrow = addDays(today, 1)
-  const dayAfterTomorrow = addDays(today, 2)
+  const tomorrow = addDaysToISODate(today, 1)
+  const dayAfterTomorrow = addDaysToISODate(today, 2)
 
   function openSurpriseRoute() {
     const options = surpriseRoutes[season]

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { inviteMemberAction } from '../actions'
 import { TEAM_ROLE_LABEL, type TeamRole } from './role-labels'
-import { keepValuesOnSubmit } from '@/lib/forms'
+import { SAVE_FAILED_MESSAGE, formErrorMessage, keepValuesOnSubmit } from '@/lib/forms'
 
 const ASSIGNABLE_ROLES: TeamRole[] = [
   'admin_pousada',
@@ -17,31 +17,43 @@ const ASSIGNABLE_ROLES: TeamRole[] = [
   'proprietario',
 ]
 
+/** Campos com lugar na tela para mostrar o erro; o resto vai para a mensagem geral. */
+const VISIBLE_FIELDS = ['email', 'role']
+
 export function InviteMemberForm() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [message, setMessage] = useState<string | null>(null)
 
   function submit(formData: FormData, form: HTMLFormElement) {
     setError(null)
+    setFieldErrors({})
     setMessage(null)
     const email = String(formData.get('email') ?? '')
     const role = String(formData.get('role') ?? '') as TeamRole
 
     startTransition(async () => {
-      const result = await inviteMemberAction({ email, role })
-      if (!result.ok) {
-        setError(result.error)
-        return
+      // Sem o try/catch, uma queda de rede derrubava a tela no error boundary.
+      try {
+        const result = await inviteMemberAction({ email, role })
+        if (!result.ok) {
+          const errors = result.fieldErrors ?? {}
+          setFieldErrors(errors)
+          setError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
+          return
+        }
+        form.reset()
+        setMessage(
+          result.data.emailSent
+            ? 'Convite registrado e e-mail enviado. A pessoa entra no painel com esse e-mail e aceita o convite. Se ainda não tiver conta, ela cria uma com o mesmo e-mail e você convida de novo.'
+            : 'Convite registrado, mas o e-mail não pôde ser enviado agora. Avise a pessoa para entrar no painel com esse e-mail e aceitar o convite.',
+        )
+        router.refresh()
+      } catch {
+        setError(SAVE_FAILED_MESSAGE)
       }
-      form.reset()
-      setMessage(
-        result.data.emailSent
-          ? 'Convite registrado e e-mail enviado. A pessoa entra no painel com esse e-mail e aceita o convite. Se ainda não tiver conta, ela cria uma com o mesmo e-mail e você convida de novo.'
-          : 'Convite registrado, mas o e-mail não pôde ser enviado agora. Avise a pessoa para entrar no painel com esse e-mail e aceitar o convite.',
-      )
-      router.refresh()
     })
   }
 
@@ -57,29 +69,43 @@ export function InviteMemberForm() {
           type="email"
           required
           placeholder="pessoa@email.com"
+          error={fieldErrors.email}
         />
       </div>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Papel
-        </span>
-        <select
-          name="role"
-          defaultValue="recepcionista"
-          className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
-        >
-          {ASSIGNABLE_ROLES.map((role) => (
-            <option key={role} value={role}>
-              {TEAM_ROLE_LABEL[role]}
-            </option>
-          ))}
-        </select>
-      </label>
+      {/* O erro fica fora do <label> para não entrar no nome acessível do campo. */}
+      <div className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            Papel
+          </span>
+          <select
+            name="role"
+            defaultValue="recepcionista"
+            aria-invalid={fieldErrors.role ? true : undefined}
+            className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 aria-invalid:border-destructive rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
+          >
+            {ASSIGNABLE_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {TEAM_ROLE_LABEL[role]}
+              </option>
+            ))}
+          </select>
+        </label>
+        {fieldErrors.role && (
+          <p role="alert" className="text-destructive text-xs">
+            {fieldErrors.role}
+          </p>
+        )}
+      </div>
       <Button type="submit" disabled={isPending}>
         <UserPlus className="size-4" />
         {isPending ? 'Convidando...' : 'Convidar'}
       </Button>
-      {error && <p className="text-destructive text-sm font-medium sm:basis-full">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive text-sm font-medium sm:basis-full">
+          {error}
+        </p>
+      )}
       {message && <p className="text-primary text-sm font-medium sm:basis-full">{message}</p>}
     </form>
   )

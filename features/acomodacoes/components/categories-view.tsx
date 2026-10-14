@@ -24,8 +24,19 @@ import { AcomodacoesTabs } from './acomodacoes-tabs'
 import { createCategoryAction, updateCategoryAction, setCategoryStatusAction } from '../actions'
 import type { AccommodationCategory } from '../types'
 import type { ActionResult } from '@/types'
-import { keepValuesOnSubmit } from '@/lib/forms'
+import { SAVE_FAILED_MESSAGE, formErrorMessage, keepValuesOnSubmit } from '@/lib/forms'
 import { formatPrice } from '@/lib/format'
+
+/** Campos com lugar na tela para mostrar o erro; o resto vai para a mensagem geral. */
+const VISIBLE_FIELDS = [
+  'name',
+  'code',
+  'defaultCapacity',
+  'maxCapacity',
+  'defaultBedCount',
+  'basePriceSuggestion',
+  'description',
+]
 
 function CategoryForm({
   category,
@@ -36,10 +47,12 @@ function CategoryForm({
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [pending, setPending] = useState(false)
 
   async function onSubmit(formData: FormData) {
     setError(null)
+    setFieldErrors({})
     setPending(true)
     const payload = {
       name: String(formData.get('name') ?? ''),
@@ -51,28 +64,50 @@ function CategoryForm({
       basePriceSuggestion: formData.get('basePriceSuggestion')
         ? Number(formData.get('basePriceSuggestion'))
         : undefined,
-      displayOrder: Number(formData.get('displayOrder') ?? 0),
+      // O formulário não tem campo de ordem: ao editar, mantém a que já estava
+      // (antes ia sempre 0 e a edição desfazia a ordenação).
+      displayOrder: category?.displayOrder ?? 0,
     }
-    const result = category
-      ? await updateCategoryAction({ ...payload, id: category.id })
-      : await createCategoryAction(payload)
-    setPending(false)
-    if (!result.ok) {
-      setError(result.error)
-      return
+    // try/finally: se a action lançar (queda de rede), o botão não fica travado.
+    try {
+      const result = category
+        ? await updateCategoryAction({ ...payload, id: category.id })
+        : await createCategoryAction(payload)
+      if (!result.ok) {
+        const errors = result.fieldErrors ?? {}
+        setFieldErrors(errors)
+        setError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
+        return
+      }
+      router.refresh()
+      onDone()
+    } catch {
+      setError(SAVE_FAILED_MESSAGE)
+    } finally {
+      setPending(false)
     }
-    router.refresh()
-    onDone()
   }
 
   return (
     <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="Nome" name="name" defaultValue={category?.name} required />
-        <Input label="Código" name="code" defaultValue={category?.code ?? ''} />
+        <Input
+          label="Nome"
+          name="name"
+          error={fieldErrors.name}
+          defaultValue={category?.name}
+          required
+        />
+        <Input
+          label="Código"
+          name="code"
+          error={fieldErrors.code}
+          defaultValue={category?.code ?? ''}
+        />
         <Input
           label="Capacidade padrão"
           name="defaultCapacity"
+          error={fieldErrors.defaultCapacity}
           type="number"
           min={1}
           defaultValue={category?.defaultCapacity ?? 2}
@@ -80,6 +115,7 @@ function CategoryForm({
         <Input
           label="Capacidade máxima"
           name="maxCapacity"
+          error={fieldErrors.maxCapacity}
           type="number"
           min={1}
           defaultValue={category?.maxCapacity ?? ''}
@@ -87,6 +123,7 @@ function CategoryForm({
         <Input
           label="Camas padrão"
           name="defaultBedCount"
+          error={fieldErrors.defaultBedCount}
           type="number"
           min={1}
           defaultValue={category?.defaultBedCount ?? 1}
@@ -94,6 +131,7 @@ function CategoryForm({
         <Input
           label="Valor-base sugerido (R$)"
           name="basePriceSuggestion"
+          error={fieldErrors.basePriceSuggestion}
           type="number"
           min={0}
           defaultValue={category?.basePriceSuggestion ?? ''}
@@ -102,10 +140,15 @@ function CategoryForm({
       <Textarea
         label="Descrição"
         name="description"
+        error={fieldErrors.description}
         rows={2}
         defaultValue={category?.description ?? ''}
       />
-      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive text-sm font-medium">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancelar
@@ -137,14 +180,18 @@ export function CategoriesView({
   function run(promise: Promise<ActionResult<unknown>>) {
     setError(null)
     setPending(true)
-    promise.then((result) => {
-      setPending(false)
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      router.refresh()
-    })
+    promise
+      .then((result) => {
+        if (!result.ok) {
+          // Aqui não há campo na tela: os erros de validação vão todos na mensagem geral.
+          setError([result.error, ...new Set(Object.values(result.fieldErrors ?? {}))].join(' '))
+          return
+        }
+        router.refresh()
+      })
+      .catch(() => setError(SAVE_FAILED_MESSAGE))
+      // finally: se a action lançar (queda de rede), os botões não ficam travados.
+      .finally(() => setPending(false))
   }
 
   return (
@@ -160,7 +207,13 @@ export function CategoriesView({
 
       <div className="mt-5 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>{error && <p className="text-destructive text-sm font-medium">{error}</p>}</div>
+          <div>
+            {error && (
+              <p role="alert" className="text-destructive text-sm font-medium">
+                {error}
+              </p>
+            )}
+          </div>
           {canManage && (
             <Button onClick={() => setEditing('new')}>
               <Plus className="size-4" /> Nova categoria

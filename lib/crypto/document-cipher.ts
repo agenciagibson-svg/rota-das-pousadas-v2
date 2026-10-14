@@ -32,12 +32,28 @@ function getSecret(): string {
   return secret
 }
 
+/**
+ * `scryptSync` é caro de propósito (dezenas de ms). Derivar a cada documento
+ * travava o servidor em listas com muitos hóspedes; a subchave depende só do
+ * segredo e do sal, então fica em memória enquanto o segredo não mudar.
+ */
+const derivedKeys = new Map<string, { secret: string; key: Buffer }>()
+
+function deriveKey(salt: string): Buffer {
+  const secret = getSecret()
+  const cached = derivedKeys.get(salt)
+  if (cached && cached.secret === secret) return cached.key
+  const key = scryptSync(secret, salt, 32)
+  derivedKeys.set(salt, { secret, key })
+  return key
+}
+
 function getCipherKey(): Buffer {
-  return scryptSync(getSecret(), 'rota-das-pousadas-document-numbers', 32)
+  return deriveKey('rota-das-pousadas-document-numbers')
 }
 
 function getHashKey(): Buffer {
-  return scryptSync(getSecret(), 'rota-das-pousadas-document-hash', 32)
+  return deriveKey('rota-das-pousadas-document-hash')
 }
 
 /**
@@ -102,5 +118,37 @@ export function safeDecryptDocumentNumber(encrypted: string | null): string | nu
       '[document-cipher] falha ao decifrar document_number — retornando null pra não quebrar a tela.',
     )
     return null
+  }
+}
+
+/** `iv:authTag:ciphertext` em base64 — o formato que `encryptDocumentNumber` grava. */
+const ENCRYPTED_SHAPE = /^[A-Za-z0-9+/]{16}:[A-Za-z0-9+/]{22}==:[A-Za-z0-9+/]+={0,2}$/
+
+/**
+ * Lê uma coluna de documento que pode ter linhas ANTERIORES à cifra
+ * (`booking_guests.document_number` só passou a ser cifrado na 0083). Valor no
+ * formato cifrado é decifrado; qualquer outro é texto antigo e volta como está,
+ * para a ficha (FNRH) não perder o documento. Ao salvar a reserva de novo, o
+ * valor é regravado cifrado.
+ */
+export function readStoredDocumentNumber(stored: string | null): string | null {
+  if (!stored) return null
+  if (!ENCRYPTED_SHAPE.test(stored)) return stored
+  return safeDecryptDocumentNumber(stored)
+}
+
+/**
+ * O valor guardado está no formato cifrado mas NÃO decifra com a chave deste
+ * ambiente (chave trocada, ou outro ambiente gravando no mesmo banco)? Quem
+ * for regravar a linha precisa saber: `readStoredDocumentNumber` devolve
+ * `null` nesse caso, e salvar "sem documento" apagaria o original.
+ */
+export function isUnreadableStoredDocument(stored: string | null): boolean {
+  if (!stored || !ENCRYPTED_SHAPE.test(stored)) return false
+  try {
+    decryptDocumentNumber(stored)
+    return false
+  } catch {
+    return true
   }
 }

@@ -14,6 +14,7 @@ import type {
   GuestSource,
 } from '@/features/hospedes/types'
 import type { GuestFilters } from '@/features/hospedes/schemas'
+import { orNull } from '@/lib/supabase/rpc-args'
 
 /**
  * Nunca expõe o documento completo fora do perfil individual (RB seção 3).
@@ -224,7 +225,7 @@ export async function ensureTravelerGuestRpc(input: {
   const { data, error } = await supabase.rpc('ensure_traveler_guest', {
     p_pousada_id: input.pousadaId,
     p_full_name: input.fullName,
-    p_email: input.email ?? null,
+    p_email: orNull(input.email ?? null),
   })
   if (error) throw new Error(error.message)
   const result = data as { id: string }
@@ -248,24 +249,24 @@ export async function upsertGuestRpc(input: UpsertGuestInput): Promise<{ id: str
 
   const { data, error } = await supabase.rpc('upsert_guest', {
     p_pousada_id: input.pousadaId,
-    p_guest_id: input.guestId ?? null,
-    p_user_id: input.userId ?? null,
+    p_guest_id: orNull(input.guestId ?? null),
+    p_user_id: orNull(input.userId ?? null),
     p_full_name: input.fullName,
-    p_preferred_name: input.preferredName ?? null,
-    p_email: input.email ?? null,
-    p_phone: input.phone ?? null,
-    p_whatsapp: input.whatsapp ?? null,
-    p_document_type: input.documentType ?? null,
-    p_document_number: encryptedDocument,
-    p_document_number_hash: documentHash,
-    p_document_last4: last4,
-    p_birth_date: input.birthDate ?? null,
-    p_nationality: input.nationality ?? null,
+    p_preferred_name: orNull(input.preferredName ?? null),
+    p_email: orNull(input.email ?? null),
+    p_phone: orNull(input.phone ?? null),
+    p_whatsapp: orNull(input.whatsapp ?? null),
+    p_document_type: orNull(input.documentType ?? null),
+    p_document_number: orNull(encryptedDocument),
+    p_document_number_hash: orNull(documentHash),
+    p_document_last4: orNull(last4),
+    p_birth_date: orNull(input.birthDate ?? null),
+    p_nationality: orNull(input.nationality ?? null),
     p_country: input.country ?? 'BR',
-    p_city: input.city ?? null,
-    p_state: input.state ?? null,
-    p_address: input.address ?? null,
-    p_cep: input.cep ?? null,
+    p_city: orNull(input.city ?? null),
+    p_state: orNull(input.state ?? null),
+    p_address: orNull(input.address ?? null),
+    p_cep: orNull(input.cep ?? null),
     p_emergency_contact: input.emergencyContact ?? {},
     p_preferences: input.preferences ?? [],
     p_dietary_restrictions: input.dietaryRestrictions ?? '',

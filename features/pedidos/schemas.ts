@@ -38,6 +38,15 @@ export const consumptionPaymentSchema = z.object({
   note: z.string().trim().max(200).default(''),
 })
 
+export const reverseConsumptionPaymentSchema = z.object({
+  paymentId: z.string().uuid(),
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Informe o motivo do estorno.')
+    .max(190, 'Use no máximo 190 caracteres.'),
+})
+
 /** Lista "uma por linha" do formulário → array validado (erro aponta a linha). */
 function listField<T>(
   parse: (text: string) => { ok: true; items: T[] } | { ok: false; error: string },

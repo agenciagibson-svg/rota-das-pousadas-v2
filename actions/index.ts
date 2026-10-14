@@ -1,16 +1,10 @@
 /**
- * Server Actions layer.
+ * Camada de Server Actions.
  *
- * Business mutations (reservations, host onboarding, payments) are intentionally
- * NOT implemented yet — this folder establishes the pattern and the typed result
- * envelope so future actions are consistent and safe.
- *
- * Convention:
- *   'use server'
- *   export async function doThing(input): Promise<ActionResult<T>> { ... }
- *
- * Always validate input (zod) at the boundary and return `ActionResult`
- * instead of throwing, so forms can render field-level errors.
+ * Toda mutação do app é uma Server Action criada por `createAction`
+ * (actions/create-action.ts): entrada validada por Zod na borda, regra de
+ * negócio no Service e retorno sempre no envelope `ActionResult` — nunca
+ * exceção para a tela, para o formulário mostrar o erro no campo certo.
  */
 import type { ActionResult } from '@/types'
 

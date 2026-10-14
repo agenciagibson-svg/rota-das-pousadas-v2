@@ -121,12 +121,17 @@ export const cancelBlockSchema = z.object({
 })
 export type CancelBlockInput = z.infer<typeof cancelBlockSchema>
 
-export const availabilityQuerySchema = z.object({
-  checkin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.'),
-  checkout: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.'),
-  adults: z.coerce.number().int().min(1).max(50),
-  children: z.coerce.number().int().min(0).max(50),
-  pets: z.coerce.boolean(),
-  categoryId: z.string().uuid().optional().or(z.literal('')),
-})
+export const availabilityQuerySchema = z
+  .object({
+    checkin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.'),
+    checkout: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.'),
+    adults: z.coerce.number().int().min(1).max(50),
+    children: z.coerce.number().int().min(0).max(50),
+    pets: z.coerce.boolean(),
+    categoryId: z.string().uuid().optional().or(z.literal('')),
+  })
+  .refine((d) => d.checkout > d.checkin, {
+    message: 'A saída deve ser posterior à entrada.',
+    path: ['checkout'],
+  })
 export type AvailabilityQueryInput = z.infer<typeof availabilityQuerySchema>

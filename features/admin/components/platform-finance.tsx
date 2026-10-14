@@ -11,6 +11,7 @@ import {
   bootstrapPlatformPlanAction,
 } from '../actions'
 import type { PlatformExpense, PlatformExpenseCategory } from '../types'
+import { formatBRL } from '@/lib/format'
 
 const CATEGORY_LABEL: Record<PlatformExpenseCategory, string> = {
   infraestrutura: 'Infraestrutura',
@@ -30,10 +31,10 @@ const CATEGORY_OPTIONS: PlatformExpenseCategory[] = [
 ]
 
 function formatCurrency(value: number): string {
-  return `R$ ${value.toLocaleString('pt-BR')}`
+  return formatBRL(value)
 }
 
-/** Preço de assinatura tem centavos (R$59,90) — sempre 2 casas, diferente de `formatCurrency` (reais inteiros das despesas). */
+/** Preço de assinatura tem centavos (R$59,90) — sempre 2 casas. */
 function formatPlanPrice(value: number): string {
   return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -169,7 +170,9 @@ export function PlatformFinance({
           <Input
             label="Valor (R$)"
             type="number"
-            min={1}
+            inputMode="decimal"
+            min={0.01}
+            step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="w-32"

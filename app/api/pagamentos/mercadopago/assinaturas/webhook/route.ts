@@ -5,6 +5,7 @@ import {
   processSubscriptionPreapprovalNotification,
   processSubscriptionAuthorizedPaymentNotification,
 } from '@/features/pagamentos/services/subscription.service'
+import { reportError } from '@/lib/observability/report-error'
 
 /**
  * Webhook da assinatura da PLATAFORMA (Mercado Pago Assinaturas) — diferente
@@ -21,7 +22,9 @@ import {
  * 2026-09) antes de operar em produção.
  */
 const notificationSchema = z.object({
-  type: z.enum(['subscription_preapproval', 'subscription_authorized_payment']),
+  // Aceita qualquer tipo aqui: os que não tratamos recebem 200 `ignored` depois
+  // da assinatura conferida (400 fazia o Mercado Pago reenviar por dias).
+  type: z.string().max(80),
   data: z.object({
     id: z
       .union([z.string(), z.number().int().positive().safe()])
@@ -49,15 +52,19 @@ export async function POST(request: NextRequest) {
 
     if (body.data.type === 'subscription_preapproval') {
       await processSubscriptionPreapprovalNotification(dataId)
-    } else {
+    } else if (body.data.type === 'subscription_authorized_payment') {
       await processSubscriptionAuthorizedPaymentNotification(dataId)
+    } else {
+      return NextResponse.json({ ignored: true })
     }
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (error) {
     console.error('[mercadopago:assinaturas:webhook] processamento falhou', {
       type: body.data.type,
       dataId,
+      reason: error instanceof Error ? error.message.slice(0, 300) : 'erro desconhecido',
     })
+    await reportError(error, { where: 'webhook:assinaturas' })
     return NextResponse.json({ error: 'processing_failed' }, { status: 503 })
   }
 }

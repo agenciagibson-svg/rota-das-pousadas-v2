@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import '@/lib/validation/zod-pt'
 import { useRouter } from 'next/navigation'
 import { createPousadaAdminSchema, type CreatePousadaAdminInput } from '../schemas'
 import { createPousadaAdminAction } from '../actions'
@@ -62,10 +63,20 @@ export function AdminCreatePousadaForm() {
         )}
       />
 
-      <Input label="Nome da pousada" placeholder="Ex.: Refúgio das Nuvens" error={errors.name?.message} {...register('name')} />
+      <Input
+        label="Nome da pousada"
+        placeholder="Ex.: Refúgio das Nuvens"
+        error={errors.name?.message}
+        {...register('name')}
+      />
 
       <div className="grid grid-cols-[1fr_auto] gap-3">
-        <Input label="Cidade" placeholder="Ex.: Monte Verde" error={errors.city?.message} {...register('city')} />
+        <Input
+          label="Cidade"
+          placeholder="Ex.: Monte Verde"
+          error={errors.city?.message}
+          {...register('city')}
+        />
         <Input
           label="UF"
           placeholder="MG"
@@ -117,12 +128,16 @@ export function AdminCreatePousadaForm() {
         />
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-foreground">
-        <input type="checkbox" className="size-4 rounded border-input" {...register('publishNow')} />
+      <label className="text-foreground flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="border-input size-4 rounded"
+          {...register('publishNow')}
+        />
         Publicar imediatamente (senão fica salva como rascunho)
       </label>
 
-      {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
+      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
         {isSubmitting ? 'Cadastrando…' : 'Cadastrar pousada'}

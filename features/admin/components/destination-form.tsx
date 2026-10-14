@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import '@/lib/validation/zod-pt'
 import { useRouter } from 'next/navigation'
 import { destinationInputSchema, type DestinationFormInput } from '../schemas'
 import { createDestinationAction, updateDestinationAction } from '../actions'

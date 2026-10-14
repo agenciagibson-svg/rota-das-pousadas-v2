@@ -1,7 +1,8 @@
 import 'server-only'
 import QRCode from 'qrcode'
 import { getActivePousadaId, getActiveTenantRole } from '@/lib/auth/tenant-context'
-import { can, type Action, type Role } from '@/lib/auth/rbac'
+import { can, type Role } from '@/lib/auth/rbac'
+import { requireAnyCapability } from '@/lib/auth/require-capability'
 import { publicEnv } from '@/lib/env'
 import { pousadaToday } from '@/features/dashboard/metrics'
 import { listReservationsByPousada } from '@/repositories/management.repository'
@@ -11,9 +12,11 @@ import {
   getGuestSettings,
   getOrderPousadaId,
   listBookingOrders,
+  getConsumptionPaymentRef,
   listConsumptionPayments,
   listPousadaOrders,
   registerConsumptionPaymentRpc,
+  reverseConsumptionPaymentRpc,
   saveGuestSettings,
   setOrderStatusRpc,
   staffCreateOrderRpc,
@@ -27,15 +30,7 @@ import type {
   OrderStatus,
 } from '../types'
 
-async function requireAny(actions: Action[]): Promise<{ pousadaId: string; role: Role }> {
-  const pousadaId = await getActivePousadaId()
-  if (!pousadaId) throw new Error('Nenhuma pousada ativa selecionada.')
-  const role = await getActiveTenantRole()
-  if (!role || !actions.some((a) => can(role, a))) {
-    throw new Error('Seu perfil não tem acesso a esta ação.')
-  }
-  return { pousadaId, role }
-}
+const requireAny = requireAnyCapability
 
 /** Papéis (espelham as RPCs de 0078). */
 export function orderPermissions(role: Role) {
@@ -49,6 +44,8 @@ export function orderPermissions(role: Role) {
       role === 'master',
     showPrices: can(role, 'payment:register') || can(role, 'finance:pousada:view'),
     registerPayment: can(role, 'payment:register'),
+    // Estorno: mesmos papéis da RPC `reverse_consumption_payment` (0083).
+    reversePayment: can(role, 'payment:refund'),
   }
 }
 
@@ -147,11 +144,14 @@ export async function changeOrderStatus(
 
 async function requireBookingInPousada(bookingId: string, pousadaId: string) {
   const supabase = await createSupabaseServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('bookings')
     .select('pousada_id')
     .eq('id', bookingId)
     .maybeSingle()
+  // Falha de banco não é "reserva não encontrada": sobe como erro técnico
+  // (mensagem genérica na tela, detalhe no log).
+  if (error) throw error
   if (data?.pousada_id !== pousadaId) throw new Error('Reserva não encontrada.')
 }
 
@@ -171,6 +171,7 @@ export type BookingConsumption = {
   summary: ConsumptionSummary
   payments: ConsumptionPayment[]
   canRegisterPayment: boolean
+  canReversePayment: boolean
   canCharge: boolean
   canOperate: boolean
 }
@@ -192,6 +193,7 @@ export async function getBookingConsumption(bookingId: string): Promise<BookingC
     summary,
     payments,
     canRegisterPayment: perms.registerPayment,
+    canReversePayment: perms.reversePayment,
     canCharge: perms.charge,
     canOperate: perms.operate,
   }
@@ -206,6 +208,22 @@ export async function registerConsumptionPayment(
   const { pousadaId } = await requireAny(['payment:register'])
   await requireBookingInPousada(bookingId, pousadaId)
   await registerConsumptionPaymentRpc(bookingId, amount, method, note)
+}
+
+/**
+ * Estorno de um pagamento de consumo lançado errado. Não apaga nada: gera um
+ * lançamento negativo com o motivo e fica na auditoria. Devolve a reserva para
+ * a action revalidar a tela certa.
+ */
+export async function reverseConsumptionPayment(
+  paymentId: string,
+  reason: string,
+): Promise<{ bookingId: string }> {
+  const { pousadaId } = await requireAny(['payment:refund'])
+  const ref = await getConsumptionPaymentRef(paymentId)
+  if (!ref || ref.pousadaId !== pousadaId) throw new Error('Pagamento não encontrado.')
+  await reverseConsumptionPaymentRpc(paymentId, reason)
+  return { bookingId: ref.bookingId }
 }
 
 /** Itens que a equipe pode lançar numa reserva (detalhe da reserva). */

@@ -2,6 +2,7 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 import { publicEnv } from '@/lib/env'
 
@@ -16,10 +17,15 @@ type CookieToSet = {
  * Handlers. Respeita a sessão via cookies (RLS aplicada pelo Postgres).
  * NUNCA importar em Client Components.
  */
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies()
 
-  return createServerClient<Database, 'public', any>(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
+  // `@supabase/ssr` 0.5 não casa os genéricos com o `supabase-js` atual. Em vez
+  // de `any` (que desligava a checagem de TODA query e RPC), o cliente é criado
+  // sem genérico e devolvido como `SupabaseClient<Database>`: mesmo objeto em
+  // tempo de execução, com tabelas, colunas e argumentos de RPC conferidos pelo
+  // TypeScript.
+  const client = createServerClient(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -34,4 +40,5 @@ export async function createSupabaseServerClient() {
       },
     },
   })
+  return client as unknown as SupabaseClient<Database>
 }
