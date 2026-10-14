@@ -11,7 +11,7 @@ import { getCurrentUser } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Salvar nos favoritos | Rota das Pousadas' }
+export const metadata = { title: 'Salvar nos favoritos' }
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 

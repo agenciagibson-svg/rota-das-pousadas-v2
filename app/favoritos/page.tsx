@@ -15,7 +15,7 @@ import { formatPrice } from '@/lib/format'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Favoritos | Rota das Pousadas',
+  title: 'Favoritos',
   description: 'Suas pousadas salvas para comparar e reservar depois.',
 }
 

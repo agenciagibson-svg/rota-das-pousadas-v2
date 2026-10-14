@@ -9,7 +9,7 @@ import { getPousadas } from '@/server/queries'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Concierge de viagem | Rota das Pousadas',
+  title: 'Concierge de viagem',
   description:
     'Monte uma rota personalizada e descubra pousadas alinhadas ao seu estilo de viagem.',
 }

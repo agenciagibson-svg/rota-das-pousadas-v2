@@ -16,7 +16,7 @@ import { catalogQuerySchema, singleParam } from '@/features/pousadas/search'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Todas as pousadas | Rota das Pousadas',
+  title: 'Todas as pousadas',
   description: 'Veja todas as pousadas publicadas e escolha uma hospedagem para reservar.',
 }
 
