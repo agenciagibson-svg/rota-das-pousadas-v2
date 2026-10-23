@@ -44,6 +44,9 @@ const buttonVariantsBase = cva(
         pill: 'h-12 gap-2 rounded-full px-5 text-sm font-semibold',
         'pill-lg': 'h-14 gap-2 rounded-full px-7 text-base font-semibold',
         'icon-pill': 'size-12 rounded-full',
+        // Ações operacionais do painel no celular (recepção): alvo de toque de 44px.
+        touch:
+          'h-11 gap-2 px-4 text-sm has-data-[icon=inline-end]:pr-3.5 has-data-[icon=inline-start]:pl-3.5',
       },
     },
     defaultVariants: {

@@ -177,6 +177,8 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                     currentStatus={reservation.status}
                     paymentDueAt={reservation.paymentDueAt}
                     checkin={reservation.checkin}
+                    guestName={reservation.guestName}
+                    balanceDue={reservation.balanceDue}
                   />
                 </div>
               </div>

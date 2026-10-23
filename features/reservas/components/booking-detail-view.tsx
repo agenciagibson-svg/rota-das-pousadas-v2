@@ -77,6 +77,8 @@ export function BookingDetailView({
               currentStatus={booking.status}
               paymentDueAt={booking.paymentDueAt}
               checkin={booking.checkin}
+              guestName={booking.guestName}
+              balanceDue={booking.balanceDue}
             />
           </div>
           {booking.status === 'cancelled' && booking.cancellationReason && (
