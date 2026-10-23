@@ -43,6 +43,7 @@ export function BookingDetailView({
   sellable = [],
   payments = null,
   todayISO,
+  canManageBooking = true,
 }: {
   displayName: string
   pousadaName: string
@@ -55,9 +56,14 @@ export function BookingDetailView({
   payments?: BookingPayments | null
   /** "Hoje" no fuso da pousada; sem ele, Brasília. */
   todayISO?: string
+  /**
+   * `booking:manage` (recepção, gestor, dono). O financeiro abre a reserva para
+   * conferir pagamentos e aprovar o Pix, mas não muda status, datas nem fichas.
+   */
+  canManageBooking?: boolean
 }) {
   const status = BOOKING_STATUS[booking.status]
-  const canEdit = !isFinalStatus(booking.status)
+  const canEdit = canManageBooking && !isFinalStatus(booking.status)
   const today = todayISO ?? isoDateInTimeZone(new Date())
   // Pré-check-in (0088): o link só abre para o hóspede com conta no site, antes do check-in.
   const precheckinOpen =
@@ -91,14 +97,16 @@ export function BookingDetailView({
                 </span>
               )}
             </div>
-            <OwnerReservationActions
-              bookingId={booking.id}
-              currentStatus={booking.status}
-              paymentDueAt={booking.paymentDueAt}
-              checkin={booking.checkin}
-              guestName={booking.guestName}
-              balanceDue={booking.balanceDue}
-            />
+            {canManageBooking && (
+              <OwnerReservationActions
+                bookingId={booking.id}
+                currentStatus={booking.status}
+                paymentDueAt={booking.paymentDueAt}
+                checkin={booking.checkin}
+                guestName={booking.guestName}
+                balanceDue={booking.balanceDue}
+              />
+            )}
           </div>
           {booking.status === 'cancelled' && booking.cancellationReason && (
             <p className="text-muted-foreground mt-3 text-sm">
@@ -292,46 +300,48 @@ export function BookingDetailView({
           </Card>
         </div>
 
-        <Card className="p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-foreground font-semibold">Acompanhantes</h2>
-              <p className="text-muted-foreground text-sm">
-                Responsável + acompanhantes cadastrados nesta reserva.
-              </p>
-            </div>
-            <Link
-              href={`/dashboard/reservas/${booking.id}/fnrh`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-input text-foreground hover:bg-muted inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition"
-            >
-              <Printer className="size-3.5" />
-              Imprimir ficha FNRH
-            </Link>
-          </div>
-          {precheckinOpen && (
-            <div className="bg-secondary/60 mt-4 flex flex-col gap-3 rounded-2xl p-4 text-sm">
-              {booking.travelerUserId ? (
-                <>
-                  <p className="text-muted-foreground">
-                    {booking.precheckinCompletedAt
-                      ? `O hóspede enviou a ficha em ${fmtDateTime(booking.precheckinCompletedAt)}. Na chegada, só confira.`
-                      : 'O hóspede ainda não preencheu a ficha. Mande o link pelo WhatsApp: ele preenche pelo celular, com login na conta dele.'}
-                  </p>
-                  <CopyPrecheckinLink url={`${publicEnv.siteUrl}${precheckinPath(booking.id)}`} />
-                </>
-              ) : (
-                <p className="text-muted-foreground">
-                  Reserva sem conta de hóspede no site: a ficha é preenchida aqui ou na recepção.
+        {canManageBooking && (
+          <Card className="p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-foreground font-semibold">Acompanhantes</h2>
+                <p className="text-muted-foreground text-sm">
+                  Responsável + acompanhantes cadastrados nesta reserva.
                 </p>
-              )}
+              </div>
+              <Link
+                href={`/dashboard/reservas/${booking.id}/fnrh`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-input text-foreground hover:bg-muted inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition"
+              >
+                <Printer className="size-3.5" />
+                Imprimir ficha FNRH
+              </Link>
             </div>
-          )}
-          <div className="mt-4">
-            <BookingCompanionsPanel booking={booking} canEdit={canEdit} />
-          </div>
-        </Card>
+            {precheckinOpen && (
+              <div className="bg-secondary/60 mt-4 flex flex-col gap-3 rounded-2xl p-4 text-sm">
+                {booking.travelerUserId ? (
+                  <>
+                    <p className="text-muted-foreground">
+                      {booking.precheckinCompletedAt
+                        ? `O hóspede enviou a ficha em ${fmtDateTime(booking.precheckinCompletedAt)}. Na chegada, só confira.`
+                        : 'O hóspede ainda não preencheu a ficha. Mande o link pelo WhatsApp: ele preenche pelo celular, com login na conta dele.'}
+                    </p>
+                    <CopyPrecheckinLink url={`${publicEnv.siteUrl}${precheckinPath(booking.id)}`} />
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Reserva sem conta de hóspede no site: a ficha é preenchida aqui ou na recepção.
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="mt-4">
+              <BookingCompanionsPanel booking={booking} canEdit={canEdit} />
+            </div>
+          </Card>
+        )}
 
         {consumption && (
           <Card className="p-6">

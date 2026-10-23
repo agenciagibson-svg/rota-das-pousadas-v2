@@ -18,6 +18,7 @@ export function OwnerReservationsView({
   calendar,
   filters,
   todayISO,
+  canManageBookings = true,
 }: {
   displayName: string
   pousadaName: string
@@ -31,6 +32,8 @@ export function OwnerReservationsView({
   filters: GestaoReservationFilters
   /** "Hoje" no fuso da pousada — separa dias passados de livres no calendário. */
   todayISO: string
+  /** `booking:manage`: sem ele (financeiro) a lista é só de consulta. */
+  canManageBookings?: boolean
 }) {
   const hasFilters = Boolean(
     filters.status ||
@@ -149,10 +152,12 @@ export function OwnerReservationsView({
                   {hasFilters ? ' com esses filtros' : ''}
                 </p>
               </div>
-              <Link href="/dashboard/reservas/nova" className={buttonVariants({ size: 'sm' })}>
-                <Plus className="size-4" />
-                Nova reserva
-              </Link>
+              {canManageBookings && (
+                <Link href="/dashboard/reservas/nova" className={buttonVariants({ size: 'sm' })}>
+                  <Plus className="size-4" />
+                  Nova reserva
+                </Link>
+              )}
             </div>
             <div className="mt-4">
               <OwnerReservationsTable reservations={reservations} todayISO={todayISO} />

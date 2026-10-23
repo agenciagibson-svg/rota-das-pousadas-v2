@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import type { BookingStatus } from '@/features/reservas/types'
 import { formatBRL } from '@/lib/format'
+import { can } from '@/lib/auth/rbac'
+import { useDashboardRole } from '@/components/dashboard/role-context'
 import { updateReservationStatusAction, expireOwnerPendingBookingAction } from '../actions'
 
 type ActionItem = {
@@ -28,7 +30,13 @@ function getActions(status: BookingStatus, checkinISO?: string | null): ActionIt
   if (status === 'quote' || status === 'pending') {
     return [
       { label: 'Confirmar', status: 'confirmed', icon: Check },
-      { label: 'Cancelar', status: 'cancelled', icon: XCircle, variant: 'destructive', requiresReason: true },
+      {
+        label: 'Cancelar',
+        status: 'cancelled',
+        icon: XCircle,
+        variant: 'destructive',
+        requiresReason: true,
+      },
     ]
   }
   if (status === 'confirmed') {
@@ -40,10 +48,25 @@ function getActions(status: BookingStatus, checkinISO?: string | null): ActionIt
         status: 'checked_in',
         icon: LogIn,
         disabled: !canCheckInToday,
-        title: canCheckInToday || !checkinISO ? undefined : `Check-in a partir de ${fmtDate(checkinISO)}`,
+        title:
+          canCheckInToday || !checkinISO
+            ? undefined
+            : `Check-in a partir de ${fmtDate(checkinISO)}`,
       },
-      { label: 'Cancelar', status: 'cancelled', icon: XCircle, variant: 'destructive', requiresReason: true },
-      { label: 'Marcar no-show', status: 'no_show', icon: Flag, variant: 'secondary', requiresReason: true },
+      {
+        label: 'Cancelar',
+        status: 'cancelled',
+        icon: XCircle,
+        variant: 'destructive',
+        requiresReason: true,
+      },
+      {
+        label: 'Marcar no-show',
+        status: 'no_show',
+        icon: Flag,
+        variant: 'secondary',
+        requiresReason: true,
+      },
     ]
   }
   if (status === 'checked_in') {
@@ -84,6 +107,7 @@ export function OwnerReservationActions({
   balanceDue?: number
 }) {
   const router = useRouter()
+  const role = useDashboardRole()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [reasonTarget, setReasonTarget] = useState<ActionItem | null>(null)
@@ -96,7 +120,8 @@ export function OwnerReservationActions({
   const primaryActions = actions.filter((a) => !a.variant || a.variant === 'default')
   const secondaryActions = actions.filter((a) => a.variant && a.variant !== 'default')
   const blockedHint = actions.find((a) => a.disabled && a.title)?.title
-  const isOverduePending = currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
+  const isOverduePending =
+    currentStatus === 'pending' && !!paymentDueAt && paymentDueAt < new Date().toISOString()
 
   function run(promise: Promise<{ ok: boolean; error?: string }>) {
     setError(null)
@@ -146,6 +171,9 @@ export function OwnerReservationActions({
       </Button>
     )
   }
+
+  // Financeiro vê a reserva para conferir pagamento, mas não muda o status.
+  if (role && !can(role, 'booking:manage')) return null
 
   return (
     <div className="flex min-w-36 flex-col items-stretch gap-2">
@@ -242,7 +270,7 @@ export function OwnerReservationActions({
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           placeholder="Motivo (obrigatório)"
-          className="w-full resize-none rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
+          className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
         />
       </Dialog>
     </div>

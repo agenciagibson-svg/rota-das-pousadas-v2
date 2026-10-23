@@ -9,6 +9,7 @@
  * cross-request caching + ISR without touching components.
  */
 import 'server-only'
+import { requireAnyCapability } from '@/lib/auth/require-capability'
 import { cache } from 'react'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
@@ -211,10 +212,15 @@ export const canManageGuests = cache(async () => {
   return state.status === 'ok' && can(state.membership.role, 'guest:manage')
 })
 
-/** Detalhe administrativo de uma reserva — precisa da pousada ativa para escopar (nunca confia só no id). */
+/**
+ * Detalhe administrativo de uma reserva — precisa da pousada ativa para escopar
+ * (nunca confia só no id). Quem registra pagamento (o financeiro) também abre,
+ * para aprovar o comprovante Pix; `canManageBooking` diz se mexe na reserva.
+ */
 export const getOwnerReservationDetail = cache(async (bookingId: string) => {
-  const { pousadaId } = await requireCapability('booking:manage')
-  return getBookingDetailById(bookingId, pousadaId)
+  const { pousadaId, role } = await requireAnyCapability(['booking:manage', 'payment:register'])
+  const booking = await getBookingDetailById(bookingId, pousadaId)
+  return booking ? { ...booking, canManageBooking: can(role, 'booking:manage') } : null
 })
 export const canManageBookings = cache(async () => {
   const state = await resolveTenantAccess()

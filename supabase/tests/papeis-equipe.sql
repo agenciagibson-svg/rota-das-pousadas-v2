@@ -361,14 +361,12 @@ select test_assert(test_try(format('select staff_create_order(%L, %L::jsonb, %L)
   '[{"itemId":"' || test_id('agua') || '","quantity":1}]', '')) = 'Seu perfil não pode lançar consumo.', 'financeiro não lança consumo');
 select test_assert(test_try(format('select set_guest_order_status(%L, %L, null)',
   (select id from guest_orders limit 1), 'preparando')) = 'Pedido não encontrado.', 'financeiro não opera pedidos');
--- ACHADO: o pedido diz "financeiro não aprova comprovante Pix", mas rbac.ts dá
--- `payment:register` ao financeiro (pix.service.reviewPaymentProof aceita) e
--- review_payment_proof usa auth_has_operational_access (inclui financeiro).
--- Banco e app concordam: o financeiro PODE aprovar. Só não acha o botão,
--- porque o detalhe da reserva exige `booking:manage` (ver relatório). A
--- tentativa abaixo passa e é desfeita.
+-- Decisão do Gibson (23/10/2026): o financeiro APROVA comprovante Pix
+-- (`payment:register` no rbac.ts e review_payment_proof no banco). Na tela ele
+-- abre o detalhe da reserva só para pagamentos, sem mudar status. A tentativa
+-- abaixo passa e é desfeita.
 select test_assert(test_try(format('select review_payment_proof(%L, true, null, null)', test_id('comprovante'))) = 'ok',
-  'ACHADO: financeiro consegue aprovar comprovante Pix pela API');
+  'financeiro aprova comprovante Pix');
 -- ACHADO: booking_guests_read usa auth_has_operational_access, que inclui o
 -- financeiro; a ficha `guests` não (guest:manage). Nome, nascimento e
 -- documento (cifrado) dos acompanhantes ficam legíveis para o financeiro.

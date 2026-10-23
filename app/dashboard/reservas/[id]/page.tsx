@@ -62,6 +62,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       sellable={sellable}
       payments={payments}
       todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
+      canManageBooking={booking.canManageBooking}
     />
   )
 }
