@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BOOKING_STATUS } from '@/features/reservas'
 import { OwnerReservationActions } from '@/features/gestao/components/owner-reservation-actions'
+import { PrecheckinBadge } from '@/features/reservas/components/precheckin-badge'
 import type { OwnerReservation } from '@/features/gestao/types'
 import { formatBRL, plural } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,8 @@ import { cn } from '@/lib/utils'
 export type TodaySummary = {
   /** Data de hoje no fuso da pousada, já formatada ("sexta, 23 de outubro"). */
   dateLabel: string
+  /** Hoje no fuso da pousada (YYYY-MM-DD). */
+  iso: string
   arrivals: OwnerReservation[]
   departures: OwnerReservation[]
   inHouse: number
@@ -55,10 +58,12 @@ function Row({
   reservation,
   kind,
   showMoney,
+  todayISO,
 }: {
   reservation: OwnerReservation
   kind: 'in' | 'out'
   showMoney: boolean
+  todayISO: string
 }) {
   const status = BOOKING_STATUS[reservation.status]
   return (
@@ -74,6 +79,14 @@ function Row({
           <Badge variant={status.variant} size="sm">
             {status.label}
           </Badge>
+          {kind === 'in' && (
+            <PrecheckinBadge
+              status={reservation.status}
+              checkin={reservation.checkin}
+              precheckinDone={reservation.precheckinDone}
+              todayISO={todayISO}
+            />
+          )}
         </div>
         <p className="text-muted-foreground text-sm">
           {reservation.roomName} · {plural(reservation.nights, 'noite', 'noites')} ·{' '}
@@ -151,7 +164,13 @@ export function TodayPanel({ today, showMoney }: { today: TodaySummary; showMone
               <h3 className="text-foreground text-sm font-semibold">Chegam hoje</h3>
               <ul>
                 {arrivals.map((r) => (
-                  <Row key={r.id} reservation={r} kind="in" showMoney={showMoney} />
+                  <Row
+                    key={r.id}
+                    reservation={r}
+                    kind="in"
+                    showMoney={showMoney}
+                    todayISO={today.iso}
+                  />
                 ))}
               </ul>
             </section>
@@ -161,7 +180,13 @@ export function TodayPanel({ today, showMoney }: { today: TodaySummary; showMone
               <h3 className="text-foreground text-sm font-semibold">Saem hoje</h3>
               <ul>
                 {departures.map((r) => (
-                  <Row key={r.id} reservation={r} kind="out" showMoney={showMoney} />
+                  <Row
+                    key={r.id}
+                    reservation={r}
+                    kind="out"
+                    showMoney={showMoney}
+                    todayISO={today.iso}
+                  />
                 ))}
               </ul>
             </section>

@@ -148,6 +148,7 @@ export function buildDemoOwnerDashboard(now: Date, timeZone = 'America/Sao_Paulo
     week: weeklyDailies(reservations, today.date),
     reviews: summarizeReviews(DEMO_RATINGS.map((rating) => ({ rating }))),
     today: {
+      iso: today.iso,
       dateLabel: new Intl.DateTimeFormat('pt-BR', {
         weekday: 'long',
         day: 'numeric',

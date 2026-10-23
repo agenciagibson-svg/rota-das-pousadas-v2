@@ -7,7 +7,7 @@ import { getOperationalAlerts } from '@/features/pedidos/services/orders.service
 import { listChannels } from '@/features/canais/services/channels.service'
 import { getSetupProgress } from '@/features/onboarding/services/setup.service'
 import { reportError } from '@/lib/observability/report-error'
-import { dayMovements, pousadaToday } from '../metrics'
+import { addDays, dayMovements, pousadaToday } from '../metrics'
 import { buildNotices, type Notice } from '../notices'
 
 /** Falha numa fonte nunca derruba o sino: o aviso dela só não aparece. */
@@ -48,7 +48,16 @@ export async function getDashboardNotices(): Promise<Notice[]> {
       ? reservations.filter((r) => r.status === 'pending' && !r.proofPending).length
       : null,
     arrivalsToday: arrivals ? arrivals.filter((r) => r.status !== 'checked_in').length : null,
-    arrivalsWithoutPrecheckin: null,
+    // Confirmadas que chegam hoje ou nos próximos 3 dias e ainda sem ficha (0088).
+    arrivalsWithoutPrecheckin: reservations
+      ? reservations.filter(
+          (r) =>
+            r.status === 'confirmed' &&
+            !r.precheckinDone &&
+            r.checkin >= today &&
+            r.checkin <= addDays(today, 3),
+        ).length
+      : null,
     newOrders: operational ? operational.newOrders : null,
     lowStock: operational ? operational.lowStock.length : null,
     channelErrors: channels

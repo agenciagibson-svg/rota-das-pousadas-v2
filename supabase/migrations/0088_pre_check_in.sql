@@ -373,9 +373,12 @@ begin
     updated_at = now()
   where id = v_booking.responsible_guest_id;
 
-  -- Documentos guardados antes de apagar as linhas antigas (keepDocumentOf).
+  -- Guardado antes de apagar as linhas antigas (keepDocumentOf): o documento e
+  -- o que a EQUIPE anotou sobre o acompanhante (necessidade especial, notas
+  -- operacionais) — o hóspede reenviar a ficha não pode apagar isso.
   select coalesce(jsonb_object_agg(bg.id::text, jsonb_build_object(
-           'type', bg.document_type, 'number', bg.document_number)), '{}'::jsonb)
+           'type', bg.document_type, 'number', bg.document_number,
+           'special', bg.has_special_needs, 'notes', bg.operational_notes)), '{}'::jsonb)
     into v_old_docs
     from booking_guests bg
    where bg.booking_id = p_booking_id and bg.guest_type <> 'responsible';
@@ -394,8 +397,10 @@ begin
       booking_id, guest_id, full_name, guest_type, has_special_needs,
       birth_date, document_type, document_number, operational_notes
     ) values (
-      p_booking_id, null, trim(v_item->>'fullName'), (v_item->>'guestType')::booking_guest_type, false,
-      nullif(v_item->>'birthDate', '')::date, case when v_doc is null then null else v_doc_type end, v_doc, ''
+      p_booking_id, null, trim(v_item->>'fullName'), (v_item->>'guestType')::booking_guest_type,
+      coalesce((v_old_docs->v_keep::text->>'special')::boolean, false),
+      nullif(v_item->>'birthDate', '')::date, case when v_doc is null then null else v_doc_type end, v_doc,
+      coalesce(v_old_docs->v_keep::text->>'notes', '')
     );
   end loop;
 

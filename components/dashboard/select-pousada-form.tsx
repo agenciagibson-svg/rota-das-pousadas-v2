@@ -32,16 +32,16 @@ export function SelectPousadaForm({ options }: { options: { pousadaId: string; n
             type="button"
             disabled={isPending}
             onClick={() => select(option.pousadaId)}
-            className="flex w-full items-center gap-3 rounded-3xl p-4 text-left transition-colors hover:bg-secondary/60 disabled:opacity-50"
+            className="hover:bg-secondary/60 flex w-full items-center gap-3 rounded-3xl p-4 text-left transition-colors disabled:opacity-50"
           >
-            <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
               <Compass className="size-5" />
             </span>
-            <span className="font-medium text-foreground">{option.name}</span>
+            <span className="text-foreground font-medium">{option.name}</span>
           </button>
         </Card>
       ))}
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm font-medium">{error}</p>}
     </div>
   )
 }

@@ -76,6 +76,7 @@ export function OwnerDashboardView({
   growthSlot,
   alertsSlot,
   setupSlot,
+  todayISO,
 }: {
   displayName: string
   pousadaName: string | null
@@ -98,6 +99,8 @@ export function OwnerDashboardView({
   alertsSlot?: React.ReactNode
   /** Configuração guiada (só enquanto falta passo obrigatório; só para quem configura). */
   setupSlot?: React.ReactNode
+  /** Hoje no fuso da pousada (badge de ficha de hospedagem nas próximas reservas). */
+  todayISO?: string
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -302,7 +305,7 @@ export function OwnerDashboardView({
             </Link>
           </div>
           <div className="mt-4 overflow-x-auto">
-            <OwnerReservationsTable reservations={upcomingReservations} />
+            <OwnerReservationsTable reservations={upcomingReservations} todayISO={todayISO} />
           </div>
         </div>
 

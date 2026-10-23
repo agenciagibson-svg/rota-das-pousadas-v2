@@ -91,6 +91,7 @@ export default async function DashboardPage() {
 
   const { arrivals, departures } = dayMovements(reservations, todayISO)
   const todaySummary = {
+    iso: todayISO,
     dateLabel: new Intl.DateTimeFormat('pt-BR', {
       weekday: 'long',
       day: 'numeric',
@@ -120,6 +121,7 @@ export default async function DashboardPage() {
       week={weeklyDailies(reservations, today.date)}
       reviews={summarizeReviews(reviews)}
       today={todaySummary}
+      todayISO={todayISO}
       setupSlot={setup ? <SetupChecklist progress={setup} /> : null}
       upcomingReservations={upcomingReservations(reservations, todayISO)}
       growthSlot={growth && pousada.status === 'publicada' ? <GrowthInvite card={growth} /> : null}

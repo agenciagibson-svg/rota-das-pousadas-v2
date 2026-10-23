@@ -36,6 +36,9 @@ insert into booking_guests(id, booking_id, guest_id, full_name, guest_type, docu
  ('88000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000881', null, 'Acompanhante Antigo', 'adult', 'RG', 'CCCCCCCCCCCCCCCC:DDDDDDDDDDDDDDDDDDDDDD==:QU5USUdP'),
  ('88000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000885', '40000000-0000-0000-0000-000000000089', 'Hóspede Oitenta Nove', 'responsible', null, null),
  ('88000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000885', null, 'Acompanhante do Outro', 'adult', 'RG', 'EEEEEEEEEEEEEEEE:FFFFFFFFFFFFFFFFFFFFFF==:T1VUUk8=');
+-- Anotação da equipe sobre o acompanhante: o reenvio da ficha pelo hóspede não pode apagá-la.
+update booking_guests set has_special_needs = true, operational_notes = 'Cadeira de rodas'
+ where id = '88000000-0000-0000-0000-000000000002';
 
 -- Atalho: envio válido com o que cada teste quiser trocar.
 create function test_submit(
@@ -179,6 +182,9 @@ select test_assert((select count(*) from booking_guests where booking_id = '3000
 select test_assert((select document_number from booking_guests
   where booking_id = '30000000-0000-0000-0000-000000000881' and full_name = 'Acompanhante Antigo') = 'CCCCCCCCCCCCCCCC:DDDDDDDDDDDDDDDDDDDDDD==:QU5USUdP',
   'documento do acompanhante mantido sem passar pelo cliente');
+select test_assert((select has_special_needs and operational_notes = 'Cadeira de rodas' from booking_guests
+  where booking_id = '30000000-0000-0000-0000-000000000881' and full_name = 'Acompanhante Antigo'),
+  'anotação da equipe sobre o acompanhante continua depois do reenvio');
 select test_assert((select count(*) from booking_guests
   where booking_id = '30000000-0000-0000-0000-000000000881' and guest_type = 'responsible'
     and id = '88000000-0000-0000-0000-000000000001' and guest_id = '40000000-0000-0000-0000-000000000088') = 1,

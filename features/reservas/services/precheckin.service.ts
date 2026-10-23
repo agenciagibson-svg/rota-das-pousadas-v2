@@ -77,8 +77,9 @@ export async function submitMyPrecheckin(input: PrecheckinInput): Promise<void> 
         birthDate: c.birthDate || null,
         documentType: plain ? c.documentType || null : null,
         documentNumber: plain ? encryptDocumentNumber(plain) : null,
-        // Só aponta para um documento antigo que exista nesta reserva.
-        keepDocumentOf: !plain && storedIds.has(c.keepDocumentOf) ? c.keepDocumentOf : null,
+        // Acompanhante que já existia nesta reserva: o banco mantém o documento
+        // antigo (se não veio outro) e as anotações da equipe sobre ele.
+        keepDocumentOf: storedIds.has(c.keepDocumentOf) ? c.keepDocumentOf : null,
       }
     }),
     expectedArrivalTime: input.expectedArrivalTime || null,
