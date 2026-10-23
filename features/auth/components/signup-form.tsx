@@ -74,7 +74,7 @@ export function SignupForm({ next }: SignupFormProps) {
         {...register('password')}
       />
       {formError && (
-        <p className="text-destructive text-sm font-medium">
+        <p role="alert" className="text-destructive text-sm font-medium">
           {formError}{' '}
           {formError.includes('já tem uma conta') && (
             <Link href={loginHref} className="underline underline-offset-4">

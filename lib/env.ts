@@ -21,6 +21,16 @@ export function isSupabaseConfigured(): boolean {
 }
 
 /**
+ * "Continuar com Google" (login e cadastro). Só aparece com
+ * `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, depois de o provedor Google estar
+ * ligado no Supabase (docs/configuracao/login-google-e-codigo.md) — sem isso o
+ * botão levaria a uma tela de erro do Supabase.
+ */
+export function isGoogleAuthEnabled(): boolean {
+  return cleanEnv(process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED ?? '') === 'true'
+}
+
+/**
  * Sem as credenciais do Supabase os repositórios caem nos dados de exemplo de
  * `lib/data.ts` — útil em desenvolvimento e nos testes. Em produção isso seria
  * uma vitrine de pousadas FICTÍCIAS no ar por causa de uma variável faltando;

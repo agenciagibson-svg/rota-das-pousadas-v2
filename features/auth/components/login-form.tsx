@@ -83,7 +83,11 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
       >
         Esqueci minha senha
       </Link>
-      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
+      {formError && (
+        <p role="alert" className="text-destructive text-sm font-medium">
+          {formError}
+        </p>
+      )}
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Entrando…' : 'Entrar'}
       </Button>

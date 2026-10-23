@@ -100,3 +100,33 @@ sequenceDiagram
   `repositories/account-deletion.repository.test.ts`,
   `features/auth/account-deletion.test.ts`.
 - Rollback: `supabase/rollback/0090_rollback.sql`.
+
+## Entrar sem senha: código por e-mail e Google (out/2026)
+
+- **Código por e-mail**: `requestEmailCodeAction` → `signInWithOtp`
+  (`shouldCreateUser: true`) e `verifyEmailCodeAction` → `verifyOtp` (type
+  `email`). Código errado soma tentativa falha na trava de login
+  (`assert_login_not_locked` / `record_login_attempt`, 0083); conta travada
+  também não recebe mais códigos. As mensagens não dizem se o e-mail tinha conta.
+- **Link do e-mail**: `/auth/confirm?token_hash=…&type=email&next=…` mostra um
+  botão "Entrar". O token só é consumido no toque (`confirmEmailLinkAction`),
+  nunca ao abrir a página, para que a pré-visualização do e-mail não o gaste.
+- **Google**: `startGoogleSignInAction` → `signInWithOAuth` (PKCE,
+  `skipBrowserRedirect`) devolve a URL e o navegador segue; o retorno passa por
+  `/auth/callback`, que chama `exchangeCodeForSession` e completa o nome do
+  perfil pelo `user_metadata` quando estiver vazio. O botão só aparece com
+  `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true` e fora do navegador do
+  Instagram/Facebook/TikTok, onde o Google recusa login.
+- **Destino**: todo `next` passa por `safeNextPath`. No `/auth/confirm`,
+  `nextFromLinkParam` também aceita o `{{ .RedirectTo }}` do nosso próprio
+  `/auth/callback` e desembrulha o caminho de dentro.
+- **Reserva**: com `next=/pousada/…/reservar…`, o login abre no código por
+  e-mail com o aviso "Para reservar, entre com seu e-mail…". O cadastro
+  incompleto continua sendo pedido na reserva (`getMyProfile().missing`).
+- Regras puras: `features/auth/passwordless.ts`; service:
+  `features/auth/services/passwordless.service.ts`.
+- Configuração fora do código: `docs/configuracao/login-google-e-codigo.md`.
+- Testes: `features/auth/passwordless.test.ts`,
+  `features/auth/passwordless-actions.test.ts`,
+  `app/(auth)/auth/callback/route.test.ts`, `proxy-auth-routes.test.ts`,
+  `supabase/tests/auth-google-codigo.sql`.

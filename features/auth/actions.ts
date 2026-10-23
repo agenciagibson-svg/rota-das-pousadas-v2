@@ -5,10 +5,15 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createAction } from '@/actions/create-action'
 import { reportError } from '@/lib/observability/report-error'
+import { publicEnv } from '@/lib/env'
 import { assertLoginNotLocked, recordLoginAttempt } from '@/repositories/auth-rate-limit.repository'
 import { getCurrentUser, updateMyName } from './services/auth.service'
 import {
+  emailCodeRequestSchema,
+  emailCodeVerifySchema,
+  emailLinkConfirmSchema,
   forgotPasswordSchema,
+  googleSignInSchema,
   loginSchema,
   resetPasswordSchema,
   signupSchema,
@@ -19,6 +24,13 @@ import { saveMyProfile } from './services/profile.service'
 import { deleteMyAccount } from './services/account-deletion.service'
 import { safeNextPath, travelerProfileSchema } from './profile'
 import { ACCOUNT_DELETED_PATH, deleteAccountSchema } from './account-deletion'
+import {
+  confirmEmailLink,
+  requestEmailCode,
+  startGoogleSignIn,
+  verifyEmailCode,
+} from './services/passwordless.service'
+import { authRedirectOrigin } from './passwordless'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -36,6 +48,21 @@ import { ACCOUNT_DELETED_PATH, deleteAccountSchema } from './account-deletion'
 async function clientIp(): Promise<string | null> {
   const h = await headers()
   return h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || null
+}
+
+/**
+ * Para onde o Supabase devolve a pessoa (Google e link do e-mail): o site
+ * oficial em produção, o próprio domínio no preview da Vercel e o localhost
+ * em desenvolvimento (ver `authRedirectOrigin`).
+ */
+async function redirectOrigin(): Promise<string> {
+  const h = await headers()
+  return authRedirectOrigin({
+    siteUrl: publicEnv.siteUrl,
+    host: h.get('x-forwarded-host') ?? h.get('host'),
+    vercelEnv: process.env.VERCEL_ENV,
+    nodeEnv: process.env.NODE_ENV,
+  })
 }
 
 type SignInError = { message: string; code?: string; status?: number } | null
@@ -203,4 +230,46 @@ export const deleteMyAccountAction = createAction(deleteAccountSchema, async (in
   await deleteMyAccount(input.confirmEmail)
   revalidatePath('/', 'layout')
   return { redirectTo: ACCOUNT_DELETED_PATH }
+})
+
+/**
+ * "Receber código por e-mail" (passo 1). A resposta é a mesma exista ou não
+ * a conta — a conta nova é criada por trás no primeiro código.
+ */
+export const requestEmailCodeAction = createAction(emailCodeRequestSchema, async (input) => {
+  const [ip, origin] = await Promise.all([clientIp(), redirectOrigin()])
+  await requestEmailCode({ email: input.email, next: input.next, ip, redirectOrigin: origin })
+  return { sent: true as const }
+})
+
+/** Passo 2: confere o código e entra. Código errado soma tentativa falha na trava. */
+export const verifyEmailCodeAction = createAction(emailCodeVerifySchema, async (input) => {
+  const ip = await clientIp()
+  const result = await verifyEmailCode({
+    email: input.email,
+    code: input.code,
+    next: input.next,
+    ip,
+  })
+  revalidatePath('/', 'layout')
+  return result
+})
+
+/** Link do e-mail aberto em `/auth/confirm`: entra quando a pessoa toca no botão. */
+export const confirmEmailLinkAction = createAction(emailLinkConfirmSchema, async (input) => {
+  const result = await confirmEmailLink({
+    tokenHash: input.tokenHash,
+    type: input.type,
+    next: input.next,
+  })
+  revalidatePath('/', 'layout')
+  return result
+})
+
+/**
+ * "Continuar com Google": devolve a URL de autorização e o navegador segue
+ * (o cookie do PKCE vai junto nesta resposta). Volta por `/auth/callback`.
+ */
+export const startGoogleSignInAction = createAction(googleSignInSchema, async (input) => {
+  return startGoogleSignIn({ next: input.next, redirectOrigin: await redirectOrigin() })
 })
