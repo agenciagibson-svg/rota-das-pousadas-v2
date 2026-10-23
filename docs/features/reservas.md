@@ -96,6 +96,39 @@ Rodar no Supabase (SQL Editor), em ordem:
   Componentes: `features/reservas/components/fnrh-print-view.tsx`,
   `print-button.tsx`, `guest-type-labels.ts`.
 
+## Pré-check-in online (0088)
+
+O hóspede completa a ficha antes de chegar; a recepção só confere.
+
+- Página `/minhas-reservas/[id]/pre-check-in` (login obrigatório; reserva de
+  outra conta responde 404). Três blocos: "Seus dados", "Quem vai com você",
+  "Chegada". Pré-preenche com o cadastro do viajante (`getMyProfile`) e com o
+  que já está na ficha; depois de enviada, a ficha manda.
+- Banco: `bookings.precheckin_completed_at` (nulo = pendente);
+  `get_my_precheckin` (leitura — documento só tipo + 4 últimos, nunca o
+  cifrado; traz `canSubmit`, `maxCompanions`, `maxInfants`) e
+  `submit_precheckin` (grava ficha do responsável em `guests`, substitui os
+  acompanhantes em `booking_guests` sem tocar no responsável, horário previsto
+  e a marca). Só `authenticated`, só o dono: `bookings.guest_id = auth.uid()`
+  E `guests.user_id = auth.uid()`; só `pending`/`confirmed` e até o checkout.
+- Documento: cifrado no service (`precheckin.service.ts`). O banco recusa
+  documento fora do formato cifrado. Acompanhante com documento já salvo
+  manda `keepDocumentOf` (id da linha) e o banco copia o valor sem ele passar
+  pelo navegador.
+- Limite de acompanhantes: adultos + crianças da reserva (até a capacidade da
+  acomodação) menos o responsável; bebês à parte (até 2 ou o que a reserva
+  já tem).
+- Onde aparece: card em `/minhas-reservas` ("Preencher ficha" / "Ficha
+  enviada"); e-mails de confirmação e lembrete ganham "Preencher ficha de
+  hospedagem" enquanto pendente (só reserva com conta de hóspede); painel com
+  badge "Ficha completa"/"Ficha pendente" para chegadas de hoje em diante e,
+  no detalhe, "Copiar link do pré-check-in".
+- `OwnerReservation.precheckinDone` vem de `listReservationsByPousada`.
+- A FNRH imprimível não mudou: lê `guests` e `booking_guests`, as mesmas
+  tabelas que o pré-check-in grava.
+- Regras puras e schema Zod: `features/reservas/precheckin.ts`. Teste SQL:
+  `supabase/tests/pre-check-in.sql`.
+
 ## Expiração automática de pré-reserva (0050)
 
 - Até aqui só existia o botão manual "Expirar" (`expire_pending_booking`,

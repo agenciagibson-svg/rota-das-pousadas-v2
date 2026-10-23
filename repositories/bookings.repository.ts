@@ -311,6 +311,7 @@ export async function listBookingsByGuest(_guestId: string): Promise<Booking[]> 
       awaitingPixApproval: awaitingApproval.has(r.id),
       cancellationReason: r.cancellation_reason,
       createdAt: r.created_at,
+      precheckinCompletedAt: r.precheckin_completed_at ?? null,
     }
   })
 }
@@ -371,7 +372,7 @@ export async function getBookingDetailById(
   const { data, error } = await supabase
     .from('bookings')
     .select(
-      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, version, created_at, updated_at',
+      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, precheckin_completed_at, version, created_at, updated_at',
     )
     .eq('id', bookingId)
     .eq('pousada_id', pousadaId)
@@ -442,6 +443,7 @@ export async function getBookingDetailById(
     noShowReason: data.no_show_reason,
     noShowAt: data.no_show_at,
     paymentDueAt: data.payment_due_at,
+    precheckinCompletedAt: data.precheckin_completed_at,
     version: data.version,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
@@ -541,6 +543,10 @@ export type BookingNotificationContext = {
   roomName: string
   /** 0071 — opcionais: ausentes em respostas de RPC anteriores à migration. */
   status?: string
+  /** 0088 — ficha enviada pelo hóspede (pré-check-in online). */
+  precheckinDone?: boolean
+  /** 0088 — a reserva tem conta de hóspede no site (só assim o link da ficha abre). */
+  hasTravelerAccount?: boolean
   adults?: number
   children?: number
   paymentDueAt?: string | null

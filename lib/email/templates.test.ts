@@ -200,6 +200,31 @@ describe('memberInviteEmail', () => {
   })
 })
 
+describe('pré-check-in nos e-mails (0088)', () => {
+  const pending = { ...ctx, status: 'confirmed', precheckinDone: false, hasTravelerAccount: true }
+  const link = `https://rotadaspousadas.com.br/minhas-reservas/${ctx.bookingId}/pre-check-in`
+
+  it('confirmação e lembrete levam o botão enquanto a ficha não foi enviada', () => {
+    const confirmed = bookingConfirmedEmail(pending)
+    expect(confirmed.html).toContain('Preencher ficha de hospedagem')
+    expect(confirmed.html).toContain(link)
+    expect(confirmed.text).toContain(link)
+    const reminder = checkinReminderEmail(pending)
+    expect(reminder.html).toContain('Preencher ficha de hospedagem')
+    expect(reminder.text).toContain(link)
+  })
+
+  it('ficha já enviada, reserva sem conta ou contexto antigo: sem botão', () => {
+    expect(bookingConfirmedEmail({ ...pending, precheckinDone: true }).html).not.toContain(
+      'Preencher ficha',
+    )
+    expect(checkinReminderEmail({ ...pending, hasTravelerAccount: false }).html).not.toContain(
+      'Preencher ficha',
+    )
+    expect(bookingConfirmedEmail(ctx).html).not.toContain('Preencher ficha')
+  })
+})
+
 describe('app da estadia nos e-mails', () => {
   it('confirmação e lembrete levam ao app da reserva', () => {
     const confirmed = bookingConfirmedEmail(ctx)

@@ -3,6 +3,7 @@ import type { BookingNotificationContext } from '@/repositories/bookings.reposit
 import type { ReviewRequestTarget } from '@/repositories/reviews.repository'
 import { REVIEW_RATINGS, reviewPagePath } from '@/features/estadia/review'
 import { PAYMENT_REVIEW_TEXT, type PaymentReviewKind } from '@/features/pagamentos/pix'
+import { emailOffersPrecheckin, precheckinPath } from '@/features/reservas/precheckin'
 
 /**
  * Templates dos 3 e-mails transacionais (visual aprovado em 27/09/2026 — mesma
@@ -433,8 +434,30 @@ function stayAppBlock(ctx: BookingNotificationContext): string {
 </td></tr></table>`
 }
 
+/** Link do pré-check-in (0088), ou `null` se a ficha já foi enviada. */
+function precheckinLink(ctx: BookingNotificationContext): string | null {
+  return emailOffersPrecheckin(ctx) ? `${publicEnv.siteUrl}${precheckinPath(ctx.bookingId)}` : null
+}
+
+/** Bloco "Preencher ficha de hospedagem" (0088): a recepção só confere na chegada. */
+function precheckinBlock(link: string | null): string {
+  if (!link) return ''
+  const href = esc(link)
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;background:${C.linen};border:1px solid ${C.border};border-radius:16px;">
+<tr><td style="padding:16px 18px;">
+<p style="margin:0;font:700 14px ${SANS};color:${C.ink};">Adiante seu check-in</p>
+<p style="margin:6px 0 12px;font:500 13px/1.55 ${SANS};color:${C.muted};">Preencha a ficha de hospedagem agora, com seus dados e os de quem vai com você. Leva poucos minutos e, na chegada, é só confirmar com a recepção.</p>
+<a href="${href}" style="display:inline-block;background:${C.ink};color:${C.linen};font:700 13px ${SANS};text-decoration:none;padding:10px 16px;border-radius:999px;">Preencher ficha de hospedagem</a>
+</td></tr></table>`
+}
+
+function precheckinTextLine(link: string | null): string {
+  return link ? `\nPreencher ficha de hospedagem: ${link}` : ''
+}
+
 export function bookingConfirmedEmail(ctx: BookingNotificationContext): Email {
   const link = `${publicEnv.siteUrl}/minhas-reservas`
+  const fichaLink = precheckinLink(ctx)
   const subject = `Reserva confirmada — ${ctx.pousada.name} (${ctx.code})`
   const rows = rowsTable(
     [
@@ -468,16 +491,17 @@ export function bookingConfirmedEmail(ctx: BookingNotificationContext): Email {
     subtitle: `${ctx.pousada.name} · ${formatStayRange(ctx.checkin, ctx.checkout)}`,
     intro: `Pagamento recebido. Guarde este e-mail: ele é o seu comprovante da reserva ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>.`,
     ticketHtml: ticket(ctx, rows),
-    extraHtml: arrivalNotice(ctx) + stayAppBlock(ctx) + policiesHtml,
+    extraHtml: precheckinBlock(fichaLink) + arrivalNotice(ctx) + stayAppBlock(ctx) + policiesHtml,
     cta: { href: link, label: 'Ver minha reserva' },
   })
   const address = addressLine(ctx)
-  const text = `Sua reserva ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está confirmada.\nCódigo: ${ctx.code}\nAcomodação: ${ctx.roomName}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\nCheck-out: ${formatDateBR(ctx.checkout)} (até ${ctx.pousada.checkoutTime})\nTotal pago: ${formatCurrencyBRL(ctx.total)}\n${address ? `Endereço: ${address}\n` : ''}\nVeja os detalhes em: ${link}\nApp da estadia (pedidos e recepção): ${publicEnv.siteUrl}/estadia/${ctx.bookingId}`
+  const text = `Sua reserva ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está confirmada.\nCódigo: ${ctx.code}\nAcomodação: ${ctx.roomName}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\nCheck-out: ${formatDateBR(ctx.checkout)} (até ${ctx.pousada.checkoutTime})\nTotal pago: ${formatCurrencyBRL(ctx.total)}\n${address ? `Endereço: ${address}\n` : ''}\nVeja os detalhes em: ${link}${precheckinTextLine(fichaLink)}\nApp da estadia (pedidos e recepção): ${publicEnv.siteUrl}/estadia/${ctx.bookingId}`
   return { subject, html, text }
 }
 
 export function checkinReminderEmail(ctx: BookingNotificationContext, now = new Date()): Email {
   const link = `${publicEnv.siteUrl}/minhas-reservas`
+  const fichaLink = precheckinLink(ctx)
   const subject = `Sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name} está chegando — check-in ${formatDateBR(ctx.checkin)}`
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: safeTimeZone(ctx.pousada.timezone),
@@ -500,11 +524,11 @@ export function checkinReminderEmail(ctx: BookingNotificationContext, now = new 
     subtitle: `${ctx.pousada.name} · check-in em ${formatDayMonth(ctx.checkin)}`,
     intro: `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} <strong>${esc(ctx.pousada.name)}</strong>. Aqui vai o essencial para a chegada.`,
     ticketHtml: ticket(ctx, rows),
-    extraHtml: arrivalNotice(ctx) + stayAppBlock(ctx),
+    extraHtml: precheckinBlock(fichaLink) + arrivalNotice(ctx) + stayAppBlock(ctx),
     cta: { href: link, label: 'Ver detalhes da reserva' },
   })
   const address = addressLine(ctx)
-  const text = `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}\nApp da estadia (pedidos e recepção): ${publicEnv.siteUrl}/estadia/${ctx.bookingId}`
+  const text = `Faltam poucos dias para sua estadia ${emPousada(ctx.pousada.name)} ${ctx.pousada.name}.\nCódigo: ${ctx.code}\nCheck-in: ${formatDateBR(ctx.checkin)} (a partir das ${ctx.pousada.checkinTime})\n${address ? `Endereço: ${address}\n` : ''}\nDetalhes em: ${link}${precheckinTextLine(fichaLink)}\nApp da estadia (pedidos e recepção): ${publicEnv.siteUrl}/estadia/${ctx.bookingId}`
   return { subject, html, text }
 }
 

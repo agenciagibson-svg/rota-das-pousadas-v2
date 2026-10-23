@@ -58,6 +58,8 @@ export type Booking = {
   createdAt: string
   /** 0075: comprovante de Pix direto enviado, esperando a pousada aprovar. */
   awaitingPixApproval?: boolean
+  /** 0088: quando o hóspede enviou o pré-check-in. `null` = ficha pendente. */
+  precheckinCompletedAt?: string | null
 }
 
 export type BookingCompanion = {
@@ -166,6 +168,8 @@ export type BookingDetail = {
   noShowReason: string | null
   noShowAt: string | null
   paymentDueAt: string | null
+  /** 0088: quando o hóspede enviou o pré-check-in. `null` = ficha pendente. */
+  precheckinCompletedAt: string | null
   version: number
   createdAt: string
   updatedAt: string

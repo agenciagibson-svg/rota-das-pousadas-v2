@@ -8,8 +8,18 @@ import { ORIGIN_LABEL } from './origin-labels'
 import type { OwnerReservation } from '../types'
 import { formatBRL, formatDateTime, formatISODate, isEmail, plural } from '@/lib/format'
 import { OwnerReservationActions } from './owner-reservation-actions'
+import { PrecheckinBadge } from '@/features/reservas/components/precheckin-badge'
+import { isoDateInTimeZone } from '@/lib/dates'
 
-export function OwnerReservationsTable({ reservations }: { reservations: OwnerReservation[] }) {
+export function OwnerReservationsTable({
+  reservations,
+  todayISO,
+}: {
+  reservations: OwnerReservation[]
+  /** "Hoje" no fuso da pousada; sem ele, Brasília (decide o badge da ficha). */
+  todayISO?: string
+}) {
+  const today = todayISO ?? isoDateInTimeZone(new Date())
   if (reservations.length === 0) {
     return (
       <EmptyState
@@ -48,6 +58,12 @@ export function OwnerReservationsTable({ reservations }: { reservations: OwnerRe
                       Pix para aprovar
                     </Badge>
                   )}
+                  <PrecheckinBadge
+                    status={reservation.status}
+                    checkin={reservation.checkin}
+                    precheckinDone={reservation.precheckinDone}
+                    todayISO={today}
+                  />
                   {reservation.needsAttention && (
                     <Badge variant="destructiveSoft" size="sm">
                       <AlertTriangle className="mr-1 size-3" />

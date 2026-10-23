@@ -87,6 +87,8 @@ function reservation(
     paymentDueAt: status === 'pending' ? `${addDays(createdAt, 1)}T18:00:00-03:00` : null,
     createdAt: `${createdAt}T10:00:00-03:00`,
     needsAttention: false,
+    // Ficha de exemplo: metade das chegadas já veio preenchida.
+    precheckinDone: status !== 'pending' && i % 2 === 0,
   }
 }
 

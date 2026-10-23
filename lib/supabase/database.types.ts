@@ -261,6 +261,7 @@ export type Database = {
           payment_due_at: string | null
           pets: boolean
           pousada_id: string
+          precheckin_completed_at: string | null
           responsible_guest_id: string
           review_reminded_at: string | null
           review_requested_at: string | null
@@ -317,6 +318,7 @@ export type Database = {
           payment_due_at?: string | null
           pets?: boolean
           pousada_id: string
+          precheckin_completed_at?: string | null
           responsible_guest_id: string
           review_reminded_at?: string | null
           review_requested_at?: string | null
@@ -373,6 +375,7 @@ export type Database = {
           payment_due_at?: string | null
           pets?: boolean
           pousada_id?: string
+          precheckin_completed_at?: string | null
           responsible_guest_id?: string
           review_reminded_at?: string | null
           review_requested_at?: string | null
@@ -3247,6 +3250,7 @@ export type Database = {
           guest_name: string | null
           guest_email: string | null
           created_at: string
+          precheckin_completed_at: string | null
         }[]
       }
       list_pousada_reviews: {
@@ -3311,6 +3315,30 @@ export type Database = {
           p_enabled: boolean
         }
         Returns: undefined
+      }
+      get_my_precheckin: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      submit_precheckin: {
+        Args: {
+          p_booking_id: string
+          p_phone: string
+          p_birth_date: string
+          p_nationality: string
+          p_country: string
+          p_city: string
+          p_state: string
+          p_address: string
+          p_cep: string
+          p_document_type: string
+          p_document_number: string
+          p_document_number_hash: string
+          p_document_last4: string
+          p_companions: Json
+          p_expected_arrival_time: string
+        }
+        Returns: Json
       }
       submit_payment_proof: {
         Args: {

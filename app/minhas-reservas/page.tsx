@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   CalendarCheck,
+  CheckCircle2,
+  ClipboardList,
   Clock3,
   CreditCard,
   ExternalLink,
@@ -20,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { BOOKING_STATUS, CancelBookingButton } from '@/features/reservas'
+import { guestPrecheckinState, precheckinPath } from '@/features/reservas/precheckin'
 import type { BookingStatus } from '@/features/reservas'
 import { getCurrentUser, getMyBookingsReconciled } from '@/server/queries'
 import {
@@ -153,6 +156,8 @@ export default async function MyBookingsPage({
                   // esta reserva não segura mais o quarto; senão cairia em datas ocupadas.
                   const canRebook =
                     expired || !isActiveStatus(booking.status) || booking.status === 'checked_out'
+                  // Pré-check-in (0088). No modo demonstração não há ficha para abrir.
+                  const precheckin = demo ? null : guestPrecheckinState(booking, today)
 
                   return (
                     <Card
@@ -293,6 +298,33 @@ export default async function MyBookingsPage({
                                   App da estadia
                                 </Link>
                               )}
+                            {precheckin === 'todo' && (
+                              <Link
+                                href={precheckinPath(booking.id)}
+                                className={buttonVariants({ variant: 'accent', size: 'pill' })}
+                              >
+                                <ClipboardList className="size-3.5" />
+                                Preencher ficha
+                              </Link>
+                            )}
+                            {precheckin === 'done' &&
+                              (booking.status === 'checked_in' ? (
+                                <Badge variant="primarySoft" size="lg">
+                                  <CheckCircle2 className="size-3.5" />
+                                  Ficha enviada
+                                </Badge>
+                              ) : (
+                                <Link
+                                  href={precheckinPath(booking.id)}
+                                  className={buttonVariants({
+                                    variant: 'secondary',
+                                    size: 'pill',
+                                  })}
+                                >
+                                  <CheckCircle2 className="size-3.5" />
+                                  Ficha enviada
+                                </Link>
+                              ))}
                             {canRebook && (
                               <Link
                                 href={{

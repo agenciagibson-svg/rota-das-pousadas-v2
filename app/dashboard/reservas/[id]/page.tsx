@@ -11,6 +11,7 @@ import {
 } from '@/features/pedidos/services/orders.service'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ShieldAlert } from 'lucide-react'
+import { DEFAULT_TIMEZONE, isoDateInTimeZone } from '@/lib/dates'
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   if (await sectionDenied('reservas')) return <NoSectionAccess section="reservas" title="Reserva" />
@@ -60,6 +61,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       consumption={consumption}
       sellable={sellable}
       payments={payments}
+      todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
     />
   )
 }

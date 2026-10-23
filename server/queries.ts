@@ -20,6 +20,7 @@ import {
   getBookableRoom as bookableRoom,
   listPublicRooms as publicRooms,
 } from '@/features/reservas/services/bookings.service'
+import { getMyPrecheckin } from '@/features/reservas/services/precheckin.service'
 import {
   getOwnerPousada as ownerPousada,
   getOwnerSettings as ownerSettings,
@@ -100,6 +101,8 @@ export const getStayReview = cache((bookingId: string) => getStayReviewContext(b
 
 /** Reservas do usuário autenticado, memoizadas por request. */
 export const getMyBookings = cache(() => listMyBookings())
+/** Ficha do pré-check-in da reserva do hóspede logado (0088). `null` = não é dele. */
+export const getMyPrecheckinData = cache((bookingId: string) => getMyPrecheckin(bookingId))
 
 /**
  * Igual a `getMyBookings`, mas antes confere no Mercado Pago as reservas

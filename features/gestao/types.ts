@@ -25,6 +25,8 @@ export type OwnerReservation = {
   needsAttention: boolean
   /** 0075: hóspede enviou comprovante de Pix direto — falta a equipe aprovar. */
   proofPending?: boolean
+  /** 0088: hóspede já enviou o pré-check-in (`bookings.precheckin_completed_at`). */
+  precheckinDone: boolean
 }
 
 /** Pousada gerida pelo usuário atual. */

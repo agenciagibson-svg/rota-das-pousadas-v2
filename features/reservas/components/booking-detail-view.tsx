@@ -24,6 +24,11 @@ import {
   type ProofForReview,
 } from '@/features/pagamentos/components/proof-review-panel'
 import { BookingPaymentsPanel } from '@/features/pagamentos/components/booking-payments-panel'
+import { publicEnv } from '@/lib/env'
+import { isoDateInTimeZone } from '@/lib/dates'
+import { precheckinPath } from '../precheckin'
+import { PrecheckinBadge } from './precheckin-badge'
+import { CopyPrecheckinLink } from './copy-precheckin-link'
 import type { BookingPayments } from '@/features/pagamentos/services/booking-payment.service'
 
 const fmtDate = formatISODate
@@ -37,6 +42,7 @@ export function BookingDetailView({
   consumption = null,
   sellable = [],
   payments = null,
+  todayISO,
 }: {
   displayName: string
   pousadaName: string
@@ -47,9 +53,15 @@ export function BookingDetailView({
   sellable?: SellableItem[]
   /** Pagamentos da diária (0086) — `null` para quem não vê valores. */
   payments?: BookingPayments | null
+  /** "Hoje" no fuso da pousada; sem ele, Brasília. */
+  todayISO?: string
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = !isFinalStatus(booking.status)
+  const today = todayISO ?? isoDateInTimeZone(new Date())
+  // Pré-check-in (0088): o link só abre para o hóspede com conta no site, antes do check-in.
+  const precheckinOpen =
+    (booking.status === 'pending' || booking.status === 'confirmed') && booking.checkout >= today
 
   return (
     <OwnerDashboardShell
@@ -65,6 +77,13 @@ export function BookingDetailView({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Badge variant={status.variant}>{status.label}</Badge>
+              <PrecheckinBadge
+                status={booking.status}
+                checkin={booking.checkin}
+                precheckinDone={booking.precheckinCompletedAt !== null}
+                todayISO={today}
+                size="md"
+              />
               <span className="text-muted-foreground text-sm">{ORIGIN_LABEL[booking.origin]}</span>
               {booking.externalCode && (
                 <span className="text-muted-foreground text-xs">
@@ -291,6 +310,24 @@ export function BookingDetailView({
               Imprimir ficha FNRH
             </Link>
           </div>
+          {precheckinOpen && (
+            <div className="bg-secondary/60 mt-4 flex flex-col gap-3 rounded-2xl p-4 text-sm">
+              {booking.travelerUserId ? (
+                <>
+                  <p className="text-muted-foreground">
+                    {booking.precheckinCompletedAt
+                      ? `O hóspede enviou a ficha em ${fmtDateTime(booking.precheckinCompletedAt)}. Na chegada, só confira.`
+                      : 'O hóspede ainda não preencheu a ficha. Mande o link pelo WhatsApp: ele preenche pelo celular, com login na conta dele.'}
+                  </p>
+                  <CopyPrecheckinLink url={`${publicEnv.siteUrl}${precheckinPath(booking.id)}`} />
+                </>
+              ) : (
+                <p className="text-muted-foreground">
+                  Reserva sem conta de hóspede no site: a ficha é preenchida aqui ou na recepção.
+                </p>
+              )}
+            </div>
+          )}
           <div className="mt-4">
             <BookingCompanionsPanel booking={booking} canEdit={canEdit} />
           </div>

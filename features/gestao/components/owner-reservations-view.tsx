@@ -155,7 +155,7 @@ export function OwnerReservationsView({
               </Link>
             </div>
             <div className="mt-4">
-              <OwnerReservationsTable reservations={reservations} />
+              <OwnerReservationsTable reservations={reservations} todayISO={todayISO} />
             </div>
           </Card>
         </div>
