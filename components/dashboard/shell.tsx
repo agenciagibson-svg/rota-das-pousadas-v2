@@ -42,6 +42,11 @@ export function DashboardShell({
       })
     : nav
   const roleText = role ? roleLabel(role) : user.role
+  // "Painel do proprietário" só para o proprietário; a equipe vê o nome neutro.
+  const subText =
+    role && role !== 'proprietario' && brandSub === 'Painel do proprietário'
+      ? 'Painel da pousada'
+      : brandSub
   const accentBg = accent === 'ocean' ? 'bg-ocean' : 'bg-primary'
   const accentText = accent === 'ocean' ? 'text-ocean' : 'text-primary'
   const accentSoft = accent === 'ocean' ? 'bg-ocean/10' : 'bg-primary/10'
@@ -66,7 +71,7 @@ export function DashboardShell({
                 <span className="text-foreground font-display text-base font-medium">
                   {brandLabel}
                 </span>
-                <span className="text-muted-foreground mt-0.5 text-xs">{brandSub}</span>
+                <span className="text-muted-foreground mt-0.5 text-xs">{subText}</span>
               </span>
             </Link>
             <button onClick={() => setOpen(false)} className="lg:hidden" aria-label="Fechar menu">

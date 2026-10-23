@@ -4,6 +4,7 @@ import {
   addDays,
   calculateOccupancy,
   dayMovements,
+  isAwaitingArrival,
   monthlyRevenue,
   nightsWithin,
   pousadaToday,
@@ -244,5 +245,15 @@ describe('upcomingReservations', () => {
       '2026-09-18',
       '2026-09-19',
     ])
+  })
+})
+
+describe('isAwaitingArrival', () => {
+  it('só pendente e confirmada ainda vão chegar', () => {
+    expect(isAwaitingArrival('pending')).toBe(true)
+    expect(isAwaitingArrival('confirmed')).toBe(true)
+    expect(isAwaitingArrival('checked_in')).toBe(false)
+    expect(isAwaitingArrival('checked_out')).toBe(false)
+    expect(isAwaitingArrival('quote')).toBe(false)
   })
 })

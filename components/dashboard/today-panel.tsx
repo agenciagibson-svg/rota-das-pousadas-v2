@@ -10,6 +10,7 @@ import { PrecheckinBadge } from '@/features/reservas/components/precheckin-badge
 import type { OwnerReservation } from '@/features/gestao/types'
 import { formatBRL, plural } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { isAwaitingArrival } from '@/features/dashboard/metrics'
 
 export type TodaySummary = {
   /** Data de hoje no fuso da pousada, já formatada ("sexta, 23 de outubro"). */
@@ -117,11 +118,24 @@ function Row({
  * agora (quem chega, quem sai, o que arrumar), com o botão da ação ali mesmo.
  * Gráficos ficam abaixo.
  */
-export function TodayPanel({ today, showMoney }: { today: TodaySummary; showMoney: boolean }) {
+export function TodayPanel({
+  today,
+  showMoney,
+  showBookings = true,
+}: {
+  today: TodaySummary
+  showMoney: boolean
+  /**
+   * `false` para quem não lê reservas (governança): o bloco mostra só o
+   * trabalho do dia (quartos para arrumar e pedidos), nunca "0 chegadas" de
+   * uma lista que esse papel nem consegue ver.
+   */
+  showBookings?: boolean
+}) {
   // Saída de hoje que ainda não fez check-in não é "saída": é reserva com problema
   // e já aparece em Reservas. Aqui só quem está hospedado.
   const departures = today.departures.filter((r) => r.status === 'checked_in')
-  const arrivals = today.arrivals.filter((r) => r.status !== 'checked_in')
+  const arrivals = today.arrivals.filter((r) => isAwaitingArrival(r.status))
 
   return (
     <Card className="mb-5 p-5" aria-labelledby="hoje-title">
@@ -134,64 +148,87 @@ export function TodayPanel({ today, showMoney }: { today: TodaySummary; showMone
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Counter icon={LogIn} label="chegadas" value={arrivals.length} />
-        <Counter icon={LogOut} label="saídas" value={departures.length} />
-        <Counter icon={BedDouble} label="hospedados agora" value={today.inHouse} />
-        {today.newOrders !== null ? (
-          <Counter
-            icon={ConciergeBell}
-            label="pedidos novos"
-            value={today.newOrders}
-            href="/dashboard/pedidos"
-          />
-        ) : today.roomsToClean !== null ? (
-          <Counter
-            icon={Sparkles}
-            label="quartos para arrumar"
-            value={today.roomsToClean}
-            href="/dashboard/acomodacoes"
-          />
-        ) : null}
-      </div>
-
-      {arrivals.length === 0 && departures.length === 0 ? (
-        <p className="text-muted-foreground mt-4 text-sm">Nenhuma chegada ou saída hoje.</p>
-      ) : (
-        <div className="mt-4 grid gap-5 lg:grid-cols-2">
-          {arrivals.length > 0 && (
-            <section aria-label="Chegadas de hoje">
-              <h3 className="text-foreground text-sm font-semibold">Chegam hoje</h3>
-              <ul>
-                {arrivals.map((r) => (
-                  <Row
-                    key={r.id}
-                    reservation={r}
-                    kind="in"
-                    showMoney={showMoney}
-                    todayISO={today.iso}
-                  />
-                ))}
-              </ul>
-            </section>
+      {!showBookings ? (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {today.roomsToClean !== null && (
+            <Counter
+              icon={Sparkles}
+              label="quartos para arrumar"
+              value={today.roomsToClean}
+              href="/dashboard/acomodacoes"
+            />
           )}
-          {departures.length > 0 && (
-            <section aria-label="Saídas de hoje">
-              <h3 className="text-foreground text-sm font-semibold">Saem hoje</h3>
-              <ul>
-                {departures.map((r) => (
-                  <Row
-                    key={r.id}
-                    reservation={r}
-                    kind="out"
-                    showMoney={showMoney}
-                    todayISO={today.iso}
-                  />
-                ))}
-              </ul>
-            </section>
+          {today.newOrders !== null && (
+            <Counter
+              icon={ConciergeBell}
+              label="pedidos novos"
+              value={today.newOrders}
+              href="/dashboard/pedidos"
+            />
           )}
         </div>
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Counter icon={LogIn} label="chegadas" value={arrivals.length} />
+            <Counter icon={LogOut} label="saídas" value={departures.length} />
+            <Counter icon={BedDouble} label="hospedados agora" value={today.inHouse} />
+            {today.newOrders !== null ? (
+              <Counter
+                icon={ConciergeBell}
+                label="pedidos novos"
+                value={today.newOrders}
+                href="/dashboard/pedidos"
+              />
+            ) : today.roomsToClean !== null ? (
+              <Counter
+                icon={Sparkles}
+                label="quartos para arrumar"
+                value={today.roomsToClean}
+                href="/dashboard/acomodacoes"
+              />
+            ) : null}
+          </div>
+
+          {arrivals.length === 0 && departures.length === 0 ? (
+            <p className="text-muted-foreground mt-4 text-sm">Nenhuma chegada ou saída hoje.</p>
+          ) : (
+            <div className="mt-4 grid gap-5 lg:grid-cols-2">
+              {arrivals.length > 0 && (
+                <section aria-label="Chegadas de hoje">
+                  <h3 className="text-foreground text-sm font-semibold">Chegam hoje</h3>
+                  <ul>
+                    {arrivals.map((r) => (
+                      <Row
+                        key={r.id}
+                        reservation={r}
+                        kind="in"
+                        showMoney={showMoney}
+                        todayISO={today.iso}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {departures.length > 0 && (
+                <section aria-label="Saídas de hoje">
+                  <h3 className="text-foreground text-sm font-semibold">Saem hoje</h3>
+                  <ul>
+                    {departures.map((r) => (
+                      <Row
+                        key={r.id}
+                        reservation={r}
+                        kind="out"
+                        showMoney={showMoney}
+                        todayISO={today.iso}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          )}
+        </>
       )}
     </Card>
   )

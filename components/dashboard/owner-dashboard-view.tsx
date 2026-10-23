@@ -77,6 +77,9 @@ export function OwnerDashboardView({
   alertsSlot,
   setupSlot,
   todayISO,
+  showBookings = true,
+  showReviews = true,
+  showMarketing = true,
 }: {
   displayName: string
   pousadaName: string | null
@@ -101,6 +104,16 @@ export function OwnerDashboardView({
   setupSlot?: React.ReactNode
   /** Hoje no fuso da pousada (badge de ficha de hospedagem nas próximas reservas). */
   todayISO?: string
+  /**
+   * Blocos de reservas (números, ocupação, agenda, semana). `false` para quem
+   * não lê reservas (governança): sem isso a tela mostrava zeros e "nenhuma
+   * acomodação", como se a pousada estivesse vazia.
+   */
+  showBookings?: boolean
+  /** Resumo de avaliações: só para quem abre Avaliações. */
+  showReviews?: boolean
+  /** Card de divulgação: só para quem abre Marketing. */
+  showMarketing?: boolean
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -205,223 +218,245 @@ export function OwnerDashboardView({
       )}
       {setupSlot}
       {alertsSlot}
-      {today && <TodayPanel today={today} showMoney={showRevenue} />}
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {visibleStats.map((s) => (
-          <StatCard
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            delta={s.delta}
-            up={s.up}
-            icon={s.icon}
-          />
-        ))}
-      </div>
+      {today && <TodayPanel today={today} showMoney={showRevenue} showBookings={showBookings} />}
+      {showBookings && (
+        <>
+          {/* Stat cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {visibleStats.map((s) => (
+              <StatCard
+                key={s.label}
+                label={s.label}
+                value={s.value}
+                delta={s.delta}
+                up={s.up}
+                icon={s.icon}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {growthSlot}
 
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-        {/* Revenue */}
-        <div className="border-border bg-card rounded-2xl border p-6 xl:col-span-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-foreground font-semibold">Receita por mês</h2>
-              <p className="text-muted-foreground text-sm">
-                Últimos 12 meses, pelo mês do check-in
-              </p>
-            </div>
-            {showRevenue && (
-              <span className="text-primary text-sm font-semibold">{brl(activeRevenue)} ativo</span>
-            )}
-          </div>
-          <div className="mt-6 h-48">
-            {!showRevenue ? (
-              <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-                Os valores de faturamento aparecem para proprietário, gestor e financeiro.
-              </div>
-            ) : revenueSeries.some((point) => point.value > 0) ? (
-              <AreaChart
-                data={revenueSeries.map((point) => point.value)}
-                labels={revenueSeries.map((point) => point.label)}
-                format={brl}
-              />
-            ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-                Ainda sem reservas nos últimos 12 meses. O gráfico aparece assim que a primeira
-                estadia for lançada.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Occupancy */}
-        <div className="border-border bg-card flex flex-col items-center justify-center rounded-2xl border p-6">
-          <h2 className="text-foreground self-start font-semibold">Ocupação</h2>
-          {occupancy === null ? (
-            <p className="text-muted-foreground mt-6 text-center text-sm">
-              A ocupação não está disponível para o seu perfil de acesso.
-            </p>
-          ) : occupancy.totalRooms === 0 ? (
-            <div className="text-muted-foreground mt-6 text-center text-sm">
-              <p>Nenhuma acomodação disponível para venda.</p>
-              <Link
-                href="/dashboard/acomodacoes"
-                className="text-primary mt-2 inline-block font-semibold hover:underline"
-              >
-                Cadastrar acomodações
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="mt-4">
-                <Donut value={occupancy.rate} />
-              </div>
-              <p className="text-muted-foreground mt-4 text-center text-sm">
-                {occupancy.roomsOccupiedToday} de {occupancy.totalRooms}{' '}
-                {occupancy.totalRooms === 1 ? 'acomodação ocupada' : 'acomodações ocupadas'} hoje
-                <br />
-                <span className="text-xs">
-                  {occupancy.occupiedNights} de {occupancy.availableNights} diárias nos próximos 7
-                  dias
-                </span>
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-        {/* Reservations table */}
-        <div className="border-border bg-card rounded-2xl border p-6 xl:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-foreground font-semibold">Próximas reservas</h2>
-            <Link
-              href="/dashboard/reservas"
-              className="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
-            >
-              Ver agenda <ArrowUpRight className="size-4" />
-            </Link>
-          </div>
-          <div className="mt-4 overflow-x-auto">
-            <OwnerReservationsTable reservations={upcomingReservations} todayISO={todayISO} />
-          </div>
-        </div>
-
-        {/* Weekly bookings */}
-        <div className="border-border bg-card rounded-2xl border p-6">
-          <h2 className="text-foreground font-semibold">Reservas na semana</h2>
-          <p className="text-muted-foreground text-sm">
-            {week.total === 1 ? '1 diária' : `${week.total} diárias`} de segunda a domingo
-          </p>
-          <div className="mt-6 h-40">
-            <BarChart data={week.data} labels={week.labels} color="var(--ocean)" />
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
-        {/* Reviews summary */}
-        <div className="border-border bg-card rounded-2xl border p-6">
-          <h2 className="text-foreground font-semibold">Avaliações</h2>
-          {reviews.total === 0 ? (
-            <p className="text-muted-foreground mt-4 text-sm">
-              Sua pousada ainda não recebeu avaliações. Elas aparecem aqui depois da primeira
-              estadia concluída.
-            </p>
-          ) : (
-            <>
-              <div className="mt-4 flex items-center gap-4">
-                <div className="text-foreground text-4xl font-semibold">
-                  {reviews.average.toFixed(1)}
-                </div>
+      {showBookings && (
+        <>
+          <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+            {/* Revenue */}
+            <div className="border-border bg-card rounded-2xl border p-6 xl:col-span-2">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-gold flex">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`size-4 ${i < Math.round(reviews.average) ? 'fill-gold' : 'opacity-30'}`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {reviews.total === 1 ? '1 avaliação' : `${reviews.total} avaliações`}
+                  <h2 className="text-foreground font-semibold">Receita por mês</h2>
+                  <p className="text-muted-foreground text-sm">
+                    Últimos 12 meses, pelo mês do check-in
                   </p>
                 </div>
+                {showRevenue && (
+                  <span className="text-primary text-sm font-semibold">
+                    {brl(activeRevenue)} ativo
+                  </span>
+                )}
               </div>
-              <div className="mt-5 space-y-2">
-                {reviews.distribution.map(({ rating, count, percent }) => (
-                  <div key={rating} className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground w-3">{rating}</span>
-                    <div className="bg-secondary h-2 flex-1 overflow-hidden rounded-full">
-                      <div
-                        className="bg-gold h-full rounded-full"
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <span
-                      className="text-muted-foreground w-8 text-right"
-                      title={`${count} avaliação(ões)`}
-                    >
-                      {percent}%
-                    </span>
+              <div className="mt-6 h-48">
+                {!showRevenue ? (
+                  <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
+                    Os valores de faturamento aparecem para proprietário, gestor e financeiro.
                   </div>
-                ))}
+                ) : revenueSeries.some((point) => point.value > 0) ? (
+                  <AreaChart
+                    data={revenueSeries.map((point) => point.value)}
+                    labels={revenueSeries.map((point) => point.label)}
+                    format={brl}
+                  />
+                ) : (
+                  <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
+                    Ainda sem reservas nos últimos 12 meses. O gráfico aparece assim que a primeira
+                    estadia for lançada.
+                  </div>
+                )}
               </div>
-            </>
-          )}
-        </div>
+            </div>
 
-        {/*
+            {/* Occupancy */}
+            <div className="border-border bg-card flex flex-col items-center justify-center rounded-2xl border p-6">
+              <h2 className="text-foreground self-start font-semibold">Ocupação</h2>
+              {occupancy === null ? (
+                <p className="text-muted-foreground mt-6 text-center text-sm">
+                  A ocupação não está disponível para o seu perfil de acesso.
+                </p>
+              ) : occupancy.totalRooms === 0 ? (
+                <div className="text-muted-foreground mt-6 text-center text-sm">
+                  <p>Nenhuma acomodação disponível para venda.</p>
+                  <Link
+                    href="/dashboard/acomodacoes"
+                    className="text-primary mt-2 inline-block font-semibold hover:underline"
+                  >
+                    Cadastrar acomodações
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-4">
+                    <Donut value={occupancy.rate} />
+                  </div>
+                  <p className="text-muted-foreground mt-4 text-center text-sm">
+                    {occupancy.roomsOccupiedToday} de {occupancy.totalRooms}{' '}
+                    {occupancy.totalRooms === 1 ? 'acomodação ocupada' : 'acomodações ocupadas'}{' '}
+                    hoje
+                    <br />
+                    <span className="text-xs">
+                      {occupancy.occupiedNights} de {occupancy.availableNights} diárias nos próximos
+                      7 dias
+                    </span>
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+            {/* Reservations table */}
+            <div className="border-border bg-card rounded-2xl border p-6 xl:col-span-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-foreground font-semibold">Próximas reservas</h2>
+                <Link
+                  href="/dashboard/reservas"
+                  className="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
+                >
+                  Ver agenda <ArrowUpRight className="size-4" />
+                </Link>
+              </div>
+              <div className="mt-4 overflow-x-auto">
+                <OwnerReservationsTable reservations={upcomingReservations} todayISO={todayISO} />
+              </div>
+            </div>
+
+            {/* Weekly bookings */}
+            <div className="border-border bg-card rounded-2xl border p-6">
+              <h2 className="text-foreground font-semibold">Reservas na semana</h2>
+              <p className="text-muted-foreground text-sm">
+                {week.total === 1 ? '1 diária' : `${week.total} diárias`} de segunda a domingo
+              </p>
+              <div className="mt-6 h-40">
+                <BarChart data={week.data} labels={week.labels} color="var(--ocean)" />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {(showReviews || showMarketing) && (
+        <div
+          className={`mt-5 grid grid-cols-1 gap-5 ${showReviews && showMarketing ? 'xl:grid-cols-2' : ''}`}
+        >
+          {/* Reviews summary */}
+          {showReviews && (
+            <div className="border-border bg-card rounded-2xl border p-6">
+              <h2 className="text-foreground font-semibold">Avaliações</h2>
+              {reviews.total === 0 ? (
+                <p className="text-muted-foreground mt-4 text-sm">
+                  Sua pousada ainda não recebeu avaliações. Elas aparecem aqui depois da primeira
+                  estadia concluída.
+                </p>
+              ) : (
+                <>
+                  <div className="mt-4 flex items-center gap-4">
+                    <div className="text-foreground text-4xl font-semibold">
+                      {reviews.average.toFixed(1)}
+                    </div>
+                    <div>
+                      <div className="text-gold flex">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`size-4 ${i < Math.round(reviews.average) ? 'fill-gold' : 'opacity-30'}`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        {reviews.total === 1 ? '1 avaliação' : `${reviews.total} avaliações`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 space-y-2">
+                    {reviews.distribution.map(({ rating, count, percent }) => (
+                      <div key={rating} className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground w-3">{rating}</span>
+                        <div className="bg-secondary h-2 flex-1 overflow-hidden rounded-full">
+                          <div
+                            className="bg-gold h-full rounded-full"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <span
+                          className="text-muted-foreground w-8 text-right"
+                          title={`${count} avaliação(ões)`}
+                        >
+                          {percent}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/*
           Card de oportunidade. Antes exibia uma recomendação inventada ("a IA
           detectou alta procura") com um botão sem ação. O texto agora sai da
           ocupação calculada; enquanto não houver um provedor de LLM ligado, a
           tela não afirma que alguma IA analisou coisa alguma.
         */}
-        <div className="border-border bg-stone-deep text-linen relative overflow-hidden rounded-2xl border p-6">
-          <div className="relative z-10">
-            <span className="bg-linen/10 text-linen inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
-              <Sparkles className="text-gold size-3.5" />
-              Próximos 7 dias
-            </span>
-            {occupancy === null || occupancy.availableNights === 0 ? (
-              <>
-                <h2 className="font-display mt-4 text-xl font-medium">Divulgue sua pousada</h2>
-                <p className="text-linen/70 mt-2 text-sm leading-relaxed">
-                  Materiais prontos para publicar nas suas redes e responder a quem pede orçamento.
-                </p>
-              </>
-            ) : freeNightsAhead > 0 ? (
-              <>
-                <h2 className="font-display mt-4 text-xl font-medium">
-                  {freeNightsAhead === 1 ? '1 diária livre' : `${freeNightsAhead} diárias livres`}
-                </h2>
-                <p className="text-linen/70 mt-2 text-sm leading-relaxed">
-                  É o que ainda dá para vender nos próximos 7 dias, considerando as reservas já
-                  lançadas. Uma divulgação agora pega quem decide em cima da hora.
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="font-display mt-4 text-xl font-medium">Semana cheia</h2>
-                <p className="text-linen/70 mt-2 text-sm leading-relaxed">
-                  Todas as diárias dos próximos 7 dias estão ocupadas. Bom momento para trabalhar as
-                  datas mais adiante.
-                </p>
-              </>
-            )}
-            <Link
-              href="/dashboard/marketing"
-              className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition hover:brightness-105"
-            >
-              Abrir marketing
-              <ArrowUpRight className="size-4" />
-            </Link>
-          </div>
-          <div className="bg-primary/40 pointer-events-none absolute -top-10 -right-10 size-40 rounded-full blur-2xl" />
+          {showMarketing && (
+            <div className="border-border bg-stone-deep text-linen relative overflow-hidden rounded-2xl border p-6">
+              <div className="relative z-10">
+                <span className="bg-linen/10 text-linen inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
+                  <Sparkles className="text-gold size-3.5" />
+                  Próximos 7 dias
+                </span>
+                {occupancy === null || occupancy.availableNights === 0 ? (
+                  <>
+                    <h2 className="font-display mt-4 text-xl font-medium">Divulgue sua pousada</h2>
+                    <p className="text-linen/70 mt-2 text-sm leading-relaxed">
+                      Materiais prontos para publicar nas suas redes e responder a quem pede
+                      orçamento.
+                    </p>
+                  </>
+                ) : freeNightsAhead > 0 ? (
+                  <>
+                    <h2 className="font-display mt-4 text-xl font-medium">
+                      {freeNightsAhead === 1
+                        ? '1 diária livre'
+                        : `${freeNightsAhead} diárias livres`}
+                    </h2>
+                    <p className="text-linen/70 mt-2 text-sm leading-relaxed">
+                      É o que ainda dá para vender nos próximos 7 dias, considerando as reservas já
+                      lançadas. Uma divulgação agora pega quem decide em cima da hora.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="font-display mt-4 text-xl font-medium">Semana cheia</h2>
+                    <p className="text-linen/70 mt-2 text-sm leading-relaxed">
+                      Todas as diárias dos próximos 7 dias estão ocupadas. Bom momento para
+                      trabalhar as datas mais adiante.
+                    </p>
+                  </>
+                )}
+                <Link
+                  href="/dashboard/marketing"
+                  className="bg-accent text-accent-foreground mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition hover:brightness-105"
+                >
+                  Abrir marketing
+                  <ArrowUpRight className="size-4" />
+                </Link>
+              </div>
+              <div className="bg-primary/40 pointer-events-none absolute -top-10 -right-10 size-40 rounded-full blur-2xl" />
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </DashboardShell>
   )
 }

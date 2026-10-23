@@ -195,6 +195,15 @@ export function dayMovements<T extends MetricBooking>(
 }
 
 /**
+ * Chegada que ainda vai acontecer: pendente ou confirmada. Hospedada, concluída
+ * (check-out no mesmo dia, ou saída antecipada) ou cancelada já não é "chegada
+ * de hoje" — antes o sino e o bloco "Hoje" contavam a estadia já encerrada.
+ */
+export function isAwaitingArrival(status: BookingStatus): boolean {
+  return status === 'pending' || status === 'confirmed'
+}
+
+/**
  * "Hoje" da pousada, no formato que as funções deste arquivo esperam. A data
  * vem do fuso da pousada: `toISODate(new Date())` dava a data de UTC, que no
  * Brasil vira o dia seguinte às 21h — e o painel passava a mostrar as chegadas

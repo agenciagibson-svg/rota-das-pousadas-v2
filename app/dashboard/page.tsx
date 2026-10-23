@@ -1,11 +1,13 @@
 import { getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
+import { canAccessSection } from '@/lib/auth/dashboard-sections'
 import {
   getCurrentUser,
   getOwnerPousada,
   getOwnerReservations,
   getOwnerReviews,
   getOwnerRooms,
+  getHousekeepingRooms,
   getPaymentAlerts,
   getOperationalAlerts,
   getSetupProgress,
@@ -50,14 +52,23 @@ export default async function DashboardPage() {
 
   const role = await getActiveTenantRole()
   const showRevenue = Boolean(role && can(role, 'finance:pousada:view'))
-  const [reservations, rooms, reviews, growth, paymentAlerts, operational, setup] =
+  // Quem não abre Reservas (governança) não lê reservas: a tela não busca nem
+  // mostra blocos de reserva, que viriam vazios e pareceriam "pousada parada".
+  const showBookings = canAccessSection(role, 'reservas')
+  const [reservations, rooms, cleaningRooms, reviews, growth, paymentAlerts, operational, setup] =
     await Promise.all([
-      getOwnerReservations(),
+      showBookings ? getOwnerReservations() : Promise.resolve([]),
       // Papéis sem `room:status:view` (financeiro, por exemplo) não leem
       // acomodações. Nesse caso a ocupação fica indisponível e o painel diz isso
       // — nunca estima um número que não corresponde à casa do cliente.
-      getOwnerRooms().catch(() => null),
-      getOwnerReviews().catch(() => []),
+      showBookings ? getOwnerRooms().catch(() => null) : Promise.resolve(null),
+      // Contagem de limpeza pela projeção operacional (a única que a governança lê).
+      role && can(role, 'room:status:view')
+        ? getHousekeepingRooms().catch(() => null)
+        : Promise.resolve(null),
+      canAccessSection(role, 'avaliacoes')
+        ? getOwnerReviews().catch(() => [])
+        : Promise.resolve([]),
       // Convite de tráfego pago: só proprietário/admin; falha nunca derruba o painel.
       getOwnerGrowthCard().catch(() => null),
       // Comprovantes Pix e pagamentos para revisar (0082); falha nunca derruba o painel.
@@ -101,8 +112,8 @@ export default async function DashboardPage() {
     arrivals,
     departures,
     inHouse: reservations.filter((r) => r.status === 'checked_in').length,
-    roomsToClean: rooms
-      ? rooms.filter((r) =>
+    roomsToClean: cleaningRooms
+      ? cleaningRooms.filter((r) =>
           ['awaiting_cleaning', 'cleaning', 'inspection_pending'].includes(r.operationalStatus),
         ).length
       : null,
@@ -122,6 +133,9 @@ export default async function DashboardPage() {
       reviews={summarizeReviews(reviews)}
       today={todaySummary}
       todayISO={todayISO}
+      showBookings={showBookings}
+      showReviews={canAccessSection(role, 'avaliacoes')}
+      showMarketing={canAccessSection(role, 'marketing')}
       setupSlot={setup ? <SetupChecklist progress={setup} /> : null}
       upcomingReservations={upcomingReservations(reservations, todayISO)}
       growthSlot={growth && pousada.status === 'publicada' ? <GrowthInvite card={growth} /> : null}
