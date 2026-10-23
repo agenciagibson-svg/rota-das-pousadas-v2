@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { listMyBookingRows } from '@/repositories/bookings.repository'
+import { insertReview, type InsertReviewResult } from '@/repositories/reviews.repository'
+import { reviewAvailability, type ReviewAvailability } from '../review'
 import {
   cancelGuestOrderRpc,
   getGuestStayRpc,
@@ -90,22 +92,67 @@ export async function submitReview(bookingId: string, rating: number, text: stri
   if (!isSupabaseConfigured()) return
   const user = await getCurrentUser()
   if (!user) throw new Error('Faça login.')
-  const supabase = await createSupabaseServerClient()
   const [b] = await listMyBookingRows(bookingId)
   if (!b) throw new Error('Reserva não encontrada.')
-  const { error } = await supabase.from('reviews').insert({
-    pousada_id: b.pousada_id,
-    booking_id: bookingId,
-    author_id: user.id,
-    rating,
-    text,
-  })
-  if (error) {
-    if (/duplicate|unique/i.test(error.message))
-      throw new Error('Você já avaliou esta estadia. Obrigado!')
-    if (/row-level security/i.test(error.message)) {
-      throw new Error('A avaliação fica liberada a partir do dia do check-out.')
-    }
+  let result: InsertReviewResult
+  try {
+    result = await insertReview({
+      pousadaId: b.pousada_id,
+      bookingId,
+      authorId: user.id,
+      rating,
+      text,
+    })
+  } catch {
     throw new Error('Não foi possível enviar a avaliação. Tente de novo.')
+  }
+  if (result === 'duplicate') throw new Error('Você já avaliou esta estadia. Obrigado!')
+  if (result === 'not_allowed') {
+    throw new Error('A avaliação fica liberada a partir do dia do check-out.')
+  }
+}
+
+export type StayReviewContext = {
+  bookingId: string
+  pousadaName: string
+  pousadaSlug: string
+  checkin: string
+  checkout: string
+  availability: ReviewAvailability
+}
+
+/**
+ * Dados da página de avaliação (link do e-mail). Lê pela mesma RPC do app da
+ * estadia (`get_guest_stay`), que só devolve reserva do usuário logado e já
+ * diz se ele pode avaliar (`auth_can_review_booking`) e se já avaliou.
+ * `null` = reserva inexistente ou de outra conta.
+ */
+export async function getStayReviewContext(bookingId: string): Promise<StayReviewContext | null> {
+  let stay: GuestStay
+  if (!isSupabaseConfigured()) {
+    if (bookingId !== DEMO_STAY_ID) return null
+    stay = (await demoStay()).stay
+  } else {
+    try {
+      stay = parseGuestStay(await getGuestStayRpc(bookingId))
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : ''
+      if (/Reserva não encontrada|Faça login/.test(msg)) return null
+      throw e
+    }
+  }
+  return {
+    bookingId: stay.booking.id,
+    pousadaName: stay.pousada.name,
+    pousadaSlug: stay.pousada.slug,
+    checkin: stay.booking.checkin,
+    checkout: stay.booking.checkout,
+    availability: reviewAvailability({
+      canReview: stay.canReview,
+      reviewed: stay.reviewed,
+      status: stay.booking.status,
+      today: stay.today,
+      checkout: stay.booking.checkout,
+    }),
   }
 }

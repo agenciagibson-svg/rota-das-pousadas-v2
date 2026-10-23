@@ -6,7 +6,13 @@ const mocks = vi.hoisted(() => ({
   purgeStaleQuoteRequests: vi.fn(),
   sendCheckinReminders: vi.fn(),
   notifyPaymentReviews: vi.fn(),
+  sendReviewRequests: vi.fn(),
+  sendReviewReminders: vi.fn(),
   reportError: vi.fn(),
+}))
+vi.mock('@/features/estadia/services/review-requests.service', () => ({
+  sendReviewRequests: mocks.sendReviewRequests,
+  sendReviewReminders: mocks.sendReviewReminders,
 }))
 vi.mock('@/features/reservas/services/expire-overdue.service', () => ({
   expireOverduePendingBookings: mocks.expireOverduePendingBookings,
@@ -36,6 +42,8 @@ function expectNothingRan() {
   expect(mocks.purgeStaleQuoteRequests).not.toHaveBeenCalled()
   expect(mocks.sendCheckinReminders).not.toHaveBeenCalled()
   expect(mocks.notifyPaymentReviews).not.toHaveBeenCalled()
+  expect(mocks.sendReviewRequests).not.toHaveBeenCalled()
+  expect(mocks.sendReviewReminders).not.toHaveBeenCalled()
 }
 
 async function silenced<T>(run: () => Promise<T>): Promise<T> {
@@ -55,6 +63,8 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
     mocks.purgeStaleQuoteRequests.mockResolvedValue({ purged: 1 })
     mocks.sendCheckinReminders.mockResolvedValue({ sent: 3 })
     mocks.notifyPaymentReviews.mockResolvedValue({ notified: 1 })
+    mocks.sendReviewRequests.mockResolvedValue({ sent: 4, failed: 0 })
+    mocks.sendReviewReminders.mockResolvedValue({ sent: 1, failed: 1 })
     mocks.reportError.mockResolvedValue(undefined)
   })
   afterEach(() => {
@@ -94,8 +104,26 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
       bookings: { expired: 2 },
       quoteRequests: { purged: 1 },
       checkinReminders: { sent: 3 },
+      reviewRequests: { sent: 4, failed: 0 },
+      reviewReminders: { sent: 1, failed: 1 },
       paymentReviews: { notified: 1 },
     })
+  })
+
+  it('o pedido de avaliação falhando não derruba as outras tarefas e vai para o monitoramento', async () => {
+    mocks.sendReviewRequests.mockRejectedValue(new Error(TECHNICAL))
+
+    const response = await silenced(() => GET(request(`Bearer ${SECRET}`)))
+
+    expect(response.status).toBe(500)
+    expect(mocks.sendReviewReminders).toHaveBeenCalledTimes(1)
+    expect(mocks.sendCheckinReminders).toHaveBeenCalledTimes(1)
+    expect(await response.json()).toMatchObject({
+      bookings: { expired: 2 },
+      reviewRequests: { error: 'falhou' },
+      reviewReminders: { sent: 1, failed: 1 },
+    })
+    expect(mocks.reportError).toHaveBeenCalledWith(expect.any(Error), { where: 'cron:avaliacoes' })
   })
 
   it('avisa sobre pagamentos para revisar só depois de expirar as reservas vencidas', async () => {
@@ -132,10 +160,14 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
       expect(mocks.expireOverduePendingBookings).toHaveBeenCalledTimes(1)
       expect(mocks.sendCheckinReminders).toHaveBeenCalledTimes(1)
       expect(mocks.notifyPaymentReviews).toHaveBeenCalledTimes(1)
+      expect(mocks.sendReviewRequests).toHaveBeenCalledTimes(1)
+      expect(mocks.sendReviewReminders).toHaveBeenCalledTimes(1)
       expect(await response.json()).toEqual({
         bookings: { expired: 2 },
         quoteRequests: { error: 'falhou' },
         checkinReminders: { sent: 3 },
+        reviewRequests: { sent: 4, failed: 0 },
+        reviewReminders: { sent: 1, failed: 1 },
         paymentReviews: { notified: 1 },
       })
     })

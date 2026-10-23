@@ -62,6 +62,7 @@ import {
   getBookingFnrhData,
 } from '@/repositories/bookings.repository'
 import { getPousadaSettings } from '@/repositories/management.repository'
+import { getStayReviewContext } from '@/features/estadia/services/stay.service'
 import { createCheckoutPreference } from '@/features/pagamentos/services/checkout.service'
 import { requireCapability } from '@/features/acomodacoes/services/access'
 import { resolveTenantAccess } from '@/lib/auth/tenant-context'
@@ -90,6 +91,12 @@ export const getCurrentUser = cache(() => currentUser())
 
 /** Cadastro do viajante (0073) + o que falta para reservar. `null` = sem login. */
 export const getMyProfile = cache(() => myProfile())
+
+/**
+ * Página de avaliação (link do e-mail, 0089): pousada, datas e se o usuário
+ * logado pode avaliar esta reserva. `null` = reserva inexistente ou de outra conta.
+ */
+export const getStayReview = cache((bookingId: string) => getStayReviewContext(bookingId))
 
 /** Reservas do usuário autenticado, memoizadas por request. */
 export const getMyBookings = cache(() => listMyBookings())

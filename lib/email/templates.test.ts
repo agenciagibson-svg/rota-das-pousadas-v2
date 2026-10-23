@@ -17,6 +17,9 @@ import {
   paymentProofReceivedEmail,
   paymentProofRejectedEmail,
   passwordResetEmail,
+  reviewRatingUrl,
+  reviewReminderEmail,
+  reviewRequestEmail,
 } from './templates'
 import type { BookingNotificationContext } from '@/repositories/bookings.repository'
 
@@ -228,5 +231,63 @@ describe('Pix: prazo, parcial e fila de revisão (0082)', () => {
     const { subject, html } = paymentReviewAlertEmail(ctx, 'pix_sem_analise', 1440)
     expect(subject).toContain('Pagamento para revisar')
     expect(html).toContain('devolva o valor')
+  })
+})
+
+describe('pedido de avaliação depois do check-out (0089)', () => {
+  const target = {
+    bookingId: '30000000-0000-0000-0000-000000008901',
+    code: 'RP-6F4AA5',
+    guestName: 'Marcos Menezes',
+    guestEmail: 'hospede@example.test',
+    pousadaName: 'Refúgio das Nuvens',
+  }
+  const page = `https://rotadaspousadas.com.br/minhas-reservas/${target.bookingId}/avaliar`
+
+  it('pergunta como foi a estadia; assunto só com o nome da pousada', () => {
+    const { subject, html, text } = reviewRequestEmail(target)
+    expect(subject).toBe('Como foi sua estadia no Refúgio das Nuvens?')
+    expect(subject).not.toContain('RP-6F4AA5')
+    expect(subject).not.toContain('Marcos')
+    expect(html).toContain('Como foi sua estadia no Refúgio das Nuvens?')
+    expect(html).toContain('Olá, <strong>Marcos</strong>!')
+    expect(html).toContain('RP-6F4AA5')
+    expect(html).toContain('Avaliar minha estadia')
+    expect(text).toContain('Como foi sua estadia no Refúgio das Nuvens?')
+  })
+
+  it.each([1, 2, 3, 4, 5] as const)('estrela %i é um link com a nota', (n) => {
+    const url = `${page}?nota=${n}`
+    expect(reviewRatingUrl(target.bookingId, n)).toBe(url)
+    expect(reviewRequestEmail(target).html).toContain(`href="${url}"`)
+    expect(reviewRequestEmail(target).text).toContain(url)
+    expect(reviewReminderEmail(target).html).toContain(`href="${url}"`)
+  })
+
+  it('tem exatamente as 5 estrelas e o botão sem nota', () => {
+    const { html } = reviewRequestEmail(target)
+    expect(html.match(/&#9733;/g)).toHaveLength(5)
+    expect(html.match(/\?nota=\d/g)).toHaveLength(10) // estrela + número embaixo
+    expect(html).toContain(`href="${page}"`)
+    expect(html).not.toMatch(/nota=[06-9]/)
+  })
+
+  it('lembrete: assunto diferente, mesma pergunta, sem dado pessoal no assunto', () => {
+    const { subject, html } = reviewReminderEmail(target)
+    expect(subject).toBe('Ainda dá tempo: como foi sua estadia no Refúgio das Nuvens?')
+    expect(subject).not.toContain('Marcos')
+    expect(html).toContain('Último lembrete')
+  })
+
+  it('escapa nome da pousada e do hóspede; sem nome, só "Olá!"', () => {
+    const { html, subject } = reviewRequestEmail({
+      ...target,
+      guestName: null,
+      pousadaName: 'Pousada <b>Sol</b>',
+    })
+    expect(html).toContain('Pousada &lt;b&gt;Sol&lt;/b&gt;')
+    expect(html).not.toContain('<b>Sol</b>')
+    expect(html).toContain('Olá!')
+    expect(subject).toBe('Como foi sua estadia na Pousada <b>Sol</b>?')
   })
 })

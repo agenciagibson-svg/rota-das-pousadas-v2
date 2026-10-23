@@ -133,7 +133,10 @@ export default async function proxy(request: NextRequest) {
   if (matched && !user) {
     const url = request.nextUrl.clone()
     url.pathname = matched.loginPath
-    url.searchParams.set('next', path)
+    // A query volta junto no `next` (ex.: `?nota=5` do e-mail de avaliação,
+    // 0089); na URL do login fica só o `next`.
+    url.search = ''
+    url.searchParams.set('next', `${path}${request.nextUrl.search}`)
     return applySecurityHeaders(NextResponse.redirect(url), csp)
   }
 

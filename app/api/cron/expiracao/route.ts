@@ -3,13 +3,18 @@ import { expireOverduePendingBookings } from '@/features/reservas/services/expir
 import { purgeStaleQuoteRequests } from '@/features/bio/services/bio.service'
 import { sendCheckinReminders } from '@/features/reservas/services/checkin-reminders.service'
 import { notifyPaymentReviews } from '@/features/pagamentos/services/pix.service'
+import {
+  sendReviewReminders,
+  sendReviewRequests,
+} from '@/features/estadia/services/review-requests.service'
 import { reportError } from '@/lib/observability/report-error'
 
 /**
  * Rodada diária de manutenção: expira pré-reserva vencida, purga pedido de
  * orçamento não convertido com mais de 180 dias (0059, LGPD) e envia lembrete
- * de check-in por e-mail pras reservas confirmadas de daqui a 2 dias (0060).
- * As três tarefas dividem o mesmo cron de propósito — o plano Hobby da
+ * de check-in por e-mail pras reservas confirmadas de daqui a 2 dias (0060) e
+ * pede avaliação a quem saiu há 1-3 dias, com um lembrete único 3 dias depois
+ * (0089). As tarefas dividem o mesmo cron de propósito — o plano Hobby da
  * Vercel só permite cron 1x/dia, então um cron novo só pra isso custaria uma
  * segunda rodada diária que não sobra.
  *
@@ -37,11 +42,14 @@ export async function GET(request: Request) {
 
   try {
     // allSettled: uma tarefa que falha não esconde as outras que rodaram.
-    const [bookings, quoteRequests, checkinReminders] = await Promise.allSettled([
-      expireOverduePendingBookings(),
-      purgeStaleQuoteRequests(),
-      sendCheckinReminders(),
-    ])
+    const [bookings, quoteRequests, checkinReminders, reviewRequests, reviewReminders] =
+      await Promise.allSettled([
+        expireOverduePendingBookings(),
+        purgeStaleQuoteRequests(),
+        sendCheckinReminders(),
+        sendReviewRequests(),
+        sendReviewReminders(),
+      ])
     // Depois da expiração: reservas que caíram com comprovante em análise
     // entram na fila de revisão (0082) e a pousada é avisada por e-mail.
     const paymentReviews = await notifyPaymentReviews()
@@ -52,11 +60,14 @@ export async function GET(request: Request) {
       failures.push(reportError(r.reason, { where: `cron:${name}` }))
       return { error: 'falhou' }
     }
-    const failed = [bookings, quoteRequests, checkinReminders].some((r) => r.status === 'rejected')
+    const settled = [bookings, quoteRequests, checkinReminders, reviewRequests, reviewReminders]
+    const failed = settled.some((r) => r.status === 'rejected')
     const body = {
       bookings: out(bookings, 'expiracao'),
       quoteRequests: out(quoteRequests, 'orcamentos'),
       checkinReminders: out(checkinReminders, 'lembretes'),
+      reviewRequests: out(reviewRequests, 'avaliacoes'),
+      reviewReminders: out(reviewReminders, 'avaliacoes-lembrete'),
       paymentReviews,
     }
     await Promise.all(failures)

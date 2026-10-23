@@ -1,5 +1,7 @@
 import { publicEnv } from '@/lib/env'
 import type { BookingNotificationContext } from '@/repositories/bookings.repository'
+import type { ReviewRequestTarget } from '@/repositories/reviews.repository'
+import { REVIEW_RATINGS, reviewPagePath } from '@/features/estadia/review'
 import { PAYMENT_REVIEW_TEXT, type PaymentReviewKind } from '@/features/pagamentos/pix'
 
 /**
@@ -13,6 +15,8 @@ import { PAYMENT_REVIEW_TEXT, type PaymentReviewKind } from '@/features/pagament
  * 3. Lembrete de check-in — cron diário (app/api/cron/expiracao).
  * 4. Nova senha (link) e 5. Senha alterada — "Esqueci minha senha"
  *    (features/auth/services/password-reset.service.ts).
+ * 6. Pedido de avaliação e lembrete único depois do check-out — cron diário
+ *    (app/api/cron/expiracao, 0089).
  *
  * Regras de e-mail: só tabelas e estilo inline (Gmail/Outlook ignoram <style>
  * e SVG); fontes do site com fallback (Gmail cai em Arial); a marca é PNG
@@ -785,4 +789,108 @@ export function memberInviteEmail(p: {
   })
   const text = `Você foi convidado para a equipe de ${p.pousadaName} (${p.roleLabel}) na Rota das Pousadas.\n\nJá tem conta com ${p.email}? Entre em ${p.dashboardUrl} e aceite o convite.\nAinda não tem? Crie uma com este mesmo e-mail em ${p.signupUrl} e peça um novo convite.\n\nSe não esperava este convite, ignore este e-mail.`
   return { subject, html, text }
+}
+
+// ---------------------------------------------------------------------------
+// Pedido de avaliação depois do check-out (0089)
+// ---------------------------------------------------------------------------
+
+const RATING_LABEL: Record<number, string> = {
+  1: 'Ruim',
+  2: 'Fraca',
+  3: 'Boa',
+  4: 'Muito boa',
+  5: 'Excelente',
+}
+
+/** Link de uma estrela: abre a página de avaliação já com a nota marcada. */
+export function reviewRatingUrl(
+  bookingId: string,
+  rating: (typeof REVIEW_RATINGS)[number],
+): string {
+  return `${publicEnv.siteUrl}${reviewPagePath(bookingId, rating)}`
+}
+
+/** 5 estrelas clicáveis — cada uma é um link com a nota (?nota=1..5). */
+function starsBlock(bookingId: string): string {
+  const cells = REVIEW_RATINGS.map((n) => {
+    const href = esc(reviewRatingUrl(bookingId, n))
+    const label = `${n} ${n === 1 ? 'estrela' : 'estrelas'} — ${RATING_LABEL[n]}`
+    return `<td align="center" style="padding:0 4px;"><a href="${href}" title="${esc(label)}" aria-label="${esc(label)}" style="display:block;text-decoration:none;color:${C.accent};font:400 40px/1 Arial,sans-serif;">&#9733;</a><a href="${href}" style="display:block;margin-top:4px;text-decoration:none;font:600 12px ${SANS};color:${C.muted};">${n}</a></td>`
+  }).join('')
+  return `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:4px auto 6px;"><tr>${cells}</tr></table>
+<p style="margin:0;text-align:center;font:500 12px ${SANS};color:${C.muted};">Toque em uma estrela: 1 é ruim, 5 é excelente.</p>`
+}
+
+function reviewText(t: ReviewRequestTarget, lead: string): string {
+  const lines = REVIEW_RATINGS.map(
+    (n) =>
+      `${n} ${n === 1 ? 'estrela' : 'estrelas'} (${RATING_LABEL[n]}): ${reviewRatingUrl(t.bookingId, n)}`,
+  )
+  return [lead, '', 'Escolha sua nota:', ...lines, '', 'Leva menos de um minuto.'].join('\n')
+}
+
+const REVIEW_FOOTER =
+  'Você recebeu este e-mail porque se hospedou com uma reserva feita em rotadaspousadas.com.br.<br>Pedimos a avaliação uma vez e lembramos no máximo mais uma.'
+
+/**
+ * Pedido de avaliação (1 a 3 dias depois do check-out). Assunto só com o nome
+ * da pousada: o código da reserva e o nome do hóspede ficam no corpo.
+ */
+export function reviewRequestEmail(t: ReviewRequestTarget): Email {
+  const na = emPousada(t.pousadaName)
+  const question = `Como foi sua estadia ${na} ${t.pousadaName}?`
+  const html = wrapLayout({
+    preheader: 'Sua nota ajuda outros viajantes e a própria pousada. Leva menos de um minuto.',
+    pill: { label: 'Sua opinião', bg: C.accent, fg: C.accentText },
+    title: question,
+    subtitle: 'Sua nota ajuda outros viajantes a escolher.',
+    intro: `${helloName(t.guestName)} Esperamos que a estadia ${na} <strong>${esc(t.pousadaName)}</strong> tenha sido especial. Que nota você dá?`,
+    ticketHtml: starsBlock(t.bookingId),
+    extraHtml: `<p style="margin:18px 0 0;font:500 12px/1.6 ${SANS};color:${C.muted};text-align:center;">Reserva ${esc(t.code)}. A avaliação aparece na página da pousada sem o seu nome.</p>`,
+    cta: {
+      href: esc(`${publicEnv.siteUrl}${reviewPagePath(t.bookingId)}`),
+      label: 'Avaliar minha estadia',
+    },
+    ctaHint: 'Leva menos de um minuto.',
+    footerNote: REVIEW_FOOTER,
+  })
+  return {
+    subject: question,
+    html,
+    text: reviewText(
+      t,
+      `${question}\nSua nota ajuda outros viajantes a escolher. Reserva ${t.code}.`,
+    ),
+  }
+}
+
+/** Lembrete único (3 dias depois do pedido, ainda sem avaliação). */
+export function reviewReminderEmail(t: ReviewRequestTarget): Email {
+  const na = emPousada(t.pousadaName)
+  const question = `Como foi sua estadia ${na} ${t.pousadaName}?`
+  const subject = `Ainda dá tempo: como foi sua estadia ${na} ${t.pousadaName}?`
+  const html = wrapLayout({
+    preheader: 'Último lembrete: sua nota ajuda outros viajantes.',
+    pill: { label: 'Último lembrete', bg: C.linen, fg: C.ink },
+    title: question,
+    subtitle: 'É o último lembrete, prometemos.',
+    intro: `${helloName(t.guestName)} Você ainda não avaliou a estadia ${na} <strong>${esc(t.pousadaName)}</strong>. Um toque na estrela já basta.`,
+    ticketHtml: starsBlock(t.bookingId),
+    extraHtml: `<p style="margin:18px 0 0;font:500 12px/1.6 ${SANS};color:${C.muted};text-align:center;">Reserva ${esc(t.code)}. A avaliação aparece na página da pousada sem o seu nome.</p>`,
+    cta: {
+      href: esc(`${publicEnv.siteUrl}${reviewPagePath(t.bookingId)}`),
+      label: 'Avaliar minha estadia',
+    },
+    ctaHint: 'Leva menos de um minuto.',
+    footerNote: REVIEW_FOOTER,
+  })
+  return {
+    subject,
+    html,
+    text: reviewText(
+      t,
+      `${question}\nÚltimo lembrete: sua nota ajuda outros viajantes. Reserva ${t.code}.`,
+    ),
+  }
 }

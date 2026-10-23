@@ -262,6 +262,8 @@ export type Database = {
           pets: boolean
           pousada_id: string
           responsible_guest_id: string
+          review_reminded_at: string | null
+          review_requested_at: string | null
           room_id: string
           services_amount: number
           special_requests: string
@@ -316,6 +318,8 @@ export type Database = {
           pets?: boolean
           pousada_id: string
           responsible_guest_id: string
+          review_reminded_at?: string | null
+          review_requested_at?: string | null
           room_id: string
           services_amount?: number
           special_requests?: string
@@ -370,6 +374,8 @@ export type Database = {
           pets?: boolean
           pousada_id?: string
           responsible_guest_id?: string
+          review_reminded_at?: string | null
+          review_requested_at?: string | null
           room_id?: string
           services_amount?: number
           special_requests?: string
@@ -3250,6 +3256,34 @@ export type Database = {
           response: string | null
           created_at: string
         }[]
+      }
+      list_review_requests_due: {
+        Args: { p_limit: number }
+        Returns: {
+          booking_id: string
+          code: string
+          guest_name: string | null
+          guest_email: string
+          pousada_name: string
+        }[]
+      }
+      list_review_reminders_due: {
+        Args: { p_limit: number }
+        Returns: {
+          booking_id: string
+          code: string
+          guest_name: string | null
+          guest_email: string
+          pousada_name: string
+        }[]
+      }
+      mark_review_request_sent: {
+        Args: { p_booking_id: string }
+        Returns: boolean
+      }
+      mark_review_reminder_sent: {
+        Args: { p_booking_id: string }
+        Returns: boolean
       }
       review_payment_proof: {
         Args: { p_proof_id: string; p_approve: boolean; p_reason?: string; p_amount?: number }

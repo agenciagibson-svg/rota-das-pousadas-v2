@@ -1,6 +1,7 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseStaticClient } from '@/lib/supabase/static'
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 
 export type OwnerReviewRow = {
   id: string
@@ -111,4 +112,99 @@ export async function updateReviewResponseByPousada(
     .eq('id', reviewId)
     .eq('pousada_id', pousadaId)
   if (error) throw error
+}
+
+// ---------------------------------------------------------------------------
+// Escrita da avaliação pelo hóspede (app da estadia e link do e-mail)
+// ---------------------------------------------------------------------------
+
+export type InsertReviewResult = 'ok' | 'duplicate' | 'not_allowed'
+
+/**
+ * Grava a avaliação com a sessão do hóspede. Quem decide se ele pode avaliar
+ * é a RLS `reviews_author_write` (0066/0084: reserva própria, feita pelo site
+ * ou link da bio, estadia encerrada). Recusa conhecida vira resultado; o
+ * resto (rede, banco) é lançado.
+ */
+export async function insertReview(input: {
+  pousadaId: string
+  bookingId: string
+  authorId: string
+  rating: number
+  text: string
+}): Promise<InsertReviewResult> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('reviews').insert({
+    pousada_id: input.pousadaId,
+    booking_id: input.bookingId,
+    author_id: input.authorId,
+    rating: input.rating,
+    text: input.text,
+  })
+  if (!error) return 'ok'
+  if (/duplicate|unique/i.test(error.message)) return 'duplicate'
+  if (/row-level security/i.test(error.message)) return 'not_allowed'
+  throw error
+}
+
+// ---------------------------------------------------------------------------
+// Pedido de avaliação por e-mail (0089) — cron diário, sem sessão.
+// RPCs concedidas só a service_role: nunca lê `bookings` direto.
+// ---------------------------------------------------------------------------
+
+/** O mínimo para montar o e-mail de pedido/lembrete de avaliação. */
+export type ReviewRequestTarget = {
+  bookingId: string
+  code: string
+  guestName: string | null
+  guestEmail: string
+  pousadaName: string
+}
+
+type ReviewRequestRow = {
+  booking_id: string
+  code: string
+  guest_name: string | null
+  guest_email: string
+  pousada_name: string
+}
+
+function toTarget(row: ReviewRequestRow): ReviewRequestTarget {
+  return {
+    bookingId: row.booking_id,
+    code: row.code,
+    guestName: row.guest_name,
+    guestEmail: row.guest_email,
+    pousadaName: row.pousada_name,
+  }
+}
+
+/** Reservas encerradas há 1 a 3 dias, elegíveis e ainda sem pedido. */
+export async function listReviewRequestsDueRpc(limit: number): Promise<ReviewRequestTarget[]> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { data, error } = await supabase.rpc('list_review_requests_due', { p_limit: limit })
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as ReviewRequestRow[]).map(toTarget)
+}
+
+/** Pedidos de 3 a 7 dias atrás, ainda sem avaliação nem lembrete. */
+export async function listReviewRemindersDueRpc(limit: number): Promise<ReviewRequestTarget[]> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { data, error } = await supabase.rpc('list_review_reminders_due', { p_limit: limit })
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as ReviewRequestRow[]).map(toTarget)
+}
+
+/** Marca o pedido como enviado (idempotente). Chamar só depois do envio. */
+export async function markReviewRequestSentRpc(bookingId: string): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { error } = await supabase.rpc('mark_review_request_sent', { p_booking_id: bookingId })
+  if (error) throw new Error(error.message)
+}
+
+/** Marca o lembrete como enviado (idempotente). Chamar só depois do envio. */
+export async function markReviewReminderSentRpc(bookingId: string): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient()
+  const { error } = await supabase.rpc('mark_review_reminder_sent', { p_booking_id: bookingId })
+  if (error) throw new Error(error.message)
 }
