@@ -15,6 +15,7 @@ import { Container } from '@/components/ui/container'
 import { Card } from '@/components/ui/card'
 import { getCurrentUser, getMyProfile } from '@/server/queries'
 import { TravelerProfileForm } from '@/features/auth/components/traveler-profile-form'
+import { DeleteAccountSection } from '@/features/auth/components/delete-account-section'
 import { maskedDocument, safeNextPath } from '@/features/auth/profile'
 
 export const metadata: Metadata = {
@@ -138,6 +139,10 @@ export default async function ContaPage({
                 </Link>
               ))}
             </div>
+          </Card>
+
+          <Card radius="3xl" border={false} className="mt-6 p-6">
+            <DeleteAccountSection email={user.email} />
           </Card>
         </Container>
       </main>

@@ -216,7 +216,8 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Podemos suspender ou encerrar contas usadas para fraude ou em desacordo com estes termos.
-        Você pode pedir o encerramento da sua conta a qualquer momento pelo e-mail {email}. Alguns
+        Você pode excluir sua conta a qualquer momento em <Link href="/conta">Meu perfil</Link> →
+        “Excluir minha conta” (veja o <Link href="/excluir-conta">passo a passo</Link>). Alguns
         dados podem ser guardados pelo prazo exigido em lei, como explicado na Política de
         Privacidade.
       </p>

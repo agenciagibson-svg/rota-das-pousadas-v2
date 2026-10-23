@@ -74,3 +74,29 @@ sequenceDiagram
 - Testes: `supabase/tests/priorities.sql` e
   `repositories/memberships.repository.test.ts`.
 - Rollback: `supabase/rollback/0068_rollback.sql`.
+
+## Excluir a própria conta (0090)
+
+- Caminho: `/conta` → "Excluir minha conta" (digitar o próprio e-mail) →
+  `deleteMyAccountAction` → `features/auth/services/account-deletion.service.ts`.
+  Página pública com o passo a passo: `/excluir-conta` (exigência da Google
+  Play). Depois de excluir: `/conta-excluida`.
+- Decisão (topo de `supabase/migrations/0090_excluir_conta.sql`): **anonimizar,
+  não apagar linhas**. ~30 chaves estrangeiras `NO ACTION` apontam para
+  `profiles` (reservas, avaliações, auditoria, comprovantes); apagar o usuário
+  do Auth seria recusado pelo banco ou exigiria reescrever a trilha da pousada.
+- `delete_my_account()` (só `authenticated`, sempre `auth.uid()`): recusa
+  reserva pendente/confirmada/em estadia com checkout >= hoje (fuso da pousada),
+  dono de pousada não encerrada e papel de plataforma; apaga perfil de viajante,
+  favoritos, alertas, equipe/convites e tentativas de login; desvincula fichas
+  (`guests.user_id`) e reservas (`bookings.guest_id`); transforma `profiles` em
+  lápide ("Conta excluída", `deleted_at`); grava `account.deleted` sem dado
+  pessoal. Idempotente.
+- Depois da RPC, o servidor chama `auth.admin.deleteUser(id, true)` (soft
+  delete do Supabase: ofusca e-mail e telefone, apaga senha, nome, identidades
+  e sessões; o e-mail fica livre para um cadastro novo).
+- Testes: `supabase/tests/excluir-conta.sql`,
+  `features/auth/services/account-deletion.service.test.ts`,
+  `repositories/account-deletion.repository.test.ts`,
+  `features/auth/account-deletion.test.ts`.
+- Rollback: `supabase/rollback/0090_rollback.sql`.

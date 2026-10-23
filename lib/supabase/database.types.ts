@@ -1719,6 +1719,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          deleted_at: string | null
           full_name: string
           id: string
           platform_role: Database['public']['Enums']['platform_role'] | null
@@ -1727,6 +1728,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           full_name?: string
           id: string
           platform_role?: Database['public']['Enums']['platform_role'] | null
@@ -1735,6 +1737,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           full_name?: string
           id?: string
           platform_role?: Database['public']['Enums']['platform_role'] | null
@@ -3002,6 +3005,7 @@ export type Database = {
         Returns: undefined
       }
       delete_destination: { Args: { p_id: string }; Returns: Json }
+      delete_my_account: { Args: never; Returns: Json }
       ensure_traveler_guest: {
         Args: { p_email?: string; p_full_name: string; p_pousada_id: string }
         Returns: Json

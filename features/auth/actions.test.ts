@@ -39,6 +39,7 @@ vi.mock('./services/password-reset.service', () => ({
   resetPassword: vi.fn(),
 }))
 vi.mock('./services/profile.service', () => ({ saveMyProfile: vi.fn() }))
+vi.mock('./services/account-deletion.service', () => ({ deleteMyAccount: vi.fn() }))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: mocks.reportError }))
 
 const EMAIL = 'viajante@example.test'

@@ -169,10 +169,11 @@ const sections: LegalSection[] = [
     title: 'Por quanto tempo guardamos',
     body: (
       <p>
-        Guardamos seus dados enquanto sua conta estiver ativa. Se você pedir o encerramento da
-        conta, apagamos ou anonimizamos os dados, exceto os que precisamos manter por obrigação
-        legal ou regulatória (como registros de reservas, pagamentos e da ficha de hospedagem), pelo
-        prazo que a lei exigir.
+        Guardamos seus dados enquanto sua conta estiver ativa. Você pode excluir a conta quando
+        quiser em <Link href="/conta">Meu perfil</Link> → “Excluir minha conta” (veja o{' '}
+        <Link href="/excluir-conta">passo a passo</Link>). Ao excluir, apagamos ou anonimizamos os
+        dados na hora, exceto os que precisam ser mantidos por obrigação legal ou regulatória (como
+        registros de reservas, pagamentos e da ficha de hospedagem), pelo prazo que a lei exigir.
       </p>
     ),
   },
@@ -192,9 +193,10 @@ const sections: LegalSection[] = [
           <li>revogação do consentimento.</li>
         </ul>
         <p>
-          Muitos dados você mesmo corrige em <Link href="/conta">Meu perfil</Link>. Para os demais
-          pedidos, escreva para {email}. Respondemos em até 15 dias. Se não ficar satisfeito, você
-          também pode procurar a Autoridade Nacional de Proteção de Dados (ANPD).
+          Muitos dados você mesmo corrige em <Link href="/conta">Meu perfil</Link>, e lá também pode{' '}
+          <Link href="/excluir-conta">excluir sua conta</Link>. Para os demais pedidos, escreva para{' '}
+          {email}. Respondemos em até 15 dias. Se não ficar satisfeito, você também pode procurar a
+          Autoridade Nacional de Proteção de Dados (ANPD).
         </p>
       </>
     ),

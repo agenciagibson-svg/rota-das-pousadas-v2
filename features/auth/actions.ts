@@ -16,7 +16,9 @@ import {
 } from './schemas'
 import { requestPasswordReset, resetPassword } from './services/password-reset.service'
 import { saveMyProfile } from './services/profile.service'
+import { deleteMyAccount } from './services/account-deletion.service'
 import { safeNextPath, travelerProfileSchema } from './profile'
+import { ACCOUNT_DELETED_PATH, deleteAccountSchema } from './account-deletion'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -191,4 +193,14 @@ export const saveMyProfileAction = createAction(travelerProfileSchema, async (in
   const { missing } = await saveMyProfile(input)
   revalidatePath('/', 'layout')
   return { missing, next: missing.length === 0 ? safeNextPath(input.next) : null }
+})
+
+/**
+ * Excluir a própria conta (0090). A pessoa digita o próprio e-mail para
+ * confirmar; o service anonimiza no banco, encerra no Auth e limpa a sessão.
+ */
+export const deleteMyAccountAction = createAction(deleteAccountSchema, async (input) => {
+  await deleteMyAccount(input.confirmEmail)
+  revalidatePath('/', 'layout')
+  return { redirectTo: ACCOUNT_DELETED_PATH }
 })

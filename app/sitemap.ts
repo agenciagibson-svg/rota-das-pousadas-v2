@@ -19,6 +19,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.2,
     },
+    {
+      url: `${siteConfig.url}/excluir-conta`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    },
   ]
 
   const slugs = await getPousadaSlugs()
