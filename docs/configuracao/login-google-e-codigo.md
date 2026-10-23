@@ -67,23 +67,19 @@ modelo. Quando a conta ainda não existe, o primeiro e-mail sai pelo modelo
 **Confirm signup**; para quem já tem conta, sai pelo **Magic Link**. Por isso,
 ajuste **os dois** em _Authentication → Emails → Templates_.
 
-Corpo sugerido (vale para os dois; o link é opcional, o código é o principal):
+Use os modelos prontos, com o layout da Rota das Pousadas (o mesmo dos
+e-mails de reserva), que ficam no repositório:
 
-```html
-<h2>Seu código de acesso</h2>
-<p>Use este código para entrar na Rota das Pousadas:</p>
-<p style="font-size:28px;font-weight:bold;letter-spacing:6px">{{ .Token }}</p>
-<p>Ele vale por 1 hora. Se não foi você, ignore este e-mail.</p>
-<p>
-  Ou toque para entrar:
-  <a
-    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}"
-    >entrar na minha conta</a
-  >
-</p>
-```
+| Modelo no Supabase    | Corpo (HTML)                                 | Assunto                                             |
+| --------------------- | -------------------------------------------- | --------------------------------------------------- |
+| **Confirm sign up**   | `supabase/templates/confirmar-cadastro.html` | `supabase/templates/confirmar-cadastro.assunto.txt` |
+| **Magic link or OTP** | `supabase/templates/codigo-de-acesso.html`   | `supabase/templates/codigo-de-acesso.assunto.txt`   |
 
-Assunto sugerido: `Seu código de acesso: {{ .Token }}`
+Os arquivos são gerados de `lib/email/templates.ts` (`authConfirmSignupTemplate`
+e `authMagicLinkTemplate`). Mudou o layout? Gere de novo com
+`WRITE_AUTH_TEMPLATES=1 NEXT_PUBLIC_SITE_URL=https://rotadaspousadas.com.br pnpm vitest run lib/email/auth-templates.test.ts`
+e cole outra vez no painel. O Supabase só deixa editar os modelos depois de
+ligar o SMTP próprio (abaixo).
 
 Como cada parte funciona:
 
