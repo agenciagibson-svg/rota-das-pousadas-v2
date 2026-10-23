@@ -35,6 +35,13 @@ const ASSIGNABLE_ROLES: TeamRole[] = [
   'governanca',
 ]
 
+/** Quem é, nos botões e diálogos: o nome ou, sem nome no perfil, o e-mail. */
+function who(member: TeamMember): string {
+  return member.fullName && member.fullName !== 'Sem nome'
+    ? member.fullName
+    : (member.email ?? member.fullName)
+}
+
 function fmtDate(iso: string | null): string {
   if (!iso) return '—'
   return new Intl.DateTimeFormat('pt-BR', {
@@ -162,7 +169,7 @@ export function TeamTable({
                           size="icon-sm"
                           disabled={isPending}
                           onClick={() => setSuspendTarget(member)}
-                          aria-label={`Suspender ${member.fullName}`}
+                          aria-label={`Suspender ${who(member)}`}
                         >
                           <Ban />
                         </Button>
@@ -173,7 +180,7 @@ export function TeamTable({
                           size="icon-sm"
                           disabled={isPending}
                           onClick={() => run(reactivateMemberAction({ membershipId: member.id }))}
-                          aria-label={`Reativar ${member.fullName}`}
+                          aria-label={`Reativar ${who(member)}`}
                         >
                           <RotateCcw />
                         </Button>
@@ -184,7 +191,7 @@ export function TeamTable({
                           size="icon-sm"
                           disabled={isPending}
                           onClick={() => setRevokeTarget(member)}
-                          aria-label={`Revogar vínculo de ${member.fullName}`}
+                          aria-label={`Revogar vínculo de ${who(member)}`}
                         >
                           <ShieldOff />
                         </Button>
@@ -201,7 +208,7 @@ export function TeamTable({
       <Dialog
         open={suspendTarget !== null}
         onClose={() => setSuspendTarget(null)}
-        title={`Suspender ${suspendTarget?.fullName ?? ''}`}
+        title={`Suspender ${suspendTarget ? who(suspendTarget) : ''}`}
         description="A pessoa perde acesso imediatamente. Você pode reativar depois."
         footer={
           <>
@@ -230,7 +237,7 @@ export function TeamTable({
       <Dialog
         open={revokeTarget !== null}
         onClose={() => setRevokeTarget(null)}
-        title={`Revogar vínculo de ${revokeTarget?.fullName ?? ''}`}
+        title={`Revogar vínculo de ${revokeTarget ? who(revokeTarget) : ''}`}
         description="Isso remove permanentemente o acesso desta pessoa a esta pousada. O histórico é preservado."
         footer={
           <>
