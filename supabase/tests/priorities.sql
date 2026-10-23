@@ -279,11 +279,12 @@ select set_config('request.jwt.claim.sub', '', false);
 -- Avaliações (0066): só avalia quem se hospedou naquela pousada (estadia
 -- encerrada); a pousada só responde, e o hóspede não escreve a resposta.
 insert into auth.users(id, email) values ('00000000-0000-0000-0000-000000000011', 'viajante@example.test');
-insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, guest_id, checkin, checkout, total, status) values
+-- origin e created_by explícitos: desde a 0084 só avalia quem reservou pelo site.
+insert into bookings(id, code, pousada_id, room_id, responsible_guest_id, guest_id, checkin, checkout, total, status, origin, created_by) values
  ('30000000-0000-0000-0000-000000000011', 'ESTADIA-FIM', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
-  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-03-01', '2099-03-03', 400, 'checked_out'),
+  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-03-01', '2099-03-03', 400, 'checked_out', 'rota_das_pousadas', '00000000-0000-0000-0000-000000000011'),
  ('30000000-0000-0000-0000-000000000012', 'ESTADIA-FUTURA', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001',
-  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-04-01', '2099-04-03', 400, 'confirmed');
+  '40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '2099-04-01', '2099-04-03', 400, 'confirmed', 'rota_das_pousadas', '00000000-0000-0000-0000-000000000011');
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000011', false);
 do $$ begin
@@ -384,9 +385,10 @@ begin
     'SITE-BIO', v_local + 20, v_local + 21, 1, 0, 0, false, 200, 0, 0, 0, 0, 200, 'pending',
     'link_bio', '00000000-0000-0000-0000-000000000011');
 end $$;
+-- Desde a 0085 o hóspede não lê `bookings` direto: confere como superusuário.
+reset role;
 select test_assert((select count(*) from bookings where origin = 'link_bio' and guest_id = '00000000-0000-0000-0000-000000000011') = 1,
   'reserva vinda do link da bio fica marcada como link_bio');
-reset role;
 select set_config('request.jwt.claim.sub', '', false);
 -- Fuso inválido gravado nas Configurações cai em Brasília em vez de travar a reserva.
 update pousadas set timezone = 'Brasília' where id = '10000000-0000-0000-0000-000000000001';
