@@ -133,11 +133,30 @@ describe('requestEmailCodeAction (receber código por e-mail)', () => {
     expect(mocks.signInWithOtp).not.toHaveBeenCalled()
   })
 
-  it('limite de envio do Supabase vira mensagem em português', async () => {
+  it('código pedido de novo antes de 1 minuto: diz que já enviou e quanto esperar', async () => {
     mocks.signInWithOtp.mockResolvedValue({
       data: {},
       error: {
         message: 'For security purposes, you can only request this after 42 seconds.',
+        status: 429,
+      },
+    })
+
+    const result = await silenced(() => requestEmailCodeAction({ email: EMAIL }))
+
+    expect(result).toMatchObject({
+      ok: false,
+      error:
+        'Já enviamos um código para este e-mail há pouco. Confira a caixa de entrada e o spam, ou peça outro em 42 segundos.',
+    })
+  })
+
+  it('limite geral de envio do Supabase vira mensagem em português', async () => {
+    mocks.signInWithOtp.mockResolvedValue({
+      data: {},
+      error: {
+        message: 'email rate limit exceeded',
+        code: 'over_email_send_rate_limit',
         status: 429,
       },
     })

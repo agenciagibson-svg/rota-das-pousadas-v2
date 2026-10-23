@@ -78,6 +78,14 @@ export async function requestEmailCode(params: {
     },
   })
   if (!error) return
+  // Mesmo e-mail pedindo de novo antes de 1 minuto (o Supabase diz quantos
+  // segundos faltam). Não é "muitas tentativas": o código já foi.
+  const wait = /after (\d+) seconds?/i.exec(error.message)
+  if (wait) {
+    throw new Error(
+      `Já enviamos um código para este e-mail há pouco. Confira a caixa de entrada e o spam, ou peça outro em ${wait[1]} segundos.`,
+    )
+  }
   if (isRateLimited(error)) throw new Error(TOO_MANY)
   const m = error.message.toLowerCase()
   if (error.code === 'email_address_invalid' || (m.includes('invalid') && m.includes('email'))) {
