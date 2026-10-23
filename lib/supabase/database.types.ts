@@ -3071,6 +3071,42 @@ export type Database = {
           stay_total: number | null
         }[]
       }
+      list_inventory_items: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          active: boolean
+          category: string
+          description: string
+          id: string
+          min_quantity: number
+          name: string
+          photo_url: string | null
+          pousada_id: string
+          quantity: number
+          sale_price: number | null
+          show_in_app: boolean
+          sort_order: number
+          track_stock: boolean
+          unit: string
+          unit_cost: number | null
+        }[]
+      }
+      list_inventory_movements: {
+        Args: { p_item_id: string | null; p_limit: number; p_pousada_id: string }
+        Returns: {
+          balance_after: number
+          created_at: string
+          expense_id: string | null
+          id: string
+          item_id: string
+          item_name: string
+          kind: string
+          note: string
+          order_id: string | null
+          quantity: number
+          unit_cost: number | null
+        }[]
+      }
       list_channel_feeds_to_import: {
         Args: never
         Returns: {
@@ -3173,6 +3209,26 @@ export type Database = {
       reactivate_member: {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
+      }
+      get_inventory_item: {
+        Args: { p_item_id: string }
+        Returns: {
+          active: boolean
+          category: string
+          description: string
+          id: string
+          min_quantity: number
+          name: string
+          photo_url: string | null
+          pousada_id: string
+          quantity: number
+          sale_price: number | null
+          show_in_app: boolean
+          sort_order: number
+          track_stock: boolean
+          unit: string
+          unit_cost: number | null
+        }[]
       }
       get_payment_account_status: {
         Args: { p_pousada_id: string }

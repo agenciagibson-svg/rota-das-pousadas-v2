@@ -320,13 +320,17 @@ select test_assert(test_try(format('select staff_create_order(%L, %L::jsonb, %L)
 select test_assert(test_try(format('select register_booking_payment(%L, 10, %L, %L)', test_id('b1'), 'dinheiro', ''))
   = 'Reserva não encontrada.', 'governança não registra pagamento');
 select test_assert(test_rows(format('update rooms set base_price = 1 where id = %L', :'R2')) = 0, 'governança não muda preço');
--- ACHADO: governança tem `order:manage` e lê guest_orders/guest_order_items
--- (RLS 0078) com os VALORES (total, unit_price), e inventory_items /
--- inventory_movements com custo e preço de venda (RLS = qualquer membro).
--- O app esconde (orderPermissions.showPrices, inventoryPermissions.seeCosts),
--- mas a API REST entrega. Mesmo vale para a recepção em custo de estoque.
-select test_assert((select count(*) from guest_orders where total > 0) = 1, 'ACHADO: governança lê o valor dos pedidos');
-select test_assert((select unit_cost from inventory_items where id = test_id('agua')) = 1.50, 'ACHADO: governança lê o custo do estoque');
+-- Decisão (23/10/2026): preço de VENDA dos pedidos é o mesmo que o hóspede vê
+-- no app da estadia, então a governança pode ler. CUSTO de compra do estoque é
+-- só de proprietário, gestor e financeiro (0092): a tabela não abre para ela e
+-- as RPCs devolvem o custo nulo.
+select test_assert((select count(*) from guest_orders where total > 0) = 1, 'governança lê o pedido (preço de venda)');
+select test_assert((select count(*) from inventory_items where id = test_id('agua')) = 0,
+  'governança não lê a tabela de estoque direto (0092)');
+select test_assert((select quantity > 0 and unit_cost is null from list_inventory_items(:'P') where id = test_id('agua')),
+  'governança vê quantidade, sem custo (0092)');
+select test_assert(not exists (select 1 from list_inventory_movements(:'P') where unit_cost is not null),
+  'governança vê movimentos sem custo (0092)');
 reset role;
 
 -- ---------------------------------------------------------------------------
@@ -367,10 +371,10 @@ select test_assert(test_try(format('select set_guest_order_status(%L, %L, null)'
 -- abaixo passa e é desfeita.
 select test_assert(test_try(format('select review_payment_proof(%L, true, null, null)', test_id('comprovante'))) = 'ok',
   'financeiro aprova comprovante Pix');
--- ACHADO: booking_guests_read usa auth_has_operational_access, que inclui o
--- financeiro; a ficha `guests` não (guest:manage). Nome, nascimento e
--- documento (cifrado) dos acompanhantes ficam legíveis para o financeiro.
-select test_assert((select count(*) from booking_guests) = 3, 'ACHADO: financeiro lê acompanhantes (dados pessoais)');
+-- 0092: acompanhantes são dado pessoal da ficha; o financeiro não lê.
+select test_assert((select count(*) from booking_guests) = 0, 'financeiro não lê acompanhantes (0092)');
+select test_assert((select unit_cost from list_inventory_items(:'P') where id = test_id('agua')) = 1.50,
+  'financeiro vê o custo do estoque');
 reset role;
 
 -- Recepção aprova o Pix e acerta o restante do balcão; check-out.

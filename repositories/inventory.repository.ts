@@ -4,7 +4,11 @@ import type { InventoryItem, InventoryMovement } from '@/features/estoque/types'
 import type { InventoryCategory, InventoryUnit, MovementKind } from '@/features/estoque/labels'
 import type { Json } from '@/lib/supabase/database.types'
 
-/** Estoque (0078). Leitura pela RLS; escrita só pelas RPCs (travam o item). */
+/**
+ * Estoque (0078). Leitura pelas RPCs da 0092, que escondem o custo de compra de
+ * quem não é proprietário, gestor ou financeiro (a leitura direta da tabela é
+ * só desses papéis). Escrita só pelas RPCs que travam o item.
+ */
 
 type ItemRow = {
   id: string
@@ -42,33 +46,22 @@ function toItem(r: ItemRow): InventoryItem {
   }
 }
 
-const ITEM_COLUMNS =
-  'id, name, category, unit, track_stock, quantity, min_quantity, unit_cost, sale_price, show_in_app, description, photo_url, active, sort_order'
-
 export async function listInventoryItems(pousadaId: string): Promise<InventoryItem[]> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('inventory_items')
-    .select(ITEM_COLUMNS)
-    .eq('pousada_id', pousadaId)
-    .order('sort_order')
-    .order('name')
+  const { data, error } = await supabase.rpc('list_inventory_items', { p_pousada_id: pousadaId })
   if (error) throw new Error(error.message)
-  return (data ?? []).map((r) => toItem(r as ItemRow))
+  return ((data ?? []) as ItemRow[]).map(toItem)
 }
 
 export async function getInventoryItem(
   id: string,
 ): Promise<(InventoryItem & { pousadaId: string }) | null> {
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('inventory_items')
-    .select(`${ITEM_COLUMNS}, pousada_id`)
-    .eq('id', id)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('get_inventory_item', { p_item_id: id })
   if (error) throw new Error(error.message)
-  if (!data) return null
-  return { ...toItem(data as ItemRow), pousadaId: (data as { pousada_id: string }).pousada_id }
+  const row = ((data ?? []) as (ItemRow & { pousada_id: string })[])[0]
+  if (!row) return null
+  return { ...toItem(row), pousadaId: row.pousada_id }
 }
 
 export async function listInventoryMovements(
@@ -76,27 +69,29 @@ export async function listInventoryMovements(
   opts: { itemId?: string; limit?: number } = {},
 ): Promise<InventoryMovement[]> {
   const supabase = await createSupabaseServerClient()
-  let query = supabase
-    .from('inventory_movements')
-    .select(
-      'id, item_id, kind, quantity, balance_after, unit_cost, note, order_id, expense_id, created_at',
-    )
-    .eq('pousada_id', pousadaId)
-    .order('created_at', { ascending: false })
-    .limit(opts.limit ?? 100)
-  if (opts.itemId) query = query.eq('item_id', opts.itemId)
-  const { data, error } = await query
+  const { data, error } = await supabase.rpc('list_inventory_movements', {
+    p_pousada_id: pousadaId,
+    p_item_id: opts.itemId ?? null,
+    p_limit: opts.limit ?? 100,
+  })
   if (error) throw new Error(error.message)
-  const rows = data ?? []
-  const ids = [...new Set(rows.map((r) => r.item_id))]
-  const { data: names } = ids.length
-    ? await supabase.from('inventory_items').select('id, name').in('id', ids)
-    : { data: [] as { id: string; name: string }[] }
-  const nameById = new Map((names ?? []).map((n) => [n.id, n.name]))
+  const rows = (data ?? []) as {
+    id: string
+    item_id: string
+    item_name: string
+    kind: string
+    quantity: number
+    balance_after: number
+    unit_cost: number | null
+    note: string
+    order_id: string | null
+    expense_id: string | null
+    created_at: string
+  }[]
   return rows.map((r) => ({
     id: r.id,
     itemId: r.item_id,
-    itemName: nameById.get(r.item_id) ?? 'Item',
+    itemName: r.item_name,
     kind: r.kind as MovementKind,
     quantity: Number(r.quantity),
     balanceAfter: Number(r.balance_after),
