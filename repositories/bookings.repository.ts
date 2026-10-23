@@ -1,6 +1,7 @@
 import 'server-only'
 import { listMyBookingIdsAwaitingApproval } from './pix.repository'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { roomNamesById } from './room-names.repository'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import {
   encryptDocumentNumber,
@@ -380,11 +381,7 @@ export async function getBookingDetailById(
   if (error) throw error
   if (!data) return null
 
-  const { data: room } = await supabase
-    .from('rooms')
-    .select('name')
-    .eq('id', data.room_id)
-    .maybeSingle()
+  const roomNames = await roomNamesById(supabase, pousadaId, [data.room_id])
   const { data: companionRows } = await supabase
     .from('booking_guests')
     .select(
@@ -409,7 +406,7 @@ export async function getBookingDetailById(
     code: data.code,
     pousadaId: data.pousada_id,
     roomId: data.room_id,
-    roomName: room?.name ?? 'Acomodação',
+    roomName: roomNames.get(data.room_id) ?? 'Acomodação',
     responsibleGuestId: data.responsible_guest_id,
     guestName: data.guest_name ?? 'Hóspede',
     guestEmail: data.guest_email,

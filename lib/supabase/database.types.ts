@@ -3202,6 +3202,10 @@ export type Database = {
         Args: { p_pousada_id: string }
         Returns: string
       }
+      pousada_room_names: {
+        Args: { p_pousada: string }
+        Returns: { id: string; name: string }[]
+      }
       purge_stale_quote_requests: {
         Args: { p_retention_days?: number }
         Returns: Json

@@ -51,24 +51,37 @@ export function OwnerReservationsView({
       subtitle="Gerencie reservas e a disponibilidade da sua pousada."
       user={{ name: displayName, role: 'Proprietário' }}
     >
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <Card className="p-5 sm:p-6 xl:sticky xl:top-24">
-          <h2 className="text-foreground font-semibold">Calendário &amp; disponibilidade</h2>
-          <p className="text-muted-foreground text-sm">
-            {calendar.canBlock
-              ? 'Escolha o quarto e clique num dia livre para bloquear (ou bloqueado para liberar).'
-              : 'Ocupação e bloqueios por quarto.'}
-          </p>
-          <div className="mt-5">
-            <ReservationsCalendar
-              rooms={calendar.rooms}
-              bookings={calendar.bookings}
-              blocks={calendar.blocks}
-              canBlock={calendar.canBlock}
-              todayISO={todayISO}
-            />
-          </div>
-        </Card>
+      {/*
+        Calendário de disponibilidade: só para quem lança e mexe em reservas. O
+        financeiro consulta a lista; antes via um calendário vazio pedindo para
+        "cadastrar um quarto", porque não lê os quartos.
+      */}
+      <div
+        className={
+          canManageBookings
+            ? 'grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]'
+            : 'grid grid-cols-1 items-start gap-5'
+        }
+      >
+        {canManageBookings && (
+          <Card className="p-5 sm:p-6 xl:sticky xl:top-24">
+            <h2 className="text-foreground font-semibold">Calendário &amp; disponibilidade</h2>
+            <p className="text-muted-foreground text-sm">
+              {calendar.canBlock
+                ? 'Escolha o quarto e clique num dia livre para bloquear (ou bloqueado para liberar).'
+                : 'Ocupação e bloqueios por quarto.'}
+            </p>
+            <div className="mt-5">
+              <ReservationsCalendar
+                rooms={calendar.rooms}
+                bookings={calendar.bookings}
+                blocks={calendar.blocks}
+                canBlock={calendar.canBlock}
+                todayISO={todayISO}
+              />
+            </div>
+          </Card>
+        )}
 
         <div className="space-y-5">
           <Card className="p-5">

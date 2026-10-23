@@ -1,6 +1,7 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { setBookingStatusRpc } from '@/repositories/bookings.repository'
+import { roomNamesById } from '@/repositories/room-names.repository'
 import {
   blockCalendarDay,
   unblockCalendarDay,
@@ -197,11 +198,11 @@ export async function listReservationsByPousada(
   const { data, error } = await query
   if (error) throw error
 
-  const roomIds = [...new Set((data ?? []).map((r) => r.room_id))]
-  const { data: rooms } = roomIds.length
-    ? await supabase.from('rooms').select('id, name').in('id', roomIds)
-    : { data: [] }
-  const roomById = new Map((rooms ?? []).map((room) => [room.id, room]))
+  const roomNames = await roomNamesById(
+    supabase,
+    pousadaId,
+    (data ?? []).map((r) => r.room_id),
+  )
 
   // Telefone: o da reserva ou, se vazio, o WhatsApp/telefone da ficha do hóspede.
   const guestIds = [
@@ -221,7 +222,7 @@ export async function listReservationsByPousada(
     guestName: r.guest_name ?? 'Hóspede',
     guestEmail: r.guest_email ?? 'E-mail não informado',
     guestPhone: r.guest_phone || guestPhoneById.get(r.responsible_guest_id) || null,
-    roomName: roomById.get(r.room_id)?.name ?? 'Acomodação',
+    roomName: roomNames.get(r.room_id) ?? 'Acomodação',
     checkin: r.checkin,
     checkout: r.checkout,
     nights: nightsBetween(r.checkin, r.checkout),
