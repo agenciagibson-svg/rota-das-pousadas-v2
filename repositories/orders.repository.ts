@@ -33,7 +33,7 @@ type OrderRow = {
   cancel_reason: string | null
 }
 
-async function hydrate(rows: OrderRow[]): Promise<GuestOrder[]> {
+async function hydrate(rows: OrderRow[], pousadaId?: string): Promise<GuestOrder[]> {
   if (rows.length === 0) return []
   const supabase = await createSupabaseServerClient()
   const orderIds = rows.map((r) => r.id)
@@ -52,14 +52,27 @@ async function hydrate(rows: OrderRow[]): Promise<GuestOrder[]> {
   const roomById = new Map((rooms ?? []).map((r) => [r.id, r.name]))
   const bookingById = new Map((bookings ?? []).map((b) => [b.id, b]))
 
+  // Governança não lê reservas nem quartos: código, primeiro nome e quarto
+  // vêm da função enxuta (0093). Sem ela no banco, fica como antes.
+  const missing = bookingIds.filter((id) => !bookingById.has(id))
+  const context = new Map<string, { code: string; guest: string | null; room: string | null }>()
+  if (pousadaId && missing.length) {
+    const { data } = await supabase.rpc('pousada_order_bookings', {
+      p_pousada: pousadaId,
+      p_booking_ids: missing,
+    })
+    for (const c of data ?? [])
+      context.set(c.booking_id, { code: c.code, guest: c.guest_first_name, room: c.room_name })
+  }
+
   return rows.map((r) => {
     const b = bookingById.get(r.booking_id)
     return {
       id: r.id,
       bookingId: r.booking_id,
-      bookingCode: b?.code ?? '',
-      guestName: b?.guest_name ?? 'Hóspede',
-      roomName: (b && roomById.get(b.room_id)) || 'Acomodação',
+      bookingCode: b?.code ?? context.get(r.booking_id)?.code ?? '',
+      guestName: b?.guest_name ?? context.get(r.booking_id)?.guest ?? 'Hóspede',
+      roomName: (b && roomById.get(b.room_id)) || context.get(r.booking_id)?.room || 'Acomodação',
       status: r.status as OrderStatus,
       source: r.source as GuestOrder['source'],
       note: r.note,
@@ -110,7 +123,7 @@ export async function listPousadaOrders(
   ])
   if (open.error) throw new Error(open.error.message)
   if (closed.error) throw new Error(closed.error.message)
-  return hydrate([...(open.data ?? []), ...(closed.data ?? [])] as OrderRow[])
+  return hydrate([...(open.data ?? []), ...(closed.data ?? [])] as OrderRow[], pousadaId)
 }
 
 export async function listBookingOrders(bookingId: string): Promise<GuestOrder[]> {

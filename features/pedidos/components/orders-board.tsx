@@ -201,7 +201,8 @@ export function OrdersBoard({
   permissions: { operate: boolean; charge: boolean; showPrices: boolean; registerPayment: boolean }
   stayUrl: string
   stayQrSvg: string
-  appItemsCount: number
+  /** `null` = o papel não lê o estoque (governança): sem aviso. */
+  appItemsCount: number | null
 }) {
   const router = useRouter()
   const [now, setNow] = useState(() => Date.now())

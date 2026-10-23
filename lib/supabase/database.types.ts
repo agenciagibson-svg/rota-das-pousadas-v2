@@ -3202,6 +3202,15 @@ export type Database = {
         Args: { p_pousada_id: string }
         Returns: string
       }
+      pousada_order_bookings: {
+        Args: { p_pousada: string; p_booking_ids: string[] }
+        Returns: {
+          booking_id: string
+          code: string
+          guest_first_name: string | null
+          room_name: string | null
+        }[]
+      }
       pousada_room_names: {
         Args: { p_pousada: string }
         Returns: { id: string; name: string }[]

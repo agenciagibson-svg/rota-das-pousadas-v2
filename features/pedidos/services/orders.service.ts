@@ -128,7 +128,9 @@ export async function getOrdersScreen(timeZone: string) {
     permissions: perms,
     stayUrl,
     stayQrSvg: await stayQrSvg(stayUrl),
-    appItemsCount: items.filter((i) => i.active && i.showInApp).length,
+    // Só quem lê o estoque com preço sabe o que está no app; para a
+    // governança o aviso "nenhum item no app" era falso.
+    appItemsCount: perms.charge ? items.filter((i) => i.active && i.showInApp).length : null,
   }
 }
 
