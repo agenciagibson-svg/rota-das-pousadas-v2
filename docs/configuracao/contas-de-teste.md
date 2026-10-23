@@ -95,8 +95,10 @@ Reservas, Hóspedes, Financeiro, Membros, Configurações.
    pendente" e "Disponível".
 2. **Pedidos:** os pedidos aparecem sem valores. Use **Preparar** e
    **Entregue** num pedido do hóspede (ver Viajante abaixo).
-3. **Estoque:** registre uma perda (ex.: 1 garrafa quebrada).
-4. **Visão geral:** não mostra faturamento.
+3. **Estoque:** registre uma perda (ex.: 1 garrafa quebrada). A governança
+   também faz entrada e ajuste (conta o estoque), mas não vê custos.
+4. **Visão geral:** mostra só "quartos para arrumar" e "pedidos novos", sem
+   faturamento nem blocos de reserva.
 5. Digite `/dashboard/reservas` e `/dashboard/hospedes`: aparece "sem acesso".
 
 ### Financeiro
@@ -107,11 +109,13 @@ Acomodações, Pedidos, Hóspedes, Membros, Configurações.
 1. **Financeiro:** a receita das reservas, os pagamentos de consumo e as
    despesas aparecem. Em "Lançar despesa", o texto avisa que só o proprietário e
    o gestor lançam.
-2. **Reservas:** a lista abre. O botão "Nova reserva" aparece, mas leva a "sem
-   acesso" (o financeiro não cria reserva).
-3. **Toque numa reserva:** hoje aparece "Não foi possível abrir esta reserva"
-   (é um problema conhecido, veja abaixo). Anote se continuar assim.
+2. **Reservas:** a lista abre, sem o calendário e sem "Nova reserva" (o
+   financeiro não cria reserva). Digitar `/dashboard/reservas/nova` dá "sem
+   acesso".
+3. **Toque numa reserva:** o detalhe abre com valores, pagamentos e consumo, e
+   o botão "Estornar". O nome do quarto aparece depois da migration 0093.
 4. **Visão geral:** a ocupação aparece como "não disponível para o seu perfil".
+5. **Estoque:** só consulta, com custos e sem "Movimentar".
 
 ### Gestor
 
@@ -122,9 +126,9 @@ Acomodações, Pedidos, Hóspedes, Membros, Configurações.
 2. **Financeiro:** lance uma despesa e marque-a como paga.
 3. **Membros:** a equipe aparece, mas **sem** o bloco "Convidar" e sem os
    botões de trocar papel, suspender ou revogar.
-4. **Configurações:** na área "Pagamentos", o gestor não tem botão para conectar
-   o Mercado Pago. Hoje aparece "Conecte sua conta" mesmo quando a conta já está
-   conectada (problema conhecido, veja abaixo).
+4. **Configurações:** na área "Pagamentos" aparece o status real do Mercado
+   Pago ("conectada"), sem botão para conectar. A chave Pix e a assinatura são
+   só do proprietário.
 
 ### Proprietário (sua conta)
 
@@ -138,23 +142,35 @@ Tudo aparece. Confira os pontos que só o proprietário tem:
 ### Viajante (hóspede comum)
 
 1. Com `+viajante`, reserve a pousada de teste pelo site (entrada hoje) e envie
-   um comprovante Pix.
+   um comprovante Pix. Antes de reservar, o site pede o cadastro completo (nome,
+   nascimento, CPF, celular, cidade e UF) para a ficha de hospedagem.
 2. **Recepção:** abra a reserva, aprove o comprovante e faça o check-in.
 3. Com `+viajante`, em **Minhas reservas** aparece só esta reserva. Abra a
    estadia e peça 3 águas pelo app.
-4. **Governança:** entregue o pedido.
+4. **Governança:** em Pedidos, use **Preparar** e **Entregue**. O quadro
+   mostra o quarto e o primeiro nome do hóspede (depois da migration 0093), sem
+   valores.
 5. O viajante não tem acesso a `/dashboard`.
 
-## Problemas conhecidos (o teste do banco confirmou)
+## Dicas para não travar o teste
 
-- **Financeiro** não abre o detalhe da reserva: a lista de Reservas aparece, mas
-  o detalhe exige permissão de recepção. O botão "Nova reserva" também aparece
-  para ele e leva a "sem acesso".
-- **Gestor** vê "Conecte sua conta Mercado Pago" mesmo com a conta conectada.
-- **Governança e recepção** conseguem ler valores de pedidos e custos de estoque
-  se acessarem o banco por fora do app. As telas escondem esses dados.
+- O Supabase só manda **um código por minuto para o mesmo e-mail**. Se pedir de
+  novo antes, a tela avisa quanto falta. Use sempre o e-mail mais recente: o
+  código anterior deixa de valer.
+- Tocou em "Receber código" e a página recarregou sem mostrar o campo? Ela
+  ainda estava carregando. Espere 1 minuto e peça de novo.
 
-Os detalhes técnicos estão no relatório da simulação.
+## Problemas conhecidos
+
+- **Governança** consegue ler o valor dos pedidos se acessar o banco por fora
+  do app. É o mesmo preço de venda que o hóspede vê no app; a tela esconde. O
+  custo de compra do estoque ficou fechado no banco desde a 0092.
+- A equipe aparece como **"Sem nome"** em Membros enquanto a pessoa não
+  preenche o nome no perfil (os botões mostram o e-mail).
+
+Resultado do teste em produção de 23/10/2026: todos os papéis passaram. Os
+achados e correções estão em `claude/publicacao-melhorias-2026-10-23.md` (no
+projeto).
 
 ## Depois do teste
 
