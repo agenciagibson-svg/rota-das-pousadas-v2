@@ -62,7 +62,7 @@ function Block({
   className?: string
 }) {
   return (
-    <section id={id} className={cn('border-border scroll-mt-16 border-t py-10', className)}>
+    <section id={id} className={cn('border-border scroll-mt-40 border-t py-10', className)}>
       <Reveal>
         <h2 className="text-h2 text-foreground">{title}</h2>
         <div className="mt-6">{children}</div>

@@ -369,9 +369,14 @@ html {
 }
 
 /* Cabeçalho fixo e barras presas ao pé (reserva no celular, menu do app da
-   estadia) não podem cobrir a âncora nem o elemento que recebe o foco. */
-html:has([data-site-header]) {
-  scroll-padding-top: 6rem;
+   estadia) não podem cobrir a âncora nem o elemento que recebe o foco.
+   No topo é `scroll-margin` nos alvos, e não `scroll-padding` no html: o
+   Next 16.4 lê o `scroll-padding-top` do html ao trocar de página, acha que o
+   topo da página nova está "fora da tela" e rola até o último bloco da página
+   (o rodapé). */
+:where(html:has([data-site-header]))
+  :where([id], a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin-top: 6rem;
 }
 @media (max-width: 1023px) {
   html:has([data-bottom-bar]) {

@@ -55,7 +55,7 @@ export default async function ContaPage({
   ]
 
   return (
-    <>
+    <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
       <main id="conteudo" tabIndex={-1} className="pt-32 pb-24">
         <Container className="max-w-3xl">
@@ -147,6 +147,6 @@ export default async function ContaPage({
         </Container>
       </main>
       <SiteFooter />
-    </>
+    </div>
   )
 }

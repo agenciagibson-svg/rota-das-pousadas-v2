@@ -54,7 +54,7 @@ export function LegalPage({
 
           <div className="mt-10 space-y-10">
             {sections.map((s, i) => (
-              <section key={s.id} id={s.id} className="scroll-mt-4">
+              <section key={s.id} id={s.id} className="scroll-mt-28">
                 <h2 className="text-h2 text-foreground">
                   {i + 1}. {s.title}
                 </h2>

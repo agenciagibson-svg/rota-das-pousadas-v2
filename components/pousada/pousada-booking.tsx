@@ -119,7 +119,7 @@ export function PousadaBooking({
 
   return (
     <>
-      <div id="reservar" className="bg-card shadow-floating scroll-mt-4 rounded-3xl p-6">
+      <div id="reservar" className="bg-card shadow-floating scroll-mt-28 rounded-3xl p-6">
         <div className="flex items-end justify-between gap-4">
           <div>
             <span className="text-foreground text-2xl font-semibold tabular-nums">
