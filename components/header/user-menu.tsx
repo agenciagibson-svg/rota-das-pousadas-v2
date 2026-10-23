@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils'
 import { signOutAction } from '@/features/auth/actions'
 import { useDismiss } from './use-dismiss'
+import { clearHeaderSummary } from './use-header-summary'
 
 export type HeaderUser = {
   firstName: string
@@ -45,6 +46,7 @@ export function useSignOut() {
   const signOut = () =>
     start(async () => {
       await signOutAction()
+      clearHeaderSummary()
       router.push('/')
       router.refresh()
     })

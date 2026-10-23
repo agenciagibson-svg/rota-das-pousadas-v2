@@ -1,34 +1,77 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import type { HeaderSummary } from '@/features/auth/header-summary'
+
+/**
+ * Resumo do usuário logado, guardado fora do componente.
+ *
+ * Cada página monta o próprio `SiteHeader`; antes, cada montagem começava do
+ * zero e o card do usuário sumia a cada troca de página até a busca voltar.
+ * Agora a página nova já nasce com o último resumo conhecido e a busca só
+ * atualiza por trás. Falha passageira da busca (rede, função fria logo depois
+ * de um deploy) não apaga quem já estava logado.
+ */
+let cached: HeaderSummary | null = null
+const listeners = new Set<() => void>()
+
+function emit() {
+  for (const listener of listeners) listener()
+}
+
+export function setHeaderSummary(next: HeaderSummary | null) {
+  cached = next
+  emit()
+}
+
+/** Resultado de uma busca: resposta boa substitui; falha só vale se ainda não há nada. */
+export function applyHeaderFetch(
+  current: HeaderSummary | null,
+  result: { ok: true; data: HeaderSummary } | { ok: false },
+): HeaderSummary {
+  if (result.ok) return result.data
+  return current ?? { user: null }
+}
+
+/** Ao sair da conta: o card some na hora, sem esperar a próxima busca. */
+export function clearHeaderSummary() {
+  setHeaderSummary({ user: null })
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+const getSnapshot = () => cached
+const getServerSnapshot = () => null
 
 /** Busca o resumo do usuário logado; refaz a cada troca de página. */
 export function useHeaderSummary(): { summary: HeaderSummary | null; loading: boolean } {
   const pathname = usePathname()
-  const [summary, setSummary] = useState<HeaderSummary | null>(null)
-  const [loading, setLoading] = useState(true)
+  const summary = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   useEffect(() => {
     let alive = true
     fetch('/api/me/header', { cache: 'no-store', credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : { user: null }))
-      .then((data: HeaderSummary) => {
-        if (alive) setSummary(data)
-      })
-      .catch(() => {
-        if (alive) setSummary({ user: null })
-      })
-      .finally(() => {
-        if (alive) setLoading(false)
+      .then(async (r) =>
+        r.ok
+          ? { ok: true as const, data: (await r.json()) as HeaderSummary }
+          : { ok: false as const },
+      )
+      .catch(() => ({ ok: false as const }))
+      .then((result) => {
+        if (alive) setHeaderSummary(applyHeaderFetch(cached, result))
       })
     return () => {
       alive = false
     }
   }, [pathname])
 
-  return { summary, loading }
+  return { summary, loading: summary === null }
 }
 
 /** "1h42" / "35 min" / "encerrado" — tempo até o prazo de pagamento. */
