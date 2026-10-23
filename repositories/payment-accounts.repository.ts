@@ -30,15 +30,15 @@ export type SavePaymentAccountParams = {
 export async function getPaymentAccountStatusByPousada(
   pousadaId: string,
 ): Promise<{ connected: boolean; liveMode: boolean } | null> {
+  // 0091: RPC só com o status (sem tokens), legível também pelo gestor — a
+  // tabela continua restrita ao proprietário pela RLS da 0053.
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('pousada_payment_accounts')
-    .select('live_mode')
-    .eq('pousada_id', pousadaId)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('get_payment_account_status', {
+    p_pousada_id: pousadaId,
+  })
   if (error) throw error
-  if (!data) return { connected: false, liveMode: false }
-  return { connected: true, liveMode: data.live_mode }
+  const status = data as { connected?: boolean; liveMode?: boolean } | null
+  return { connected: Boolean(status?.connected), liveMode: Boolean(status?.liveMode) }
 }
 
 /** Para o checkout — traz os tokens cifrados da pousada que vai receber o pagamento. */

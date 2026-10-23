@@ -3174,6 +3174,10 @@ export type Database = {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
       }
+      get_payment_account_status: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
       quote_room_stay: {
         Args: { p_checkin: string; p_checkout: string; p_room_id: string }
         Returns: {
