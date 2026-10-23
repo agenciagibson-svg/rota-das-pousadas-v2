@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { CalendarDays, ChevronRight, Link2, MapPin, MessageCircleMore } from 'lucide-react'
 import { Logo, Marker } from '@/components/brand/logo'
@@ -215,35 +216,59 @@ export default async function BioPage({ params, searchParams }: PageProps) {
 
       {rooms.length > 0 ? (
         <section className="flex flex-col gap-2.5">
-          {rooms.map((room) => (
-            <Link
-              key={room.id}
-              href={
-                hasDates
-                  ? `/pousada/${pousada.slug}/reservar?checkin=${checkin}&checkout=${checkout}&guests=${guests}&origem=link_bio`
-                  : `/pousada/${pousada.slug}?origem=link_bio`
-              }
-              className="group bg-card hover:shadow-floating flex min-h-16 items-center justify-between gap-3 rounded-2xl p-4 transition-shadow duration-(--motion-hover)"
-            >
-              <span className="min-w-0">
-                <span className="text-foreground block text-base font-semibold">{room.name}</span>
-                <span className="text-muted-foreground block text-sm">
-                  até {room.capacity} {room.capacity === 1 ? 'hóspede' : 'hóspedes'}
-                </span>
-              </span>
-              <span className="flex shrink-0 items-center gap-2">
-                <span className="text-right">
-                  <span className="text-foreground block text-base font-semibold tabular-nums">
-                    {formatBRL(hasDates ? room.basePrice * noites : room.basePrice)}
+          {rooms.map((room) => {
+            const total = hasDates ? (room.stayTotal ?? room.basePrice * noites) : room.basePrice
+            const belowMinimum = hasDates && noites < room.minNights
+            return (
+              <Link
+                key={room.id}
+                href={
+                  hasDates
+                    ? `/pousada/${pousada.slug}/reservar?checkin=${checkin}&checkout=${checkout}&guests=${guests}&quarto=${room.id}&origem=link_bio`
+                    : `/pousada/${pousada.slug}?origem=link_bio`
+                }
+                className="group bg-card hover:shadow-floating flex min-h-16 items-center justify-between gap-3 rounded-2xl p-3 transition-shadow duration-(--motion-hover)"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  {room.gallery[0] && (
+                    <span className="relative size-16 shrink-0 overflow-hidden rounded-xl">
+                      <Image
+                        src={room.gallery[0]}
+                        alt={room.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="text-foreground block text-base font-semibold">
+                      {room.name}
+                    </span>
+                    <span className="text-muted-foreground block text-sm">
+                      até {room.capacity} {room.capacity === 1 ? 'hóspede' : 'hóspedes'}
+                    </span>
+                    {belowMinimum && (
+                      <span className="text-foreground block text-xs font-medium">
+                        Mínimo de {room.minNights} noites nessas datas
+                      </span>
+                    )}
                   </span>
-                  <span className="text-muted-foreground block text-xs">
-                    {hasDates ? `${noites} ${noites === 1 ? 'noite' : 'noites'}` : 'por noite'}
-                  </span>
                 </span>
-                <ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-colors" />
-              </span>
-            </Link>
-          ))}
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="text-right">
+                    <span className="text-foreground block text-base font-semibold tabular-nums">
+                      {formatBRL(total)}
+                    </span>
+                    <span className="text-muted-foreground block text-xs">
+                      {hasDates ? `${noites} ${noites === 1 ? 'noite' : 'noites'}` : 'por noite'}
+                    </span>
+                  </span>
+                  <ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-colors" />
+                </span>
+              </Link>
+            )
+          })}
         </section>
       ) : (
         <Card radius="3xl" border={false} className="p-5">

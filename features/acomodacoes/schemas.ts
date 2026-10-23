@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isStoredImageUrl } from '@/lib/validation/image-url'
 
 const BED_TYPES = [
   'casal',
@@ -57,6 +58,18 @@ export const roomSchema = z
     displayOrder: z.coerce.number().int().min(0).max(999),
     internalNotes: z.string().trim().max(1000).optional().or(z.literal('')),
     amenityIds: z.array(z.string().uuid()),
+    /** Fotos da acomodação, a principal primeiro (0087: até 12). */
+    gallery: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1)
+          .max(2048)
+          .refine((v) => isStoredImageUrl(v, false), 'Foto inválida.'),
+      )
+      .max(12, 'Use no máximo 12 fotos por acomodação.')
+      .default([]),
   })
   .refine((v) => v.capacityMax === undefined || v.capacityMax >= v.capacity, {
     message: 'A capacidade máxima não pode ser menor que a padrão.',
@@ -135,3 +148,43 @@ export const availabilityQuerySchema = z
     path: ['checkout'],
   })
 export type AvailabilityQueryInput = z.infer<typeof availabilityQuerySchema>
+
+const isoNight = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data.')
+
+/** Regra de tarifa por período (0087). As mesmas travas da tabela `rate_rules`. */
+export const rateRuleSchema = z
+  .object({
+    name: z.string().trim().min(2, 'Dê um nome à regra (ex.: Carnaval).').max(80),
+    roomId: z.string().uuid().optional().or(z.literal('')),
+    firstNight: isoNight,
+    lastNight: isoNight,
+    weekdays: z.array(z.coerce.number().int().min(0).max(6)).max(7).default([]),
+    kind: z.enum(['fixed', 'percent']),
+    value: z.coerce.number({ invalid_type_error: 'Informe o valor.' }),
+    minNights: z.coerce.number().int().min(1).max(30).optional(),
+    active: z.coerce.boolean().default(true),
+  })
+  .refine((v) => v.lastNight >= v.firstNight, {
+    message: 'A última noite não pode ser antes da primeira.',
+    path: ['lastNight'],
+  })
+  .refine(
+    (v) =>
+      (Date.parse(`${v.lastNight}T00:00:00Z`) - Date.parse(`${v.firstNight}T00:00:00Z`)) /
+        86_400_000 <=
+      400,
+    { message: 'Use períodos de até 400 noites.', path: ['lastNight'] },
+  )
+  .refine(
+    (v) =>
+      v.kind === 'fixed'
+        ? Number.isInteger(v.value) && v.value >= 0 && v.value <= 100000
+        : v.value >= -90 && v.value <= 300,
+    {
+      message: 'Diária fixa: valor inteiro em reais. Percentual: de −90% a +300%.',
+      path: ['value'],
+    },
+  )
+export type RateRuleInput = z.infer<typeof rateRuleSchema>
+
+export const rateRuleIdSchema = z.object({ id: z.string().uuid('Identificador inválido.') })

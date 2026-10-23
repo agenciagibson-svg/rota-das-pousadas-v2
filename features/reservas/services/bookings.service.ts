@@ -15,7 +15,8 @@ import {
   updateBookingRpc,
 } from '@/repositories/bookings.repository'
 import { ensureTravelerGuestRpc, upsertGuestRpc } from '@/repositories/guests.repository'
-import { calculateBookingPrice } from '@/features/reservas/pricing'
+import { calculateBookingPrice, nightsBetween, type StayQuote } from '@/features/reservas/pricing'
+import { listBookableRooms } from '@/repositories/bio.repository'
 import { sendEmail } from '@/lib/email/mailer'
 import { bookingRequestReceivedEmail } from '@/lib/email/templates'
 import type {
@@ -60,8 +61,14 @@ export async function createBooking(
     input.checkin,
     input.checkout,
     input.guests,
+    input.roomId,
   )
   if (!bookable) throw new Error('Esta pousada não está disponível para reserva.')
+  if (input.roomId && bookable.roomId !== input.roomId) {
+    throw new Error(
+      'Esta acomodação não está disponível nessas datas. Escolha outra ou mude as datas.',
+    )
+  }
   if (input.expectedNightly !== undefined && input.expectedNightly !== bookable.nightly) {
     throw new Error(
       'A diária disponível mudou. Volte à busca com estas datas e hóspedes para revisar o valor antes de reservar.',
@@ -72,8 +79,20 @@ export async function createBooking(
     throw new Error(`Capacidade máxima de ${bookable.capacity} hóspedes para esta acomodação.`)
   }
 
-  const price = calculateBookingPrice(bookable.nightly, input.checkin, input.checkout)
-  if (price.nights < 1) throw new Error('Selecione um período válido (mínimo de 1 noite).')
+  const nights = nightsBetween(input.checkin, input.checkout)
+  if (nights < 1) throw new Error('Selecione um período válido (mínimo de 1 noite).')
+  if (nights < bookable.minNights) {
+    throw new Error(`Para estas datas a estadia mínima é de ${bookable.minNights} noites.`)
+  }
+  // 0087: o total vem do banco (tarifas de temporada noite a noite). Sem
+  // cotação (modo demonstração), cai na diária-base × noites.
+  const total =
+    bookable.stayTotal ??
+    calculateBookingPrice(bookable.nightly, input.checkin, input.checkout).total
+  if (input.expectedTotal !== undefined && input.expectedTotal !== total) {
+    throw new Error('O valor da estadia mudou. Confira o novo total antes de reservar.')
+  }
+  const price = { subtotal: total, fee: 0, total }
 
   // Porta pública, não a do balcão: `upsert_guest` exige acesso de staff e
   // recusava a sessão do viajante — era o que travava a reserva pública.
@@ -276,19 +295,76 @@ export async function cancelMyBooking(bookingId: string): Promise<void> {
   await setBookingStatusRpc(bookingId, 'cancelled', 'Cancelado pelo hóspede')
 }
 
-/** Dados da acomodação reservável de uma pousada (nome, diária, capacidade) para exibição pública. */
+/** Acomodação reservável de uma pousada para exibição pública (com a cotação das datas, se houver). */
+export type PublicBookableRoom = {
+  roomId: string
+  name: string
+  description: string
+  nightly: number
+  capacity: number
+  gallery: string[]
+  /** Cotação do servidor para `checkin`/`checkout` (null sem datas). */
+  quote: StayQuote | null
+}
+
 export async function getBookableRoom(
   slug: string,
   checkin?: string,
   checkout?: string,
   guests = 1,
-): Promise<{ name: string; description: string; nightly: number; capacity: number } | null> {
-  const bookable = await getBookableRoomBySlug(slug, checkin, checkout, guests)
+  roomId?: string,
+): Promise<PublicBookableRoom | null> {
+  const bookable = await getBookableRoomBySlug(slug, checkin, checkout, guests, roomId)
   if (!bookable) return null
   return {
+    roomId: bookable.roomId,
     name: bookable.name,
     description: bookable.description,
     nightly: bookable.nightly,
     capacity: bookable.capacity,
+    gallery: bookable.gallery,
+    quote:
+      checkin && checkout && bookable.stayTotal !== null
+        ? {
+            checkin,
+            checkout,
+            nights: nightsBetween(checkin, checkout),
+            total: bookable.stayTotal,
+            minNights: bookable.minNights,
+          }
+        : null,
   }
+}
+
+/** Acomodação para a vitrine da pousada (fotos e, com datas, o total da estadia). */
+export type PublicRoom = {
+  id: string
+  name: string
+  description: string
+  capacity: number
+  nightly: number
+  gallery: string[]
+  /** Total com temporada para as datas pedidas; `null` sem datas. */
+  stayTotal: number | null
+  minNights: number
+}
+
+/** Todas as acomodações publicadas da pousada (com datas: só as que têm vaga). */
+export async function listPublicRooms(
+  slug: string,
+  checkin?: string,
+  checkout?: string,
+  guests = 1,
+): Promise<PublicRoom[]> {
+  const rooms = await listBookableRooms(slug, checkin ?? null, checkout ?? null, guests)
+  return rooms.map((r) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    capacity: r.capacity,
+    nightly: r.basePrice,
+    gallery: r.gallery,
+    stayTotal: r.stayTotal,
+    minNights: r.minNights,
+  }))
 }

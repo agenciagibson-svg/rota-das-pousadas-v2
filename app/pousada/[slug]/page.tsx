@@ -17,9 +17,10 @@ import {
   getPublicReviews,
   isFavoritePousada,
   getBookableRoom,
+  getPublicRooms,
 } from '@/server/queries'
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
-import { bioOriginFromParam } from '@/features/reservas'
+import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,14 +54,21 @@ export default async function PousadaPage({
     checkout: initialBooking.checkout,
     guests: initialBooking.guests,
   })
-  const [pousada, currentUser, favorite, room] = await Promise.all([
+  const [pousada, currentUser, favorite, room, rooms] = await Promise.all([
     getPousada(slug),
     getCurrentUser(),
     isFavoritePousada(slug),
     filters.success
       ? getBookableRoom(slug, filters.data.checkin, filters.data.checkout, filters.data.guests)
       : Promise.resolve(null),
+    filters.success
+      ? getPublicRooms(slug, filters.data.checkin, filters.data.checkout, filters.data.guests)
+      : getPublicRooms(slug),
   ])
+  const stayNights =
+    filters.success && filters.data.checkin && filters.data.checkout
+      ? nightsBetween(filters.data.checkin, filters.data.checkout)
+      : 0
   if (!pousada) notFound()
 
   const [nearby, reviews] = await Promise.all([
@@ -76,6 +84,8 @@ export default async function PousadaPage({
         <PousadaDetail
           pousada={pousada}
           room={room}
+          rooms={rooms}
+          stayNights={stayNights}
           reviews={reviews}
           initialBooking={{
             checkin: initialBooking.checkin,

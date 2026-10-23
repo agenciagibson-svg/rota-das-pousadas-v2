@@ -55,6 +55,8 @@ export type ManagedRoom = {
   publicVisible: boolean
   displayOrder: number
   internalNotes: string
+  /** Fotos da acomodação (0087), a principal primeiro. */
+  gallery: string[]
   amenityIds: string[]
   createdAt: string
   updatedAt: string
@@ -122,4 +124,21 @@ export type AvailabilityResult = {
   capacity: number
   available: boolean
   reasons: AvailabilityReason[]
+}
+
+/** Regra de tarifa por período (0087). Datas por NOITE, as duas pontas inclusivas. */
+export type RateRule = {
+  id: string
+  name: string
+  /** `null` = vale para todas as acomodações. */
+  roomId: string | null
+  roomName: string | null
+  firstNight: string
+  lastNight: string
+  /** Dias da semana da noite (0 = domingo … 6 = sábado); `null` = todos. */
+  weekdays: number[] | null
+  kind: 'fixed' | 'percent'
+  value: number
+  minNights: number | null
+  active: boolean
 }

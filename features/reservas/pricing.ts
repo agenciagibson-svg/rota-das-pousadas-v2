@@ -41,5 +41,42 @@ export function calculateBookingPrice(
   const surcharge = Math.max(0, adjustments.surcharge ?? 0)
   const servicesAmount = Math.max(0, adjustments.servicesAmount ?? 0)
   const total = subtotal + fee - discount + surcharge + servicesAmount
-  return { nights, nightly, subtotal, fee, discount, surcharge, servicesAmount, total: Math.max(0, total) }
+  return {
+    nights,
+    nightly,
+    subtotal,
+    fee,
+    discount,
+    surcharge,
+    servicesAmount,
+    total: Math.max(0, total),
+  }
+}
+
+/**
+ * Cotação da estadia feita no servidor (0087: soma noite a noite com as
+ * tarifas de temporada). O cliente nunca recalcula a temporada: só mostra o
+ * total quando a cotação é das mesmas datas que estão na tela.
+ */
+export type StayQuote = {
+  checkin: string
+  checkout: string
+  nights: number
+  total: number
+  /** Estadia mínima para essas datas (1 sem regra). */
+  minNights: number
+}
+
+/** A cotação vale para as datas que a pessoa está vendo agora? */
+export function quoteMatches(
+  quote: StayQuote | null | undefined,
+  checkin: string,
+  checkout: string,
+): quote is StayQuote {
+  return Boolean(quote && quote.checkin === checkin && quote.checkout === checkout)
+}
+
+/** Diária média da estadia (para "R$ X × N noites" quando a temporada muda o valor). */
+export function averageNightly(quote: StayQuote): number {
+  return quote.nights > 0 ? Math.round(quote.total / quote.nights) : 0
 }

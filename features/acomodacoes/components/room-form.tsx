@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { ImageUpload } from '@/components/ui/image-upload'
 import { createRoomAction, updateRoomAction } from '../actions'
 import type { ManagedRoom, AccommodationCategory, BedType } from '../types'
 import { SAVE_FAILED_MESSAGE, formErrorMessage, keepValuesOnSubmit } from '@/lib/forms'
@@ -21,6 +22,7 @@ const BED_TYPES: { value: BedType; label: string }[] = [
 
 /** Campos com lugar na tela para mostrar o erro; o resto vai para a mensagem geral. */
 const VISIBLE_FIELDS = [
+  'gallery',
   ...BED_TYPES.map((b) => `bed_${b.value}`),
   'name',
   'code',
@@ -41,11 +43,14 @@ export function RoomForm({
   room,
   categories,
   amenities,
+  photoFolder,
   onDone,
 }: {
   room?: ManagedRoom
   categories: AccommodationCategory[]
   amenities: { id: string; name: string }[]
+  /** Pasta no Storage: `<id da pousada>/acomodacoes` (a policy da 0076 confere a pousada). */
+  photoFolder: string
   onDone: () => void
 }) {
   const router = useRouter()
@@ -53,6 +58,7 @@ export function RoomForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isPending, setPending] = useState(false)
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(room?.amenityIds ?? [])
+  const [photos, setPhotos] = useState<string[]>(room?.gallery ?? [])
 
   function toggleAmenity(id: string) {
     setSelectedAmenities((prev) =>
@@ -90,6 +96,7 @@ export function RoomForm({
       displayOrder: Number(formData.get('displayOrder') ?? 0),
       internalNotes: String(formData.get('internalNotes') ?? ''),
       amenityIds: selectedAmenities,
+      gallery: photos,
     }
 
     // try/finally: se a action lançar (queda de rede), o botão não fica travado.
@@ -103,7 +110,7 @@ export function RoomForm({
           // `bedConfig.<posição>.quantity` → campo da cama que ocupa essa posição no envio.
           const bed = /^bedConfig\.(\d+)\./.exec(key)
           const type = bed ? bedConfig[Number(bed[1])]?.type : undefined
-          errors[type ? `bed_${type}` : key] ??= msg
+          errors[type ? `bed_${type}` : key.startsWith('gallery.') ? 'gallery' : key] ??= msg
         }
         setFieldErrors(errors)
         setFormError(formErrorMessage(result.error, errors, VISIBLE_FIELDS))
@@ -120,6 +127,15 @@ export function RoomForm({
 
   return (
     <form onSubmit={keepValuesOnSubmit(onSubmit)} className="space-y-5">
+      <ImageUpload
+        label="Fotos da acomodação"
+        value={photos}
+        onChange={setPhotos}
+        folder={photoFolder}
+        max={12}
+        error={fieldErrors.gallery}
+        hint="A primeira é a principal. Até 12 fotos. O hóspede vê na escolha do quarto."
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           label="Nome comercial"

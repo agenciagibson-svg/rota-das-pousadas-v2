@@ -20,6 +20,10 @@ export const createBookingSchema = z
   .object({
     pousadaSlug: z.string().min(1, 'Pousada inválida.'),
     expectedNightly: z.number().nonnegative().optional(),
+    /** Total que a tela mostrou (cotação do servidor, 0087). Se mudou, o hóspede revisa. */
+    expectedTotal: z.number().int().nonnegative().optional(),
+    /** Acomodação escolhida (ex.: na página da bio). Sem ela, a mais barata disponível. */
+    roomId: z.string().uuid().optional(),
     origin: z.enum(PUBLIC_BOOKING_ORIGINS).optional(),
     checkin: isoDate,
     checkout: isoDate,

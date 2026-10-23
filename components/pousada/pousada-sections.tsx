@@ -16,7 +16,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { formatBRL } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { BookableRoomInfo } from './pousada-booking'
+import { Gallery } from '@/components/ui/gallery'
 
 /** Avaliação pública (sem nome do autor — ver `reviews.repository.ts::listPublicReviewsByPousada`). */
 export type PublicReview = {
@@ -101,25 +101,84 @@ export function AboutSection({ pousada }: { pousada: Pousada }) {
   )
 }
 
-export function RoomsSection({ room }: { room: BookableRoomInfo | null }) {
+/** Acomodação na vitrine (fotos e, com datas, o total da estadia). */
+export type PublicRoomInfo = {
+  id: string
+  name: string
+  description: string
+  capacity: number
+  nightly: number
+  gallery: string[]
+  stayTotal: number | null
+  minNights: number
+}
+
+export function RoomsSection({
+  rooms,
+  nights,
+}: {
+  rooms: PublicRoomInfo[]
+  /** Noites das datas escolhidas (0 sem datas). */
+  nights: number
+}) {
   return (
     <Block id={sectionIds.quartos} title="Quartos & acomodações">
-      {room ? (
-        <Card radius="3xl" border={false} className="flex items-start justify-between gap-4 p-5">
-          <div>
-            <h3 className="text-foreground text-lg font-semibold">{room.name}</h3>
-            {room.description && (
-              <p className="text-muted-foreground mt-1 text-base">{room.description}</p>
-            )}
-            <p className="text-muted-foreground mt-1 text-sm">até {room.capacity} hóspedes</p>
-          </div>
-          <div className="shrink-0 text-right tabular-nums">
-            <div className="text-foreground text-lg font-semibold">{formatBRL(room.nightly)}</div>
-            <div className="text-muted-foreground text-sm">/ diária</div>
-          </div>
-        </Card>
+      {rooms.length > 0 ? (
+        <div className="space-y-4">
+          {rooms.map((room) => (
+            <Card key={room.id} radius="3xl" border={false} className="overflow-hidden">
+              {room.gallery.length > 0 && (
+                <Gallery
+                  images={room.gallery.map((src, i) => ({
+                    src,
+                    alt: `${room.name}, foto ${i + 1}`,
+                  }))}
+                />
+              )}
+              <div className="flex items-start justify-between gap-4 p-5">
+                <div className="min-w-0">
+                  <h3 className="text-foreground text-lg font-semibold">{room.name}</h3>
+                  {room.description && (
+                    <p className="text-muted-foreground mt-1 text-base">{room.description}</p>
+                  )}
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    até {room.capacity} {room.capacity === 1 ? 'hóspede' : 'hóspedes'}
+                  </p>
+                  {nights > 0 && nights < room.minNights && (
+                    <p className="text-foreground mt-1 text-sm font-medium">
+                      Mínimo de {room.minNights} noites nessas datas
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0 text-right tabular-nums">
+                  {nights > 0 && room.stayTotal !== null ? (
+                    <>
+                      <div className="text-foreground text-lg font-semibold">
+                        {formatBRL(room.stayTotal)}
+                      </div>
+                      <div className="text-muted-foreground text-sm">
+                        {nights} {nights === 1 ? 'noite' : 'noites'}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-foreground text-lg font-semibold">
+                        {formatBRL(room.nightly)}
+                      </div>
+                      <div className="text-muted-foreground text-sm">/ diária</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       ) : (
-        <p className="text-muted-foreground text-base">Nenhuma acomodação disponível no momento.</p>
+        <p className="text-muted-foreground text-base">
+          {nights > 0
+            ? 'Nenhuma acomodação com vaga nessas datas. Tente outro período.'
+            : 'Nenhuma acomodação disponível no momento.'}
+        </p>
       )}
     </Block>
   )

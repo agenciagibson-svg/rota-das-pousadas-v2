@@ -18,6 +18,7 @@ import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook
 import {
   listMyBookings,
   getBookableRoom as bookableRoom,
+  listPublicRooms as publicRooms,
 } from '@/features/reservas/services/bookings.service'
 import {
   getOwnerPousada as ownerPousada,
@@ -40,6 +41,7 @@ import {
   getHousekeepingRooms as housekeepingRooms,
 } from '@/features/acomodacoes/services/rooms.service'
 import { listCategories } from '@/features/acomodacoes/services/categories.service'
+import { listRateRules } from '@/features/acomodacoes/services/rates.service'
 import { listBlocks } from '@/features/acomodacoes/services/blocks.service'
 import { listAmenitiesCatalog } from '@/repositories/rooms.repository'
 import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services/favorites.service'
@@ -106,10 +108,16 @@ export const getMyBookingsReconciled = cache(async () => {
   return results.some(Boolean) ? listMyBookings() : bookings
 })
 
-/** Diária + capacidade de uma pousada para o fluxo de reserva. */
-export const getBookableRoom = cache(
+/** Acomodações publicadas da pousada, com fotos (0087), para a página da pousada. */
+export const getPublicRooms = cache(
   (slug: string, checkin?: string, checkout?: string, guests = 1) =>
-    bookableRoom(slug, checkin, checkout, guests),
+    publicRooms(slug, checkin, checkout, guests),
+)
+
+/** Acomodação reservável (diária, capacidade, fotos e cotação das datas) para o fluxo de reserva. */
+export const getBookableRoom = cache(
+  (slug: string, checkin?: string, checkout?: string, guests = 1, roomId?: string) =>
+    bookableRoom(slug, checkin, checkout, guests, roomId),
 )
 
 /**
@@ -158,6 +166,7 @@ export const getActiveRole = cache(async () => {
   return state.status === 'ok' ? state.membership.role : null
 })
 export const getOwnerCategories = cache(() => listCategories())
+export const getRateRules = cache(() => listRateRules())
 export const getOwnerBlocks = cache(() => listBlocks())
 export const getAmenitiesCatalog = cache(() => listAmenitiesCatalog())
 export const canManageAccommodations = cache(async () => {

@@ -16,6 +16,7 @@ export type DashboardSection =
   | 'bloqueios'
   | 'disponibilidade'
   | 'canais'
+  | 'tarifas'
   | 'link'
   | 'membros'
   | 'mensagens'
@@ -37,6 +38,8 @@ export const SECTION_ACCESS: Record<DashboardSection, Action[] | null> = {
   bloqueios: ['room:block:view'],
   disponibilidade: ['availability:check'],
   canais: ['channel:view'],
+  // Recepção lê as tarifas (lança reserva no balcão); só quem gerencia edita.
+  tarifas: ['room:manage', 'booking:manage'],
   link: ['link:report:view'],
   membros: ['member:view'],
   mensagens: ['booking:manage'],

@@ -171,6 +171,12 @@ export type BookableRoom = {
   description: string
   basePrice: number
   capacity: number
+  /** Total da estadia com tarifas de temporada (0087); `null` sem datas. */
+  stayTotal: number | null
+  /** Estadia mínima para as datas pedidas (1 sem regra). */
+  minNights: number
+  /** Fotos da acomodação (0087). */
+  gallery: string[]
 }
 
 /**
@@ -198,6 +204,9 @@ export async function listBookableRooms(
             description: 'Acomodação padrão da pousada.',
             basePrice: p.pricePerNight,
             capacity: p.maxGuests ?? 4,
+            stayTotal: null,
+            minNights: 1,
+            gallery: [],
           },
         ]
       : []
@@ -217,6 +226,9 @@ export async function listBookableRooms(
       description: string
       base_price: number
       capacity: number
+      stay_total: number | null
+      min_nights: number | null
+      gallery: string[] | null
     }[]
   ).map((r) => ({
     id: r.id,
@@ -224,6 +236,9 @@ export async function listBookableRooms(
     description: r.description ?? '',
     basePrice: Number(r.base_price ?? 0),
     capacity: Number(r.capacity ?? 1),
+    stayTotal: r.stay_total === null ? null : Number(r.stay_total),
+    minNights: Math.max(1, Number(r.min_nights ?? 1)),
+    gallery: r.gallery ?? [],
   }))
 }
 

@@ -12,11 +12,14 @@ import {
   createBlockSchema,
   cancelBlockSchema,
   availabilityQuerySchema,
+  rateRuleSchema,
+  rateRuleIdSchema,
 } from './schemas'
 import { addRoom, editRoom, setRoomActive, setOperationalStatus } from './services/rooms.service'
 import { addCategory, editCategory, setCategoryActive } from './services/categories.service'
 import { addBlock, cancelBlock } from './services/blocks.service'
 import { checkAvailability } from './services/availability.service'
+import { addRateRule, editRateRule, removeRateRule } from './services/rates.service'
 
 export const createRoomAction = createAction(roomSchema, async (input) => {
   await addRoom(input)
@@ -36,11 +39,14 @@ export const setRoomStatusAction = createAction(roomStatusSchema, async ({ id, s
   return { id }
 })
 
-export const setRoomOperationalStatusAction = createAction(roomOperationalStatusSchema, async ({ id, status }) => {
-  await setOperationalStatus(id, status)
-  revalidatePath('/dashboard/acomodacoes')
-  return { id }
-})
+export const setRoomOperationalStatusAction = createAction(
+  roomOperationalStatusSchema,
+  async ({ id, status }) => {
+    await setOperationalStatus(id, status)
+    revalidatePath('/dashboard/acomodacoes')
+    return { id }
+  },
+)
 
 export const createCategoryAction = createAction(categorySchema, async (input) => {
   await addCategory(input)
@@ -48,11 +54,14 @@ export const createCategoryAction = createAction(categorySchema, async (input) =
   return { ok: true as const }
 })
 
-export const updateCategoryAction = createAction(categorySchema.and(categoryIdSchema), async (input) => {
-  await editCategory(input.id, input)
-  revalidatePath('/dashboard/acomodacoes/categorias')
-  return { ok: true as const }
-})
+export const updateCategoryAction = createAction(
+  categorySchema.and(categoryIdSchema),
+  async (input) => {
+    await editCategory(input.id, input)
+    revalidatePath('/dashboard/acomodacoes/categorias')
+    return { ok: true as const }
+  },
+)
 
 export const setCategoryStatusAction = createAction(
   categoryIdSchema.and(roomStatusSchema.pick({ status: true })),
@@ -77,4 +86,30 @@ export const cancelBlockAction = createAction(cancelBlockSchema, async (input) =
 
 export const checkAvailabilityAction = createAction(availabilityQuerySchema, async (input) => {
   return checkAvailability(input)
+})
+
+// Tarifas por temporada (0087). O preço muda a vitrine e a reserva pública.
+function revalidateRates() {
+  revalidatePath('/dashboard/acomodacoes/tarifas')
+}
+
+export const createRateRuleAction = createAction(rateRuleSchema, async (input) => {
+  const { id } = await addRateRule(input)
+  revalidateRates()
+  return { id }
+})
+
+export const updateRateRuleAction = createAction(
+  rateRuleSchema.and(rateRuleIdSchema),
+  async (input) => {
+    await editRateRule(input.id, input)
+    revalidateRates()
+    return { id: input.id }
+  },
+)
+
+export const deleteRateRuleAction = createAction(rateRuleIdSchema, async ({ id }) => {
+  await removeRateRule(id)
+  revalidateRates()
+  return { id }
 })

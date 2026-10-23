@@ -9,10 +9,11 @@ import { useRouter } from 'next/navigation'
 import { createBookingSchema, type CreateBookingInput } from '../schemas'
 import { createBookingAction } from '../actions'
 import { updateMyNameAction } from '@/features/auth/actions'
-import { calculateBookingPrice } from '../pricing'
+import type { StayQuote } from '../pricing'
+import { StayPriceSummary, quoteAllowsBooking } from './stay-price-summary'
+import { useStayQuote } from './use-stay-quote'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { formatBRL } from '@/lib/format'
 
 /** Mesma mensagem de `bookings.service.ts` (`createBooking`) — usada para decidir
  * quando trocar o erro genérico pelo mini-formulário de completar o nome. */
@@ -22,6 +23,8 @@ export function BookingForm({
   pousadaSlug,
   nightly,
   capacity,
+  quote,
+  roomId,
   initialCheckin = '',
   initialCheckout = '',
   initialGuests,
@@ -30,6 +33,10 @@ export function BookingForm({
   pousadaSlug: string
   nightly: number
   capacity: number
+  /** Cotação do servidor para as datas da URL (0087). */
+  quote: StayQuote | null
+  /** Acomodação escolhida antes (ex.: na página da bio). */
+  roomId?: string
   initialCheckin?: string
   initialCheckout?: string
   initialGuests?: string
@@ -56,16 +63,38 @@ export function BookingForm({
       checkout: initialCheckout,
       guests: Number(initialGuests) || 2,
       origin,
+      roomId,
     },
   })
 
   const checkin = watch('checkin')
   const checkout = watch('checkout')
-  const price = checkin && checkout ? calculateBookingPrice(nightly, checkin, checkout) : null
+  const guests = Number(watch('guests')) || 1
+  const { calculating } = useStayQuote({
+    checkin,
+    checkout,
+    guests,
+    quote,
+    hrefFor: (q) => {
+      const params = new URLSearchParams({
+        checkin: q.checkin,
+        checkout: q.checkout,
+        guests: String(q.guests),
+      })
+      if (roomId) params.set('quarto', roomId)
+      if (origin) params.set('origem', origin)
+      return `/pousada/${pousadaSlug}/reservar?${params.toString()}`
+    },
+  })
+  const canSubmit = quoteAllowsBooking(quote, checkin, checkout)
 
   async function onSubmit(values: CreateBookingInput) {
     setFormError(null)
-    const result = await createBookingAction(values)
+    if (!quote || !quoteAllowsBooking(quote, values.checkin, values.checkout)) {
+      setFormError('Aguarde o valor dessas datas aparecer para confirmar.')
+      return
+    }
+    const result = await createBookingAction({ ...values, roomId, expectedTotal: quote.total })
     if (!result.ok) {
       setFormError(result.error)
       return
@@ -119,20 +148,13 @@ export function BookingForm({
         {...register('guests')}
       />
 
-      {price && price.nights > 0 && (
-        <div className="bg-secondary space-y-2 rounded-2xl p-4 text-sm tabular-nums">
-          <div className="text-muted-foreground flex justify-between">
-            <span>
-              {formatBRL(nightly)} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
-            </span>
-            <span>{formatBRL(price.subtotal)}</span>
-          </div>
-          <div className="border-border text-foreground flex justify-between border-t pt-2 text-base font-semibold">
-            <span>Total</span>
-            <span>{formatBRL(price.total)}</span>
-          </div>
-        </div>
-      )}
+      <StayPriceSummary
+        nightly={nightly}
+        quote={quote}
+        checkin={checkin}
+        checkout={checkout}
+        calculating={calculating}
+      />
 
       {formError === MISSING_NAME_ERROR ? (
         <div className="border-destructive/30 bg-destructive/5 space-y-3 rounded-2xl border p-4">
@@ -172,7 +194,7 @@ export function BookingForm({
         type="submit"
         variant="accent"
         size="pill-lg"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !canSubmit}
         className="w-full"
       >
         {isSubmitting ? 'Confirmando…' : 'Confirmar reserva'}

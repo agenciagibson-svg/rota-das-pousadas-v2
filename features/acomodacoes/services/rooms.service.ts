@@ -64,6 +64,7 @@ export async function addRoom(input: RoomInput): Promise<void> {
     publicVisible: input.publicVisible,
     displayOrder: input.displayOrder,
     internalNotes: input.internalNotes ?? '',
+    gallery: input.gallery,
     createdBy: user.id,
   })
   if (input.amenityIds.length > 0) await setRoomAmenities(id, input.amenityIds)
@@ -102,6 +103,7 @@ export async function editRoom(id: string, input: RoomInput): Promise<void> {
     publicVisible: input.publicVisible,
     displayOrder: input.displayOrder,
     internalNotes: input.internalNotes ?? '',
+    gallery: input.gallery,
     updatedBy: user.id,
   })
   await setRoomAmenities(id, input.amenityIds)

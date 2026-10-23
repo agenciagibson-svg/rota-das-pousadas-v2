@@ -16,10 +16,11 @@ import {
   RoomsSection,
   sectionIds,
   type PublicReview,
+  type PublicRoomInfo,
 } from './pousada-sections'
 import { ShareButton } from './share-button'
 
-export type { BookableRoomInfo }
+export type { BookableRoomInfo, PublicRoomInfo }
 
 /**
  * Página da pousada: a foto é a protagonista (faixa que desliza no celular,
@@ -30,6 +31,8 @@ export type { BookableRoomInfo }
 export function PousadaDetail({
   pousada,
   room,
+  rooms,
+  stayNights = 0,
   reviews,
   initialBooking,
   favorite,
@@ -38,6 +41,10 @@ export function PousadaDetail({
 }: {
   pousada: Pousada
   room: BookableRoomInfo | null
+  /** Todas as acomodações publicadas (com datas: as que têm vaga). */
+  rooms: PublicRoomInfo[]
+  /** Noites das datas da URL (0 sem datas). */
+  stayNights?: number
   reviews: PublicReview[]
   initialBooking?: { checkin?: string; checkout?: string; guests?: string }
   favorite: boolean
@@ -142,7 +149,7 @@ export function PousadaDetail({
               <AboutSection pousada={pousada} />
             </div>
             <div className="lg:col-start-1">
-              <RoomsSection room={room} />
+              <RoomsSection rooms={rooms} nights={stayNights} />
             </div>
             <aside className="py-4 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:py-10">
               <div className="lg:sticky lg:top-40">

@@ -51,6 +51,7 @@ export default async function DashboardAcomodacoesPage() {
       amenities={amenities}
       canManage={canManage}
       canChangeOperationalStatus={canChangeStatus}
+      pousadaId={pousada?.id ?? ''}
     />
   )
 }

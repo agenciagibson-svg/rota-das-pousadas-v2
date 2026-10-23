@@ -30,13 +30,15 @@ export type NewRoom = {
   publicVisible: boolean
   displayOrder: number
   internalNotes: string
+  /** Fotos da acomodação (URLs públicas do bucket `pousadas`). */
+  gallery: string[]
   createdBy: string
 }
 
 export type UpdateRoom = Omit<NewRoom, 'pousadaId' | 'createdBy'> & { updatedBy: string }
 
 const ROOM_COLUMNS =
-  'id, name, code, category_id, description, operational_description, location, capacity, capacity_max, adults_max, children_max, infants_allowed, pets_allowed, bed_config, accessible, base_price, status, operational_status, public_visible, display_order, internal_notes, created_at, updated_at, accommodation_categories(name)'
+  'id, name, code, category_id, description, operational_description, location, capacity, capacity_max, adults_max, children_max, infants_allowed, pets_allowed, bed_config, accessible, base_price, status, operational_status, public_visible, display_order, internal_notes, gallery, created_at, updated_at, accommodation_categories(name)'
 
 type RoomRow = {
   id: string
@@ -60,6 +62,7 @@ type RoomRow = {
   public_visible: boolean
   display_order: number
   internal_notes: string
+  gallery: string[] | null
   created_at: string
   updated_at: string
   accommodation_categories: { name: string } | { name: string }[] | null
@@ -99,6 +102,7 @@ function mapRoom(r: RoomRow, amenityIds: string[], hideBasePrice: boolean): Mana
     publicVisible: r.public_visible,
     displayOrder: r.display_order,
     internalNotes: r.internal_notes,
+    gallery: r.gallery ?? [],
     amenityIds,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -170,6 +174,7 @@ export async function insertRoom(row: NewRoom): Promise<{ id: string }> {
       public_visible: row.publicVisible,
       display_order: row.displayOrder,
       internal_notes: row.internalNotes,
+      gallery: row.gallery,
       created_by: row.createdBy,
     })
     .select('id')
@@ -201,6 +206,7 @@ export async function updateRoom(id: string, row: UpdateRoom): Promise<void> {
       public_visible: row.publicVisible,
       display_order: row.displayOrder,
       internal_notes: row.internalNotes,
+      gallery: row.gallery,
       updated_by: row.updatedBy,
       updated_at: new Date().toISOString(),
     })
@@ -294,8 +300,15 @@ export type BookableRoom = {
   roomId: string
   name: string
   description: string
+  /** Diária-base da acomodação (sem temporada). */
   nightly: number
   capacity: number
+  /** Total da estadia com as tarifas de temporada (0087). `null` sem datas. */
+  stayTotal: number | null
+  /** Estadia mínima para as datas pedidas (1 sem regra). */
+  minNights: number
+  /** Fotos da própria acomodação (0087). */
+  gallery: string[]
 }
 
 /**
@@ -314,6 +327,9 @@ async function demoBookableRoom(slug: string): Promise<BookableRoom | null> {
     description: 'Acomodação padrão da pousada.',
     nightly: pousada.pricePerNight,
     capacity: pousada.maxGuests ?? 4,
+    stayTotal: null,
+    minNights: 1,
+    gallery: [],
   }
 }
 
@@ -332,6 +348,8 @@ export async function getBookableRoomBySlug(
   checkin?: string,
   checkout?: string,
   guests = 1,
+  /** Acomodação escolhida pelo hóspede (ex.: na página da bio). Sem ela, a mais barata. */
+  roomId?: string,
 ): Promise<BookableRoom | null> {
   if (!isSupabaseConfigured()) return demoBookableRoom(slug)
   const supabase = await createSupabaseServerClient()
@@ -358,17 +376,23 @@ export async function getBookableRoomBySlug(
     description: string
     base_price: number
     capacity: number
-    capacity_max: number | null
+    stay_total: number | null
+    min_nights: number | null
+    gallery: string[] | null
   }[]
   if (rooms.length === 0) return null
 
-  const cheapest = [...rooms].sort((a, b) => a.base_price - b.base_price)[0]
+  // A RPC já devolve a mais barata primeiro (pelo total da estadia, com datas).
+  const chosen = (roomId ? rooms.find((r) => r.id === roomId) : undefined) ?? rooms[0]
   return {
     pousadaId: pousada.id,
-    roomId: cheapest.id,
-    name: cheapest.name,
-    description: cheapest.description,
-    nightly: Number(cheapest.base_price) || Number(pousada.price_per_night),
-    capacity: cheapest.capacity_max ?? cheapest.capacity,
+    roomId: chosen.id,
+    name: chosen.name,
+    description: chosen.description,
+    nightly: Number(chosen.base_price) || Number(pousada.price_per_night),
+    capacity: chosen.capacity,
+    stayTotal: chosen.stay_total === null ? null : Number(chosen.stay_total),
+    minNights: Math.max(1, Number(chosen.min_nights ?? 1)),
+    gallery: chosen.gallery ?? [],
   }
 }

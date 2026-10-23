@@ -20,16 +20,26 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export default async function ReservarPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string; origem?: string }>
+  searchParams: Promise<{
+    checkin?: string
+    checkout?: string
+    guests?: string
+    origem?: string
+    quarto?: string
+  }>
 }) {
   const { slug } = await params
   const initial = await searchParams
   const origin = bioOriginFromParam(initial.origem)
+  // Acomodação escolhida na página da bio (0087). Valor estranho é ignorado.
+  const roomId = UUID_RE.test(initial.quarto ?? '') ? initial.quarto : undefined
   const filters = catalogQuerySchema.safeParse({
     checkin: initial.checkin,
     checkout: initial.checkout,
@@ -39,7 +49,13 @@ export default async function ReservarPage({
     getPousada(slug),
     getCurrentUser(),
     filters.success
-      ? getBookableRoom(slug, filters.data.checkin, filters.data.checkout, filters.data.guests)
+      ? getBookableRoom(
+          slug,
+          filters.data.checkin,
+          filters.data.checkout,
+          filters.data.guests,
+          roomId,
+        )
       : Promise.resolve(null),
   ])
 
@@ -50,7 +66,10 @@ export default async function ReservarPage({
   // um aviso claro e o formulário limpo. A oferta de referência (preço e
   // capacidade) é buscada sem filtros quando a combinação pedida não tem vaga.
   const askedSomething = Boolean(initial.checkin || initial.checkout || initial.guests)
-  const offer = bookable ?? (await getBookableRoom(slug, undefined, undefined, undefined))
+  // A acomodação escolhida pode estar lotada nessas datas enquanto outra tem
+  // vaga: a RPC devolve a disponível mais barata, e a página avisa da troca.
+  const offer = bookable ?? (await getBookableRoom(slug, undefined, undefined, undefined, roomId))
+  const switchedRoom = Boolean(roomId && bookable && bookable.roomId !== roomId)
   const askedGuests = filters.success ? filters.data.guests : undefined
   const problem: null | 'invalid' | 'capacity' | 'unavailable' = bookable
     ? null
@@ -84,6 +103,7 @@ export default async function ReservarPage({
     if (initial.checkout) bookingParams.set('checkout', initial.checkout)
     if (initial.guests) bookingParams.set('guests', initial.guests)
     if (origin) bookingParams.set('origem', origin)
+    if (roomId) bookingParams.set('quarto', roomId)
 
     const nextPath = `/pousada/${slug}/reservar${
       bookingParams.size > 0 ? `?${bookingParams.toString()}` : ''
@@ -95,7 +115,7 @@ export default async function ReservarPage({
   const me = await getMyProfile()
   const missingProfile = me?.missing ?? []
   const returnParams = new URLSearchParams()
-  for (const key of ['checkin', 'checkout', 'guests', 'origem'] as const) {
+  for (const key of ['checkin', 'checkout', 'guests', 'origem', 'quarto'] as const) {
     const value = initial[key]
     if (value) returnParams.set(key, value)
   }
@@ -121,8 +141,8 @@ export default async function ReservarPage({
             <Card radius="3xl" border={false} className="overflow-hidden md:sticky md:top-28">
               <div className="relative aspect-[4/3]">
                 <Image
-                  src={pousada.image || '/placeholder.svg'}
-                  alt={pousada.name}
+                  src={offer?.gallery[0] || pousada.image || '/placeholder.svg'}
+                  alt={offer?.gallery[0] ? `${offer.name} — ${pousada.name}` : pousada.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 40vw"
                   className="object-cover"
@@ -130,6 +150,9 @@ export default async function ReservarPage({
               </div>
               <div className="p-5 lg:p-6">
                 <h1 className="text-h2 text-foreground">{pousada.name}</h1>
+                {offer && (
+                  <p className="text-foreground mt-1 text-base font-medium">{offer.name}</p>
+                )}
                 <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-3 text-base">
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="size-4" />
@@ -191,10 +214,18 @@ export default async function ReservarPage({
                 </div>
               ) : offer ? (
                 <div className="mt-5">
+                  {switchedRoom && (
+                    <p className="text-muted-foreground mb-4 text-sm">
+                      A acomodação que você escolheu não tem vaga nessas datas. Esta é a opção
+                      disponível.
+                    </p>
+                  )}
                   <BookingForm
                     pousadaSlug={slug}
                     nightly={offer.nightly}
                     capacity={offer.capacity}
+                    quote={bookable?.quote ?? null}
+                    roomId={bookable?.roomId ?? roomId}
                     initialCheckin={clearDates ? '' : initial.checkin}
                     initialCheckout={clearDates ? '' : initial.checkout}
                     initialGuests={clearGuests ? undefined : initial.guests}

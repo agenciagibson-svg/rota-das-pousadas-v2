@@ -44,9 +44,12 @@ export function RoomsView({
   amenities,
   canManage,
   canChangeOperationalStatus,
+  pousadaId,
 }: {
   displayName: string
   pousadaName: string
+  /** Pasta das fotos no Storage (a policy só deixa subir na da própria pousada). */
+  pousadaId: string
   rooms: ManagedRoom[]
   categories: AccommodationCategory[]
   amenities: { id: string; name: string }[]
@@ -300,6 +303,7 @@ export function RoomsView({
             room={editing === 'new' ? undefined : editing}
             categories={categories}
             amenities={amenities}
+            photoFolder={`${pousadaId}/acomodacoes`}
             onDone={() => setEditing(null)}
           />
         )}

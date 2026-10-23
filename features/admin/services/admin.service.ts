@@ -168,6 +168,7 @@ export async function createPousadaAsAdmin(
       publicVisible: true,
       displayOrder: 0,
       internalNotes: '',
+      gallery: [],
       createdBy: user.id,
     })
   } catch (error) {

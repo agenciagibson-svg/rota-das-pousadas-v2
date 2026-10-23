@@ -1817,6 +1817,72 @@ export type Database = {
           },
         ]
       }
+      rate_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          first_night: string
+          id: string
+          kind: string
+          last_night: string
+          min_nights: number | null
+          name: string
+          pousada_id: string
+          room_id: string | null
+          updated_at: string
+          value: number
+          weekdays: number[] | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          first_night: string
+          id?: string
+          kind: string
+          last_night: string
+          min_nights?: number | null
+          name: string
+          pousada_id: string
+          room_id?: string | null
+          updated_at?: string
+          value: number
+          weekdays?: number[] | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          first_night?: string
+          id?: string
+          kind?: string
+          last_night?: string
+          min_nights?: number | null
+          name?: string
+          pousada_id?: string
+          room_id?: string | null
+          updated_at?: string
+          value?: number
+          weekdays?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'rate_rules_pousada_id_fkey'
+            columns: ['pousada_id']
+            isOneToOne: false
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'rate_rules_room_id_fkey'
+            columns: ['room_id']
+            isOneToOne: false
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       reviews: {
         Row: {
           author_id: string
@@ -1999,6 +2065,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
+          gallery: string[]
           display_order: number
           id: string
           infants_allowed: boolean
@@ -2028,6 +2095,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          gallery?: string[]
           display_order?: number
           id?: string
           infants_allowed?: boolean
@@ -2057,6 +2125,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          gallery?: string[]
           display_order?: number
           id?: string
           infants_allowed?: boolean
@@ -2982,8 +3051,11 @@ export type Database = {
           base_price: number
           capacity: number
           description: string
+          gallery: string[]
           id: string
+          min_nights: number
           name: string
+          stay_total: number | null
         }[]
       }
       list_channel_feeds_to_import: {
@@ -3088,6 +3160,14 @@ export type Database = {
       reactivate_member: {
         Args: { p_membership_id: string; p_pousada_id: string }
         Returns: Json
+      }
+      quote_room_stay: {
+        Args: { p_checkin: string; p_checkout: string; p_room_id: string }
+        Returns: {
+          min_nights: number
+          nights: number
+          total: number
+        }[]
       }
       reconcile_marketplace_payment: {
         Args: {

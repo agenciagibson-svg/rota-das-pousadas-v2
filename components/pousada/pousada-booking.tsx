@@ -5,16 +5,25 @@ import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { SearchField } from '@/components/ui/search-field'
-import { calculateBookingPrice } from '@/features/reservas/pricing'
+import { nightsBetween, type StayQuote } from '@/features/reservas/pricing'
+import {
+  StayPriceSummary,
+  quoteAllowsBooking,
+} from '@/features/reservas/components/stay-price-summary'
+import { useStayQuote } from '@/features/reservas/components/use-stay-quote'
 import { isoDateInTimeZone } from '@/lib/dates'
 import { formatBRL, formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export type BookableRoomInfo = {
+  roomId: string
   name: string
   description: string
   nightly: number
   capacity: number
+  gallery: string[]
+  /** Cotação do servidor para as datas da URL (0087); `null` sem datas. */
+  quote: StayQuote | null
 }
 
 function addDays(date: string, days: number): string {
@@ -69,11 +78,36 @@ export function PousadaBooking({
       : fallback
   })
   const [guests, setGuests] = useState(() => toInitialGuests(initialBooking?.guests))
+  // Sem datas na URL o card abre com datas sugeridas; só cota no servidor
+  // (trocando a URL) depois que a pessoa mexe nelas.
+  const [touched, setTouched] = useState(false)
 
   const nightly = room?.nightly ?? 0
   const capacity = room?.capacity ?? 1
-  const price = calculateBookingPrice(nightly, checkin, checkout)
-  const canReserve = Boolean(room) && price.nights > 0 && guests >= 1 && guests <= capacity
+  const nights = nightsBetween(checkin, checkout)
+  const quote = room?.quote ?? null
+  const { calculating } = useStayQuote({
+    checkin: touched || quote ? checkin : '',
+    checkout: touched || quote ? checkout : '',
+    guests,
+    quote,
+    hrefFor: (q) => {
+      const params = new URLSearchParams({
+        checkin: q.checkin,
+        checkout: q.checkout,
+        guests: String(q.guests),
+      })
+      if (bookingOrigin) params.set('origem', bookingOrigin)
+      return `/pousada/${slug}?${params.toString()}`
+    },
+  })
+  const minimumBlocks =
+    quote !== null &&
+    quote.checkin === checkin &&
+    quote.checkout === checkout &&
+    !quoteAllowsBooking(quote, checkin, checkout)
+  const canReserve =
+    Boolean(room) && nights > 0 && guests >= 1 && guests <= capacity && !minimumBlocks
   const href = {
     pathname: `/pousada/${slug}/reservar`,
     query: { checkin, checkout, guests, ...(bookingOrigin ? { origem: bookingOrigin } : {}) },
@@ -108,6 +142,7 @@ export function PousadaBooking({
             min={todayIso()}
             onChange={(event) => {
               const nextCheckin = event.target.value
+              setTouched(true)
               setCheckin(nextCheckin)
               if (checkout <= nextCheckin) setCheckout(addDays(nextCheckin, 1))
             }}
@@ -118,7 +153,10 @@ export function PousadaBooking({
             type="date"
             value={checkout}
             min={addDays(checkin, 1)}
-            onChange={(event) => setCheckout(event.target.value)}
+            onChange={(event) => {
+              setTouched(true)
+              setCheckout(event.target.value)
+            }}
           />
           <div className="col-span-2">
             <SearchField
@@ -142,20 +180,21 @@ export function PousadaBooking({
           Você ainda não será cobrado
         </p>
 
-        {room && (
-          <div className="mt-5 space-y-2 text-sm">
-            <div className="text-muted-foreground flex justify-between tabular-nums">
-              <span>
-                {formatBRL(nightly)} × {price.nights} {price.nights === 1 ? 'noite' : 'noites'}
-              </span>
-              <span>{formatBRL(price.subtotal)}</span>
-            </div>
-            <div className="border-border text-foreground flex justify-between border-t pt-3 text-base font-semibold tabular-nums">
-              <span>Total</span>
-              <span>{formatBRL(price.total)}</span>
-            </div>
-          </div>
-        )}
+        {room &&
+          (touched || quote ? (
+            <StayPriceSummary
+              className="mt-5"
+              nightly={nightly}
+              quote={quote}
+              checkin={checkin}
+              checkout={checkout}
+              calculating={calculating}
+            />
+          ) : (
+            <p className="text-muted-foreground mt-5 text-sm">
+              Escolha as datas para ver o total. Feriados e fins de semana podem ter outro valor.
+            </p>
+          ))}
       </div>
 
       {/* Celular: barra presa ao pé da tela com o preço e o botão Ipê. */}

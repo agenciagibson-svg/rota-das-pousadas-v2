@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isStoredImageUrl } from '@/lib/validation/image-url'
 import { ufSchema, phoneSchema, cepSchema } from '@/lib/validation/br'
 import { isValidTimeZone } from '@/lib/dates'
 import type { BookingStatus } from '@/features/reservas/types'
@@ -55,20 +56,8 @@ export type ReviewResponseActionInput = z.infer<typeof reviewResponseActionSchem
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
-/**
- * Imagem da pousada: vazio, caminho do próprio site (ex.: `/placeholder.svg`,
- * que o cadastro do /anunciar grava) ou URL http(s). Sem `//` nem `\` no
- * início do caminho, que o navegador trataria como outro domínio.
- */
-function isPousadaImage(value: string): boolean {
-  if (value === '' || /^\/(?![/\\])[^\s\\]*$/.test(value)) return true
-  try {
-    const url = new URL(value)
-    return url.protocol === 'https:' || url.protocol === 'http:'
-  } catch {
-    return false
-  }
-}
+/** Imagem da pousada: vazio, caminho do próprio site ou URL http(s) (ver `isStoredImageUrl`). */
+const isPousadaImage = (value: string) => isStoredImageUrl(value)
 
 export const pousadaSettingsSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome.').max(120, 'Nome muito longo.'),
