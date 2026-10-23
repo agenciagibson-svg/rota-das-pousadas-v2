@@ -14,8 +14,8 @@ describe('painel da pousada — demonstração', () => {
 
   it('métricas saem das funções do painel real, com movimento hoje', () => {
     const d = buildDemoOwnerDashboard(NOW)
-    expect(d.arrivalsToday.length).toBe(2)
-    expect(d.departuresToday.length).toBeGreaterThan(0)
+    expect(d.today.arrivals.length).toBe(2)
+    expect(d.today.departures.length).toBeGreaterThan(0)
     expect(d.occupancy!.rate).toBeGreaterThan(0)
     expect(d.revenueSeries.some((p) => p.value > 0)).toBe(true)
     expect(d.reviews.total).toBeGreaterThan(0)

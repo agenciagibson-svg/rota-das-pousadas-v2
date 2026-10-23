@@ -9,8 +9,6 @@ import {
   Users,
   ArrowUpRight,
   Sparkles,
-  LogIn,
-  LogOut,
 } from 'lucide-react'
 import Link from 'next/link'
 import { APP_TIME_ZONE } from '@/lib/format'
@@ -22,6 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
 import { Building2 } from 'lucide-react'
 import { OwnerReservationsTable } from '@/features/gestao/components/owner-reservations-table'
+import { TodayPanel, type TodaySummary } from './today-panel'
 import type { OwnerReservation } from '@/features/gestao/types'
 import type {
   MonthlyRevenuePoint,
@@ -71,12 +70,12 @@ export function OwnerDashboardView({
   revenueSeries,
   week,
   reviews,
-  arrivalsToday,
-  departuresToday,
+  today,
   upcomingReservations,
   showRevenue = true,
   growthSlot,
   alertsSlot,
+  setupSlot,
 }: {
   displayName: string
   pousadaName: string | null
@@ -87,8 +86,8 @@ export function OwnerDashboardView({
   revenueSeries: MonthlyRevenuePoint[]
   week: WeeklyDailies
   reviews: ReviewSummary
-  arrivalsToday: OwnerReservation[]
-  departuresToday: OwnerReservation[]
+  /** Bloco "Hoje" (chegadas, saídas, hospedados, pedidos); `null` sem pousada. */
+  today: TodaySummary | null
   /** Entradas a partir de hoje, já ordenadas e limitadas (`upcomingReservations`). */
   upcomingReservations: OwnerReservation[]
   /** Faturamento só para quem tem `finance:pousada:view` (recepção/governança não veem). */
@@ -97,6 +96,8 @@ export function OwnerDashboardView({
   growthSlot?: React.ReactNode
   /** Dinheiro que precisa de alguém: comprovantes Pix e pagamentos para revisar (0082). */
   alertsSlot?: React.ReactNode
+  /** Configuração guiada (só enquanto falta passo obrigatório; só para quem configura). */
+  setupSlot?: React.ReactNode
 }) {
   const firstName = displayName.split(/[\s@]/)[0]
   const activeReservations = reservations.filter(
@@ -199,7 +200,9 @@ export function OwnerDashboardView({
                 : 'Sua pousada está em análise pela nossa curadoria. Você já pode preparar tudo; ela ficará visível no site após a aprovação.'}
         </div>
       )}
+      {setupSlot}
       {alertsSlot}
+      {today && <TodayPanel today={today} showMoney={showRevenue} />}
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {visibleStats.map((s) => (
@@ -315,74 +318,7 @@ export function OwnerDashboardView({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-        {/* Movimento de hoje — substitui a antiga lista de mensagens de exemplo. */}
-        <div className="border-border bg-card rounded-2xl border p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-foreground font-semibold">Movimento de hoje</h2>
-            <Link
-              href="/dashboard/reservas"
-              className="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
-            >
-              Ver todas <ArrowUpRight className="size-4" />
-            </Link>
-          </div>
-          {arrivalsToday.length === 0 && departuresToday.length === 0 ? (
-            <p className="text-muted-foreground mt-4 text-sm">
-              Nenhuma chegada ou saída prevista para hoje.
-            </p>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {arrivalsToday.map((reservation) => (
-                <div
-                  key={`in-${reservation.id}`}
-                  className="bg-secondary/50 flex items-start gap-3 rounded-xl p-3"
-                >
-                  <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full">
-                    <LogIn className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-foreground truncate text-sm font-semibold">
-                        {reservation.guestName}
-                      </span>
-                      <span className="text-primary shrink-0 text-xs font-semibold">Chegada</span>
-                    </div>
-                    <p className="text-muted-foreground truncate text-sm">
-                      {reservation.roomName} · {reservation.nights}{' '}
-                      {reservation.nights === 1 ? 'noite' : 'noites'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {departuresToday.map((reservation) => (
-                <div
-                  key={`out-${reservation.id}`}
-                  className="bg-secondary/50 flex items-start gap-3 rounded-xl p-3"
-                >
-                  <span className="bg-accent/15 text-accent flex size-9 shrink-0 items-center justify-center rounded-full">
-                    <LogOut className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-foreground truncate text-sm font-semibold">
-                        {reservation.guestName}
-                      </span>
-                      <span className="text-accent shrink-0 text-xs font-semibold">Saída</span>
-                    </div>
-                    <p className="text-muted-foreground truncate text-sm">
-                      {reservation.roomName}
-                      {reservation.balanceDue > 0 && showRevenue
-                        ? ` · saldo de ${brl(reservation.balanceDue)}`
-                        : ''}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
         {/* Reviews summary */}
         <div className="border-border bg-card rounded-2xl border p-6">
           <h2 className="text-foreground font-semibold">Avaliações</h2>

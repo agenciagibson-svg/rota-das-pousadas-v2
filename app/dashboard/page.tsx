@@ -12,6 +12,9 @@ import { GrowthInvite } from '@/components/dashboard/growth-invite'
 import { getOwnerGrowthCard } from '@/features/admin/services/growth.service'
 import { PaymentAlerts } from '@/components/dashboard/payment-alerts'
 import { getPaymentAlerts } from '@/features/pagamentos/services/pix.service'
+import { getOperationalAlerts } from '@/features/pedidos/services/orders.service'
+import { getSetupProgress } from '@/features/onboarding/services/setup.service'
+import { SetupChecklist } from '@/components/dashboard/setup-checklist'
 import {
   addDays,
   calculateOccupancy,
@@ -39,8 +42,7 @@ export default async function DashboardPage() {
         revenueSeries={[]}
         week={{ labels: [], data: [], total: 0 }}
         reviews={{ total: 0, average: 0, distribution: [] }}
-        arrivalsToday={[]}
-        departuresToday={[]}
+        today={null}
         upcomingReservations={[]}
       />
     )
@@ -48,21 +50,26 @@ export default async function DashboardPage() {
 
   const role = await getActiveTenantRole()
   const showRevenue = Boolean(role && can(role, 'finance:pousada:view'))
-  const [reservations, rooms, reviews, growth, paymentAlerts] = await Promise.all([
-    getOwnerReservations(),
-    // Papéis sem `room:status:view` (financeiro, por exemplo) não leem
-    // acomodações. Nesse caso a ocupação fica indisponível e o painel diz isso
-    // — nunca estima um número que não corresponde à casa do cliente.
-    getOwnerRooms().catch(() => null),
-    getOwnerReviews().catch(() => []),
-    // Convite de tráfego pago: só proprietário/admin; falha nunca derruba o painel.
-    getOwnerGrowthCard().catch(() => null),
-    // Comprovantes Pix e pagamentos para revisar (0082); falha nunca derruba o painel.
-    getPaymentAlerts().catch((error) => {
-      console.error('[dashboard] alertas de pagamento', String(error))
-      return null
-    }),
-  ])
+  const [reservations, rooms, reviews, growth, paymentAlerts, operational, setup] =
+    await Promise.all([
+      getOwnerReservations(),
+      // Papéis sem `room:status:view` (financeiro, por exemplo) não leem
+      // acomodações. Nesse caso a ocupação fica indisponível e o painel diz isso
+      // — nunca estima um número que não corresponde à casa do cliente.
+      getOwnerRooms().catch(() => null),
+      getOwnerReviews().catch(() => []),
+      // Convite de tráfego pago: só proprietário/admin; falha nunca derruba o painel.
+      getOwnerGrowthCard().catch(() => null),
+      // Comprovantes Pix e pagamentos para revisar (0082); falha nunca derruba o painel.
+      getPaymentAlerts().catch((error) => {
+        console.error('[dashboard] alertas de pagamento', String(error))
+        return null
+      }),
+      // Pedidos novos do app da estadia (só papéis com `order:manage`).
+      getOperationalAlerts().catch(() => null),
+      // Configuração guiada: só proprietário/gestor; `null` para os outros papéis.
+      getSetupProgress().catch(() => null),
+    ])
 
   // "Hoje" no fuso da pousada: em UTC o painel já virava o dia às 21h.
   const today = pousadaToday(new Date(), pousada.timezone)
@@ -83,6 +90,23 @@ export default async function DashboardPage() {
       : calculateOccupancy(reservations, sellableRooms, todayISO, addDays(todayISO, 7), today.date)
 
   const { arrivals, departures } = dayMovements(reservations, todayISO)
+  const todaySummary = {
+    dateLabel: new Intl.DateTimeFormat('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      timeZone: pousada.timezone,
+    }).format(new Date()),
+    arrivals,
+    departures,
+    inHouse: reservations.filter((r) => r.status === 'checked_in').length,
+    roomsToClean: rooms
+      ? rooms.filter((r) =>
+          ['awaiting_cleaning', 'cleaning', 'inspection_pending'].includes(r.operationalStatus),
+        ).length
+      : null,
+    newOrders: operational && operational.newOrders >= 0 ? operational.newOrders : null,
+  }
 
   return (
     <OwnerDashboardView
@@ -95,8 +119,8 @@ export default async function DashboardPage() {
       showRevenue={showRevenue}
       week={weeklyDailies(reservations, today.date)}
       reviews={summarizeReviews(reviews)}
-      arrivalsToday={arrivals}
-      departuresToday={departures}
+      today={todaySummary}
+      setupSlot={setup ? <SetupChecklist progress={setup} /> : null}
       upcomingReservations={upcomingReservations(reservations, todayISO)}
       growthSlot={growth && pousada.status === 'publicada' ? <GrowthInvite card={growth} /> : null}
       alertsSlot={

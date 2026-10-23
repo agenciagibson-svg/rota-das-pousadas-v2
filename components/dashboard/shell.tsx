@@ -5,9 +5,10 @@ import { canAccessSection, sectionForHref } from '@/lib/auth/dashboard-sections'
 import { roleLabel } from '@/features/membros/components/role-labels'
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Menu, X, Search, Bell, Globe, CalendarDays, type LucideIcon } from 'lucide-react'
+import { Menu, X, Globe, CalendarDays, type LucideIcon } from 'lucide-react'
 import { LogoutButton } from '@/features/auth/components/logout-button'
 import { Marker } from '@/components/brand/logo'
+import { NoticesBell } from './notices-bell'
 
 export type NavItem = { label: string; icon: LucideIcon; active?: boolean; href?: string }
 
@@ -136,7 +137,11 @@ export function DashboardShell({
       <div className="lg:pl-72">
         <header className="border-border bg-card/80 sticky top-0 z-30 flex items-center justify-between gap-4 border-b px-5 py-4 backdrop-blur lg:px-8">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="lg:hidden" aria-label="Abrir menu">
+            <button
+              onClick={() => setOpen(true)}
+              className="-ml-2 flex size-11 items-center justify-center lg:hidden"
+              aria-label="Abrir menu"
+            >
               <Menu className="text-foreground size-6" />
             </button>
             <div>
@@ -151,23 +156,11 @@ export function DashboardShell({
               href="/"
               className="border-border bg-card text-foreground hover:bg-secondary flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
             >
-              <Globe className="size-4" />
-              <span className="hidden sm:inline">Ver o site</span>
+              <Globe className="size-4" aria-hidden="true" />
+              <span className="sr-only sm:not-sr-only">Ver o site</span>
             </Link>
-            <div className="border-border bg-secondary/60 hidden items-center gap-2 rounded-full border px-4 py-2 md:flex">
-              <Search className="text-muted-foreground size-4" />
-              <input
-                placeholder="Buscar…"
-                className="placeholder:text-muted-foreground w-40 bg-transparent text-sm outline-none"
-              />
-            </div>
-            <button
-              className="border-border bg-card relative flex size-10 items-center justify-center rounded-full border"
-              aria-label="Notificações"
-            >
-              <Bell className="text-foreground size-5" />
-              <span className="bg-accent absolute top-2.5 right-2.5 size-2 rounded-full" />
-            </button>
+            {/* Sino real (avisos do servidor). A busca falsa que ficava aqui saiu. */}
+            <NoticesBell />
           </div>
         </header>
 

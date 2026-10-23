@@ -145,8 +145,19 @@ export function buildDemoOwnerDashboard(now: Date, timeZone = 'America/Sao_Paulo
     showRevenue: true,
     week: weeklyDailies(reservations, today.date),
     reviews: summarizeReviews(DEMO_RATINGS.map((rating) => ({ rating }))),
-    arrivalsToday: arrivals,
-    departuresToday: departures,
+    today: {
+      dateLabel: new Intl.DateTimeFormat('pt-BR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone,
+      }).format(now),
+      arrivals,
+      departures,
+      inHouse: reservations.filter((r) => r.status === 'checked_in').length,
+      roomsToClean: null,
+      newOrders: null,
+    },
     upcomingReservations: upcomingReservations(reservations, today.iso),
   }
 }

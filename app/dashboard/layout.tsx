@@ -12,6 +12,8 @@ import {
   PendingInvitesBanner,
 } from '@/components/dashboard/tenant-gate'
 import { DashboardRoleProvider } from '@/components/dashboard/role-context'
+import { DashboardNoticesProvider } from '@/components/dashboard/notices-context'
+import { getDashboardNotices } from '@/features/dashboard/services/notices.service'
 
 /**
  * Guarda de tenant da área de gestão (Ciclo 2 — itens 7 e 8 do escopo de
@@ -62,11 +64,17 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
     case 'ok': {
       // Já tem pousada ativa, mas pode ter sido convidado para outra.
-      const invites = await getMyPendingInvites()
+      // Avisos do sino: nunca derrubam o painel (cada fonte já falha em silêncio).
+      const [invites, notices] = await Promise.all([
+        getMyPendingInvites(),
+        getDashboardNotices().catch(() => []),
+      ])
       return (
         <DashboardRoleProvider role={state.membership.role}>
-          <PendingInvitesBanner invites={invites} />
-          {children}
+          <DashboardNoticesProvider notices={notices}>
+            <PendingInvitesBanner invites={invites} />
+            {children}
+          </DashboardNoticesProvider>
         </DashboardRoleProvider>
       )
     }
