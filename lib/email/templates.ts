@@ -918,3 +918,79 @@ export function reviewReminderEmail(t: ReviewRequestTarget): Email {
     ),
   }
 }
+
+// ---------------------------------------------------------------------------
+// Modelos do Supabase Auth (colados no painel: Authentication → Emails)
+// ---------------------------------------------------------------------------
+// Quem envia é o Supabase, não o app: o HTML leva as variáveis do Supabase
+// (`{{ .Token }}`, `{{ .TokenHash }}`, `{{ .SiteURL }}`, `{{ .RedirectTo }}`,
+// `{{ .Email }}`) e é gerado daqui para usar o mesmo layout dos e-mails de
+// reserva. Gerar de novo: `WRITE_AUTH_TEMPLATES=1 NEXT_PUBLIC_SITE_URL=https://rotadaspousadas.com.br
+// pnpm vitest run lib/email/auth-templates.test.ts` → supabase/templates/*.html.
+
+/** Link de um toque: abre /auth/confirm, que só gasta o token no clique em "Entrar". */
+const AUTH_CONFIRM_LINK =
+  '{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email&amp;next={{ .RedirectTo }}'
+
+function authCodeBox(label: string): string {
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.linen};border:1px solid ${C.border};border-radius:16px;">
+  <tr><td align="center" style="padding:20px 22px 6px;font:600 12px ${SANS};color:${C.muted};">${label}</td></tr>
+  <tr><td align="center" style="padding:2px 22px 6px;font:500 38px ${DISPLAY};color:${C.ink};letter-spacing:10px;">{{ .Token }}</td></tr>
+  <tr><td align="center" style="padding:0 22px 18px;font:500 12px ${SANS};color:${C.muted};">Vale por 10 minutos e funciona uma única vez.</td></tr>
+</table>`
+}
+
+const AUTH_SECURITY_NOTICE = notice(
+  '<strong>Não foi você?</strong> Pode ignorar este e-mail. Ninguém entra na conta sem este código.',
+  'warn',
+)
+
+export type AuthEmailTemplate = { subject: string; html: string }
+
+/**
+ * "Confirm sign up": primeiro e-mail de quem ainda não tem conta — tanto no
+ * cadastro com senha quanto no primeiro "receber código" (o Supabase usa este
+ * modelo quando a conta é nova). Por isso o código aparece com destaque.
+ */
+export function authConfirmSignupTemplate(): AuthEmailTemplate {
+  return {
+    subject: 'Confirme seu e-mail — código {{ .Token }}',
+    html: wrapLayout({
+      preheader:
+        'Seu código é {{ .Token }}. Confirme o e-mail para ativar sua conta na Rota das Pousadas.',
+      pill: { label: 'Boas-vindas', bg: C.accent, fg: C.accentText },
+      title: 'Confirme seu e-mail',
+      subtitle: 'Falta só um passo para ativar sua conta na Rota das Pousadas.',
+      intro:
+        'Olá! Que bom ter você por aqui. Para ativar a conta <strong>{{ .Email }}</strong>, toque no botão abaixo ou digite o código na tela de entrada do site.',
+      ticketHtml: authCodeBox('Seu código de confirmação'),
+      extraHtml: AUTH_SECURITY_NOTICE,
+      cta: { href: AUTH_CONFIRM_LINK, label: 'Confirmar meu e-mail' },
+      ctaHint: 'Depois de confirmar, é só escolher sua próxima pousada.',
+      footerNote:
+        'Você recebeu este e-mail porque este endereço foi usado para criar uma conta em rotadaspousadas.com.br.',
+    }),
+  }
+}
+
+/** "Magic link or OTP": entrada sem senha de quem já tem conta. */
+export function authMagicLinkTemplate(): AuthEmailTemplate {
+  return {
+    subject: 'Seu código de acesso: {{ .Token }}',
+    html: wrapLayout({
+      preheader: 'Seu código é {{ .Token }}. Ele vale por 10 minutos.',
+      pill: { label: 'Código de acesso', bg: C.accent, fg: C.accentText },
+      title: 'Seu código para entrar',
+      subtitle: 'Digite na tela de entrada da Rota das Pousadas. Não precisa de senha.',
+      intro:
+        'Olá! Use o código abaixo para entrar na conta <strong>{{ .Email }}</strong>. Se preferir, toque no botão e entre com um clique.',
+      ticketHtml: authCodeBox('Seu código de acesso'),
+      extraHtml: AUTH_SECURITY_NOTICE,
+      cta: { href: AUTH_CONFIRM_LINK, label: 'Entrar na minha conta' },
+      ctaHint: 'Por segurança, não encaminhe este e-mail para ninguém.',
+      footerNote:
+        'Você recebeu este e-mail porque alguém pediu um código de acesso para esta conta em rotadaspousadas.com.br.',
+    }),
+  }
+}

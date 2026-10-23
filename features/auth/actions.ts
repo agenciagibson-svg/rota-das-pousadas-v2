@@ -30,7 +30,7 @@ import {
   startGoogleSignIn,
   verifyEmailCode,
 } from './services/passwordless.service'
-import { authRedirectOrigin } from './passwordless'
+import { authCallbackPath, authRedirectOrigin } from './passwordless'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -170,7 +170,11 @@ export const signUpAction = createAction(signupSchema, async (input) => {
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
-    options: { data: { full_name: input.name } },
+    options: {
+      data: { full_name: input.name },
+      // O link do e-mail de confirmação volta para onde a pessoa estava (a reserva).
+      emailRedirectTo: `${await redirectOrigin()}${authCallbackPath(input.next)}`,
+    },
   })
   if (error) throw new Error(signUpErrorMessage(error.message))
   revalidatePath('/', 'layout')

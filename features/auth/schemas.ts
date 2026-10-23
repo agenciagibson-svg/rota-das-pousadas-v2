@@ -10,6 +10,8 @@ export type LoginInput = z.infer<typeof loginSchema>
 /** Validação de cadastro. */
 export const signupSchema = z.object({
   name: z.string().min(2, 'Informe seu nome.').max(80, 'Nome muito longo.'),
+  /** Para onde voltar depois de confirmar o e-mail (ex.: a reserva em andamento). */
+  next: z.string().max(500).optional(),
   email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
   password: z
     .string()

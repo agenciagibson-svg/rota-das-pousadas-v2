@@ -21,7 +21,7 @@ export function SignupForm({ next }: SignupFormProps) {
   const safeNext = safeNextPath(next)
   const loginHref = safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : '/login'
   const [formError, setFormError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const [sentTo, setSentTo] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -33,14 +33,14 @@ export function SignupForm({ next }: SignupFormProps) {
 
   async function onSubmit(values: SignupInput) {
     setFormError(null)
-    setMessage(null)
-    const result = await signUpAction(values)
+    setSentTo(null)
+    const result = await signUpAction({ ...values, next: safeNext ?? undefined })
     if (!result.ok) {
       setFormError(result.error)
       return
     }
     if (result.data.needsEmailConfirmation) {
-      setMessage('Conta criada! Confirme seu e-mail para acessar o painel.')
+      setSentTo(values.email)
       return
     }
     router.push(safeNext ?? result.data.redirectTo)
@@ -83,7 +83,15 @@ export function SignupForm({ next }: SignupFormProps) {
           )}
         </p>
       )}
-      {message && <p className="text-primary text-sm font-medium">{message}</p>}
+      {sentTo && (
+        <div role="status" className="bg-secondary text-foreground rounded-2xl p-4 text-sm">
+          <p className="font-semibold">Conta criada! Falta confirmar seu e-mail.</p>
+          <p className="text-muted-foreground mt-1">
+            Enviamos um e-mail da Rota das Pousadas para <strong>{sentTo}</strong> com o botão de
+            confirmação e um código. Não chegou? Veja a caixa de spam ou promoções.
+          </p>
+        </div>
+      )}
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Criando conta…' : 'Criar conta'}
       </Button>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Confirme seu e-mail</title>
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500&family=Figtree:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#eef1ef;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Seu código é {{ .Token }}. Confirme o e-mail para ativar sua conta na Rota das Pousadas.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1ef;padding:28px 0;">
+<tr><td align="center" style="padding:0 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+  <tr><td style="padding:0 12px 18px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td><img src="https://rotadaspousadas.com.br/email/marca.png" width="40" height="40" alt="" style="display:inline-block;border:0;vertical-align:middle;"><span style="font:500 20px 'Funnel Display','Helvetica Neue',Arial,sans-serif;color:#0f1716;vertical-align:middle;padding-left:10px;">Rota das Pousadas</span></td>
+      <td align="right" style="font:500 12px 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#4f5955;">Cada destino tem uma história</td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="background:#0f1716;border-radius:22px 22px 0 0;padding:34px 36px 30px;">
+    <span style="display:inline-block;background:#f4b42a;color:#0f1716;font:600 12px 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;padding:6px 12px;border-radius:999px;">Boas-vindas</span>
+    <h1 style="margin:16px 0 6px;font:500 30px/1.15 'Funnel Display','Helvetica Neue',Arial,sans-serif;color:#eef1ef;">Confirme seu e-mail</h1>
+    <p style="margin:0;font:500 15px/1.5 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#c9d0cc;">Falta só um passo para ativar sua conta na Rota das Pousadas.</p>
+  </td></tr>
+  <tr><td style="background:#ffffff;padding:30px 36px 8px;border-left:1px solid #d5dbd8;border-right:1px solid #d5dbd8;">
+    <p style="margin:0 0 22px;font:500 15px/1.6 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#0f1716;">Olá! Que bom ter você por aqui. Para ativar a conta <strong>{{ .Email }}</strong>, toque no botão abaixo ou digite o código na tela de entrada do site.</p>
+    
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1ef;border:1px solid #d5dbd8;border-radius:16px;">
+  <tr><td align="center" style="padding:20px 22px 6px;font:600 12px 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#4f5955;">Seu código de confirmação</td></tr>
+  <tr><td align="center" style="padding:2px 22px 6px;font:500 38px 'Funnel Display','Helvetica Neue',Arial,sans-serif;color:#0f1716;letter-spacing:10px;">{{ .Token }}</td></tr>
+  <tr><td align="center" style="padding:0 22px 18px;font:500 12px 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#4f5955;">Vale por 10 minutos e funciona uma única vez.</td></tr>
+</table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr><td style="padding:14px 18px;border-radius:14px;background:#fdf0d4;border:1px solid #f8d58a;color:#0f1716;font:500 14px/1.5 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;"><strong>Não foi você?</strong> Pode ignorar este e-mail. Ninguém entra na conta sem este código.</td></tr></table>
+  </td></tr>
+  <tr><td align="center" style="background:#ffffff;padding:18px 36px 34px;border:1px solid #d5dbd8;border-top:0;border-radius:0 0 22px 22px;">
+    <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email&amp;next={{ .RedirectTo }}" style="display:inline-block;background:#f4b42a;color:#0f1716;font:700 15px 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;text-decoration:none;padding:15px 34px;border-radius:999px;">Confirmar meu e-mail &rarr;</a>
+    <p style="margin:14px 0 0;font:500 12px 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#4f5955;">Depois de confirmar, é só escolher sua próxima pousada.</p>
+  </td></tr>
+  <tr><td style="padding:22px 12px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f1716;border-radius:18px;"><tr><td style="padding:22px 26px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td width="52" valign="middle"><img src="https://rotadaspousadas.com.br/email/marca-negativo.png" width="38" height="38" alt="" style="display:inline-block;border:0;vertical-align:middle;"></td>
+        <td valign="middle"><div style="font:500 16px 'Funnel Display','Helvetica Neue',Arial,sans-serif;color:#eef1ef;">Rota das Pousadas</div>
+          <div style="font:500 12px/1.5 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#a9b3ae;margin-top:2px;">Reserva direto com a pousada, sem intermediário na hospedagem.</div></td>
+      </tr></table>
+    </td></tr></table>
+    <p style="margin:14px 0 0;text-align:center;font:500 11px/1.6 'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif;color:#4f5955;">Você recebeu este e-mail porque este endereço foi usado para criar uma conta em rotadaspousadas.com.br.</p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>

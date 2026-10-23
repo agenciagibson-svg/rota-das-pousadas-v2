@@ -410,8 +410,29 @@ describe('signUpAction (cadastro)', () => {
     expect(mocks.signUp).toHaveBeenCalledWith({
       email: EMAIL,
       password: PASSWORD,
-      options: { data: { full_name: 'Viajante Teste' } },
+      options: {
+        data: { full_name: 'Viajante Teste' },
+        emailRedirectTo: expect.stringMatching(/\/auth\/callback$/),
+      },
     })
+  })
+
+  it('o link de confirmação volta para a reserva em andamento', async () => {
+    mocks.signUp.mockResolvedValue({ data: { session: null }, error: null })
+
+    await signUpAction({ ...form, next: '/pousada/serra/reservar?checkin=2026-12-01' })
+
+    expect(mocks.signUp.mock.calls[0]![0].options.emailRedirectTo).toMatch(
+      /\/auth\/callback\?next=%2Fpousada%2Fserra%2Freservar%3Fcheckin%3D2026-12-01$/,
+    )
+  })
+
+  it('destino de fora do site é ignorado no link de confirmação', async () => {
+    mocks.signUp.mockResolvedValue({ data: { session: null }, error: null })
+
+    await signUpAction({ ...form, next: 'https://evil.example/' })
+
+    expect(mocks.signUp.mock.calls[0]![0].options.emailRedirectTo).toMatch(/\/auth\/callback$/)
   })
 
   it('projeto que exige confirmação de e-mail: avisa que falta confirmar', async () => {
