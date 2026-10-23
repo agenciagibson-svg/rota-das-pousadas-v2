@@ -5,6 +5,8 @@ import {
   insertRateRule,
   listRateRulesByPousada,
   updateRateRule,
+  quoteRoomStay,
+  type CounterStayQuote,
   type RateRuleWrite,
 } from '@/repositories/rate-rules.repository'
 import type { RateRule } from '../types'
@@ -53,4 +55,17 @@ export async function removeRateRule(id: string): Promise<void> {
   const { pousadaId } = await requireCapability('room:manage')
   const removed = await deleteRateRule(id, pousadaId)
   if (!removed) throw new Error('Regra não encontrada nesta pousada.')
+}
+
+/**
+ * Preço da estadia no balcão (nova reserva pelo painel): mesma conta da reserva
+ * pelo site, com as tarifas de temporada. A equipe ainda pode ajustar o valor.
+ */
+export async function quoteStayForCounter(input: {
+  roomId: string
+  checkin: string
+  checkout: string
+}): Promise<CounterStayQuote | null> {
+  await requireAnyCapability(['booking:manage', 'room:manage'])
+  return quoteRoomStay(input.roomId, input.checkin, input.checkout)
 }

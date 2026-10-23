@@ -57,6 +57,7 @@ export async function submitMyPrecheckin(input: PrecheckinInput): Promise<void> 
     : null
 
   const storedIds = new Set(current.companions.filter((c) => c.hasDocument).map((c) => c.id))
+  const existingIds = new Set(current.companions.map((c) => c.id))
 
   await submitPrecheckinRpc({
     bookingId: input.bookingId,
@@ -77,9 +78,10 @@ export async function submitMyPrecheckin(input: PrecheckinInput): Promise<void> 
         birthDate: c.birthDate || null,
         documentType: plain ? c.documentType || null : null,
         documentNumber: plain ? encryptDocumentNumber(plain) : null,
-        // Acompanhante que já existia nesta reserva: o banco mantém o documento
-        // antigo (se não veio outro) e as anotações da equipe sobre ele.
-        keepDocumentOf: storedIds.has(c.keepDocumentOf) ? c.keepDocumentOf : null,
+        // Documento antigo que continua valendo (só quando não veio outro).
+        keepDocumentOf: !plain && storedIds.has(c.keepDocumentOf) ? c.keepDocumentOf : null,
+        // Linha antiga deste acompanhante: o banco mantém as anotações da equipe.
+        previousId: existingIds.has(c.previousId) ? c.previousId : null,
       }
     }),
     expectedArrivalTime: input.expectedArrivalTime || null,

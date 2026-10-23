@@ -40,6 +40,7 @@ export const RESERVED_SLUGS: readonly string[] = [
   'conta',
   'conta-excluida',
   'dashboard',
+  'estadia',
   'esqueci-senha',
   'excluir-conta',
   'destinos',

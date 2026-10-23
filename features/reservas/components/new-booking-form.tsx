@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarSearch, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { checkAvailabilityAction } from '@/features/acomodacoes/actions'
+import { checkAvailabilityAction, quoteCounterStayAction } from '@/features/acomodacoes/actions'
 import { createBookingAdminAction } from '../actions'
 import { calculateBookingPrice } from '../pricing'
 import type { ManagedRoom, AvailabilityResult } from '@/features/acomodacoes/types'
@@ -94,6 +94,13 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
   const [discount, setDiscount] = useState(0)
   const [surcharge, setSurcharge] = useState(0)
   const [servicesAmount, setServicesAmount] = useState(0)
+  /** Preço da data pelas tarifas de temporada (0087), quando difere da diária-base. */
+  const [seasonQuote, setSeasonQuote] = useState<{
+    total: number
+    nights: number
+    minNights: number
+  } | null>(null)
+  const quoteFor = useRef<string | null>(null)
 
   const price =
     checkin && checkout && nightlyRate > 0
@@ -137,6 +144,28 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
     setSelectedRoomId(room.roomId)
     const managed = rooms.find((r) => r.id === room.roomId)
     setNightlyRate(managed?.basePrice ?? 0)
+    setSeasonQuote(null)
+    const key = `${room.roomId}|${checkin}|${checkout}`
+    quoteFor.current = key
+    // Mesma conta da reserva pelo site (tarifas de temporada). Se falhar, fica
+    // a diária-base e a equipe ajusta à mão.
+    void quoteCounterStayAction({ roomId: room.roomId, checkin, checkout })
+      .then((result) => {
+        if (quoteFor.current !== key || !result.ok || !result.data) return
+        const { total, nights, minNights } = result.data
+        if (nights < 1) return
+        // Diária inteira em reais; o que sobra da divisão entra como acréscimo
+        // para o total bater com a tabela.
+        const nightly = Math.floor(total / nights)
+        setNightlyRate(nightly)
+        setSurcharge(total - nightly * nights)
+        setSeasonQuote(
+          total !== (managed?.basePrice ?? 0) * nights || minNights > 1
+            ? { total, nights, minNights }
+            : null,
+        )
+      })
+      .catch(() => undefined)
   }
 
   function submit(formData: FormData) {
@@ -374,6 +403,20 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
                 />
               </Field>
             </div>
+            {seasonQuote && (
+              <p className="text-muted-foreground mt-3 text-sm">
+                Pelas tarifas de temporada, estas {seasonQuote.nights}{' '}
+                {seasonQuote.nights === 1 ? 'noite saem' : 'noites saem'} por{' '}
+                <strong className="text-foreground">{formatBRL(seasonQuote.total)}</strong>. Você pode
+                ajustar os valores acima.
+                {seasonQuote.minNights > seasonQuote.nights && (
+                  <span className="text-destructive block">
+                    Atenção: nestas datas a estadia mínima é de {seasonQuote.minNights} noites (regra do
+                    site; no balcão você decide).
+                  </span>
+                )}
+              </p>
+            )}
             {price && (
               <div className="border-border bg-secondary/40 mt-4 space-y-1.5 rounded-2xl border p-4 text-sm">
                 <div className="text-muted-foreground flex justify-between">

@@ -187,7 +187,8 @@ export default async function PousadasPage({
 
         {!parsed.success && (
           <p role="alert" className="text-destructive mt-6">
-            Informe datas válidas de entrada e saída, quantidade de hóspedes e página.
+            {parsed.error.issues.find((issue) => issue.message.includes('noites'))?.message ??
+              'Informe datas válidas de entrada e saída, quantidade de hóspedes e página.'}
           </p>
         )}
         {result.items.length ? (

@@ -6,14 +6,14 @@ import {
   getOwnerReservations,
   getOwnerReviews,
   getOwnerRooms,
+  getPaymentAlerts,
+  getOperationalAlerts,
+  getSetupProgress,
 } from '@/server/queries'
 import { OwnerDashboardView } from '@/components/dashboard/owner-dashboard-view'
 import { GrowthInvite } from '@/components/dashboard/growth-invite'
 import { getOwnerGrowthCard } from '@/features/admin/services/growth.service'
 import { PaymentAlerts } from '@/components/dashboard/payment-alerts'
-import { getPaymentAlerts } from '@/features/pagamentos/services/pix.service'
-import { getOperationalAlerts } from '@/features/pedidos/services/orders.service'
-import { getSetupProgress } from '@/features/onboarding/services/setup.service'
 import { SetupChecklist } from '@/components/dashboard/setup-checklist'
 import {
   addDays,

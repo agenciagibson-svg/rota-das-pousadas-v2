@@ -44,6 +44,8 @@ export const precheckinCompanionSchema = z
   .object({
     /** Linha já salva cujo documento continua valendo (documento em branco = manter). */
     keepDocumentOf: z.string().uuid().or(z.literal('')),
+    /** Linha já salva deste acompanhante (com ou sem documento): o banco mantém as anotações da equipe. */
+    previousId: z.string().uuid().or(z.literal('')).default(''),
     fullName: z
       .string()
       .trim()
@@ -347,6 +349,7 @@ export function buildPrecheckinDefaults(
     expectedArrivalTime: arrivalTime.test(arrival) ? arrival : '',
     companions: snapshot.companions.map((c) => ({
       keepDocumentOf: c.hasDocument ? c.id : '',
+      previousId: c.id,
       fullName: c.fullName,
       guestType: c.guestType,
       birthDate: c.birthDate ?? '',

@@ -82,3 +82,18 @@ export function civilNow(date: Date, timeZone: string = DEFAULT_TIMEZONE): Date 
     return new Date(`${formatISODateTime(date, DEFAULT_TIMEZONE)}Z`)
   }
 }
+
+/**
+ * Máximo de noites numa reserva pelo site (busca, página da pousada e
+ * `create_booking` público). Igual a `public_stay_max_nights()` no banco (0087):
+ * mudar os dois juntos. Estadias maiores a pousada lança pelo painel.
+ */
+export const PUBLIC_STAY_MAX_NIGHTS = 90
+
+/** Noites entre duas datas ISO (AAAA-MM-DD); negativo se a saída vier antes. */
+export function isoNightsBetween(checkin: string, checkout: string): number {
+  const a = Date.parse(`${checkin}T00:00:00Z`)
+  const b = Date.parse(`${checkout}T00:00:00Z`)
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0
+  return Math.round((b - a) / 86_400_000)
+}

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { ListQuery } from '@/types'
+import { PUBLIC_STAY_MAX_NIGHTS, isoNightsBetween } from '@/lib/dates'
 
 const date = z
   .string()
@@ -24,6 +25,13 @@ export const catalogQuerySchema = z
   .refine((query) => !query.checkin || !query.checkout || query.checkout > query.checkin, {
     message: 'A saída deve ser posterior à entrada.',
   })
+  .refine(
+    (query) =>
+      !query.checkin ||
+      !query.checkout ||
+      isoNightsBetween(query.checkin, query.checkout) <= PUBLIC_STAY_MAX_NIGHTS,
+    { message: `Pelo site, a busca vai até ${PUBLIC_STAY_MAX_NIGHTS} noites.` },
+  )
 
 export function parseCatalogQuery(query: ListQuery) {
   return catalogQuerySchema.parse(query)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { KeyRound, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmailCodeForm } from './email-code-form'
@@ -80,6 +81,18 @@ export function GuestSignIn({
           </Button>
         </>
       )}
+      {/* Código e Google também criam a conta no primeiro acesso: mesmo aviso do cadastro. */}
+      <p className="text-muted-foreground text-center text-xs">
+        Ao continuar{googleEnabled ? ' com o Google ou' : ''} com o código, você concorda com os{' '}
+        <Link href="/termos" target="_blank" className="text-primary underline">
+          Termos de Uso
+        </Link>{' '}
+        e com a{' '}
+        <Link href="/privacidade" target="_blank" className="text-primary underline">
+          Política de Privacidade
+        </Link>
+        .
+      </p>
     </div>
   )
 }

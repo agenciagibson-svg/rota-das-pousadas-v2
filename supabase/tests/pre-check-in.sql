@@ -35,10 +35,14 @@ insert into booking_guests(id, booking_id, guest_id, full_name, guest_type, docu
  ('88000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000881', '40000000-0000-0000-0000-000000000088', 'Hóspede Oitenta Oito', 'responsible', null, null),
  ('88000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000881', null, 'Acompanhante Antigo', 'adult', 'RG', 'CCCCCCCCCCCCCCCC:DDDDDDDDDDDDDDDDDDDDDD==:QU5USUdP'),
  ('88000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000885', '40000000-0000-0000-0000-000000000089', 'Hóspede Oitenta Nove', 'responsible', null, null),
- ('88000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000885', null, 'Acompanhante do Outro', 'adult', 'RG', 'EEEEEEEEEEEEEEEE:FFFFFFFFFFFFFFFFFFFFFF==:T1VUUk8=');
+ ('88000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000885', null, 'Acompanhante do Outro', 'adult', 'RG', 'EEEEEEEEEEEEEEEE:FFFFFFFFFFFFFFFFFFFFFF==:T1VUUk8='),
+ ('88000000-0000-0000-0000-000000000005', '30000000-0000-0000-0000-000000000881', null, 'Filha Pequena', 'child', null, null);
 -- Anotação da equipe sobre o acompanhante: o reenvio da ficha pelo hóspede não pode apagá-la.
 update booking_guests set has_special_needs = true, operational_notes = 'Cadeira de rodas'
  where id = '88000000-0000-0000-0000-000000000002';
+-- Criança sem documento também pode ter anotação da equipe.
+update booking_guests set operational_notes = 'Berço no quarto'
+ where id = '88000000-0000-0000-0000-000000000005';
 
 -- Atalho: envio válido com o que cada teste quiser trocar.
 create function test_submit(
@@ -98,7 +102,7 @@ select test_assert(get_my_precheckin('30000000-0000-0000-0000-000000000881')->'r
 select test_assert(get_my_precheckin('30000000-0000-0000-0000-000000000881')::text not like '%AAAAAAAAAAAAAAAA:%'
   and get_my_precheckin('30000000-0000-0000-0000-000000000881')::text not like '%CCCCCCCCCCCCCCCC:%',
   'leitura nunca devolve documento cifrado');
-select test_assert(jsonb_array_length(get_my_precheckin('30000000-0000-0000-0000-000000000881')->'companions') = 1,
+select test_assert(jsonb_array_length(get_my_precheckin('30000000-0000-0000-0000-000000000881')->'companions') = 2,
   'leitura traz só acompanhantes (sem o responsável)');
 select test_assert((get_my_precheckin('30000000-0000-0000-0000-000000000881')->>'maxCompanions')::int = 2
   and (get_my_precheckin('30000000-0000-0000-0000-000000000881')->>'canSubmit')::boolean,
@@ -124,6 +128,12 @@ select test_denied($q$select test_submit('30000000-0000-0000-0000-000000000881',
 select test_denied($q$select test_submit('30000000-0000-0000-0000-000000000881',
   '[{"fullName":"Pega Doc","guestType":"adult","birthDate":"1990-01-01","keepDocumentOf":"88000000-0000-0000-0000-000000000004"}]')$q$,
   'não reaproveita documento de acompanhante de outra reserva');
+select test_denied($q$select test_submit('30000000-0000-0000-0000-000000000881',
+  '[{"fullName":"Pega Nota","guestType":"child","birthDate":"2018-01-01","previousId":"88000000-0000-0000-0000-000000000004"}]')$q$,
+  'não puxa anotação de acompanhante de outra reserva');
+select test_denied($q$select test_submit('30000000-0000-0000-0000-000000000881',
+  '[{"fullName":"Pega Nota","guestType":"child","birthDate":"2018-01-01","previousId":"88000000-0000-0000-0000-000000000001"}]')$q$,
+  'não puxa a linha do responsável como acompanhante');
 select test_denied($q$select test_submit('30000000-0000-0000-0000-000000000881', '[]', null, null, null, null, '25:99')$q$,
   'horário de chegada inválido');
 select test_denied($q$select submit_precheckin('30000000-0000-0000-0000-000000000881', '(34) 92222-1111', '2015-01-01', 'Brasileira', null,
@@ -161,7 +171,7 @@ end $$;
 -- documento e um bebê.
 select test_submit('30000000-0000-0000-0000-000000000881',
   '[{"fullName":"Acompanhante Antigo","guestType":"adult","birthDate":"1988-02-02","keepDocumentOf":"88000000-0000-0000-0000-000000000002"},
-    {"fullName":"Filha Pequena","guestType":"child","birthDate":"2018-03-03"},
+    {"fullName":"Filha Pequena","guestType":"child","birthDate":"2018-03-03","previousId":"88000000-0000-0000-0000-000000000005"},
     {"fullName":"Bebê","guestType":"infant"}]',
   'IIIIIIIIIIIIIIII:JJJJJJJJJJJJJJJJJJJJJJ==:Tk9WTw==', 'CPF', repeat('c', 64), '1234');
 select test_assert((list_my_bookings('30000000-0000-0000-0000-000000000881'))
@@ -185,6 +195,12 @@ select test_assert((select document_number from booking_guests
 select test_assert((select has_special_needs and operational_notes = 'Cadeira de rodas' from booking_guests
   where booking_id = '30000000-0000-0000-0000-000000000881' and full_name = 'Acompanhante Antigo'),
   'anotação da equipe sobre o acompanhante continua depois do reenvio');
+select test_assert((select operational_notes = 'Berço no quarto' and document_number is null from booking_guests
+  where booking_id = '30000000-0000-0000-0000-000000000881' and full_name = 'Filha Pequena'),
+  'anotação da equipe sobre criança sem documento continua (previousId)');
+select test_assert((select operational_notes = '' and not has_special_needs from booking_guests
+  where booking_id = '30000000-0000-0000-0000-000000000881' and full_name = 'Bebê'),
+  'acompanhante novo começa sem anotação');
 select test_assert((select count(*) from booking_guests
   where booking_id = '30000000-0000-0000-0000-000000000881' and guest_type = 'responsible'
     and id = '88000000-0000-0000-0000-000000000001' and guest_id = '40000000-0000-0000-0000-000000000088') = 1,

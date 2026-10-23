@@ -183,6 +183,7 @@ export function PrecheckinCompanionsStep({
         onClick={() =>
           append({
             keepDocumentOf: '',
+            previousId: '',
             fullName: '',
             guestType: limits.maxCompanions > 0 ? 'adult' : 'infant',
             birthDate: '',

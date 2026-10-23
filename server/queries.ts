@@ -54,6 +54,10 @@ import {
   getGuestProfile as guestProfile,
 } from '@/features/hospedes/services/guests.service'
 import { listChannels as ownerChannels } from '@/features/canais/services/channels.service'
+import { getPaymentAlerts as paymentAlerts } from '@/features/pagamentos/services/pix.service'
+import { getOperationalAlerts as operationalAlerts } from '@/features/pedidos/services/orders.service'
+import { getSetupProgress as setupProgress } from '@/features/onboarding/services/setup.service'
+import { getDashboardNotices as dashboardNotices } from '@/features/dashboard/services/notices.service'
 import {
   getLinkReport as linkReport,
   listQuoteRequests as quoteRequests,
@@ -275,3 +279,21 @@ export const canManageQuotes = cache(async () => {
 export const isFavoritePousada = cache((slug: string) => getFavoriteState(slug))
 export const getMyFavorites = cache(() => listMyFavorites())
 export const getMyFavoriteAlertStates = cache(() => listMyFavoriteAlertStates())
+
+/**
+ * Alertas e avisos do painel. Com `cache()`: o sino (layout) e a tela inicial
+ * pedem as mesmas listas no mesmo request e cada consulta roda uma vez.
+ */
+export const getPaymentAlerts = cache(() => paymentAlerts())
+export const getOperationalAlerts = cache(() => operationalAlerts())
+export const getSetupProgress = cache(() => setupProgress())
+export const getDashboardNotices = cache(() =>
+  dashboardNotices({
+    pousada: getOwnerPousada,
+    reservations: () => getOwnerReservations(),
+    payments: getPaymentAlerts,
+    operational: getOperationalAlerts,
+    channels: getOwnerChannels,
+    setup: getSetupProgress,
+  }),
+)

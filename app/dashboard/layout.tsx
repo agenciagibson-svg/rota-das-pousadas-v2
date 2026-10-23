@@ -13,7 +13,7 @@ import {
 } from '@/components/dashboard/tenant-gate'
 import { DashboardRoleProvider } from '@/components/dashboard/role-context'
 import { DashboardNoticesProvider } from '@/components/dashboard/notices-context'
-import { getDashboardNotices } from '@/features/dashboard/services/notices.service'
+import { getDashboardNotices } from '@/server/queries'
 
 /**
  * Guarda de tenant da área de gestão (Ciclo 2 — itens 7 e 8 do escopo de

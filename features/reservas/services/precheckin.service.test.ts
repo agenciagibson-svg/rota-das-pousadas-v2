@@ -17,6 +17,7 @@ vi.mock('@/lib/cep', () => ({ lookupCep: mocks.lookupCep }))
 
 const BOOKING = '30000000-0000-4000-8000-000000000881'
 const KEPT = '88000000-0000-4000-8000-000000000002'
+const KID = '88000000-0000-4000-8000-000000000005'
 
 const snapshot = {
   bookingId: BOOKING,
@@ -31,6 +32,14 @@ const snapshot = {
       birthDate: '1990-01-01',
       documentType: 'RG',
       hasDocument: true,
+    },
+    {
+      id: KID,
+      fullName: 'Bia',
+      guestType: 'child',
+      birthDate: null,
+      documentType: null,
+      hasDocument: false,
     },
   ],
 } as unknown as PrecheckinSnapshot
@@ -50,6 +59,7 @@ const input: PrecheckinInput = {
   companions: [
     {
       keepDocumentOf: KEPT,
+      previousId: KEPT,
       fullName: 'Ana',
       guestType: 'adult',
       birthDate: '1990-01-01',
@@ -58,6 +68,7 @@ const input: PrecheckinInput = {
     },
     {
       keepDocumentOf: '',
+      previousId: KID,
       fullName: 'Bia',
       guestType: 'child',
       birthDate: '',
@@ -112,6 +123,21 @@ describe('submitMyPrecheckin', () => {
       ],
     })
     expect(mocks.submitPrecheckinRpc.mock.calls[0]![0].companions[0].keepDocumentOf).toBeNull()
+  })
+
+  it('acompanhante antigo sem documento leva o previousId (anotações da equipe ficam)', async () => {
+    await submitMyPrecheckin(input)
+    const sent = mocks.submitPrecheckinRpc.mock.calls[0]![0]
+    expect(sent.companions[0]).toMatchObject({ keepDocumentOf: KEPT, previousId: KEPT })
+    expect(sent.companions[1]).toMatchObject({ keepDocumentOf: null, previousId: KID })
+  })
+
+  it('previousId de fora da reserva vira nulo', async () => {
+    await submitMyPrecheckin({
+      ...input,
+      companions: [{ ...input.companions[1]!, previousId: '99999999-0000-4000-8000-000000000001' }],
+    })
+    expect(mocks.submitPrecheckinRpc.mock.calls[0]![0].companions[0].previousId).toBeNull()
   })
 
   it('reserva alheia, fechada, acima do limite ou CEP de outra UF: recusa sem gravar', async () => {

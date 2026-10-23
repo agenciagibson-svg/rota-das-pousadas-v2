@@ -172,24 +172,43 @@ revoke all on function room_night_price(uuid, date) from public, anon, authentic
 create or replace function room_stay_quote(p_room_id uuid, p_checkin date, p_checkout date)
 returns table(total integer, nights integer, min_nights integer)
 language sql stable security definer set search_path = public as $$
+  -- Uma consulta só: as regras que tocam a estadia são lidas uma vez e cada
+  -- noite escolhe a vencedora entre elas (mesma ordem de room_night_price).
+  with r as (
+    select r.id, r.pousada_id, coalesce(nullif(r.base_price, 0), p.price_per_night) as price
+    from rooms r join pousadas p on p.id = r.pousada_id
+    where r.id = p_room_id
+  ), n as (
+    select d::date as night
+    from generate_series(p_checkin::timestamp, (p_checkout - 1)::timestamp, interval '1 day') d
+    where p_checkout > p_checkin
+  ), rules as (
+    select rr.* from rate_rules rr, r
+    where rr.pousada_id = r.pousada_id and rr.active
+      and (rr.room_id is null or rr.room_id = r.id)
+      and rr.first_night <= p_checkout - 1 and rr.last_night >= p_checkin
+  ), per_night as (
+    select n.night, r.price as base, (
+      select case when w.kind = 'fixed' then w.value::integer
+                  else greatest(0, round(r.price * (1 + w.value / 100.0))::integer) end
+      from rules w
+      where n.night between w.first_night and w.last_night
+        and (w.weekdays is null or extract(dow from n.night)::smallint = any(w.weekdays))
+      order by (w.room_id is not null) desc, (w.last_night - w.first_night) asc,
+               (w.weekdays is not null) desc, w.created_at desc, w.id
+      limit 1
+    ) as rule_price
+    from n, r
+  )
   select
-    coalesce(sum(room_night_price(p_room_id, d::date)), 0)::integer,
-    (p_checkout - p_checkin)::integer,
+    coalesce(sum(coalesce(rule_price, base)), 0)::integer,
+    greatest(p_checkout - p_checkin, 0)::integer,
     coalesce((
-      select max(rr.min_nights)::integer
-      from rate_rules rr join rooms r on r.pousada_id = rr.pousada_id
-      where r.id = p_room_id and rr.active and rr.min_nights is not null
-        and (rr.room_id is null or rr.room_id = r.id)
-        and rr.first_night <= p_checkout - 1 and rr.last_night >= p_checkin
-        -- com dia da semana, só conta se alguma noite da estadia cair nele
-        and (rr.weekdays is null or exists (
-          select 1 from generate_series(greatest(p_checkin, rr.first_night)::timestamp,
-                                        least(p_checkout - 1, rr.last_night)::timestamp,
-                                        interval '1 day') n
-          where extract(dow from n)::smallint = any(rr.weekdays)))
+      select max(w.min_nights)::integer from rules w join n
+        on n.night between w.first_night and w.last_night
+       and (w.weekdays is null or extract(dow from n.night)::smallint = any(w.weekdays))
     ), 1)
-  from generate_series(p_checkin::timestamp, (p_checkout - 1)::timestamp, interval '1 day') d
-  where p_checkout > p_checkin;
+  from per_night;
 $$;
 revoke all on function room_stay_quote(uuid, date, date) from public, anon, authenticated;
 
@@ -207,7 +226,7 @@ begin
     raise exception 'Acomodação não encontrada.';
   end if;
   if p_checkin is null or p_checkout is null or p_checkout <= p_checkin
-     or p_checkout - p_checkin > 365 then
+     or p_checkout - p_checkin > 366 then
     raise exception 'Período inválido.';
   end if;
   return query select q.total, q.nights, q.min_nights from room_stay_quote(p_room_id, p_checkin, p_checkout) q;
@@ -217,35 +236,33 @@ revoke all on function quote_room_stay(uuid, date, date) from public, anon;
 grant execute on function quote_room_stay(uuid, date, date) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- 4. list_bookable_rooms: preço da estadia, mínimo de noites e fotos
+-- 4. Vitrine: núcleo sem cotação (busca) e list_bookable_rooms com cotação
 -- ---------------------------------------------------------------------------
-drop function if exists list_bookable_rooms(text, date, date, integer);
-create function list_bookable_rooms(
-  p_slug text, p_checkin date default null, p_checkout date default null,
-  p_guests integer default 1
-) returns table(
-  id uuid, name text, description text, base_price integer, capacity integer,
-  stay_total integer, min_nights integer, gallery text[]
-)
+-- Estadia pública: no máximo 90 noites (vitrine, busca e reserva pelo site).
+-- Limita o custo da cotação que `anon` consegue pedir pela API.
+create or replace function public_stay_max_nights() returns integer
+language sql immutable as $$ select 90 $$;
+
+-- Acomodações ofertáveis, sem cotação: a busca do catálogo só precisa saber se
+-- há vaga e a diária-base (0087: não cota noite a noite para cada pousada).
+create or replace function bookable_rooms_core(
+  p_slug text, p_checkin date, p_checkout date, p_guests integer
+) returns table(id uuid, name text, description text, base_price integer, capacity integer, gallery text[])
 language plpgsql stable security definer set search_path = public as $$
 begin
   if p_guests is null or p_guests < 1 or p_guests > 100
     or (p_checkin is null) <> (p_checkout is null)
     or p_checkout <= p_checkin
-    or p_checkout - p_checkin > 365 then
+    or p_checkout - p_checkin > public_stay_max_nights() then
     raise exception 'Filtros de disponibilidade inválidos.';
   end if;
   return query
   select r.id, r.name, r.description,
     coalesce(nullif(r.base_price, 0), p.price_per_night),
     coalesce(r.capacity_max, r.capacity),
-    q.total, coalesce(q.min_nights, 1), r.gallery
+    r.gallery
   from rooms r join pousadas p on p.id = r.pousada_id
   left join accommodation_categories c on c.id = r.category_id
-  left join lateral (
-    select sq.total, sq.min_nights from room_stay_quote(r.id, p_checkin, p_checkout) sq
-    where p_checkin is not null
-  ) q on true
   where p.slug = p_slug and p.status = 'publicada'
     and p.tenant_status in ('onboarding', 'active')
     and r.status = 'active' and r.public_visible
@@ -265,13 +282,73 @@ begin
       and not exists (select 1 from channel_events ce where ce.room_id = r.id
         and ce.starts_on < p_checkout and ce.ends_on > p_checkin)
     ))
+  order by 4, r.id;
+end;
+$$;
+revoke all on function bookable_rooms_core(text, date, date, integer) from public, anon, authenticated;
+
+drop function if exists list_bookable_rooms(text, date, date, integer);
+create function list_bookable_rooms(
+  p_slug text, p_checkin date default null, p_checkout date default null,
+  p_guests integer default 1
+) returns table(
+  id uuid, name text, description text, base_price integer, capacity integer,
+  stay_total integer, min_nights integer, gallery text[]
+)
+language sql stable security definer set search_path = public as $$
   -- Com datas, a mais barata é a de menor total da estadia (a temporada pode
   -- inverter a ordem das diárias-base); sem datas, pela diária-base.
-  order by coalesce(q.total, coalesce(nullif(r.base_price, 0), p.price_per_night)), r.id;
-end;
+  select c.id, c.name, c.description, c.base_price, c.capacity,
+         q.total, coalesce(q.min_nights, 1), c.gallery
+  from bookable_rooms_core(p_slug, p_checkin, p_checkout, p_guests) c
+  left join lateral (
+    select sq.total, sq.min_nights from room_stay_quote(c.id, p_checkin, p_checkout) sq
+    where p_checkin is not null
+  ) q on true
+  order by coalesce(q.total, c.base_price), c.id;
 $$;
 revoke all on function list_bookable_rooms(text, date, date, integer) from public;
 grant execute on function list_bookable_rooms(text, date, date, integer) to anon, authenticated;
+
+-- A busca do catálogo usa o núcleo sem cotação (cópia da 0041 com essa troca).
+CREATE OR REPLACE FUNCTION public.search_public_pousadas(p_search text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 24, p_checkin date DEFAULT NULL::date, p_checkout date DEFAULT NULL::date, p_guests integer DEFAULT NULL::integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare v_result jsonb;
+begin
+  if p_page is null or p_page < 1 or p_page > 1000000
+    or p_page_size is null or p_page_size < 1 or p_page_size > 100
+    or (p_guests is not null and (p_guests < 1 or p_guests > 100))
+    or (p_checkin is null) <> (p_checkout is null) or p_checkout <= p_checkin
+    or p_checkout - p_checkin > public_stay_max_nights()
+    or length(coalesce(p_search, '')) > 200 then
+    raise exception 'Filtros de busca inválidos.';
+  end if;
+  with matched as (
+    select p.slug, p.name, p.city, p.state, p.image, p.rating, p.reviews,
+      coalesce(offer.base_price, p.price_per_night) as price_per_night,
+      p.tags, p.description, p.instagram
+    from pousadas p
+    left join lateral (
+      select r.base_price from bookable_rooms_core(p.slug, p_checkin, p_checkout, coalesce(p_guests, 1)) r
+      where p_checkin is not null or p_guests is not null limit 1
+    ) offer on true
+    where p.status = 'publicada' and p.tenant_status in ('onboarding', 'active')
+      and strpos(catalog_search_text(concat_ws(' ', p.name, p.city, p.state, p.description, array_to_string(p.tags, ' '))),
+        catalog_search_text(coalesce(p_search, ''))) > 0
+      and (p_checkin is null and p_guests is null or offer.base_price is not null)
+  ), paged as (
+    select * from matched order by slug limit p_page_size offset (p_page - 1) * p_page_size
+  )
+  select jsonb_build_object('items', coalesce((select jsonb_agg(to_jsonb(paged) order by slug) from paged), '[]'::jsonb),
+    'total', (select count(*) from matched), 'page', p_page, 'pageSize', p_page_size,
+    'totalPages', greatest(1, ceil((select count(*) from matched)::numeric / p_page_size))) into v_result;
+  return v_result;
+end;
+$function$;
 
 -- ---------------------------------------------------------------------------
 -- 5. create_booking: no fluxo público, preço = room_stay_quote e mínimo de noites
@@ -315,8 +392,9 @@ begin
     if p_checkin < pousada_local_date(p_pousada_id) then
       raise exception 'A data de entrada não pode ser no passado.';
     end if;
-    if p_checkout - p_checkin > 365 then
-      raise exception 'O período máximo de uma reserva é de 365 noites.';
+    if p_checkout - p_checkin > public_stay_max_nights() then
+      raise exception 'Pelo site, a reserva pode ter até % noites. Fale com a pousada para estadias maiores.',
+        public_stay_max_nights();
     end if;
     if not exists (
       select 1 from pousadas p where p.id = p_pousada_id
@@ -324,7 +402,15 @@ begin
     ) then
       raise exception 'Esta pousada não está disponível para reserva.';
     end if;
-    if not exists (select 1 from rooms r where r.id = p_room_id and r.pousada_id = p_pousada_id) then
+    -- Mesmas condições da vitrine: acomodação oculta ou inativa não se reserva
+    -- pelo site, nem chamando a RPC direto.
+    if not exists (
+      select 1 from rooms r left join accommodation_categories c on c.id = r.category_id
+      where r.id = p_room_id and r.pousada_id = p_pousada_id
+        and r.status = 'active' and r.public_visible
+        and (r.category_id is null or c.status = 'active')
+        and r.operational_status not in ('maintenance', 'blocked')
+    ) then
       raise exception 'Acomodação inválida para esta pousada.';
     end if;
 

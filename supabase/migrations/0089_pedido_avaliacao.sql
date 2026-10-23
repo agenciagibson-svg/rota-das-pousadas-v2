@@ -100,6 +100,9 @@ as $$
   from bookings b
   join pousadas p on p.id = b.pousada_id
   where b.review_requested_at is null
+    -- Pré-filtro que usa o índice parcial por checkout (folga de 1 dia para
+    -- qualquer fuso); a janela exata vem logo abaixo, no fuso da pousada.
+    and b.checkout between current_date - 5 and current_date + 1
     and b.checkout between pousada_local_date(b.pousada_id) - 3
                        and pousada_local_date(b.pousada_id) - 1
     and booking_review_request_eligible(b.id)

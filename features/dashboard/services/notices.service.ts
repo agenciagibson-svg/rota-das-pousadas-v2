@@ -1,11 +1,11 @@
 import 'server-only'
 import { getActiveTenantRole } from '@/lib/auth/tenant-context'
 import { can } from '@/lib/auth/rbac'
-import { listOwnerReservations, getOwnerPousada } from '@/features/gestao/services/pms.service'
-import { getPaymentAlerts } from '@/features/pagamentos/services/pix.service'
-import { getOperationalAlerts } from '@/features/pedidos/services/orders.service'
-import { listChannels } from '@/features/canais/services/channels.service'
-import { getSetupProgress } from '@/features/onboarding/services/setup.service'
+import type { listOwnerReservations, getOwnerPousada } from '@/features/gestao/services/pms.service'
+import type { getPaymentAlerts } from '@/features/pagamentos/services/pix.service'
+import type { getOperationalAlerts } from '@/features/pedidos/services/orders.service'
+import type { listChannels } from '@/features/canais/services/channels.service'
+import type { getSetupProgress } from '@/features/onboarding/services/setup.service'
 import { reportError } from '@/lib/observability/report-error'
 import { addDays, dayMovements, pousadaToday } from '../metrics'
 import { buildNotices, type Notice } from '../notices'
@@ -21,21 +21,35 @@ async function safe<T>(label: string, run: () => Promise<T>): Promise<T | null> 
 }
 
 /**
+ * Fontes do sino. Vêm de `server/queries` já com `cache()` do React: a tela
+ * inicial do painel pede as mesmas listas, e no mesmo request cada consulta
+ * roda uma vez só (o layout e a página dividem o resultado).
+ */
+export type NoticeSources = {
+  pousada: typeof getOwnerPousada
+  reservations: () => ReturnType<typeof listOwnerReservations>
+  payments: typeof getPaymentAlerts
+  operational: typeof getOperationalAlerts
+  channels: typeof listChannels
+  setup: typeof getSetupProgress
+}
+
+/**
  * Avisos do sino do painel da pousada ativa, respeitando o papel de quem vê
  * (cada fonte já confere a própria permissão; aqui só não pedimos o que o papel
  * não usa, para não gastar consulta à toa).
  */
-export async function getDashboardNotices(): Promise<Notice[]> {
-  const [role, pousada] = await Promise.all([getActiveTenantRole(), getOwnerPousada()])
+export async function getDashboardNotices(src: NoticeSources): Promise<Notice[]> {
+  const [role, pousada] = await Promise.all([getActiveTenantRole(), src.pousada()])
   if (!role || !pousada) return []
 
   const seesBookings = can(role, 'booking:manage')
   const [reservations, payments, operational, channels, setup] = await Promise.all([
-    seesBookings ? safe('reservas', () => listOwnerReservations()) : null,
-    safe('pagamentos', () => getPaymentAlerts()),
-    safe('operacao', () => getOperationalAlerts()),
-    can(role, 'channel:view') ? safe('canais', () => listChannels()) : null,
-    can(role, 'pousada:edit') ? safe('configuracao', () => getSetupProgress()) : null,
+    seesBookings ? safe('reservas', () => src.reservations()) : null,
+    safe('pagamentos', () => src.payments()),
+    safe('operacao', () => src.operational()),
+    can(role, 'channel:view') ? safe('canais', () => src.channels()) : null,
+    can(role, 'pousada:edit') ? safe('configuracao', () => src.setup()) : null,
   ])
 
   const today = pousadaToday(new Date(), pousada.timezone).iso

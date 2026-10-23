@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { catalogQuerySchema } from '@/features/pousadas/search'
+import { PUBLIC_STAY_MAX_NIGHTS } from '@/lib/dates'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -71,6 +72,8 @@ export default async function ReservarPage({
   const offer = bookable ?? (await getBookableRoom(slug, undefined, undefined, undefined, roomId))
   const switchedRoom = Boolean(roomId && bookable && bookable.roomId !== roomId)
   const askedGuests = filters.success ? filters.data.guests : undefined
+  const tooLong =
+    !filters.success && filters.error.issues.some((issue) => issue.message.includes('noites'))
   const problem: null | 'invalid' | 'capacity' | 'unavailable' = bookable
     ? null
     : !filters.success
@@ -82,8 +85,10 @@ export default async function ReservarPage({
           : null
   const problemMessage = {
     invalid: {
-      title: 'Não entendemos as datas escolhidas.',
-      body: 'Confira se a saída é depois da entrada e escolha o período abaixo.',
+      title: tooLong ? `Pelo site, a reserva vai até ${PUBLIC_STAY_MAX_NIGHTS} noites.` : 'Não entendemos as datas escolhidas.',
+      body: tooLong
+        ? 'Para uma estadia maior, fale com a pousada. Ou escolha outro período abaixo.'
+        : 'Confira se a saída é depois da entrada e escolha o período abaixo.',
     },
     capacity: {
       title: `A acomodação recebe até ${offer?.capacity ?? ''} hóspedes.`,

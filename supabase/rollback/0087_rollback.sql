@@ -213,6 +213,47 @@ begin
 end;
 $function$;
 
+-- search_public_pousadas da 0041 (volta a usar list_bookable_rooms).
+CREATE OR REPLACE FUNCTION public.search_public_pousadas(p_search text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 24, p_checkin date DEFAULT NULL::date, p_checkout date DEFAULT NULL::date, p_guests integer DEFAULT NULL::integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare v_result jsonb;
+begin
+  if p_page is null or p_page < 1 or p_page > 1000000
+    or p_page_size is null or p_page_size < 1 or p_page_size > 100
+    or (p_guests is not null and (p_guests < 1 or p_guests > 100))
+    or (p_checkin is null) <> (p_checkout is null) or p_checkout <= p_checkin
+    or length(coalesce(p_search, '')) > 200 then
+    raise exception 'Filtros de busca inválidos.';
+  end if;
+  with matched as (
+    select p.slug, p.name, p.city, p.state, p.image, p.rating, p.reviews,
+      coalesce(offer.base_price, p.price_per_night) as price_per_night,
+      p.tags, p.description, p.instagram
+    from pousadas p
+    left join lateral (
+      select r.base_price from list_bookable_rooms(p.slug, p_checkin, p_checkout, coalesce(p_guests, 1)) r
+      where p_checkin is not null or p_guests is not null limit 1
+    ) offer on true
+    where p.status = 'publicada' and p.tenant_status in ('onboarding', 'active')
+      and strpos(catalog_search_text(concat_ws(' ', p.name, p.city, p.state, p.description, array_to_string(p.tags, ' '))),
+        catalog_search_text(coalesce(p_search, ''))) > 0
+      and (p_checkin is null and p_guests is null or offer.base_price is not null)
+  ), paged as (
+    select * from matched order by slug limit p_page_size offset (p_page - 1) * p_page_size
+  )
+  select jsonb_build_object('items', coalesce((select jsonb_agg(to_jsonb(paged) order by slug) from paged), '[]'::jsonb),
+    'total', (select count(*) from matched), 'page', p_page, 'pageSize', p_page_size,
+    'totalPages', greatest(1, ceil((select count(*) from matched)::numeric / p_page_size))) into v_result;
+  return v_result;
+end;
+$function$;
+
+drop function if exists bookable_rooms_core(text, date, date, integer);
+drop function if exists public_stay_max_nights();
 drop function if exists room_stay_quote(uuid, date, date);
 drop function if exists room_night_price(uuid, date);
 drop table if exists rate_rules;

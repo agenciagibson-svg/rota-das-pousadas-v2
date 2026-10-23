@@ -185,3 +185,43 @@ grant execute on function public.delete_my_account() to authenticated;
 
 comment on function public.delete_my_account() is
   '0090: o titular exclui a própria conta. Anonimiza e desvincula; nunca apaga reserva, pagamento, ficha, avaliação ou auditoria da pousada. O Auth é excluído (soft) pelo servidor depois.';
+
+-- ---------------------------------------------------------------------------
+-- Conta excluída não escreve mais. A RPC marca `deleted_at` por último; se a
+-- etapa do Auth falhar depois dela, ou enquanto o JWT já emitido ainda vale,
+-- a sessão antiga continuaria reservando, favoritando ou mandando ficha pela
+-- REST. O gatilho recusa qualquer escrita feita POR essa conta (a equipe e o
+-- cron seguem normais: `auth.uid()` deles é outro ou nulo).
+-- ---------------------------------------------------------------------------
+create or replace function public.block_writes_from_deleted_account()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is not null and exists (
+    select 1 from profiles p where p.id = auth.uid() and p.deleted_at is not null
+  ) then
+    raise exception 'Esta conta foi excluída.' using errcode = '42501';
+  end if;
+  return coalesce(new, old);
+end;
+$$;
+revoke all on function public.block_writes_from_deleted_account() from public, anon, authenticated;
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'profiles', 'bookings', 'guests', 'booking_guests', 'reviews', 'favorites',
+    'favorite_alerts', 'traveler_profiles', 'payment_proofs', 'guest_orders',
+    'guest_order_items', 'quote_requests', 'pousadas', 'memberships'
+  ] loop
+    execute format('drop trigger if exists trg_block_deleted_account on public.%I', t);
+    execute format(
+      'create trigger trg_block_deleted_account before insert or update or delete on public.%I
+         for each row execute function public.block_writes_from_deleted_account()', t);
+  end loop;
+end $$;

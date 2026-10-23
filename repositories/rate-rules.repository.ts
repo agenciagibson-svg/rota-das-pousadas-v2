@@ -110,3 +110,26 @@ export async function deleteRateRule(id: string, pousadaId: string): Promise<boo
   if (error) throw error
   return (data ?? []).length > 0
 }
+
+export type CounterStayQuote = { total: number; nights: number; minNights: number }
+
+/**
+ * Cotação da estadia com as tarifas de temporada (0087, `quote_room_stay`):
+ * o banco confere se a conta tem acesso à pousada da acomodação.
+ */
+export async function quoteRoomStay(
+  roomId: string,
+  checkin: string,
+  checkout: string,
+): Promise<CounterStayQuote | null> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('quote_room_stay', {
+    p_room_id: roomId,
+    p_checkin: checkin,
+    p_checkout: checkout,
+  })
+  if (error) throw new Error(error.message)
+  const row = Array.isArray(data) ? data[0] : null
+  if (!row) return null
+  return { total: Number(row.total), nights: Number(row.nights), minNights: Number(row.min_nights) }
+}

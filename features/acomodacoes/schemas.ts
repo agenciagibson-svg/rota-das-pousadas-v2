@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isStoredImageUrl } from '@/lib/validation/image-url'
+import { isUploadedPhotoUrl } from '@/lib/validation/image-url'
 
 const BED_TYPES = [
   'casal',
@@ -66,7 +66,7 @@ export const roomSchema = z
           .trim()
           .min(1)
           .max(2048)
-          .refine((v) => isStoredImageUrl(v, false), 'Foto inválida.'),
+          .refine(isUploadedPhotoUrl, 'Envie a foto pelo botão de upload.'),
       )
       .max(12, 'Use no máximo 12 fotos por acomodação.')
       .default([]),
@@ -188,3 +188,16 @@ export const rateRuleSchema = z
 export type RateRuleInput = z.infer<typeof rateRuleSchema>
 
 export const rateRuleIdSchema = z.object({ id: z.string().uuid('Identificador inválido.') })
+
+/** Cotação da estadia para a reserva de balcão (até 366 noites, como no banco). */
+export const counterStayQuoteSchema = z
+  .object({
+    roomId: z.string().uuid(),
+    checkin: isoNight,
+    checkout: isoNight,
+  })
+  .refine((v) => v.checkout > v.checkin, { message: 'A saída deve ser posterior à entrada.', path: ['checkout'] })
+  .refine(
+    (v) => (Date.parse(`${v.checkout}T00:00:00Z`) - Date.parse(`${v.checkin}T00:00:00Z`)) / 86_400_000 <= 366,
+    { message: 'Período longo demais.', path: ['checkout'] },
+  )

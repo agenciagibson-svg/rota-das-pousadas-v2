@@ -122,6 +122,13 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000091', false);
 select test_assert(delete_my_account()->>'status' = 'deleted', 'viajante sem reserva em aberto exclui a conta');
 select test_assert(delete_my_account()->>'status' = 'already_deleted', 'repetir é inofensivo (etapa do Auth pode ser refeita)');
+-- Sessão antiga (JWT ainda válido) não escreve mais.
+select test_denied($q$insert into favorites(user_id, pousada_id) values ('00000000-0000-0000-0000-000000000091', '10000000-0000-0000-0000-000000000001')$q$,
+  'conta excluída não favorita');
+select test_denied($q$update profiles set full_name = 'Voltei' where id = '00000000-0000-0000-0000-000000000091'$q$,
+  'conta excluída não renomeia o perfil');
+select test_denied($q$insert into traveler_profiles(user_id) values ('00000000-0000-0000-0000-000000000091')$q$,
+  'conta excluída não recria o perfil de viajante');
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
 

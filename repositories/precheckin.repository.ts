@@ -42,6 +42,8 @@ export type SubmitPrecheckinParams = {
     /** Já cifrado. */
     documentNumber: string | null
     keepDocumentOf: string | null
+    /** Linha antiga do acompanhante (anotações da equipe continuam). */
+    previousId: string | null
   }[]
   expectedArrivalTime: string | null
 }

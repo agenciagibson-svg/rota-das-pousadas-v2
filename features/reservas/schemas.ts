@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { phoneSchema } from '@/lib/validation/br'
+import { PUBLIC_STAY_MAX_NIGHTS, isoNightsBetween } from '@/lib/dates'
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
 
@@ -35,6 +36,10 @@ export const createBookingSchema = z
   })
   .refine((d) => d.checkout > d.checkin, {
     message: 'A data de saída deve ser posterior à de entrada.',
+    path: ['checkout'],
+  })
+  .refine((d) => isoNightsBetween(d.checkin, d.checkout) <= PUBLIC_STAY_MAX_NIGHTS, {
+    message: `Pelo site, a reserva pode ter até ${PUBLIC_STAY_MAX_NIGHTS} noites. Para mais tempo, fale com a pousada.`,
     path: ['checkout'],
   })
   // O "hoje" exato depende do fuso da pousada e quem confere é o banco

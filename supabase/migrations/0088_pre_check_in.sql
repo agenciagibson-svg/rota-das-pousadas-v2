@@ -172,6 +172,7 @@ declare
   v_arrival text := nullif(trim(coalesce(p_expected_arrival_time, '')), '');
   v_new_doc boolean;
   v_old_docs jsonb;
+  v_prev uuid;
 begin
   if auth.uid() is null then raise exception 'Faça login para enviar a ficha.'; end if;
 
@@ -346,6 +347,15 @@ begin
     elsif v_doc is null and v_type = 'adult' then
       raise exception 'Informe o documento de cada adulto.';
     end if;
+    -- previousId: a linha antiga deste acompanhante (com ou sem documento),
+    -- para manter o que a equipe anotou sobre ele.
+    v_prev := nullif(v_item->>'previousId', '')::uuid;
+    if v_prev is not null and not exists (
+      select 1 from booking_guests bg
+      where bg.id = v_prev and bg.booking_id = p_booking_id and bg.guest_type <> 'responsible'
+    ) then
+      raise exception 'Acompanhante não encontrado nesta reserva.';
+    end if;
   end loop;
 
   if v_people > v_max_people then
@@ -387,6 +397,7 @@ begin
 
   for v_item in select * from jsonb_array_elements(p_companions) loop
     v_keep := nullif(v_item->>'keepDocumentOf', '')::uuid;
+    v_prev := coalesce(nullif(v_item->>'previousId', '')::uuid, v_keep);
     v_doc := nullif(v_item->>'documentNumber', '');
     v_doc_type := nullif(v_item->>'documentType', '');
     if v_doc is null and v_keep is not null then
@@ -398,9 +409,9 @@ begin
       birth_date, document_type, document_number, operational_notes
     ) values (
       p_booking_id, null, trim(v_item->>'fullName'), (v_item->>'guestType')::booking_guest_type,
-      coalesce((v_old_docs->v_keep::text->>'special')::boolean, false),
+      coalesce((v_old_docs->v_prev::text->>'special')::boolean, false),
       nullif(v_item->>'birthDate', '')::date, case when v_doc is null then null else v_doc_type end, v_doc,
-      coalesce(v_old_docs->v_keep::text->>'notes', '')
+      coalesce(v_old_docs->v_prev::text->>'notes', '')
     );
   end loop;
 

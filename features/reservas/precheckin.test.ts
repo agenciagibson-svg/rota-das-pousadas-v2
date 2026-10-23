@@ -327,6 +327,7 @@ describe('buildPrecheckinDefaults', () => {
     expect(d.companions).toEqual([
       {
         keepDocumentOf: 'c1',
+        previousId: 'c1',
         fullName: 'Ana',
         guestType: 'adult',
         birthDate: '1990-01-01',
@@ -335,6 +336,7 @@ describe('buildPrecheckinDefaults', () => {
       },
       {
         keepDocumentOf: '',
+        previousId: 'c2',
         fullName: 'Bia',
         guestType: 'child',
         birthDate: '',

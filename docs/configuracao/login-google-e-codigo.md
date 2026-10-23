@@ -105,8 +105,24 @@ Como cada parte funciona:
 Em _Authentication → Sign In / Providers → Email_:
 
 - **Email OTP Length**: `6` (a tela aceita exatamente 6 números).
-- **Email OTP Expiration**: `3600` (1 hora) ou menos.
+- **Email OTP Expiration**: `600` (10 minutos). Quanto menos tempo o código
+  fica válido, menor a chance de alguém adivinhá-lo.
 - Mantenha **Confirm email** ligado.
+
+### Proteção contra abuso (antes de anunciar)
+
+Em _Authentication → Rate Limits_:
+
+- **Token verifications** (verificações de código): no máximo `30` por 5 min
+  por IP — é o que impede alguém de testar os 1 milhão de códigos.
+- **Emails sent / OTP requests**: o suficiente para o tráfego, mas com teto (a
+  tela já espera 60 s antes de reenviar).
+
+**Não** ligue _Authentication → Attack Protection → CAPTCHA protection_ por
+enquanto: com ele ligado o Supabase exige um token de CAPTCHA em todo login,
+cadastro e pedido de código, e o app ainda não envia esse token — todo mundo
+ficaria sem entrar. Ligar o CAPTCHA no login é um passo à parte (integrar o
+Turnstile do site nas telas de entrada); até lá, os limites acima são a defesa.
 
 ### E-mail de verdade (SMTP)
 

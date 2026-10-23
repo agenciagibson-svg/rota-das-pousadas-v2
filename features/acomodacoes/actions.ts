@@ -14,12 +14,18 @@ import {
   availabilityQuerySchema,
   rateRuleSchema,
   rateRuleIdSchema,
+  counterStayQuoteSchema,
 } from './schemas'
 import { addRoom, editRoom, setRoomActive, setOperationalStatus } from './services/rooms.service'
 import { addCategory, editCategory, setCategoryActive } from './services/categories.service'
 import { addBlock, cancelBlock } from './services/blocks.service'
 import { checkAvailability } from './services/availability.service'
-import { addRateRule, editRateRule, removeRateRule } from './services/rates.service'
+import {
+  addRateRule,
+  editRateRule,
+  removeRateRule,
+  quoteStayForCounter,
+} from './services/rates.service'
 
 export const createRoomAction = createAction(roomSchema, async (input) => {
   await addRoom(input)
@@ -112,4 +118,8 @@ export const deleteRateRuleAction = createAction(rateRuleIdSchema, async ({ id }
   await removeRateRule(id)
   revalidateRates()
   return { id }
+})
+
+export const quoteCounterStayAction = createAction(counterStayQuoteSchema, async (input) => {
+  return quoteStayForCounter(input)
 })
