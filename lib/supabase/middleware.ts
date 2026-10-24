@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
 import type { CookieOptions } from '@supabase/ssr'
-import type { User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 import { publicEnv } from '@/lib/env'
 
@@ -29,7 +28,7 @@ type CookieToSet = {
 export async function updateSession(
   request: NextRequest,
   extraRequestHeaders?: Record<string, string>,
-): Promise<{ response: NextResponse; user: User | null }> {
+): Promise<{ response: NextResponse; user: { id: string } | null }> {
   const nextInit = () => {
     if (!extraRequestHeaders) return { request }
     const headers = new Headers(request.headers)
@@ -55,10 +54,18 @@ export async function updateSession(
     },
   })
 
-  // Renova o token se necessário (não remover: mantém a sessão viva).
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  return { response, user }
+  // Renova o token se necessário (não remover: mantém a sessão viva) e confere
+  // a assinatura do token com a chave pública do projeto (ES256), sem ir ao
+  // servidor do Auth. Antes era `getUser()`: uma ida aos EUA em TODA
+  // requisição de quem está logado (+0,4 a 0,9 s medidos do Brasil em
+  // 24/10/2026, até no robots.txt). O proxy só decide se manda para o login;
+  // quem lê dado continua conferindo o usuário no servidor (getCurrentUser)
+  // e a RLS no banco.
+  try {
+    const { data, error } = await supabase.auth.getClaims()
+    const sub = !error && typeof data?.claims?.sub === 'string' ? data.claims.sub : null
+    return { response, user: sub ? { id: sub } : null }
+  } catch {
+    return { response, user: null }
+  }
 }
