@@ -95,6 +95,7 @@ export function OwnerReservationActions({
   checkin,
   guestName,
   balanceDue = 0,
+  consumptionDue,
 }: {
   bookingId: string
   currentStatus: BookingStatus
@@ -105,6 +106,12 @@ export function OwnerReservationActions({
   guestName?: string
   /** Saldo em aberto (R$): o check-out avisa antes de encerrar a estadia com dívida. */
   balanceDue?: number
+  /**
+   * Consumo ainda não pago (R$), entregue ou não. Antes o check-out dizia
+   * "A reserva está quitada" com águas do app em aberto. `undefined` = a
+   * tela não carregou o consumo (Hoje, lista): não afirma que está quitada.
+   */
+  consumptionDue?: number
 }) {
   const router = useRouter()
   const role = useDashboardRole()
@@ -235,10 +242,24 @@ export function OwnerReservationActions({
           </>
         }
       >
-        {balanceDue > 0 ? (
-          <p className="border-ipe/50 bg-ipe/15 text-foreground rounded-xl border p-3 text-sm">
-            Ainda falta receber <strong>{formatBRL(balanceDue)}</strong>. Registre o pagamento antes
-            de encerrar, se o hóspede já pagou.
+        {balanceDue > 0 || (consumptionDue ?? 0) > 0 ? (
+          <div className="border-ipe/50 bg-ipe/15 text-foreground space-y-1 rounded-xl border p-3 text-sm">
+            {balanceDue > 0 && (
+              <p>
+                Ainda falta receber <strong>{formatBRL(balanceDue)}</strong> da diária.
+              </p>
+            )}
+            {(consumptionDue ?? 0) > 0 && (
+              <p>
+                Consumo em aberto: <strong>{formatBRL(consumptionDue ?? 0)}</strong> (pedidos do app
+                e lançamentos da equipe).
+              </p>
+            )}
+            <p>Registre o pagamento antes de encerrar, se o hóspede já pagou.</p>
+          </div>
+        ) : consumptionDue === undefined ? (
+          <p className="text-muted-foreground text-sm">
+            A diária está quitada. Confira a conta de consumo na reserva antes de encerrar.
           </p>
         ) : (
           <p className="text-muted-foreground text-sm">A reserva está quitada.</p>

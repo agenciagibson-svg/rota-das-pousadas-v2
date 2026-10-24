@@ -105,6 +105,12 @@ export function BookingDetailView({
                 checkin={booking.checkin}
                 guestName={booking.guestName}
                 balanceDue={booking.balanceDue}
+                consumptionDue={
+                  consumption
+                    ? Math.max(0, consumption.summary.balance) +
+                      Math.max(0, consumption.summary.open)
+                    : 0
+                }
               />
             )}
           </div>
