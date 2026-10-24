@@ -1,0 +1,58 @@
+# Aplica as migrations do Supabase em produção, sem digitar senha.
+#
+# A conexão do banco fica guardada uma vez no segredo SUPABASE_DB_URL do
+# repositório (Settings → Secrets and variables → Actions). Use a URL do
+# "Session pooler" do Supabase: o GitHub não alcança a conexão direta
+# (db.<ref>.supabase.co é só IPv6 no plano Free).
+#
+# Só roda pelo botão (Actions → "Migrations do banco" → Run workflow) ou por
+# `gh workflow run migrations.yml`. Nunca roda sozinho num push: o plano Free
+# não tem backup, então cada aplicação é uma decisão.
+name: Migrations do banco
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'simular = só lista o que falta; aplicar = grava no banco de produção'
+        type: choice
+        options: [simular, aplicar]
+        default: simular
+
+concurrency:
+  group: migrations-producao
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+
+      - name: Conferir o segredo
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Falta o segredo SUPABASE_DB_URL (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: O que falta aplicar
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+
+      - name: Aplicar
+        if: ${{ inputs.modo == 'aplicar' }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes
