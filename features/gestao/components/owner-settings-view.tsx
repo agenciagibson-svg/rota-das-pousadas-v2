@@ -112,10 +112,26 @@ export function OwnerSettingsView({
                 Pagamentos
               </div>
               {paymentAccount?.connected ? (
-                <p className="text-muted-foreground mt-2 text-sm">
-                  Conta Mercado Pago conectada{paymentAccount.liveMode ? '' : ' (modo de teste)'}.
-                  Os pagamentos das reservas caem direto nela.
-                </p>
+                <>
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Conta Mercado Pago conectada{paymentAccount.liveMode ? '' : ' (modo de teste)'}.
+                    Os pagamentos das reservas caem direto nela.
+                  </p>
+                  {/*
+                    Conexão de teste só aceita cartão de teste. Sem este botão
+                    não havia como trocar pela conexão real (nem trocar de conta).
+                  */}
+                  {!paymentAccount.liveMode && paymentAccount.canConnect && (
+                    <p className="text-foreground mt-2 text-xs font-medium">
+                      Para receber pagamentos de verdade, reconecte a conta.
+                    </p>
+                  )}
+                  {paymentAccount.canConnect && (
+                    <div className="mt-3">
+                      <ConnectMpButton label="Reconectar Mercado Pago" />
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <p className="text-muted-foreground mt-2 text-sm">
