@@ -1,9 +1,9 @@
 # Aplica as migrations do Supabase em produção, sem digitar senha.
 #
-# A conexão do banco fica guardada uma vez no segredo SUPABASE_DB_URL do
-# repositório (Settings → Secrets and variables → Actions). Use a URL do
-# "Session pooler" do Supabase: o GitHub não alcança a conexão direta
-# (db.<ref>.supabase.co é só IPv6 no plano Free).
+# A senha do banco fica guardada uma vez no segredo SUPABASE_DB_URL do
+# repositório (Settings → Secrets and variables → Actions). Vale só a senha ou
+# a URL inteira: `scripts/montar-db-url.py` monta a conexão pelo "Session
+# pooler" (o GitHub não alcança db.<ref>.supabase.co, que é só IPv6).
 #
 # Só roda pelo botão (Actions → "Migrations do banco" → Run workflow) ou por
 # `gh workflow run migrations.yml`. Nunca roda sozinho num push: o plano Free
@@ -37,22 +37,14 @@ jobs:
         with:
           version: 2.110.0
 
-      - name: Conferir o segredo
+      - name: Montar a conexão
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::error::Falta o segredo SUPABASE_DB_URL (Settings → Secrets and variables → Actions)."
-            exit 1
-          fi
+        run: python3 scripts/montar-db-url.py
 
       - name: O que falta aplicar
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+        run: supabase db push --db-url "$DB_URL" --dry-run
 
       - name: Aplicar
         if: ${{ inputs.modo == 'aplicar' }}
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes
+        run: supabase db push --db-url "$DB_URL" --yes
