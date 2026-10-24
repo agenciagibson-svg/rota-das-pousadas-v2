@@ -158,3 +158,38 @@ export async function reportError(error: unknown, context: ErrorContext): Promis
     // Sentry fora do ar ou DSN errado: o erro original já está no log da Vercel.
   }
 }
+
+export type SentryTestResult =
+  | { status: 'sem-dsn' }
+  | { status: 'enviado'; eventId: string }
+  | { status: 'recusado'; http: number }
+  | { status: 'sem-resposta' }
+
+/**
+ * Manda um erro de teste e diz o que aconteceu — para conferir, depois de
+ * cadastrar o `SENTRY_DSN` na Vercel, que os alertas chegam (botão em
+ * /admin → Configurações). Diferente de `reportError`, espera a resposta.
+ */
+export async function sendTestEvent(): Promise<SentryTestResult> {
+  const dsn = parseDsn(process.env.SENTRY_DSN)
+  if (!dsn) return { status: 'sem-dsn' }
+  const { eventId, body } = buildEnvelope(
+    new Error('Teste do Sentry: alerta enviado pelo painel master da Rota.'),
+    { where: 'admin:teste-sentry' },
+    dsn,
+  )
+  try {
+    const res = await fetch(dsn.envelopeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-sentry-envelope',
+        'X-Sentry-Auth': `Sentry sentry_version=7, sentry_key=${dsn.publicKey}, sentry_client=rota-das-pousadas/1.0`,
+      },
+      body,
+      signal: AbortSignal.timeout(5000),
+    })
+    return res.ok ? { status: 'enviado', eventId } : { status: 'recusado', http: res.status }
+  } catch {
+    return { status: 'sem-resposta' }
+  }
+}

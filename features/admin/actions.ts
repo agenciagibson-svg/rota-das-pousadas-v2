@@ -34,6 +34,7 @@ import {
   addPlatformExpense,
   markPlatformExpensePaid,
   bootstrapPlatformPlanAdmin,
+  sendSentryTestAdmin,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -166,3 +167,6 @@ export const bootstrapPlatformPlanAction = createAction(z.object({}), async () =
   revalidatePath('/admin/financeiro')
   return { ok: true as const }
 })
+
+/** Manda um erro de teste ao Sentry e diz se chegou — só master. */
+export const sendSentryTestAction = createAction(z.object({}), async () => sendSentryTestAdmin())

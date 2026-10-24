@@ -620,3 +620,10 @@ export async function getBillingOverview(): Promise<{
   const cashFlow = projectCashFlow(metrics.mrr, CASH_FLOW_MONTHS)
   return { metrics, cashFlow, receivables, recentInvoices }
 }
+
+/** Erro de teste para o Sentry (só master): confere o `SENTRY_DSN` da Vercel. */
+export async function sendSentryTestAdmin() {
+  await assertCanManageRoles()
+  const { sendTestEvent } = await import('@/lib/observability/report-error')
+  return sendTestEvent()
+}

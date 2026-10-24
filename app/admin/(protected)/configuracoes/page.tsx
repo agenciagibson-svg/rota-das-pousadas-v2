@@ -4,6 +4,7 @@ import { AdminShell } from '@/features/admin/components/admin-shell'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PlatformTeam } from '@/features/admin/components/platform-team'
+import { SentryTest } from '@/features/admin/components/sentry-test'
 import { listPlatformTeamAdmin, canManageRoles } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
@@ -34,6 +35,11 @@ export default async function AdminConfiguracoesPage() {
           />
         )}
       </Card>
+      {canManage && (
+        <Card className="mt-5 p-6">
+          <SentryTest />
+        </Card>
+      )}
     </AdminShell>
   )
 }

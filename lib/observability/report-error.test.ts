@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildEnvelope, parseDsn, parseStack, redact, reportError } from './report-error'
+import {
+  buildEnvelope,
+  parseDsn,
+  parseStack,
+  redact,
+  reportError,
+  sendTestEvent,
+} from './report-error'
 
 const DSN = 'https://abc123@o450.ingest.us.sentry.io/4507'
 const ORIGINAL = process.env.SENTRY_DSN
@@ -122,6 +129,43 @@ describe('reportError', () => {
     process.env.SENTRY_DSN = DSN
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('rede')))
     await expect(reportError(new Error('x'), { where: 'teste' })).resolves.toBeUndefined()
+  })
+})
+
+describe('sendTestEvent', () => {
+  it('sem SENTRY_DSN diz que falta configurar, sem chamar a rede', async () => {
+    delete process.env.SENTRY_DSN
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    await expect(sendTestEvent()).resolves.toEqual({ status: 'sem-dsn' })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('Sentry aceitou: devolve o id do evento para procurar no painel', async () => {
+    process.env.SENTRY_DSN = DSN
+    const fetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fetch)
+    const result = await sendTestEvent()
+    expect(result.status).toBe('enviado')
+    expect(result).toHaveProperty('eventId')
+    expect(fetch.mock.calls[0][1].body).toContain('Teste do Sentry')
+  })
+
+  it('Sentry recusou (DSN errado ou projeto apagado): diz o código HTTP', async () => {
+    process.env.SENTRY_DSN = DSN
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('no', { status: 403 })))
+    await expect(sendTestEvent()).resolves.toEqual({ status: 'recusado', http: 403 })
+  })
+
+  it('rede fora: não lança', async () => {
+    process.env.SENTRY_DSN = DSN
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('rede')))
+    await expect(sendTestEvent()).resolves.toEqual({ status: 'sem-resposta' })
+  })
+
+  it('DSN em formato errado é tratado como falta de configuração', async () => {
+    process.env.SENTRY_DSN = 'nao-e-um-dsn'
+    await expect(sendTestEvent()).resolves.toEqual({ status: 'sem-dsn' })
   })
 })
 
