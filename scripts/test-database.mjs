@@ -83,6 +83,8 @@ try {
     'excluir-conta.sql',
     'auth-google-codigo.sql',
     'papeis-equipe.sql',
+    // 0097: relatório do mês por e-mail e fichas completadas pelo perfil.
+    'relatorio-mensal-0097.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

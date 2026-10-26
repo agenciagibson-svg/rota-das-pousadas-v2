@@ -7,6 +7,7 @@ import {
   sendReviewReminders,
   sendReviewRequests,
 } from '@/features/estadia/services/review-requests.service'
+import { sendMonthlyReports } from '@/features/dashboard/services/monthly-report.service'
 import { reportError } from '@/lib/observability/report-error'
 
 /**
@@ -14,7 +15,8 @@ import { reportError } from '@/lib/observability/report-error'
  * orçamento não convertido com mais de 180 dias (0059, LGPD) e envia lembrete
  * de check-in por e-mail pras reservas confirmadas de daqui a 2 dias (0060) e
  * pede avaliação a quem saiu há 1-3 dias, com um lembrete único 3 dias depois
- * (0089). As tarefas dividem o mesmo cron de propósito — o plano Hobby da
+ * (0089); nos dias 1 a 3 do mês (Brasília) manda ao proprietário e ao
+ * gestor o relatório do mês anterior (0097, idempotente). As tarefas dividem o mesmo cron de propósito — o plano Hobby da
  * Vercel só permite cron 1x/dia, então um cron novo só pra isso custaria uma
  * segunda rodada diária que não sobra.
  *
@@ -42,14 +44,21 @@ export async function GET(request: Request) {
 
   try {
     // allSettled: uma tarefa que falha não esconde as outras que rodaram.
-    const [bookings, quoteRequests, checkinReminders, reviewRequests, reviewReminders] =
-      await Promise.allSettled([
-        expireOverduePendingBookings(),
-        purgeStaleQuoteRequests(),
-        sendCheckinReminders(),
-        sendReviewRequests(),
-        sendReviewReminders(),
-      ])
+    const [
+      bookings,
+      quoteRequests,
+      checkinReminders,
+      reviewRequests,
+      reviewReminders,
+      monthlyReports,
+    ] = await Promise.allSettled([
+      expireOverduePendingBookings(),
+      purgeStaleQuoteRequests(),
+      sendCheckinReminders(),
+      sendReviewRequests(),
+      sendReviewReminders(),
+      sendMonthlyReports(),
+    ])
     // Depois da expiração: reservas que caíram com comprovante em análise
     // entram na fila de revisão (0082) e a pousada é avisada por e-mail.
     const paymentReviews = await notifyPaymentReviews()
@@ -60,7 +69,14 @@ export async function GET(request: Request) {
       failures.push(reportError(r.reason, { where: `cron:${name}` }))
       return { error: 'falhou' }
     }
-    const settled = [bookings, quoteRequests, checkinReminders, reviewRequests, reviewReminders]
+    const settled = [
+      bookings,
+      quoteRequests,
+      checkinReminders,
+      reviewRequests,
+      reviewReminders,
+      monthlyReports,
+    ]
     const failed = settled.some((r) => r.status === 'rejected')
     const body = {
       bookings: out(bookings, 'expiracao'),
@@ -68,6 +84,7 @@ export async function GET(request: Request) {
       checkinReminders: out(checkinReminders, 'lembretes'),
       reviewRequests: out(reviewRequests, 'avaliacoes'),
       reviewReminders: out(reviewReminders, 'avaliacoes-lembrete'),
+      monthlyReports: out(monthlyReports, 'relatorio-mensal'),
       paymentReviews,
     }
     await Promise.all(failures)

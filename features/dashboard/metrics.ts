@@ -103,6 +103,11 @@ export function roomsOccupiedOn(bookings: MetricBooking[], dayISO: string): numb
  * `rate` é limitada a 100 porque `totalRooms` pode estar desatualizado (quarto
  * desativado com reserva ativa ainda em curso); `occupiedNights` continua
  * bruto, sem recorte, para que a divergência apareça em vez de sumir.
+ *
+ * `countsAsNight` decide que status ocupam a noite. O padrão
+ * (`isOccupyingStatus`) serve à janela do painel, que olha para a frente. Para
+ * um período já fechado (relatório do mês, `monthly-report.ts`) a estadia
+ * concluída também ocupou a noite — passa-se `countsAsStayRevenue`.
  */
 export function calculateOccupancy(
   bookings: MetricBooking[],
@@ -110,13 +115,13 @@ export function calculateOccupancy(
   from: string,
   to: string,
   today = new Date(),
+  countsAsNight: (status: BookingStatus) => boolean = isOccupyingStatus,
 ): OccupancySnapshot {
   const days = Math.max(0, Math.round((isoToUTC(to) - isoToUTC(from)) / DAY_MS))
   const rooms = Math.max(0, totalRooms)
   const availableNights = rooms * days
   const occupiedNights = bookings.reduce(
-    (sum, b) =>
-      sum + (isOccupyingStatus(b.status) ? nightsWithin(b.checkin, b.checkout, from, to) : 0),
+    (sum, b) => sum + (countsAsNight(b.status) ? nightsWithin(b.checkin, b.checkout, from, to) : 0),
     0,
   )
   const rate =
@@ -128,6 +133,15 @@ export function calculateOccupancy(
     rate,
     roomsOccupiedToday: roomsOccupiedOn(bookings, toISODate(today)),
   }
+}
+
+/**
+ * A reserva entra na receita do painel? Estadias que ocupam inventário e as já
+ * concluídas; cotação, cancelada e no-show ficam de fora. Mesma regra do
+ * gráfico de receita e do relatório do mês por e-mail (`monthly-report.ts`).
+ */
+export function countsAsStayRevenue(status: BookingStatus): boolean {
+  return isOccupyingStatus(status) || status === 'checked_out'
 }
 
 /**
@@ -143,7 +157,7 @@ export function monthlyRevenue(
   today = new Date(),
   months = 12,
 ): MonthlyRevenuePoint[] {
-  const counted = bookings.filter((b) => isOccupyingStatus(b.status) || b.status === 'checked_out')
+  const counted = bookings.filter((b) => countsAsStayRevenue(b.status))
   const points: MonthlyRevenuePoint[] = []
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - i, 1))

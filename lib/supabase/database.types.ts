@@ -1310,6 +1310,38 @@ export type Database = {
           },
         ]
       }
+      monthly_reports_sent: {
+        Row: {
+          claimed_at: string
+          month: string
+          pousada_id: string
+          recipients: number
+          sent_at: string | null
+        }
+        Insert: {
+          claimed_at?: string
+          month: string
+          pousada_id: string
+          recipients?: number
+          sent_at?: string | null
+        }
+        Update: {
+          claimed_at?: string
+          month?: string
+          pousada_id?: string
+          recipients?: number
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'monthly_reports_sent_pousada_id_fkey'
+            columns: ['pousada_id']
+            isOneToOne: false
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       plans: {
         Row: {
           active: boolean
@@ -3121,6 +3153,24 @@ export type Database = {
           id: string
         }[]
       }
+      list_guests_pending_profile_backfill: {
+        Args: { p_after?: string; p_limit?: number }
+        Returns: {
+          guest_id: string
+          fields: string[]
+          profile_document_number: string | null
+          profile_document_number_hash: string | null
+        }[]
+      }
+      apply_guest_profile_backfill: {
+        Args: {
+          p_guest_id: string
+          p_document_number?: string
+          p_document_number_hash?: string
+          p_document_last4?: string
+        }
+        Returns: string[]
+      }
       list_login_attempts: {
         Args: { p_email?: string; p_limit?: number }
         Returns: {
@@ -3365,6 +3415,50 @@ export type Database = {
       mark_review_reminder_sent: {
         Args: { p_booking_id: string }
         Returns: boolean
+      }
+      list_monthly_report_pousadas: {
+        Args: { p_month: string; p_limit?: number }
+        Returns: {
+          pousada_id: string
+          name: string
+          timezone: string
+          active_rooms: number
+        }[]
+      }
+      get_monthly_report_pousada: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          pousada_id: string
+          name: string
+          timezone: string
+          active_rooms: number
+        }[]
+      }
+      list_monthly_report_bookings: {
+        Args: { p_pousada_id: string; p_from: string; p_to: string }
+        Returns: {
+          checkin: string
+          checkout: string
+          total: number
+          status: Database['public']['Enums']['booking_status']
+          origin: Database['public']['Enums']['booking_origin']
+        }[]
+      }
+      list_monthly_report_recipients: {
+        Args: { p_pousada_id: string }
+        Returns: { email: string }[]
+      }
+      claim_monthly_report: {
+        Args: { p_pousada_id: string; p_month: string }
+        Returns: boolean
+      }
+      mark_monthly_report_sent: {
+        Args: { p_pousada_id: string; p_month: string; p_recipients: number }
+        Returns: boolean
+      }
+      release_monthly_report: {
+        Args: { p_pousada_id: string; p_month: string }
+        Returns: undefined
       }
       review_payment_proof: {
         Args: { p_proof_id: string; p_approve: boolean; p_reason?: string; p_amount?: number }

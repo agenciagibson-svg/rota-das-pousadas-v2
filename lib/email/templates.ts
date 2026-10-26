@@ -18,6 +18,8 @@ import { emailOffersPrecheckin, precheckinPath } from '@/features/reservas/prech
  *    (features/auth/services/password-reset.service.ts).
  * 6. Pedido de avaliação e lembrete único depois do check-out — cron diário
  *    (app/api/cron/expiracao, 0089).
+ * 7. Relatório do mês para proprietário/gestor — `monthly-report-email.ts`,
+ *    que reaproveita o layout exportado daqui (cron diário, dia 1º, 0097).
  *
  * Regras de e-mail: só tabelas e estilo inline (Gmail/Outlook ignoram <style>
  * e SVG); fontes do site com fallback (Gmail cai em Arial); a marca é PNG
@@ -28,7 +30,7 @@ import { emailOffersPrecheckin, precheckinPath } from '@/features/reservas/prech
  */
 
 /** Paleta da marca (docs/Marca.md): Neblina, Breu, Grafite e Ipê. */
-const C = {
+export const C = {
   linen: '#eef1ef',
   forest: '#0f1716',
   ink: '#0f1716',
@@ -40,8 +42,8 @@ const C = {
   heroText: '#c9d0cc',
   footerText: '#a9b3ae',
 }
-const DISPLAY = "'Funnel Display','Helvetica Neue',Arial,sans-serif"
-const SANS = "'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif"
+export const DISPLAY = "'Funnel Display','Helvetica Neue',Arial,sans-serif"
+export const SANS = "'Figtree','Helvetica Neue',Arial,Helvetica,sans-serif"
 const DEFAULT_TZ = 'America/Sao_Paulo'
 const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const MONTHS = [
@@ -151,7 +153,7 @@ function nightsBetween(checkin: string, checkout: string): number {
   return Math.round((Date.UTC(b.y, b.m - 1, b.d) - Date.UTC(a.y, a.m - 1, a.d)) / 86_400_000)
 }
 
-function formatCurrencyBRL(value: number): string {
+export function formatCurrencyBRL(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
 
@@ -268,7 +270,7 @@ function ticket(ctx: BookingNotificationContext, rowsHtml: string): string {
 </table>`
 }
 
-function notice(html: string, tone: 'warn' | 'ok'): string {
+export function notice(html: string, tone: 'warn' | 'ok'): string {
   const s =
     tone === 'warn'
       ? 'background:#fdf0d4;border:1px solid #f8d58a;color:#0f1716;'
@@ -290,7 +292,7 @@ function arrivalNotice(ctx: BookingNotificationContext): string {
   return notice(lines.join('<br>'), 'ok')
 }
 
-type LayoutParams = {
+export type LayoutParams = {
   preheader: string
   pill: { label: string; bg: string; fg: string }
   title: string
@@ -305,7 +307,7 @@ type LayoutParams = {
   footerNote?: string
 }
 
-function wrapLayout(p: LayoutParams): string {
+export function wrapLayout(p: LayoutParams): string {
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -360,7 +362,7 @@ function wrapLayout(p: LayoutParams): string {
 // E-mails
 // ---------------------------------------------------------------------------
 
-type Email = { subject: string; html: string; text: string }
+export type Email = { subject: string; html: string; text: string }
 
 function greeting(ctx: BookingNotificationContext): string {
   const name = firstName(ctx.guestName)
