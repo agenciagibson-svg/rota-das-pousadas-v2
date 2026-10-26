@@ -35,6 +35,7 @@ import {
   markPlatformExpensePaid,
   bootstrapPlatformPlanAdmin,
   sendSentryTestAdmin,
+  sendEmailTestAdmin,
 } from './services/admin.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
@@ -170,3 +171,5 @@ export const bootstrapPlatformPlanAction = createAction(z.object({}), async () =
 
 /** Manda um erro de teste ao Sentry e diz se chegou — só master. */
 export const sendSentryTestAction = createAction(z.object({}), async () => sendSentryTestAdmin())
+
+export const sendEmailTestAction = createAction(z.object({}), async () => sendEmailTestAdmin())

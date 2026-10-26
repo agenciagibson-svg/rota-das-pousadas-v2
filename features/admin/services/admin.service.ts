@@ -627,3 +627,20 @@ export async function sendSentryTestAdmin() {
   const { sendTestEvent } = await import('@/lib/observability/report-error')
   return sendTestEvent()
 }
+
+/**
+ * E-mail de teste (só master): manda para o próprio e-mail de quem clicou,
+ * pelo mesmo SMTP das reservas. Confere as SMTP_* da Vercel sem criar reserva.
+ */
+export async function sendEmailTestAdmin() {
+  const user = await assertCanManageRoles()
+  if (!user.email) throw new Error('Sua conta não tem e-mail para receber o teste.')
+  const { sendEmailWithResult } = await import('@/lib/email/mailer')
+  const result = await sendEmailWithResult({
+    to: user.email,
+    subject: 'Teste de envio — Rota das Pousadas',
+    text: 'Se você recebeu este e-mail, os avisos de reserva da Rota das Pousadas estão saindo normalmente.',
+    html: '<p>Se você recebeu este e-mail, os avisos de reserva da <strong>Rota das Pousadas</strong> estão saindo normalmente.</p>',
+  })
+  return { ...result, to: user.email }
+}

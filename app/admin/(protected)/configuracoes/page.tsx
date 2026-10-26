@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PlatformTeam } from '@/features/admin/components/platform-team'
 import { SentryTest } from '@/features/admin/components/sentry-test'
+import { EmailTest } from '@/features/admin/components/email-test'
 import { listPlatformTeamAdmin, canManageRoles } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
@@ -38,6 +39,11 @@ export default async function AdminConfiguracoesPage() {
       {canManage && (
         <Card className="mt-5 p-6">
           <SentryTest />
+        </Card>
+      )}
+      {canManage && (
+        <Card className="mt-5 p-6">
+          <EmailTest />
         </Card>
       )}
     </AdminShell>

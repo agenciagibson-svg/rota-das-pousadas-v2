@@ -2,11 +2,10 @@ import 'server-only'
 import nodemailer from 'nodemailer'
 
 /**
- * Envio de e-mail transacional — fase de piloto usa SMTP do Gmail (conta
- * comum + senha de app, gerada em myaccount.google.com/apppasswords).
- * `SMTP_HOST`/`SMTP_PORT` ficam configuráveis de propósito: trocar de
- * provedor depois (Resend, SendGrid, SES) é só mudar as env vars, nunca
- * quem chama `sendEmail`.
+ * Envio de e-mail transacional por SMTP. Desde 26/10/2026 sai pelo Resend
+ * com o domínio próprio (SMTP_HOST=smtp.resend.com, SMTP_PORT=465,
+ * SMTP_USER=resend, SMTP_PASS=chave da API, SMTP_FROM=reservas@rotadaspousadas.com.br).
+ * Trocar de provedor é só mudar as env vars, nunca quem chama `sendEmail`.
  *
  * Fail-soft de propósito: notificação nunca pode derrubar reserva nem
  * pagamento. Sem `SMTP_USER`/`SMTP_PASS` configurados, ou se o envio falhar,
@@ -63,17 +62,23 @@ function errorCode(error: unknown): string {
   return 'erro'
 }
 
-/** Envia um e-mail transacional. Nunca lança — retorna `false` em qualquer falha (ver comentário do módulo). */
-export async function sendEmail(params: SendEmailParams): Promise<boolean> {
+export type SendEmailResult =
+  | { status: 'enviado'; from: string; host: string }
+  | { status: 'sem-config' }
+  | { status: 'falhou'; code: string; from: string; host: string }
+
+/** Igual a `sendEmail`, mas diz o que aconteceu (para o botão de teste do admin). Nunca lança. */
+export async function sendEmailWithResult(params: SendEmailParams): Promise<SendEmailResult> {
   const transporter = getTransporter()
   if (!transporter) {
     console.warn(
       `[email] SMTP não configurado (SMTP_USER/SMTP_PASS ausentes) — e-mail para ${maskRecipient(params.to)} não enviado.`,
     )
-    return false
+    return { status: 'sem-config' }
   }
 
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || ''
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com'
 
   try {
     await transporter.sendMail({
@@ -83,11 +88,15 @@ export async function sendEmail(params: SendEmailParams): Promise<boolean> {
       html: params.html,
       text: params.text,
     })
-    return true
+    return { status: 'enviado', from, host }
   } catch (error) {
-    console.error(
-      `[email] Falha ao enviar e-mail para ${maskRecipient(params.to)} (código ${errorCode(error)}).`,
-    )
-    return false
+    const code = errorCode(error)
+    console.error(`[email] Falha ao enviar e-mail para ${maskRecipient(params.to)} (código ${code}).`)
+    return { status: 'falhou', code, from, host }
   }
+}
+
+/** Envia um e-mail transacional. Nunca lança — retorna `false` em qualquer falha (ver comentário do módulo). */
+export async function sendEmail(params: SendEmailParams): Promise<boolean> {
+  return (await sendEmailWithResult(params)).status === 'enviado'
 }
