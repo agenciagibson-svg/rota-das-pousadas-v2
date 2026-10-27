@@ -129,7 +129,7 @@ select test_assert(not has_function_privilege('anon', 'create_booking_with_coupo
 select test_assert(has_function_privilege('anon', 'get_featured_coupon(text)', 'EXECUTE'), 'anon lê o cupom divulgado');
 :COMO_POSTGRES
 select test_assert(not has_function_privilege('authenticated', 'coupon_evaluate(uuid,text,date,date,integer,uuid,boolean)', 'EXECUTE'), 'API não chama a avaliação interna');
-select test_assert(not has_function_privilege('authenticated', 'coupon_record_failure(uuid,uuid)', 'EXECUTE'), 'API não mexe nas tentativas');
+select test_assert(not has_function_privilege('authenticated', 'coupon_take_attempt(uuid,uuid)', 'EXECUTE'), 'API não mexe nas tentativas');
 select test_assert(not has_function_privilege('authenticated', 'coupon_discount(text,integer,integer)', 'EXECUTE'), 'API não chama o cálculo interno');
 select test_assert(not has_function_privilege('authenticated', 'coupon_public_room_pousada(uuid)', 'EXECUTE'), 'API não chama o filtro interno');
 select test_assert(not has_table_privilege('authenticated', 'pousada_coupons', 'INSERT'), 'sem INSERT direto em cupons');
@@ -380,6 +380,90 @@ select test_invisible('select count(*) from booking_coupon_redemptions');
 -- Total nunca negativo em nenhuma reserva com cupom.
 select test_assert(not exists(select 1 from bookings b join booking_coupon_redemptions r on r.booking_id = b.id
   where b.total < 0 or b.discount > b.subtotal), 'total nunca negativo');
+
+-- ---------------------------------------------------------------------------
+-- Revisão de segurança de 26/10
+-- ---------------------------------------------------------------------------
+insert into auth.users(id, email) values
+ ('c0100000-0000-0000-0000-00000000000a', 'viajante-g-c100@example.test'),
+ ('c0100000-0000-0000-0000-00000000000b', 'viajante-h-c100@example.test');
+insert into guests(id, pousada_id, full_name, user_id) values
+ ('c0100000-0000-0000-0000-00000000040a', :'P', 'Viajante G', 'c0100000-0000-0000-0000-00000000000a'),
+ ('c0100000-0000-0000-0000-00000000040b', :'P', 'Viajante H', 'c0100000-0000-0000-0000-00000000000b');
+\set COMO_G 'set role authenticated; set request.jwt.claim.sub = ''c0100000-0000-0000-0000-00000000000a'';'
+\set COMO_H 'set role authenticated; set request.jwt.claim.sub = ''c0100000-0000-0000-0000-00000000000b'';'
+
+-- (1) Chamada em transação só de leitura (o PostgREST roda RPC por GET assim)
+-- falha antes de dizer qualquer coisa sobre o código — nem o válido responde.
+:COMO_G
+begin;
+set transaction read only;
+do $$ begin
+  begin
+    perform preview_booking_coupon('c0100000-0000-0000-0000-000000000103', '2098-06-01', '2098-06-03', 'QUALQUERUM');
+    raise exception 'TEST: prévia respondeu em transação só de leitura';
+  exception when others then
+    if sqlerrm like 'TEST:%' then raise; end if;
+  end;
+end $$;
+rollback;
+:COMO_POSTGRES
+select test_assert(not exists(select 1 from coupon_attempts where user_id = 'c0100000-0000-0000-0000-00000000000a'),
+  'nada gravado pela tentativa de leitura');
+
+-- (4) Percentual deixa pelo menos R$ 1 de total.
+select test_assert(coupon_discount('percent', 90, 5) = 4, '90% de 5 deixa R$ 1');
+select test_assert(coupon_discount('percent', 90, 1) = 0, '90% de 1 não zera o total');
+
+-- (3) Pendência vencida não segura o cupom.
+:COMO_DONO
+select set_config('c100.lim1', create_pousada_coupon(:'P', 'LIMITE1', 'percent', 10, p_max_uses => 1)::text, false);
+:COMO_G
+select test_assert((c100_book(:'R2', 'c0100000-0000-0000-0000-00000000040a', '2098-07-01', '2098-07-03', 'LIMITE1')->>'ok')::boolean,
+  'G usa o cupom de 1 uso');
+:COMO_H
+select test_assert(preview_booking_coupon(:'R2', '2098-08-01', '2098-08-03', 'LIMITE1')->>'reason' = 'invalid',
+  'esgotado enquanto a reserva de G está no prazo');
+:COMO_POSTGRES
+update bookings set payment_due_at = now() - interval '1 hour'
+ where id = (select booking_id from booking_coupon_redemptions where coupon_id = current_setting('c100.lim1')::uuid);
+:COMO_H
+select test_assert((preview_booking_coupon(:'R2', '2098-08-01', '2098-08-03', 'LIMITE1')->>'ok')::boolean,
+  'pendência vencida de G não segura o cupom');
+select test_assert((c100_book(:'R2', 'c0100000-0000-0000-0000-00000000040b', '2098-08-01', '2098-08-03', 'LIMITE1')->>'ok')::boolean,
+  'H consegue usar');
+:COMO_POSTGRES
+select test_assert((select b.status = 'cancelled' and r.released_at is not null
+                    from booking_coupon_redemptions r join bookings b on b.id = r.booking_id
+                    where r.coupon_id = current_setting('c100.lim1')::uuid
+                      and r.user_id = 'c0100000-0000-0000-0000-00000000000a'),
+  'a pendência vencida de G expirou e devolveu o uso');
+select test_assert((select count(*) from booking_coupon_redemptions
+                    where coupon_id = current_setting('c100.lim1')::uuid and released_at is null) = 1,
+  'continua um uso só');
+
+-- (8) Conta excluída (0090 zera guest_id): o uso perde o vínculo com a conta.
+insert into coupon_attempts(user_id, pousada_id) values ('c0100000-0000-0000-0000-00000000000b', :'P');
+update bookings set guest_id = null
+ where id = (select booking_id from booking_coupon_redemptions
+             where coupon_id = current_setting('c100.lim1')::uuid and released_at is null);
+select test_assert((select user_id is null from booking_coupon_redemptions
+                    where coupon_id = current_setting('c100.lim1')::uuid and released_at is null),
+  'uso sem a conta depois da exclusão');
+select test_assert(not exists(select 1 from coupon_attempts where user_id = 'c0100000-0000-0000-0000-00000000000b'),
+  'tentativas da conta excluída somem');
+
+-- (5) Tipo nulo recusado com mensagem.
+:COMO_DONO
+do $$ begin
+  begin
+    perform create_pousada_coupon('c0100000-0000-0000-0000-000000000100', 'SEMTIPO', null, 10);
+    raise exception 'TEST: aceitou tipo nulo';
+  exception when raise_exception then
+    if sqlerrm <> 'Tipo de desconto inválido.' then raise; end if;
+  end;
+end $$;
+:COMO_POSTGRES
 
 -- ---------------------------------------------------------------------------
 -- Preparação do teste de concorrência (supabase/tests/concurrent-coupon.sql,

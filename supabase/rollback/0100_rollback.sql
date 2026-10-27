@@ -4,6 +4,8 @@
 -- estão (são o valor combinado com o hóspede). Some apenas o registro de qual
 -- cupom foi usado, os cupons e o histórico de tentativas.
 
+drop trigger if exists trg_unlink_coupon_data_on_guest_removed on bookings;
+drop function if exists unlink_coupon_data_on_guest_removed();
 drop trigger if exists trg_release_coupon_on_booking_cancel on bookings;
 drop function if exists release_coupon_on_booking_cancel();
 
@@ -15,8 +17,9 @@ drop function if exists set_pousada_coupon_active(uuid, boolean);
 drop function if exists create_pousada_coupon(uuid, text, text, integer, date, date, date, date, integer, integer);
 drop function if exists list_pousada_coupons(uuid);
 drop function if exists coupon_evaluate(uuid, text, date, date, integer, uuid, boolean);
-drop function if exists coupon_record_failure(uuid, uuid);
-drop function if exists coupon_rate_limited(uuid);
+drop function if exists coupon_redemption_live(uuid);
+drop function if exists coupon_drop_attempt(bigint);
+drop function if exists coupon_take_attempt(uuid, uuid);
 drop function if exists coupon_public_room_pousada(uuid);
 drop function if exists coupon_discount(text, integer, integer);
 

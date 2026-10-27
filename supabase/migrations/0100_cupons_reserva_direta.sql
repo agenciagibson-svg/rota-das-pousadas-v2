@@ -94,7 +94,9 @@ create table if not exists booking_coupon_redemptions (
   coupon_id   uuid not null references pousada_coupons(id) on delete cascade,
   pousada_id  uuid not null references pousadas(id) on delete cascade,
   booking_id  uuid not null unique references bookings(id) on delete cascade,
-  user_id     uuid not null references auth.users(id) on delete cascade,
+  -- Nulo depois que o hóspede exclui a conta (0090 zera bookings.guest_id; o
+  -- gatilho da seção 10 faz o mesmo aqui). O uso continua contando.
+  user_id     uuid references auth.users(id) on delete set null,
   code        text not null,
   discount    integer not null check (discount >= 0),
   created_at  timestamptz not null default now(),
@@ -132,15 +134,17 @@ revoke all on coupon_attempts from anon, authenticated;
 -- ---------------------------------------------------------------------------
 
 -- Desconto em reais inteiros. Percentual arredonda para o real mais próximo
--- (meio real sobe), como as tarifas percentuais da 0087. Nunca passa do
--- subtotal nem fica negativo. Espelho em features/cupons/discount.ts.
+-- (meio real sobe), como as tarifas percentuais da 0087, e deixa pelo menos
+-- R$ 1 de total (total zero trava o Pix e o Mercado Pago). Fixo nunca passa do
+-- subtotal (e coupon_evaluate só aceita fixo menor que o subtotal). Nunca
+-- negativo. Espelho em features/cupons/discount.ts.
 create or replace function coupon_discount(p_kind text, p_value integer, p_subtotal integer)
 returns integer
 language sql immutable set search_path = public as $$
   select case
     when coalesce(p_subtotal, 0) <= 0 or coalesce(p_value, 0) <= 0 then 0
     else greatest(0, least(p_subtotal,
-      case when p_kind = 'percent' then ((p_subtotal::bigint * p_value + 50) / 100)::integer
+      case when p_kind = 'percent' then least(p_subtotal - 1, ((p_subtotal::bigint * p_value + 50) / 100)::integer)
            else p_value end))
   end;
 $$;
@@ -164,21 +168,56 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function coupon_public_room_pousada(uuid) from public, anon, authenticated;
 
-create or replace function coupon_rate_limited(p_user uuid)
-returns boolean
-language sql stable security definer set search_path = public as $$
-  select count(*) >= 10 from coupon_attempts
-  where user_id = p_user and created_at > now() - interval '1 hour';
+-- Freio contra adivinhar código (revisão de 26/10). Toda tentativa é GRAVADA
+-- antes de avaliar o código, com lock por usuário: requisições paralelas fazem
+-- fila e enxergam umas às outras, e uma chamada em transação só de leitura
+-- (o PostgREST roda RPC por GET assim) falha antes de responder qualquer
+-- coisa. Código que vale tem a tentativa apagada depois (coupon_drop_attempt):
+-- só os inválidos ficam contando. Devolve o id da tentativa ou null se o
+-- usuário passou de 10 inválidos na última hora.
+create or replace function coupon_take_attempt(p_user uuid, p_pousada_id uuid)
+returns bigint
+language plpgsql volatile security definer set search_path = public as $$
+declare
+  v_id bigint;
+begin
+  if current_setting('transaction_read_only', true) = 'on' then
+    raise exception 'Use o formulário de reserva para aplicar o cupom.';
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended('coupon_attempts:' || p_user::text, 0));
+  delete from coupon_attempts where user_id = p_user and created_at < now() - interval '1 day';
+  if (select count(*) from coupon_attempts
+      where user_id = p_user and created_at > now() - interval '1 hour') >= 10 then
+    return null;
+  end if;
+  insert into coupon_attempts(user_id, pousada_id) values (p_user, p_pousada_id)
+  returning id into v_id;
+  return v_id;
+end;
 $$;
-revoke all on function coupon_rate_limited(uuid) from public, anon, authenticated;
+revoke all on function coupon_take_attempt(uuid, uuid) from public, anon, authenticated;
 
-create or replace function coupon_record_failure(p_user uuid, p_pousada_id uuid)
+create or replace function coupon_drop_attempt(p_attempt bigint)
 returns void
 language sql security definer set search_path = public as $$
-  delete from coupon_attempts where user_id = p_user and created_at < now() - interval '1 day';
-  insert into coupon_attempts(user_id, pousada_id) values (p_user, p_pousada_id);
+  delete from coupon_attempts where id = p_attempt;
 $$;
-revoke all on function coupon_record_failure(uuid, uuid) from public, anon, authenticated;
+revoke all on function coupon_drop_attempt(bigint) from public, anon, authenticated;
+
+-- Uso "vivo" de um cupom: não devolvido E a reserva não é uma pendência com o
+-- prazo de pagamento vencido (revisão de 26/10: sem isto, reservas não pagas
+-- seguravam o cupom até o cron diário, e dava para "esgotar" uma promoção com
+-- contas descartáveis). Se a pendência vencida for paga depois, volta a contar.
+create or replace function coupon_redemption_live(p_booking_id uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select not exists (
+    select 1 from bookings b
+    where b.id = p_booking_id and b.status = 'pending'
+      and b.payment_due_at is not null and b.payment_due_at < now()
+  );
+$$;
+revoke all on function coupon_redemption_live(uuid) from public, anon, authenticated;
 
 -- Avalia o cupom para uma estadia. VOLATILE de propósito: com p_lock, a linha
 -- do cupom é travada no primeiro comando e a contagem de usos roda num comando
@@ -211,6 +250,22 @@ begin
   if v_c.id is null or not v_c.active then
     return jsonb_build_object('reason', 'invalid');
   end if;
+  -- Com o cupom travado (criação da reserva): pendências vencidas que seguram
+  -- este cupom expiram agora — mesmo UPDATE protegido da 0099 (se o pagamento
+  -- chegou no meio-tempo, a reserva fica de fora) — e o gatilho devolve o uso.
+  if p_lock then
+    with expired as (
+      update bookings b set status = 'cancelled', cancellation_reason = 'Prazo de pagamento expirado',
+        cancelled_at = now(), version = b.version + 1
+      where b.id in (select r.booking_id from booking_coupon_redemptions r
+                     where r.coupon_id = v_c.id and r.released_at is null)
+        and b.status = 'pending' and b.payment_due_at is not null and b.payment_due_at < now()
+      returning b.id
+    )
+    insert into audit_log (actor_id, action, target_table, target_id, metadata)
+    select null, 'booking.expired', 'bookings', e.id, jsonb_build_object('reason', 'payment_due_at_passed')
+    from expired e;
+  end if;
   v_today := pousada_local_date(p_pousada_id);
   if (v_c.valid_from is not null and v_today < v_c.valid_from)
      or (v_c.valid_until is not null and v_today > v_c.valid_until) then
@@ -218,7 +273,7 @@ begin
   end if;
   if v_c.max_uses is not null then
     select count(*) into v_used from booking_coupon_redemptions
-    where coupon_id = v_c.id and released_at is null;
+    where coupon_id = v_c.id and released_at is null and coupon_redemption_live(booking_id);
     if v_used >= v_c.max_uses then
       return jsonb_build_object('reason', 'invalid');
     end if;
@@ -226,6 +281,7 @@ begin
   if exists (
     select 1 from booking_coupon_redemptions
     where coupon_id = v_c.id and user_id = p_user and released_at is null
+      and coupon_redemption_live(booking_id)
   ) then
     return jsonb_build_object('reason', 'already_used');
   end if;
@@ -264,14 +320,14 @@ returns table (
 )
 language plpgsql stable security definer set search_path = public as $$
 begin
-  if auth.uid() is null or not auth_can_manage_pousada(p_pousada_id) then
+  if auth.uid() is null or not (auth_can_manage_pousada(p_pousada_id) or auth_has_active_grant(p_pousada_id)) then
     raise exception 'Você não tem permissão para ver os cupons desta pousada.';
   end if;
   return query
   select c.id, c.code, c.kind, c.value, c.valid_from, c.valid_until, c.stay_from, c.stay_until,
          c.min_nights::integer, c.max_uses, c.active, c.featured,
          (select count(*)::integer from booking_coupon_redemptions r
-          where r.coupon_id = c.id and r.released_at is null),
+          where r.coupon_id = c.id and r.released_at is null and coupon_redemption_live(r.booking_id)),
          c.created_at
   from pousada_coupons c
   where c.pousada_id = p_pousada_id
@@ -292,13 +348,13 @@ declare
   v_code text := upper(btrim(coalesce(p_code, '')));
   v_id uuid;
 begin
-  if auth.uid() is null or not auth_can_manage_pousada(p_pousada_id) then
+  if auth.uid() is null or not (auth_can_manage_pousada(p_pousada_id) or auth_has_active_grant(p_pousada_id)) then
     raise exception 'Você não tem permissão para gerenciar os cupons desta pousada.';
   end if;
   if v_code !~ '^[A-Z0-9]{3,20}$' then
     raise exception 'Use de 3 a 20 letras ou números no código, sem espaço nem acento.';
   end if;
-  if p_kind not in ('percent', 'fixed') then raise exception 'Tipo de desconto inválido.'; end if;
+  if p_kind is null or p_kind not in ('percent', 'fixed') then raise exception 'Tipo de desconto inválido.'; end if;
   if p_kind = 'percent' and (p_value is null or p_value < 1 or p_value > 90) then
     raise exception 'O desconto percentual vai de 1%% a 90%%.';
   end if;
@@ -351,7 +407,8 @@ declare
   v_pousada uuid;
 begin
   select pousada_id into v_pousada from pousada_coupons where id = p_coupon_id;
-  if auth.uid() is null or v_pousada is null or not auth_can_manage_pousada(v_pousada) then
+  if auth.uid() is null or v_pousada is null
+     or not (auth_can_manage_pousada(v_pousada) or auth_has_active_grant(v_pousada)) then
     raise exception 'Cupom não encontrado.';
   end if;
   update pousada_coupons
@@ -375,10 +432,15 @@ declare
   v_c pousada_coupons%rowtype;
 begin
   select * into v_c from pousada_coupons where id = p_coupon_id;
-  if auth.uid() is null or v_c.id is null or not auth_can_manage_pousada(v_c.pousada_id) then
+  if auth.uid() is null or v_c.id is null
+     or not (auth_can_manage_pousada(v_c.pousada_id) or auth_has_active_grant(v_c.pousada_id)) then
     raise exception 'Cupom não encontrado.';
   end if;
   if coalesce(p_featured, false) then
+    -- Trava os cupons da pousada: dois "divulgar" ao mesmo tempo fazem fila
+    -- (antes, o segundo batia no índice único com erro cru).
+    perform 1 from pousada_coupons where pousada_id = v_c.pousada_id order by id for update;
+    select * into v_c from pousada_coupons where id = p_coupon_id;
     if not v_c.active then raise exception 'Reative o cupom antes de divulgar.'; end if;
     update pousada_coupons set featured = false, updated_at = now()
      where pousada_id = v_c.pousada_id and featured and id <> p_coupon_id;
@@ -412,7 +474,7 @@ language sql stable security definer set search_path = public as $$
     and (c.valid_until is null or c.valid_until >= pousada_local_date(p.id))
     and (c.max_uses is null or c.max_uses > (
       select count(*) from booking_coupon_redemptions r
-      where r.coupon_id = c.id and r.released_at is null))
+      where r.coupon_id = c.id and r.released_at is null and coupon_redemption_live(r.booking_id)))
   limit 1;
 $$;
 revoke all on function get_featured_coupon(text) from public;
@@ -429,6 +491,7 @@ declare
   v_pousada uuid;
   v_subtotal integer;
   v_eval jsonb;
+  v_attempt bigint;
 begin
   if auth.uid() is null then raise exception 'Faça login para usar um cupom.'; end if;
   if p_checkin is null or p_checkout is null or p_checkout <= p_checkin
@@ -440,16 +503,17 @@ begin
   if auth_has_guest_access(v_pousada) or auth_has_active_grant(v_pousada) then
     return jsonb_build_object('ok', false, 'reason', 'staff');
   end if;
-  if coupon_rate_limited(auth.uid()) then
+  v_attempt := coupon_take_attempt(auth.uid(), v_pousada);
+  if v_attempt is null then
     return jsonb_build_object('ok', false, 'reason', 'too_many_attempts');
   end if;
 
   select q.total into v_subtotal from room_stay_quote(p_room_id, p_checkin, p_checkout) q;
   v_eval := coupon_evaluate(v_pousada, p_code, p_checkin, p_checkout, v_subtotal, auth.uid(), false);
+  -- Só o código que não vale fica contando como tentativa errada: os outros
+  -- motivos só aparecem para quem já sabe um código de verdade.
+  if v_eval->>'reason' <> 'invalid' then perform coupon_drop_attempt(v_attempt); end if;
   if v_eval->>'reason' <> 'ok' then
-    -- Só o código que não vale conta como tentativa errada: os outros motivos
-    -- só aparecem para quem já sabe um código de verdade.
-    if v_eval->>'reason' = 'invalid' then perform coupon_record_failure(auth.uid(), v_pousada); end if;
     return (v_eval - 'couponId') || jsonb_build_object('ok', false);
   end if;
   return jsonb_build_object(
@@ -493,6 +557,7 @@ declare
   v_booking jsonb;
   v_id uuid;
   v_total integer;
+  v_attempt bigint;
 begin
   if auth.uid() is null then raise exception 'Não autenticado.'; end if;
   if p_checkout is null or p_checkin is null or p_checkout <= p_checkin then
@@ -509,15 +574,16 @@ begin
     raise exception 'Pelo site, a reserva pode ter até % noites. Fale com a pousada para estadias maiores.',
       public_stay_max_nights();
   end if;
-  if coupon_rate_limited(auth.uid()) then
+  v_attempt := coupon_take_attempt(auth.uid(), p_pousada_id);
+  if v_attempt is null then
     return jsonb_build_object('ok', false, 'reason', 'too_many_attempts');
   end if;
 
   select q.total into v_subtotal from room_stay_quote(p_room_id, p_checkin, p_checkout) q;
   -- Trava a linha do cupom até o fim da transação: usos simultâneos fazem fila.
   v_eval := coupon_evaluate(p_pousada_id, p_coupon_code, p_checkin, p_checkout, v_subtotal, auth.uid(), true);
+  if v_eval->>'reason' <> 'invalid' then perform coupon_drop_attempt(v_attempt); end if;
   if v_eval->>'reason' <> 'ok' then
-    if v_eval->>'reason' = 'invalid' then perform coupon_record_failure(auth.uid(), p_pousada_id); end if;
     return (v_eval - 'couponId') || jsonb_build_object('ok', false);
   end if;
   v_discount := (v_eval->>'discount')::integer;
@@ -598,3 +664,27 @@ create trigger trg_release_coupon_on_booking_cancel
   for each row
   when (new.status = 'cancelled' and old.status is distinct from 'cancelled')
   execute function release_coupon_on_booking_cancel();
+
+
+-- ---------------------------------------------------------------------------
+-- 10. Conta excluída (0090 zera bookings.guest_id): o uso perde o vínculo com
+--     a conta e as tentativas dela somem. O uso continua contando no cupom.
+-- ---------------------------------------------------------------------------
+create or replace function unlink_coupon_data_on_guest_removed()
+returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  update booking_coupon_redemptions set user_id = null
+   where booking_id = new.id and user_id is not null;
+  delete from coupon_attempts where user_id = old.guest_id;
+  return null;
+end;
+$$;
+revoke all on function unlink_coupon_data_on_guest_removed() from public, anon, authenticated;
+
+drop trigger if exists trg_unlink_coupon_data_on_guest_removed on bookings;
+create trigger trg_unlink_coupon_data_on_guest_removed
+  after update of guest_id on bookings
+  for each row
+  when (new.guest_id is null and old.guest_id is not null)
+  execute function unlink_coupon_data_on_guest_removed();

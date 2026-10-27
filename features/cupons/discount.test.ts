@@ -17,7 +17,8 @@ describe('couponDiscount — mesma conta do banco (coupon_discount, 0100)', () =
     ['percent', 10, 5, 1], // 0,5 → 1
     ['percent', 10, 4, 0], // 0,4 → 0
     ['percent', 20, 1500, 300],
-    ['percent', 90, 1, 1],
+    ['percent', 90, 1, 0], // deixa R$ 1 de total
+    ['percent', 90, 5, 4], // 4,5 → 5, mas o total fica em R$ 1
     ['fixed', 50, 300, 50],
     ['fixed', 1000, 300, 300], // nunca passa do subtotal
     ['percent', 90, 0, 0],

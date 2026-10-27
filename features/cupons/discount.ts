@@ -17,11 +17,17 @@ export function normalizeCouponCode(raw: string): string {
 /**
  * Desconto em reais inteiros (mesma convenção de bookings.total). Percentual
  * arredonda para o real mais próximo (meio real sobe), como as tarifas
- * percentuais da 0087. Nunca passa do subtotal nem fica negativo.
+ * percentuais da 0087, deixando pelo menos R$ 1 de total. Nunca passa do
+ * subtotal nem fica negativo.
  */
 export function couponDiscount(kind: CouponKind, value: number, subtotal: number): number {
   if (!(subtotal > 0) || !(value > 0)) return 0
-  const raw = kind === 'percent' ? Math.floor((subtotal * value + 50) / 100) : Math.round(value)
+  // Percentual deixa pelo menos R$ 1 de total (total zero trava Pix e Mercado
+  // Pago); fixo só é aceito pelo banco quando é menor que o subtotal.
+  const raw =
+    kind === 'percent'
+      ? Math.min(subtotal - 1, Math.floor((subtotal * value + 50) / 100))
+      : Math.round(value)
   return Math.max(0, Math.min(subtotal, raw))
 }
 
