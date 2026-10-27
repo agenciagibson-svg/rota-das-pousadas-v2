@@ -272,3 +272,43 @@ O hóspede completa a ficha antes de chegar; a recepção só confere.
 - Testes: `supabase/tests/priorities.sql`, `reservas.test.ts`,
   `services/bookings.service.test.ts` e `lib/dates.test.ts`.
 - Rollback: `supabase/rollback/0067_rollback.sql`.
+
+## Calendário com preço e link para o acompanhante (0094)
+
+**Calendário com preço (h6).** `public_price_calendar(slug, de, até, hóspedes, quarto?)`
+(anon) devolve, por noite, a menor diária livre ("a partir de"), se há vaga e a
+estadia mínima. Não recalcula nada: vaga = `bookable_rooms_core` (mesmo núcleo da
+vitrine) e preço/mínimo = `room_stay_quote` (mesma cotação de `create_booking`).
+Só pousada publicada e acomodação visível; janela de até 120 dias e no máximo ~2
+anos à frente (limite no banco). `jit = off` na função (o JIT custava ~200 ms).
+
+- Página da pousada e da reserva: `PriceCalendar` (cliente) busca o mês em
+  `GET /pousada/[slug]/calendario?mes=&hospedes=&quarto=`. Os campos de data
+  continuam; o calendário é o atalho (toque na entrada, depois na saída). Na
+  página da pousada fica atrás de "Ver diárias no calendário" (o card é fixo na
+  lateral); na reserva fica aberto. Quarto só entra quando a pessoa escolheu um
+  (bio, `?quarto=`); sem ele, "a partir de" de todos.
+- Página da bio: `BioPriceCalendar`, só HTML (cada dia é um link com
+  `?checkin=`/`&checkout=`/`&mes=`), dentro de um `<details>`. Sem JS continua
+  funcionando; o formulário de datas não mudou.
+- Com várias acomodações, "tem vaga" é por noite: a saída liberada no calendário
+  ainda pode não ter a MESMA acomodação livre o período todo — a cotação do
+  servidor (e o aviso "datas não disponíveis") continua sendo a palavra final.
+- Lógica pura e testes: `price-calendar.ts` / `price-calendar.test.ts`,
+  `components/price-calendar.test.tsx`.
+
+**Agenda e link para o acompanhante (h9).**
+
+- `GET /minhas-reservas/[id]/agenda.ics`: login + reserva do próprio usuário
+  (`list_my_bookings`); outra pessoa = 404. Evento das horas de check-in/out da
+  pousada (em UTC) ou de dia inteiro sem horário válido. Gerador: `ics.ts`
+  (escape RFC 5545 e dobra em 75 octetos), testado em `ics.test.ts`.
+- `booking_share_links` (um token por reserva, 244 bits aleatórios, sem acesso
+  direto para anon/authenticated). `share_my_booking` (cria/renova, só o dono),
+  `revoke_my_booking_share` e `get_shared_booking` (anon: pousada, endereço,
+  datas, horários, código — nada de valores/documento/contato/hóspedes;
+  cancelada ou pendência vencida → só `{"status":"cancelled"}`; conta excluída
+  derruba o link). Página pública `/viagem/[token]` com `noindex` e
+  `referrer: no-referrer`.
+- Testes de banco: `supabase/tests/calendario-compartilhar-0094.sql`.
+- Rollback: `supabase/rollback/0094_rollback.sql`.

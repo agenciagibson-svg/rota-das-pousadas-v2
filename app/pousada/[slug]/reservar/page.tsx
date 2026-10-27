@@ -85,7 +85,9 @@ export default async function ReservarPage({
           : null
   const problemMessage = {
     invalid: {
-      title: tooLong ? `Pelo site, a reserva vai até ${PUBLIC_STAY_MAX_NIGHTS} noites.` : 'Não entendemos as datas escolhidas.',
+      title: tooLong
+        ? `Pelo site, a reserva vai até ${PUBLIC_STAY_MAX_NIGHTS} noites.`
+        : 'Não entendemos as datas escolhidas.',
       body: tooLong
         ? 'Para uma estadia maior, fale com a pousada. Ou escolha outro período abaixo.'
         : 'Confira se a saída é depois da entrada e escolha o período abaixo.',
@@ -231,6 +233,7 @@ export default async function ReservarPage({
                     capacity={offer.capacity}
                     quote={bookable?.quote ?? null}
                     roomId={bookable?.roomId ?? roomId}
+                    calendarRoomId={roomId}
                     initialCheckin={clearDates ? '' : initial.checkin}
                     initialCheckout={clearDates ? '' : initial.checkout}
                     initialGuests={clearGuests ? undefined : initial.guests}

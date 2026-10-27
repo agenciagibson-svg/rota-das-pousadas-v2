@@ -57,6 +57,8 @@ export const RESERVED_SLUGS: readonly string[] = [
   'sobre',
   'suporte',
   'termos',
+  // Link da reserva para o acompanhante (0094).
+  'viagem',
   'sitemap',
   'robots',
   'manifest',

@@ -10,6 +10,10 @@ import { cn } from '@/lib/utils'
 import { isReservedSlug } from '@/lib/slug'
 import { publicEnv } from '@/lib/env'
 import { QuoteCard } from '@/features/bio/components/quote-card'
+import { BioPriceCalendar } from '@/features/bio/components/bio-price-calendar'
+import { clampMonth, indexCalendarDays, isMonth, monthOf } from '@/features/reservas'
+import { getPriceCalendar } from '@/server/queries'
+import { isoDateInTimeZone } from '@/lib/dates'
 import {
   getBioPousadaBySlug,
   listBookableRooms,
@@ -28,6 +32,7 @@ import { formatBRL } from '@/lib/format'
  *="get"` e os resultados vêm renderizados do servidor. Esse link abre quase
  * sempre dentro do navegador interno do Instagram, em celular e rede ruim —
  * cada script a menos é conversão a mais. Só o card de orçamento é cliente.
+ * O calendário com preço (h6) também é só HTML: cada dia é um link.
  *
  * ROTA NA RAIZ: mora em `/<slug>` para caber na bio. Caminho estático sempre
  * vence sobre dinâmico no App Router, então um slug igual a um caminho do site
@@ -37,7 +42,7 @@ export const dynamic = 'force-dynamic'
 
 type PageProps = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ checkin?: string; checkout?: string; hospedes?: string }>
+  searchParams: Promise<{ checkin?: string; checkout?: string; hospedes?: string; mes?: string }>
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -135,7 +140,17 @@ export default async function BioPage({ params, searchParams }: PageProps) {
     )
   }
 
-  const rooms = await listBookableRooms(slug, checkin, checkout, guests)
+  // Calendário com preço (h6): mês da URL, ou o da entrada escolhida, ou o atual.
+  const today = isoDateInTimeZone(new Date())
+  const calendarMonth = clampMonth(
+    isMonth(query.mes) ? query.mes : monthOf(checkin ?? today),
+    today,
+  )
+  const [rooms, calendarDays] = await Promise.all([
+    listBookableRooms(slug, checkin, checkout, guests),
+    // Calendário é extra: se falhar, a página segue com o formulário de datas.
+    getPriceCalendar(slug, calendarMonth, guests).catch(() => []),
+  ])
 
   await recordLinkEvent({ pousadaId: pousada.id, event: 'view' })
   if (hasDates) {
@@ -206,6 +221,16 @@ export default async function BioPage({ params, searchParams }: PageProps) {
           </button>
         </div>
       </form>
+
+      <BioPriceCalendar
+        slug={pousada.slug}
+        month={calendarMonth}
+        days={indexCalendarDays(calendarDays)}
+        today={today}
+        selection={{ checkin: checkin ?? '', checkout: checkout ?? '' }}
+        guests={guests}
+        open={!hasDates}
+      />
 
       {hasDates && (
         <p className="text-muted-foreground text-sm tabular-nums">

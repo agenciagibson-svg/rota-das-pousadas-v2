@@ -22,6 +22,11 @@ import {
   listPublicRooms as publicRooms,
 } from '@/features/reservas/services/bookings.service'
 import { getMyPrecheckin } from '@/features/reservas/services/precheckin.service'
+import { getPublicPriceCalendar } from '@/features/reservas/services/price-calendar.service'
+import {
+  getMyBookingCalendarFile,
+  getSharedTrip as sharedTrip,
+} from '@/features/reservas/services/booking-share.service'
 import {
   getOwnerPousada as ownerPousada,
   getOwnerSettings as ownerSettings,
@@ -133,6 +138,16 @@ export const getPublicRooms = cache(
 export const getBookableRoom = cache(
   (slug: string, checkin?: string, checkout?: string, guests = 1, roomId?: string) =>
     bookableRoom(slug, checkin, checkout, guests, roomId),
+)
+
+/** Arquivo .ics da reserva do hóspede logado (0094). `null` = não é dele. */
+export const getMyBookingIcs = cache((bookingId: string) => getMyBookingCalendarFile(bookingId))
+/** Página pública do link da reserva para o acompanhante (0094). */
+export const getSharedTrip = cache((token: string) => sharedTrip(token))
+
+/** Calendário com preço por dia de um mês (0094): diária "a partir de", vaga e mínimo. */
+export const getPriceCalendar = cache((slug: string, month: string, guests = 1, roomId?: string) =>
+  getPublicPriceCalendar({ slug, month, guests, roomId }),
 )
 
 /**

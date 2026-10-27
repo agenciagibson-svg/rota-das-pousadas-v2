@@ -219,6 +219,32 @@ export type Database = {
           },
         ]
       }
+      booking_share_links: {
+        Row: {
+          booking_id: string
+          created_at: string
+          token: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          token: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'booking_share_links_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: true
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       bookings: {
         Row: {
           adults: number
@@ -3271,6 +3297,21 @@ export type Database = {
         Args: { p_pousada: string }
         Returns: { id: string; name: string }[]
       }
+      public_price_calendar: {
+        Args: {
+          p_from: string
+          p_guests?: number
+          p_room_id?: string
+          p_slug: string
+          p_to: string
+        }
+        Returns: {
+          available: boolean
+          from_price: number | null
+          min_nights: number
+          night: string
+        }[]
+      }
       purge_stale_quote_requests: {
         Args: { p_retention_days?: number }
         Returns: Json
@@ -3564,6 +3605,18 @@ export type Database = {
       }
       revoke_platform_role_by_email: {
         Args: { p_email: string }
+        Returns: Json
+      }
+      share_my_booking: {
+        Args: { p_booking_id: string; p_renew?: boolean }
+        Returns: string
+      }
+      revoke_my_booking_share: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
+      get_shared_booking: {
+        Args: { p_token: string }
         Returns: Json
       }
       save_channel_calendar: {

@@ -2,8 +2,8 @@
 
 import { useState, type ComponentProps } from 'react'
 import Link from 'next/link'
-import { Star } from 'lucide-react'
-import { buttonVariants } from '@/components/ui/button'
+import { CalendarDays, Star } from 'lucide-react'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { SearchField } from '@/components/ui/search-field'
 import { nightsBetween, type StayQuote } from '@/features/reservas/pricing'
 import {
@@ -11,6 +11,7 @@ import {
   quoteAllowsBooking,
 } from '@/features/reservas/components/stay-price-summary'
 import { useStayQuote } from '@/features/reservas/components/use-stay-quote'
+import { PriceCalendar } from '@/features/reservas/components/price-calendar'
 import { isoDateInTimeZone } from '@/lib/dates'
 import { formatBRL, formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -81,6 +82,9 @@ export function PousadaBooking({
   // Sem datas na URL o card abre com datas sugeridas; só cota no servidor
   // (trocando a URL) depois que a pessoa mexe nelas.
   const [touched, setTouched] = useState(false)
+  // Calendário com preço por dia (h6): fechado por padrão para o card fixo
+  // da lateral não passar da altura da tela.
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const nightly = room?.nightly ?? 0
   const capacity = room?.capacity ?? 1
@@ -170,6 +174,39 @@ export function PousadaBooking({
             />
           </div>
         </div>
+
+        {room && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-expanded={calendarOpen}
+              aria-controls="reserva-calendario"
+              onClick={() => setCalendarOpen((open) => !open)}
+              className="mt-2"
+            >
+              <CalendarDays className="size-4" />
+              {calendarOpen ? 'Fechar calendário' : 'Ver diárias no calendário'}
+            </Button>
+            {calendarOpen && (
+              <PriceCalendar
+                id="reserva-calendario"
+                className="mt-2"
+                slug={slug}
+                guests={guests}
+                today={todayIso()}
+                checkin={checkin}
+                checkout={checkout}
+                onChange={(selection) => {
+                  setTouched(true)
+                  setCheckin(selection.checkin)
+                  setCheckout(selection.checkout)
+                }}
+              />
+            )}
+          </>
+        )}
 
         <ReserveAction
           href={href}

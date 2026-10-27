@@ -4,7 +4,22 @@
  */
 export { BookingForm } from './components/booking-form'
 export { CancelBookingButton } from './components/cancel-booking-button'
+export { BookingTripActions } from './components/booking-trip-actions'
 export { StaleDatesNotice } from './components/stale-dates-notice'
+export { PriceCalendar } from './components/price-calendar'
+export { PriceCalendarGrid } from './components/price-calendar-grid'
+export {
+  buildCalendarMonth,
+  canGoToMonth,
+  clampMonth,
+  indexCalendarDays,
+  isMonth,
+  monthOf,
+  nextSelection,
+  selectionHint,
+  shiftMonth,
+} from './price-calendar'
+export type { CalendarSelection, PriceCalendarDay } from './price-calendar'
 export {
   averageNightly,
   calculateBookingPrice,

@@ -53,6 +53,17 @@ export const createBookingSchema = z
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>
 
+/**
+ * Consulta do calendário com preço (0094): mês, hóspedes e, se a pessoa já
+ * escolheu, a acomodação. Usado pela rota `/pousada/[slug]/calendario`.
+ */
+export const priceCalendarQuerySchema = z.object({
+  mes: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Mês inválido.'),
+  hospedes: z.coerce.number().int().min(1).max(20).catch(1),
+  quarto: z.string().uuid().optional().catch(undefined),
+})
+export type PriceCalendarQuery = z.infer<typeof priceCalendarQuerySchema>
+
 const bookingOrigins = [
   'rota_das_pousadas',
   'site_proprio',
@@ -162,6 +173,13 @@ const cancelBookingSchema = z.object({
 })
 export type CancelBookingInput = z.infer<typeof cancelBookingSchema>
 export { cancelBookingSchema }
+
+/** Link da reserva para o acompanhante (0094): o atual ou um novo (`renew`). */
+export const shareBookingSchema = z.object({
+  bookingId: z.string().uuid('Reserva inválida.'),
+  renew: z.boolean().default(false),
+})
+export type ShareBookingInput = z.infer<typeof shareBookingSchema>
 
 export const companionSchema = z.object({
   guestId: z.string().uuid().optional(),

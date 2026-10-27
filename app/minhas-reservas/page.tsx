@@ -21,7 +21,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { buttonVariants } from '@/components/ui/button'
-import { BOOKING_STATUS, CancelBookingButton } from '@/features/reservas'
+import { BOOKING_STATUS, BookingTripActions, CancelBookingButton } from '@/features/reservas'
 import { guestPrecheckinState, precheckinPath } from '@/features/reservas/precheckin'
 import type { BookingStatus } from '@/features/reservas'
 import { getCurrentUser, getMyBookingsReconciled } from '@/server/queries'
@@ -348,6 +348,22 @@ export default async function MyBookingsPage({
                               <CancelBookingButton bookingId={booking.id} />
                             )}
                           </div>
+
+                          {/* h9: agenda (.ics) e link para o acompanhante. Sem banco
+                              (demonstração) não há reserva de verdade para baixar. */}
+                          {!demo &&
+                            !expired &&
+                            isActiveStatus(booking.status) &&
+                            booking.status !== 'checked_out' && (
+                              <div className="border-border mt-4 border-t pt-4">
+                                <BookingTripActions
+                                  bookingId={booking.id}
+                                  pousadaName={booking.pousadaName}
+                                  checkin={booking.checkin}
+                                  checkout={booking.checkout}
+                                />
+                              </div>
+                            )}
                         </div>
                       </div>
                     </Card>

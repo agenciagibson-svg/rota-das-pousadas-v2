@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { buttonVariants } from '@/components/ui/button'
-import { BOOKING_STATUS } from '@/features/reservas'
+import { BOOKING_STATUS, BookingTripActions } from '@/features/reservas'
 import type { Booking } from '@/features/reservas'
 import { getMyBookingsReconciled, getCurrentUser, getCanPayOnline } from '@/server/queries'
 import {
@@ -268,6 +268,23 @@ export default async function PagamentoReservaPage({
               )}
             </div>
           </Card>
+
+          {/* h9: agenda e link para o acompanhante, enquanto a reserva vale. */}
+          {!deadlinePassed && booking.status !== 'cancelled' && booking.status !== 'no_show' && (
+            <Card radius="3xl" border={false} className="mt-6 p-6 lg:p-8">
+              <h2 className="text-h3 text-foreground">Sua viagem</h2>
+              <p className="text-muted-foreground mt-1 mb-4 text-sm">
+                Guarde as datas na sua agenda e mande o endereço e os horários para quem vai com
+                você.
+              </p>
+              <BookingTripActions
+                bookingId={booking.id}
+                pousadaName={booking.pousadaName}
+                checkin={booking.checkin}
+                checkout={booking.checkout}
+              />
+            </Card>
+          )}
 
           <p className="text-muted-foreground mt-6 text-center text-sm">
             <Link

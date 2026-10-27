@@ -12,6 +12,8 @@ import { updateMyNameAction } from '@/features/auth/actions'
 import type { StayQuote } from '../pricing'
 import { StayPriceSummary, quoteAllowsBooking } from './stay-price-summary'
 import { useStayQuote } from './use-stay-quote'
+import { PriceCalendar } from './price-calendar'
+import { isoDateInTimeZone } from '@/lib/dates'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -25,6 +27,7 @@ export function BookingForm({
   capacity,
   quote,
   roomId,
+  calendarRoomId,
   initialCheckin = '',
   initialCheckout = '',
   initialGuests,
@@ -37,6 +40,11 @@ export function BookingForm({
   quote: StayQuote | null
   /** Acomodação escolhida antes (ex.: na página da bio). */
   roomId?: string
+  /**
+   * Acomodação que o calendário com preço considera. Só quando a pessoa
+   * escolheu uma (bio); sem ela o calendário mostra o "a partir de" de todas.
+   */
+  calendarRoomId?: string
   initialCheckin?: string
   initialCheckout?: string
   initialGuests?: string
@@ -53,6 +61,7 @@ export function BookingForm({
     handleSubmit,
     watch,
     getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateBookingInput>({
     resolver: zodResolver(createBookingSchema),
@@ -139,6 +148,18 @@ export function BookingForm({
           {...register('checkout')}
         />
       </div>
+      <PriceCalendar
+        slug={pousadaSlug}
+        guests={guests}
+        roomId={calendarRoomId}
+        today={isoDateInTimeZone(new Date())}
+        checkin={checkin}
+        checkout={checkout}
+        onChange={(selection) => {
+          setValue('checkin', selection.checkin, { shouldValidate: Boolean(errors.checkin) })
+          setValue('checkout', selection.checkout, { shouldValidate: Boolean(errors.checkout) })
+        }}
+      />
       <Input
         label={`Hóspedes (máx. ${capacity})`}
         type="number"

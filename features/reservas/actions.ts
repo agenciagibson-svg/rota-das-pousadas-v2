@@ -7,6 +7,7 @@ import {
   createBookingAdminSchema,
   createBookingSchema,
   setBookingCompanionsSchema,
+  shareBookingSchema,
   updateBookingSchema,
 } from './schemas'
 import {
@@ -17,6 +18,7 @@ import {
   updateAdminBooking,
 } from './services/bookings.service'
 import { submitMyPrecheckin } from './services/precheckin.service'
+import { revokeMyBookingShare, shareMyBooking } from './services/booking-share.service'
 import { precheckinSchema, precheckinPath } from './precheckin'
 
 /** A reserva do hóspede também muda o que a pousada vê no painel. */
@@ -41,6 +43,20 @@ export const cancelBookingAction = createAction(cancelBookingSchema, async (inpu
   await cancelMyBooking(input.bookingId)
   revalidatePath('/minhas-reservas')
   revalidatePanelBookings()
+  return { ok: true as const }
+})
+
+/**
+ * "Enviar para quem vai comigo" (0094): devolve o link só de leitura da
+ * reserva do hóspede logado — o mesmo de antes, ou um novo com `renew`.
+ */
+export const shareBookingAction = createAction(shareBookingSchema, async (input) =>
+  shareMyBooking(input.bookingId, input.renew),
+)
+
+/** Desativa o link da reserva (quem tiver o link antigo passa a ver "link não encontrado"). */
+export const revokeBookingShareAction = createAction(cancelBookingSchema, async (input) => {
+  await revokeMyBookingShare(input.bookingId)
   return { ok: true as const }
 })
 
