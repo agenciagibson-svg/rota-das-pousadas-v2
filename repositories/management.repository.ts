@@ -16,6 +16,8 @@ import type {
   OwnerReservation,
 } from '@/features/gestao/types'
 import type { Database } from '@/lib/supabase/database.types'
+import { pointFromColumns } from '@/lib/geo/coordinates'
+import type { GeoPoint } from '@/types'
 
 type BookingOriginColumn = Database['public']['Enums']['booking_origin']
 
@@ -54,7 +56,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
   const { data, error } = await supabase
     .from('pousadas')
     .select(
-      'id, slug, name, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, house_rules, cancellation_policy',
+      'id, slug, name, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, house_rules, cancellation_policy, latitude, longitude',
     )
     .eq('id', pousadaId)
     .maybeSingle()
@@ -95,6 +97,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
     notificationEmail: priv?.notification_email ?? '',
     houseRules: data.house_rules,
     cancellationPolicy: data.cancellation_policy,
+    location: pointFromColumns(data.latitude, data.longitude),
   }
 }
 
@@ -156,6 +159,27 @@ export async function updatePousadaSettings(
     })
     .eq('id', pousadaId)
   if (error) throw error
+}
+
+/**
+ * Ponto da pousada no mapa (0095). `null` apaga o ponto (a página pública
+ * deixa de mostrar o mapa). Mesmo caminho das Configurações: a RLS
+ * `pousadas_update` só deixa proprietário/gestor da pousada e a equipe
+ * comercial/master; as checagens de faixa ficam também no banco.
+ */
+export async function updatePousadaLocation(
+  pousadaId: string,
+  point: GeoPoint | null,
+): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('pousadas')
+    .update({ latitude: point?.lat ?? null, longitude: point?.lng ?? null })
+    .eq('id', pousadaId)
+    .select('id')
+  if (error) throw error
+  // RLS recusa em silêncio (0 linhas): sem isto a tela diria "salvo".
+  if (!data?.length) throw new Error('Não foi possível salvar o ponto desta pousada.')
 }
 
 /**

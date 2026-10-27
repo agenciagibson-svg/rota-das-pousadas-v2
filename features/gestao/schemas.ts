@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { isStoredImageUrl } from '@/lib/validation/image-url'
 import { ufSchema, phoneSchema, cepSchema } from '@/lib/validation/br'
 import { isValidTimeZone } from '@/lib/dates'
+import { geoPointSchema } from '@/lib/geo/coordinates'
 import type { BookingStatus } from '@/features/reservas/types'
 
 /** Ação sobre uma data do calendário, como bloquear ou desbloquear. */
@@ -102,3 +103,10 @@ export const pousadaSettingsSchema = z.object({
   cancellationPolicy: z.string().trim().max(1500, 'Política muito longa.'),
 })
 export type PousadaSettingsInput = z.infer<typeof pousadaSettingsSchema>
+
+/** Ponto da pousada no mapa (0095). `null` apaga o ponto. */
+export const pousadaLocationSchema = z.object({ location: geoPointSchema.nullable() }).strict()
+export type PousadaLocationInput = z.infer<typeof pousadaLocationSchema>
+
+/** "Buscar pelo endereço" não recebe nada do navegador: usa o endereço salvo. */
+export const geocodeAddressActionSchema = z.object({}).strict()

@@ -14,11 +14,22 @@ import { isSupabaseConfigured, publicEnv } from '@/lib/env'
  * NÃO faz autorização de negócio (isso é RBAC nos Services + RLS no Postgres).
  */
 
+/**
+ * Mapas (h8, MapLibre + OpenFreeMap): o estilo, os tiles vetoriais, as
+ * fontes e os ícones do mapa são baixados por `fetch` (do navegador e do
+ * worker do MapLibre), todos de `tiles.openfreemap.org` — por isso o domínio
+ * entra só em `connect-src`. As imagens do mapa viram `blob:`/`data:`, que
+ * `img-src` já aceita. Nada muda em `script-src`: o MapLibre é um pacote do
+ * próprio app, servido de `/_next/static/`.
+ */
+const MAP_TILES_ORIGIN = 'https://tiles.openfreemap.org'
+
 const CONNECT_SRC = [
   "'self'",
   'https://*.supabase.co',
   'https://*.supabase.in',
   'https://vitals.vercel-insights.com',
+  MAP_TILES_ORIGIN,
 ]
 
 /**
@@ -55,6 +66,13 @@ const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
  *
  * `style-src 'unsafe-inline'` continua em todo lugar: `next/font` e o
  * Tailwind injetam estilo inline. Dívida registrada, não esquecimento.
+ *
+ * `worker-src 'self'` (h8): o MapLibre processa os tiles num Web Worker. O
+ * arquivo do worker é publicado pelo Next em `/_next/static/` (ver
+ * `components/map/maplibre.ts`), mesmo domínio — sem `blob:`. Antes a
+ * diretiva não existia e o navegador caía em `script-src`; explícita, ela
+ * vale para o worker do mapa e para o service worker da estadia
+ * (`/sw-estadia.js`), ambos do próprio site.
  */
 function contentSecurityPolicy(nonce: string): string {
   return [
@@ -68,6 +86,7 @@ function contentSecurityPolicy(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN}`,
     `frame-src ${TURNSTILE_ORIGIN}`,
+    "worker-src 'self'",
     `connect-src ${CONNECT_SRC.join(' ')}`,
     'upgrade-insecure-requests',
   ].join('; ')

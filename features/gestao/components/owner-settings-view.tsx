@@ -1,6 +1,16 @@
 'use client'
 
-import { Clock3, CreditCard, Mail, Phone, QrCode, Settings, Smartphone, Wallet } from 'lucide-react'
+import {
+  Clock3,
+  CreditCard,
+  Mail,
+  MapPin,
+  Phone,
+  QrCode,
+  Settings,
+  Smartphone,
+  Wallet,
+} from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
 import { Card } from '@/components/ui/card'
@@ -13,6 +23,7 @@ import type { OwnerPousadaSettings } from '../types'
 import { GuestSettingsForm } from '@/features/pedidos/components/guest-settings-form'
 import type { GuestSettings } from '@/features/pedidos/types'
 import { OwnerSettingsForm } from './owner-settings-form'
+import { PousadaLocationForm } from './pousada-location-form'
 
 function formatSubscriptionAmount(value: number): string {
   return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -68,15 +79,32 @@ export function OwnerSettingsView({
         />
       ) : (
         <div className="grid gap-5 2xl:grid-cols-[1.3fr_0.7fr]">
-          <Card className="p-6">
-            <h2 className="text-foreground font-semibold">Dados da pousada</h2>
-            <p className="text-muted-foreground text-sm">
-              Essas informações alimentam a página pública e a operação de reservas.
-            </p>
-            <div className="mt-6">
-              <OwnerSettingsForm settings={settings} />
-            </div>
-          </Card>
+          <div className="space-y-5">
+            <Card className="p-6">
+              <h2 className="text-foreground font-semibold">Dados da pousada</h2>
+              <p className="text-muted-foreground text-sm">
+                Essas informações alimentam a página pública e a operação de reservas.
+              </p>
+              <div className="mt-6">
+                <OwnerSettingsForm settings={settings} />
+              </div>
+            </Card>
+            <Card className="p-6">
+              <h2 className="text-foreground flex items-center gap-2 font-semibold">
+                <MapPin className="text-primary size-4" />
+                Localização no mapa
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                O ponto marcado aqui aparece no mapa da página da pousada e na busca.
+              </p>
+              <div className="mt-6">
+                <PousadaLocationForm
+                  initial={settings.location}
+                  hasAddress={Boolean(settings.address.trim() || settings.city.trim())}
+                />
+              </div>
+            </Card>
+          </div>
 
           <div className="space-y-4">
             <Card className="p-5">

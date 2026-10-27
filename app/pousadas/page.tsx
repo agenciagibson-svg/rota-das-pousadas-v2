@@ -12,6 +12,8 @@ import { getPousadas } from '@/server/queries'
 import { PaginationLinks } from '@/components/ui/pagination'
 import { formatISODate } from '@/lib/format'
 import { catalogQuerySchema, singleParam } from '@/features/pousadas/search'
+import { ResultsViewToggle, type ResultsView } from '@/components/map/results-view-toggle'
+import { PousadasResultsMap, type MapResult } from '@/components/map/pousadas-results-map'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +28,7 @@ export default async function PousadasPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const query = await searchParams
-  const [busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina] = [
+  const [busca, checkin, checkout, hospedes, temporada, surpresa, oferta, pagina, ver] = [
     'busca',
     'checkin',
     'checkout',
@@ -35,7 +37,9 @@ export default async function PousadasPage({
     'surpresa',
     'oferta',
     'pagina',
+    'ver',
   ].map((key) => singleParam(query[key]))
+  const view: ResultsView = ver === 'mapa' ? 'mapa' : 'lista'
   const parsed = catalogQuerySchema.safeParse({
     search: busca,
     checkin,
@@ -56,10 +60,30 @@ export default async function PousadasPage({
       temporada,
       surpresa,
       oferta,
+      ver: view === 'mapa' ? 'mapa' : undefined,
     })) {
       if (value) params.set(key, value)
     }
     return `/pousadas?${params}`
+  }
+  /** Mesma busca e mesma página, trocando só entre lista e mapa. */
+  function viewHref(next: ResultsView) {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries({
+      busca,
+      checkin,
+      checkout,
+      hospedes,
+      temporada,
+      surpresa,
+      oferta,
+      pagina,
+    })) {
+      if (value) params.set(key, value)
+    }
+    if (next === 'mapa') params.set('ver', 'mapa')
+    const qs = params.toString()
+    return qs ? `/pousadas?${qs}` : '/pousadas'
   }
   const activeFilters = [
     surpresa === '1' ? 'Rota surpresa' : null,
@@ -79,6 +103,26 @@ export default async function PousadasPage({
     const query = params.toString()
     return query ? `/pousada/${slug}?${query}` : `/pousada/${slug}`
   }
+
+  // Só entra no mapa quem tem ponto marcado pelo dono (0095) — nada de
+  // alfinete chutado no centro da cidade.
+  const mapResults: MapResult[] = result.items.flatMap((pousada) =>
+    pousada.coordinates
+      ? [
+          {
+            slug: pousada.slug,
+            name: pousada.name,
+            city: pousada.city,
+            state: pousada.state,
+            image: pousada.image,
+            price: pousada.pricePerNight,
+            href: pousadaHref(pousada.slug),
+            point: pousada.coordinates,
+          },
+        ]
+      : [],
+  )
+  const withoutPoint = result.items.length - mapResults.length
 
   return (
     <div className="bg-background min-h-screen">
@@ -175,14 +219,23 @@ export default async function PousadasPage({
               </div>
             ) : null}
           </div>
-          {busca ? (
-            <Link
-              href="/pousadas"
-              className={cn(buttonVariants({ variant: 'outline', size: 'pill-sm' }), 'w-fit')}
-            >
-              Limpar busca
-            </Link>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {result.items.length ? (
+              <ResultsViewToggle
+                current={view}
+                listHref={viewHref('lista')}
+                mapHref={viewHref('mapa')}
+              />
+            ) : null}
+            {busca ? (
+              <Link
+                href="/pousadas"
+                className={cn(buttonVariants({ variant: 'outline', size: 'pill-sm' }), 'w-fit')}
+              >
+                Limpar busca
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         {!parsed.success && (
@@ -191,7 +244,32 @@ export default async function PousadasPage({
               'Informe datas válidas de entrada e saída, quantidade de hóspedes e página.'}
           </p>
         )}
-        {result.items.length ? (
+        {result.items.length && view === 'mapa' ? (
+          <div className="mt-8">
+            {mapResults.length ? (
+              <PousadasResultsMap results={mapResults} />
+            ) : (
+              <Card radius="3xl" border={false} className="p-10 text-center">
+                <h2 className="text-h2 text-foreground">Ainda sem pontos no mapa</h2>
+                <p className="text-muted-foreground mt-2 text-base">
+                  As pousadas desta lista ainda não marcaram a localização no mapa. Veja a lista.
+                </p>
+              </Card>
+            )}
+            {mapResults.length > 0 && withoutPoint > 0 && (
+              <p className="text-muted-foreground mt-3 text-sm">
+                {withoutPoint === 1
+                  ? '1 pousada desta página ainda não marcou o ponto no mapa — ela aparece na lista.'
+                  : `${withoutPoint} pousadas desta página ainda não marcaram o ponto no mapa — elas aparecem na lista.`}
+              </p>
+            )}
+            {mapResults.length > 0 && result.totalPages > 1 && (
+              <p className="text-muted-foreground mt-3 text-sm">
+                O mapa mostra as pousadas desta página. Use a paginação abaixo para ver as outras.
+              </p>
+            )}
+          </div>
+        ) : result.items.length ? (
           <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {result.items.map((pousada) => (
               <li key={pousada.slug}>

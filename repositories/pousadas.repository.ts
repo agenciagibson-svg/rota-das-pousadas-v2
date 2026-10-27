@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseStaticClient } from '@/lib/supabase/static'
 import type { Database } from '@/lib/supabase/database.types'
 import { normalizeCatalogText, parseCatalogQuery } from '@/features/pousadas/search'
+import { pointFromColumns } from '@/lib/geo/coordinates'
 
 /**
  * Contrato de acesso a dados de Pousadas. Única camada que fala com o banco.
@@ -71,9 +72,12 @@ type PousadaRow = Database['public']['Tables']['pousadas']['Row']
  * id do dono ficam fora; o painel lê esses campos pela RPC
  * `get_pousada_private_settings`. Nunca use `.select('*')` em `pousadas`:
  * a consulta é recusada pelo banco.
+ *
+ * `latitude`/`longitude` (0095): a migration precisa estar aplicada ANTES
+ * do deploy deste código — sem as colunas, a página da pousada quebra.
  */
 export const PUBLIC_POUSADA_COLUMNS =
-  'id, slug, name, city, state, destination_id, image, gallery, rating, reviews, price_per_night, tags, description, status, created_at, updated_at, checkin_time, checkout_time, contact_phone, house_rules, cancellation_policy, tenant_status, whatsapp, address, country, timezone, currency, language, instagram, cep'
+  'id, slug, name, city, state, destination_id, image, gallery, rating, reviews, price_per_night, tags, description, status, created_at, updated_at, checkin_time, checkout_time, contact_phone, house_rules, cancellation_policy, tenant_status, whatsapp, address, country, timezone, currency, language, instagram, cep, latitude, longitude'
 
 export type PublicPousadaRow = Omit<
   PousadaRow,
@@ -107,6 +111,8 @@ function rowToPousada(r: PublicPousadaRow): Pousada {
     houseRules: r.house_rules,
     whatsapp: r.whatsapp,
     contactPhone: r.contact_phone,
+    // Vem também na busca (0095), para o mapa de `/pousadas`.
+    coordinates: pointFromColumns(r.latitude, r.longitude),
   }
 }
 

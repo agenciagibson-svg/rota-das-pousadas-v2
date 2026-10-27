@@ -1,3 +1,4 @@
+import type { GeoPoint } from '@/types'
 import type { BookingOrigin, BookingStatus } from '@/features/reservas/types'
 
 /** Reserva na visão do proprietário. */
@@ -66,6 +67,8 @@ export type OwnerPousadaSettings = {
   notificationEmail: string
   houseRules: string
   cancellationPolicy: string
+  /** Ponto marcado no mapa (0095); `null` enquanto o dono não marcar. */
+  location: GeoPoint | null
 }
 
 export type OwnerReview = {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import {
+  Car,
   ClipboardList,
   Clock3,
   MapPin,
@@ -17,6 +18,8 @@ import { Card } from '@/components/ui/card'
 import { formatBRL } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Gallery } from '@/components/ui/gallery'
+import { PousadaLocationMap } from '@/components/map/pousada-location-map'
+import { directionsLinks } from '@/lib/geo/coordinates'
 
 /** Avaliação pública (sem nome do autor — ver `reviews.repository.ts::listPublicReviewsByPousada`). */
 export type PublicReview = {
@@ -309,15 +312,24 @@ export function ReviewsSection({
 }
 
 export function LocationSection({ pousada }: { pousada: Pousada }) {
-  const mapsUrl = pousada.address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pousada.address}, ${pousada.city} - ${pousada.state}`)}`
-    : null
+  const point = pousada.coordinates ?? null
+  // Com o ponto marcado pelo dono (0095), os apps de rota vão direto a ele;
+  // sem ponto, buscam pelo endereço em texto, como antes.
+  const links = directionsLinks(
+    point,
+    pousada.address ? `${pousada.address}, ${pousada.city} - ${pousada.state}` : '',
+  )
   return (
     <Block id={sectionIds.localizacao} title="Localização">
+      {/* Sem coordenadas, sem mapa: nada de alfinete chutado no centro da cidade. */}
+      {point && <PousadaLocationMap point={point} name={pousada.name} />}
       <Card
         radius="3xl"
         border={false}
-        className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center"
+        className={cn(
+          'flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center',
+          point && 'mt-4',
+        )}
       >
         <div className="flex items-start gap-3 text-base">
           <MapPin className="text-foreground mt-0.5 size-5 shrink-0" />
@@ -330,16 +342,27 @@ export function LocationSection({ pousada }: { pousada: Pousada }) {
             )}
           </div>
         </div>
-        {mapsUrl && (
-          <a
-            href={mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: 'outline', size: 'pill' }), 'shrink-0')}
-          >
-            <Navigation className="size-4" />
-            Ver no mapa
-          </a>
+        {links && (
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <a
+              href={links.googleMaps}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: 'outline', size: 'pill' })}
+            >
+              <Navigation className="size-4" />
+              Ver no Google Maps
+            </a>
+            <a
+              href={links.waze}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: 'outline', size: 'pill' })}
+            >
+              <Car className="size-4" />
+              Ir com o Waze
+            </a>
+          </div>
         )}
       </Card>
     </Block>

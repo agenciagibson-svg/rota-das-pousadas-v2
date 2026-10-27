@@ -5,6 +5,8 @@ import { createAction } from '@/actions/create-action'
 import {
   bookingIdActionSchema,
   dateActionSchema,
+  geocodeAddressActionSchema,
+  pousadaLocationSchema,
   pousadaSettingsSchema,
   reservationStatusActionSchema,
   reviewResponseActionSchema,
@@ -17,6 +19,7 @@ import {
   updateOwnerSettings,
   updateOwnerReservationStatus,
 } from './services/pms.service'
+import { geocodeOwnerPousadaAddress, updateOwnerPousadaLocation } from './services/location.service'
 
 export const blockDateAction = createAction(dateActionSchema, async (input) => {
   const { affected } = await blockOwnerDate(input.date, input.roomId)
@@ -67,4 +70,19 @@ export const updatePousadaSettingsAction = createAction(pousadaSettingsSchema, a
   revalidatePath('/pousada/[slug]', 'page')
   revalidatePath('/[slug]', 'page')
   return { ok: true as const }
+})
+
+/** Endereço salvo → ponto sugerido no mapa. Não grava nada: o dono confere e salva. */
+export const geocodePousadaAddressAction = createAction(geocodeAddressActionSchema, async () =>
+  geocodeOwnerPousadaAddress(),
+)
+
+export const updatePousadaLocationAction = createAction(pousadaLocationSchema, async (input) => {
+  const location = await updateOwnerPousadaLocation(input.location)
+  revalidatePath('/dashboard/configuracoes')
+  // Mapa da página da pousada e da busca.
+  revalidatePath('/pousadas')
+  revalidatePath('/pousada/[slug]', 'page')
+  revalidatePath('/[slug]', 'page')
+  return { location }
 })

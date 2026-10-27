@@ -28,6 +28,9 @@ export type Experience = {
   description: string
 }
 
+/** Ponto no mapa em graus decimais (WGS 84). Regras em `lib/geo/coordinates.ts`. */
+export type GeoPoint = { lat: number; lng: number }
+
 export type Pousada = {
   slug: string
   name: string
@@ -57,6 +60,11 @@ export type Pousada = {
   houseRules?: string
   whatsapp?: string
   contactPhone?: string
+  /**
+   * Ponto marcado pelo dono no painel (0095). `null`/ausente = sem mapa —
+   * a página e a busca não inventam um ponto a partir da cidade.
+   */
+  coordinates?: GeoPoint | null
 }
 
 export type Room = {
