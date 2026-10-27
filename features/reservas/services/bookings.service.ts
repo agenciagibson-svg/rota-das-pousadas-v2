@@ -17,6 +17,8 @@ import {
 import { ensureTravelerGuestRpc, upsertGuestRpc } from '@/repositories/guests.repository'
 import { calculateBookingPrice, nightsBetween, type StayQuote } from '@/features/reservas/pricing'
 import { listBookableRooms } from '@/repositories/bio.repository'
+import { createBookingWithCouponRpc } from '@/repositories/coupons.repository'
+import { couponRejectionMessage } from '@/features/cupons/discount'
 import { sendEmail } from '@/lib/email/mailer'
 import { bookingRequestReceivedEmail } from '@/lib/email/templates'
 import type {
@@ -113,6 +115,26 @@ export async function createBooking(
     fullName: user.name,
     email: user.email,
   })
+
+  // 0100: com cupom, a reserva nasce pela RPC que valida o cupom com lock e
+  // grava desconto e uso na mesma transação. Cupom recusado = nada é criado.
+  if (input.couponCode) {
+    const result = await createBookingWithCouponRpc({
+      pousadaId: bookable.pousadaId,
+      roomId: bookable.roomId,
+      responsibleGuestId: guestId,
+      checkin: input.checkin,
+      checkout: input.checkout,
+      adults: input.guests,
+      subtotal: price.subtotal,
+      couponCode: input.couponCode,
+      origin: input.origin ?? 'rota_das_pousadas',
+      expectedDiscount: input.expectedDiscount,
+    })
+    if (!result.ok) throw new Error(couponRejectionMessage(result))
+    await notifyBookingRequestReceived(result.id)
+    return { id: result.id, code: result.code }
+  }
 
   const { id, code } = await createBookingRpc({
     pousadaId: bookable.pousadaId,

@@ -5,6 +5,7 @@ import { getCurrentUser, getOwnerPousada, getOwnerReservationDetail } from '@/se
 import { BookingDetailView } from '@/features/reservas/components/booking-detail-view'
 import { listBookingProofsForStaff } from '@/features/pagamentos/services/pix.service'
 import { getBookingPaymentsForStaff } from '@/features/pagamentos/services/booking-payment.service'
+import { getBookingCouponForStaff } from '@/features/cupons/services/coupons.service'
 import {
   getBookingConsumption,
   listSellableItems,
@@ -36,7 +37,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   }
   if (!booking) notFound()
 
-  const [pousada, proofs, consumption, sellable, payments] = await Promise.all([
+  const [pousada, proofs, consumption, sellable, payments, coupon] = await Promise.all([
     getOwnerPousada(),
     listBookingProofsForStaff(booking.id).catch(() => []),
     // Conta de consumo não pode derrubar a página da reserva.
@@ -48,6 +49,11 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
     // Pagamentos da diária também não podem derrubar a página.
     getBookingPaymentsForStaff(booking.id).catch((e) => {
       console.error('[dashboard] pagamentos da reserva', e)
+      return null
+    }),
+    // Cupom usado (0100) — só informativo.
+    getBookingCouponForStaff(booking.id).catch((e) => {
+      console.error('[dashboard] cupom da reserva', e)
       return null
     }),
   ])
@@ -63,6 +69,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       payments={payments}
       todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
       canManageBooking={booking.canManageBooking}
+      coupon={coupon}
     />
   )
 }

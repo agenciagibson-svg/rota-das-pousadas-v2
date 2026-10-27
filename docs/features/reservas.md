@@ -312,3 +312,43 @@ anos à frente (limite no banco). `jit = off` na função (o JIT custava ~200 ms
   `referrer: no-referrer`.
 - Testes de banco: `supabase/tests/calendario-compartilhar-0094.sql`.
 - Rollback: `supabase/rollback/0094_rollback.sql`.
+
+## Cupom para quem reserva direto (0100)
+
+Objetivo: dar ao hóspede um motivo para reservar pelo link da pousada em vez do
+Booking/Airbnb. Feature em `features/cupons/`; banco em
+`supabase/migrations/0100_cupons_reserva_direta.sql`.
+
+- **Gestão** (Painel → Marketing, `coupon:manage` = dono e gestor; no banco,
+  `auth_can_manage_pousada`): criar, listar com quantas vezes foi usado,
+  pausar/reativar e escolher UM cupom divulgado. Código de 3–20 letras/números,
+  único por pousada sem diferenciar maiúsculas. Percentual (1–90%) ou valor fixo
+  em reais. Validade = período em que o cupom pode ser **usado** (data de hoje no
+  fuso da pousada); opcional "só para estadias entre X e Y" (entrada a partir de
+  X, saída até Y), estadia mínima e limite total de usos. Sempre uma vez por
+  hóspede (conta de viajante). Sem edição: para mudar, pause e crie outro.
+- **Valores**: reais inteiros, como `bookings.total`. Percentual arredonda para o
+  real mais próximo (meio real sobe). Valor fixo só vale para estadia que custe
+  mais do que ele (o total nunca zera). Conta em `coupon_discount` (banco) e
+  espelho em `features/cupons/discount.ts`.
+- **Reserva pelo site**: campo "Tenho um cupom" → `preview_booking_coupon`
+  (login; código inexistente, pausado, fora do período e esgotado dão a mesma
+  resposta; 10 códigos inválidos por conta em 1 hora bloqueiam). Ao confirmar
+  com cupom, a reserva nasce por `create_booking_with_coupon`, que na mesma
+  transação trava a linha do cupom, chama `create_booking` (intacta: no fluxo
+  público continua recusando desconto vindo do cliente) e grava
+  `bookings.discount`, o total com desconto e o uso. `balance_due` acompanha —
+  Pix e Mercado Pago já cobram o valor com desconto. Se o desconto calculado
+  for diferente do que a tela mostrou, nada é criado e a tela avisa.
+- **Uso devolvido**: reserva cancelada (inclusive expirada) marca o uso como
+  devolvido (gatilho em `bookings`); o hóspede pode usar de novo.
+- **Equipe/balcão** não usa cupom (tem o campo de desconto).
+- **Divulgação**: `get_featured_coupon(slug)` (público) só devolve o cupom
+  divulgado que vale hoje. A bio (`/<slug>`, sem JavaScript) e a página da
+  pousada mostram "Reservando direto aqui: use o cupom X e ganhe Y" com as
+  condições cadastradas; os links de reservar levam `?cupom=`, que preenche e
+  aplica o cupom na página de reserva.
+- **Detalhe da reserva** (painel) mostra o cupom usado.
+- Testes: `features/cupons/**/*.test.*`, `supabase/tests/cupons-0100.sql` e
+  `supabase/tests/concurrent-coupon.sql` (duas sessões ao mesmo tempo).
+  Rollback: `supabase/rollback/0100_rollback.sql`.

@@ -26,6 +26,19 @@ export const createBookingSchema = z
     /** Acomodação escolhida (ex.: na página da bio). Sem ela, a mais barata disponível. */
     roomId: z.string().uuid().optional(),
     origin: z.enum(PUBLIC_BOOKING_ORIGINS).optional(),
+    /**
+     * Cupom aplicado na tela (0100). O desconto é calculado e validado no
+     * banco (`create_booking_with_coupon`); `expectedDiscount` é só o valor que
+     * a pessoa viu — se o banco calcular outro, a reserva não é criada.
+     */
+    couponCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z0-9]{3,20}$/, 'Cupom inválido.')
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
+    expectedDiscount: z.number().int().nonnegative().optional(),
     checkin: isoDate,
     checkout: isoDate,
     guests: z.coerce

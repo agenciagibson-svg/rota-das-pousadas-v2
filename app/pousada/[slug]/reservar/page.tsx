@@ -10,6 +10,7 @@ import { Container } from '@/components/ui/container'
 import { Card } from '@/components/ui/card'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { BookingForm, StaleDatesNotice, bioOriginFromParam } from '@/features/reservas'
+import { couponFromParam } from '@/features/cupons/schemas'
 import { getPousada, getCurrentUser, getBookableRoom, getMyProfile } from '@/server/queries'
 import { buttonVariants } from '@/components/ui/button'
 import { formatPrice } from '@/lib/format'
@@ -34,11 +35,15 @@ export default async function ReservarPage({
     guests?: string
     origem?: string
     quarto?: string
+    cupom?: string
   }>
 }) {
   const { slug } = await params
   const initial = await searchParams
   const origin = bioOriginFromParam(initial.origem)
+  // Cupom divulgado vindo da bio (0100). Só preenche o campo: quem decide se
+  // vale (e quanto) é o banco, na prévia e na reserva.
+  const couponCode = couponFromParam(initial.cupom)
   // Acomodação escolhida na página da bio (0087). Valor estranho é ignorado.
   const roomId = UUID_RE.test(initial.quarto ?? '') ? initial.quarto : undefined
   const filters = catalogQuerySchema.safeParse({
@@ -111,6 +116,7 @@ export default async function ReservarPage({
     if (initial.guests) bookingParams.set('guests', initial.guests)
     if (origin) bookingParams.set('origem', origin)
     if (roomId) bookingParams.set('quarto', roomId)
+    if (couponCode) bookingParams.set('cupom', couponCode)
 
     const nextPath = `/pousada/${slug}/reservar${
       bookingParams.size > 0 ? `?${bookingParams.toString()}` : ''
@@ -122,7 +128,7 @@ export default async function ReservarPage({
   const me = await getMyProfile()
   const missingProfile = me?.missing ?? []
   const returnParams = new URLSearchParams()
-  for (const key of ['checkin', 'checkout', 'guests', 'origem', 'quarto'] as const) {
+  for (const key of ['checkin', 'checkout', 'guests', 'origem', 'quarto', 'cupom'] as const) {
     const value = initial[key]
     if (value) returnParams.set(key, value)
   }
@@ -238,6 +244,7 @@ export default async function ReservarPage({
                     initialCheckout={clearDates ? '' : initial.checkout}
                     initialGuests={clearGuests ? undefined : initial.guests}
                     origin={origin}
+                    initialCoupon={couponCode}
                   />
                 </div>
               ) : (

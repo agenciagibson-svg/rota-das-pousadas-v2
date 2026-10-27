@@ -2759,6 +2759,144 @@ export type Database = {
         }
         Relationships: []
       }
+      // 0100 — cupons para quem reserva direto
+      pousada_coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          featured: boolean
+          id: string
+          kind: string
+          max_uses: number | null
+          min_nights: number | null
+          pousada_id: string
+          stay_from: string | null
+          stay_until: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          featured?: boolean
+          id?: string
+          kind: string
+          max_uses?: number | null
+          min_nights?: number | null
+          pousada_id: string
+          stay_from?: string | null
+          stay_until?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          featured?: boolean
+          id?: string
+          kind?: string
+          max_uses?: number | null
+          min_nights?: number | null
+          pousada_id?: string
+          stay_from?: string | null
+          stay_until?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'pousada_coupons_pousada_id_fkey'
+            columns: ['pousada_id']
+            isOneToOne: false
+            referencedRelation: 'pousadas'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      booking_coupon_redemptions: {
+        Row: {
+          booking_id: string
+          code: string
+          coupon_id: string
+          created_at: string
+          discount: number
+          id: string
+          pousada_id: string
+          released_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          code: string
+          coupon_id: string
+          created_at?: string
+          discount: number
+          id?: string
+          pousada_id: string
+          released_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          code?: string
+          coupon_id?: string
+          created_at?: string
+          discount?: number
+          id?: string
+          pousada_id?: string
+          released_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'booking_coupon_redemptions_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: true
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'booking_coupon_redemptions_coupon_id_fkey'
+            columns: ['coupon_id']
+            isOneToOne: false
+            referencedRelation: 'pousada_coupons'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      coupon_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          pousada_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          pousada_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          pousada_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -3804,6 +3942,88 @@ export type Database = {
           p_whatsapp?: string
         }
         Returns: Json
+      }
+      // 0100 — cupons para quem reserva direto
+      list_pousada_coupons: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          active: boolean
+          code: string
+          created_at: string
+          featured: boolean
+          id: string
+          kind: string
+          max_uses: number | null
+          min_nights: number | null
+          stay_from: string | null
+          stay_until: string | null
+          uses: number
+          valid_from: string | null
+          valid_until: string | null
+          value: number
+        }[]
+      }
+      create_pousada_coupon: {
+        Args: {
+          p_code: string
+          p_kind: string
+          p_max_uses?: number
+          p_min_nights?: number
+          p_pousada_id: string
+          p_stay_from?: string
+          p_stay_until?: string
+          p_valid_from?: string
+          p_valid_until?: string
+          p_value: number
+        }
+        Returns: string
+      }
+      set_pousada_coupon_active: {
+        Args: { p_active: boolean; p_coupon_id: string }
+        Returns: undefined
+      }
+      set_pousada_coupon_featured: {
+        Args: { p_coupon_id: string; p_featured: boolean }
+        Returns: undefined
+      }
+      get_featured_coupon: {
+        Args: { p_slug: string }
+        Returns: {
+          code: string
+          kind: string
+          min_nights: number | null
+          stay_from: string | null
+          stay_until: string | null
+          valid_until: string | null
+          value: number
+        }[]
+      }
+      preview_booking_coupon: {
+        Args: { p_checkin: string; p_checkout: string; p_code: string; p_room_id: string }
+        Returns: Json
+      }
+      create_booking_with_coupon: {
+        Args: {
+          p_adults: number
+          p_checkin: string
+          p_checkout: string
+          p_children?: number
+          p_coupon_code: string
+          p_expected_discount?: number
+          p_infants?: number
+          p_origin?: Database['public']['Enums']['booking_origin']
+          p_pets?: boolean
+          p_pousada_id: string
+          p_responsible_guest_id: string
+          p_room_id: string
+          p_special_requests?: string
+          p_subtotal: number
+        }
+        Returns: Json
+      }
+      coupon_discount: {
+        Args: { p_kind: string; p_subtotal: number; p_value: number }
+        Returns: number
       }
     }
     Enums: {

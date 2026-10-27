@@ -91,6 +91,8 @@ try {
     'mover-reserva-0096.sql',
     // 0097: relatório do mês por e-mail e fichas completadas pelo perfil.
     'relatorio-mensal-0097.sql',
+    // 0100: cupons para quem reserva direto (prepara também o teste de concorrência abaixo).
+    'cupons-0100.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)
@@ -119,6 +121,68 @@ try {
   ) {
     throw new Error(`Concorrência ao mover reservas: ${JSON.stringify(moves)}`)
   }
+  // 0100: cupom com limite de 1 uso por dois hóspedes ao mesmo tempo, e o
+  // mesmo hóspede usando o cupom em duas reservas ao mesmo tempo. A segunda
+  // sessão espera o lock da linha do cupom e já enxerga o uso da primeira.
+  const concurrentCoupon = readFileSync(`${root}/supabase/tests/concurrent-coupon.sql`, 'utf8')
+  const couponSession = (v) =>
+    sqlAsync(
+      Object.entries(v).reduce((src, [key, value]) => src.replaceAll(key, value), concurrentCoupon),
+    )
+  const E = {
+    USER_ID: 'c0100000-0000-0000-0000-00000000000e',
+    GUEST_ID: 'c0100000-0000-0000-0000-00000000040e',
+  }
+  const F = {
+    USER_ID: 'c0100000-0000-0000-0000-00000000000f',
+    GUEST_ID: 'c0100000-0000-0000-0000-00000000040f',
+  }
+  const R = (n) => `c0100000-0000-0000-0000-00000000010${n}`
+  const limitRace = await Promise.all([
+    couponSession({
+      ...E,
+      ROOM_ID: R(1),
+      CHECKIN: '2096-09-01',
+      CHECKOUT: '2096-09-03',
+      SUBTOTAL: '1000',
+      COUPON: 'CORRIDA',
+    }),
+    couponSession({
+      ...F,
+      ROOM_ID: R(2),
+      CHECKIN: '2096-09-01',
+      CHECKOUT: '2096-09-03',
+      SUBTOTAL: '600',
+      COUPON: 'CORRIDA',
+    }),
+  ])
+  const onceRace = await Promise.all([
+    couponSession({
+      ...E,
+      ROOM_ID: R(1),
+      CHECKIN: '2096-10-01',
+      CHECKOUT: '2096-10-03',
+      SUBTOTAL: '1000',
+      COUPON: 'UNICA',
+    }),
+    couponSession({
+      ...E,
+      ROOM_ID: R(3),
+      CHECKIN: '2096-10-01',
+      CHECKOUT: '2096-10-03',
+      SUBTOTAL: '400',
+      COUPON: 'UNICA',
+    }),
+  ])
+  if ([...limitRace, ...onceRace].some((result) => result.code !== 0)) {
+    throw new Error(`Concorrência de cupons: ${JSON.stringify([...limitRace, ...onceRace])}`)
+  }
+  sql(`do $$ begin
+    if (select count(*) from booking_coupon_redemptions r join pousada_coupons c on c.id = r.coupon_id where c.code = 'CORRIDA' and r.released_at is null) <> 1 then raise exception 'Cupom passou do limite de usos'; end if;
+    if (select count(*) from booking_coupon_redemptions r join pousada_coupons c on c.id = r.coupon_id where c.code = 'UNICA' and r.released_at is null) <> 1 then raise exception 'Mesmo hóspede usou o cupom duas vezes'; end if;
+    if (select count(*) from bookings where guest_id in ('c0100000-0000-0000-0000-00000000000e', 'c0100000-0000-0000-0000-00000000000f')) <> 2 then raise exception 'Reserva criada sem o cupom'; end if;
+  end $$;`)
+  console.log('Concorrência de cupons: OK')
   const payment = `select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '999', 1000, 'aprovado', 'pix', 'BRL', '2026-10-01T12:00:00Z', 0);`
   const payments = await Promise.all([sqlAsync(payment), sqlAsync(payment)])
   if (payments.some((result) => result.code !== 0)) throw new Error(JSON.stringify(payments))

@@ -18,6 +18,7 @@ import {
   isFavoritePousada,
   getBookableRoom,
   getPublicRooms,
+  getPublicFeaturedCoupon,
 } from '@/server/queries'
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
@@ -71,9 +72,11 @@ export default async function PousadaPage({
       : 0
   if (!pousada) notFound()
 
-  const [nearby, reviews] = await Promise.all([
+  const [nearby, reviews, featuredCoupon] = await Promise.all([
     getNearbyPousadas(slug, 3),
     getPublicReviews(pousada.id),
+    // Cupom divulgado (0100): sem cupom valendo hoje, nada aparece.
+    getPublicFeaturedCoupon(slug),
   ])
 
   return (
@@ -95,6 +98,7 @@ export default async function PousadaPage({
           favorite={favorite}
           isLoggedIn={Boolean(currentUser)}
           bookingOrigin={bioOriginFromParam(initialBooking.origem)}
+          featuredCoupon={featuredCoupon}
         />
 
         {/* Outras pousadas, nos mesmos cards comparáveis da home. */}

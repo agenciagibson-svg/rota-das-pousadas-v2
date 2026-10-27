@@ -150,6 +150,12 @@ export default async function PagamentoReservaPage({
                   <span>{formatBRL(booking.fee)}</span>
                 </div>
               )}
+              {booking.discount > 0 && (
+                <div className="text-muted-foreground flex justify-between tabular-nums">
+                  <span>Desconto</span>
+                  <span>−{formatBRL(booking.discount)}</span>
+                </div>
+              )}
               <div className="border-border text-foreground flex justify-between border-t pt-1.5 text-base font-semibold">
                 <span>Total</span>
                 <span>{formatBRL(booking.total)}</span>

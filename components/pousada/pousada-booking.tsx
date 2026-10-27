@@ -59,12 +59,15 @@ export function PousadaBooking({
   room,
   initialBooking,
   bookingOrigin,
+  couponCode,
 }: {
   slug: string
   rating: number
   room: BookableRoomInfo | null
   initialBooking?: { checkin?: string; checkout?: string; guests?: string }
   bookingOrigin?: 'link_bio'
+  /** Cupom divulgado (0100): já chega preenchido na página de reservar. */
+  couponCode?: string
 }) {
   const [checkin, setCheckin] = useState(() => {
     const fallback = addDays(todayIso(), 1)
@@ -114,7 +117,13 @@ export function PousadaBooking({
     Boolean(room) && nights > 0 && guests >= 1 && guests <= capacity && !minimumBlocks
   const href = {
     pathname: `/pousada/${slug}/reservar`,
-    query: { checkin, checkout, guests, ...(bookingOrigin ? { origem: bookingOrigin } : {}) },
+    query: {
+      checkin,
+      checkout,
+      guests,
+      ...(bookingOrigin ? { origem: bookingOrigin } : {}),
+      ...(couponCode ? { cupom: couponCode } : {}),
+    },
   }
   const reserveClass = cn(
     buttonVariants({ variant: 'accent', size: 'pill-lg' }),

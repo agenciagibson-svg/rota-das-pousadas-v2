@@ -19,6 +19,8 @@ import {
   type PublicRoomInfo,
 } from './pousada-sections'
 import { ShareButton } from './share-button'
+import { DirectBookingPerk } from '@/features/cupons/components/direct-booking-perk'
+import type { FeaturedCoupon } from '@/features/cupons/types'
 
 export type { BookableRoomInfo, PublicRoomInfo }
 
@@ -38,6 +40,7 @@ export function PousadaDetail({
   favorite,
   isLoggedIn,
   bookingOrigin,
+  featuredCoupon,
 }: {
   pousada: Pousada
   room: BookableRoomInfo | null
@@ -51,6 +54,8 @@ export function PousadaDetail({
   isLoggedIn: boolean
   /** `link_bio` quando a visita veio do link da bio — segue para a página de reserva. */
   bookingOrigin?: 'link_bio'
+  /** Cupom divulgado pela pousada (0100), já filtrado: só vem se vale hoje. */
+  featuredCoupon?: FeaturedCoupon | null
 }) {
   const photos = pousada.gallery.length ? pousada.gallery : [pousada.image || '/placeholder.svg']
   const images = photos.map((src, i) => ({ src, alt: `${pousada.name} - foto ${i + 1}` }))
@@ -153,12 +158,14 @@ export function PousadaDetail({
             </div>
             <aside className="py-4 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:py-10">
               <div className="lg:sticky lg:top-40">
+                {featuredCoupon && <DirectBookingPerk coupon={featuredCoupon} className="mb-4" />}
                 <PousadaBooking
                   slug={pousada.slug}
                   rating={pousada.rating}
                   room={room}
                   initialBooking={initialBooking}
                   bookingOrigin={bookingOrigin}
+                  couponCode={featuredCoupon?.code}
                 />
               </div>
             </aside>

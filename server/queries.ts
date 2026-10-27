@@ -50,6 +50,7 @@ import {
 } from '@/features/acomodacoes/services/rooms.service'
 import { listCategories } from '@/features/acomodacoes/services/categories.service'
 import { listRateRules } from '@/features/acomodacoes/services/rates.service'
+import { getFeaturedCoupon, listCoupons } from '@/features/cupons/services/coupons.service'
 import { listBlocks } from '@/features/acomodacoes/services/blocks.service'
 import { listAmenitiesCatalog } from '@/repositories/rooms.repository'
 import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services/favorites.service'
@@ -203,6 +204,14 @@ export const getActiveRole = cache(async () => {
 export const getOwnerCategories = cache(() => listCategories())
 export const getRateRules = cache(() => listRateRules())
 export const getOwnerBlocks = cache(() => listBlocks())
+/** Cupons da pousada ativa (0100): `null` para quem não gerencia cupons. */
+export const getOwnerCoupons = cache(async () => {
+  const state = await resolveTenantAccess()
+  if (state.status !== 'ok' || !can(state.membership.role, 'coupon:manage')) return null
+  return listCoupons()
+})
+/** Cupom divulgado da pousada (bio e página pública); `null` = nada aparece. */
+export const getPublicFeaturedCoupon = cache((slug: string) => getFeaturedCoupon(slug))
 export const getAmenitiesCatalog = cache(() => listAmenitiesCatalog())
 export const canManageAccommodations = cache(async () => {
   const state = await resolveTenantAccess()

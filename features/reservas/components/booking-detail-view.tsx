@@ -44,6 +44,7 @@ export function BookingDetailView({
   payments = null,
   todayISO,
   canManageBooking = true,
+  coupon = null,
 }: {
   displayName: string
   pousadaName: string
@@ -61,6 +62,8 @@ export function BookingDetailView({
    * conferir pagamentos e aprovar o Pix, mas não muda status, datas nem fichas.
    */
   canManageBooking?: boolean
+  /** Cupom usado na reserva pelo site (0100); `released` = reserva cancelada devolveu o uso. */
+  coupon?: { code: string; discount: number; released: boolean } | null
 }) {
   const status = BOOKING_STATUS[booking.status]
   const canEdit = canManageBooking && !isFinalStatus(booking.status)
@@ -231,9 +234,23 @@ export function BookingDetailView({
               )}
               {booking.discount > 0 && (
                 <div className="text-muted-foreground flex justify-between">
-                  <span>Desconto</span>
+                  <span>
+                    {coupon ? (
+                      <>
+                        Desconto do cupom{' '}
+                        <strong className="text-foreground font-mono">{coupon.code}</strong>
+                      </>
+                    ) : (
+                      'Desconto'
+                    )}
+                  </span>
                   <span>−{formatBRL(booking.discount)}</span>
                 </div>
+              )}
+              {coupon?.released && (
+                <p className="text-muted-foreground text-xs">
+                  A reserva foi cancelada e o uso do cupom voltou para o hóspede.
+                </p>
               )}
               {booking.surcharge > 0 && (
                 <div className="text-muted-foreground flex justify-between">

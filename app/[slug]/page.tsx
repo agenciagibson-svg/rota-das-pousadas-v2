@@ -12,7 +12,8 @@ import { publicEnv } from '@/lib/env'
 import { QuoteCard } from '@/features/bio/components/quote-card'
 import { BioPriceCalendar } from '@/features/bio/components/bio-price-calendar'
 import { clampMonth, indexCalendarDays, isMonth, monthOf } from '@/features/reservas'
-import { getPriceCalendar } from '@/server/queries'
+import { getPriceCalendar, getPublicFeaturedCoupon } from '@/server/queries'
+import { DirectBookingPerk } from '@/features/cupons/components/direct-booking-perk'
 import { isoDateInTimeZone } from '@/lib/dates'
 import {
   getBioPousadaBySlug,
@@ -146,11 +147,14 @@ export default async function BioPage({ params, searchParams }: PageProps) {
     isMonth(query.mes) ? query.mes : monthOf(checkin ?? today),
     today,
   )
-  const [rooms, calendarDays] = await Promise.all([
+  const [rooms, calendarDays, coupon] = await Promise.all([
     listBookableRooms(slug, checkin, checkout, guests),
     // Calendário é extra: se falhar, a página segue com o formulário de datas.
     getPriceCalendar(slug, calendarMonth, guests).catch(() => []),
+    // Cupom divulgado (0100): sem cupom valendo hoje, nada aparece.
+    getPublicFeaturedCoupon(pousada.slug),
   ])
+  const couponParam = coupon ? `&cupom=${encodeURIComponent(coupon.code)}` : ''
 
   await recordLinkEvent({ pousadaId: pousada.id, event: 'view' })
   if (hasDates) {
@@ -173,6 +177,8 @@ export default async function BioPage({ params, searchParams }: PageProps) {
       className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8"
     >
       <BioHeader name={pousada.name} city={pousada.city} state={pousada.state} />
+
+      {coupon && <DirectBookingPerk coupon={coupon} />}
 
       {/* Seletor de datas — form GET, sem JavaScript. */}
       <form
@@ -249,7 +255,7 @@ export default async function BioPage({ params, searchParams }: PageProps) {
                 key={room.id}
                 href={
                   hasDates
-                    ? `/pousada/${pousada.slug}/reservar?checkin=${checkin}&checkout=${checkout}&guests=${guests}&quarto=${room.id}&origem=link_bio`
+                    ? `/pousada/${pousada.slug}/reservar?checkin=${checkin}&checkout=${checkout}&guests=${guests}&quarto=${room.id}&origem=link_bio${couponParam}`
                     : `/pousada/${pousada.slug}?origem=link_bio`
                 }
                 className="group bg-card hover:shadow-floating flex min-h-16 items-center justify-between gap-3 rounded-2xl p-3 transition-shadow duration-(--motion-hover)"

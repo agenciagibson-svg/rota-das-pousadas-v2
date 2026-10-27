@@ -94,6 +94,9 @@ export type Action =
   // a RLS da 0046 usa para o relatório e para os pedidos de orçamento.
   | 'link:report:view'
   | 'quote:manage'
+  // 0100 — cupons da pousada para quem reserva direto. Espelha
+  // `auth_can_manage_pousada` (dono e gestor), o mesmo grupo das tarifas.
+  | 'coupon:manage'
   // 0078 — estoque e pedidos do hóspede
   | 'inventory:view'
   | 'inventory:manage'
@@ -138,6 +141,7 @@ const MATRIX: Record<Role, Action[]> = {
     'room:manage',
     'calendar:manage',
     'pricing:manage',
+    'coupon:manage',
     'review:respond',
     'checkin:perform',
     'checkout:perform',
@@ -180,6 +184,7 @@ const MATRIX: Record<Role, Action[]> = {
     'room:manage',
     'calendar:manage',
     'pricing:manage',
+    'coupon:manage',
     'review:respond',
     'checkin:perform',
     'checkout:perform',
@@ -300,6 +305,7 @@ const MATRIX: Record<Role, Action[]> = {
     'room:manage',
     'calendar:manage',
     'pricing:manage',
+    'coupon:manage',
     'coupon:platform:create',
     'review:respond',
     'content:moderate',

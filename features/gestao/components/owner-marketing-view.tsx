@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   CalendarDays,
   Check,
@@ -141,6 +141,7 @@ export function OwnerMarketingView({
   reservations,
   reviews,
   finance,
+  children,
 }: {
   displayName: string
   pousadaName: string
@@ -148,6 +149,8 @@ export function OwnerMarketingView({
   reservations: OwnerReservation[]
   reviews: OwnerReview[]
   finance: FinanceSummary
+  /** Blocos extras vindos do servidor (ex.: cupons para quem reserva direto). */
+  children?: ReactNode
 }) {
   const campaigns = buildCampaigns({ reservations, reviews, finance, settings })
   const socialText = buildSocialText(settings)
@@ -190,6 +193,8 @@ export function OwnerMarketingView({
           <div className="text-foreground mt-2 text-3xl font-semibold">{reviews.length}</div>
         </Card>
       </div>
+
+      {children && <div className="mt-5">{children}</div>}
 
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <Card className="p-6">

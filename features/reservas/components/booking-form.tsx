@@ -16,6 +16,8 @@ import { PriceCalendar } from './price-calendar'
 import { isoDateInTimeZone } from '@/lib/dates'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { CouponField } from '@/features/cupons/components/coupon-field'
+import { useCoupon } from '@/features/cupons/components/use-coupon'
 
 /** Mesma mensagem de `bookings.service.ts` (`createBooking`) — usada para decidir
  * quando trocar o erro genérico pelo mini-formulário de completar o nome. */
@@ -32,6 +34,7 @@ export function BookingForm({
   initialCheckout = '',
   initialGuests,
   origin,
+  initialCoupon,
 }: {
   pousadaSlug: string
   nightly: number
@@ -50,6 +53,8 @@ export function BookingForm({
   initialGuests?: string
   /** `link_bio` quando o hóspede chegou pelo link da bio — vai junto na reserva. */
   origin?: 'link_bio'
+  /** Cupom vindo da bio (`?cupom=`, 0100): já aparece preenchido e é aplicado. */
+  initialCoupon?: string
 }) {
   const router = useRouter()
   const [formError, setFormError] = useState<string | null>(null)
@@ -96,6 +101,13 @@ export function BookingForm({
     },
   })
   const canSubmit = quoteAllowsBooking(quote, checkin, checkout)
+  const coupon = useCoupon({
+    roomId,
+    checkin,
+    checkout,
+    ready: canSubmit,
+    initialCode: initialCoupon,
+  })
 
   async function onSubmit(values: CreateBookingInput) {
     setFormError(null)
@@ -103,9 +115,27 @@ export function BookingForm({
       setFormError('Aguarde o valor dessas datas aparecer para confirmar.')
       return
     }
-    const result = await createBookingAction({ ...values, roomId, expectedTotal: quote.total })
+    if (coupon.applying) {
+      setFormError('Aguarde o cupom ser conferido.')
+      return
+    }
+    if (coupon.pendingCode) {
+      setFormError('Toque em "Aplicar" para usar o cupom, ou remova o código.')
+      return
+    }
+    // O desconto é recalculado e validado no banco; `expectedDiscount` só
+    // garante que a reserva não nasce com um valor diferente do que a tela mostrou.
+    const result = await createBookingAction({
+      ...values,
+      roomId,
+      expectedTotal: quote.total,
+      couponCode: coupon.applied?.code,
+      expectedDiscount: coupon.applied?.discount,
+    })
     if (!result.ok) {
       setFormError(result.error)
+      // O cupom pode ter mudado (esgotou, outro valor): confere de novo.
+      if (coupon.applied) void coupon.refresh()
       return
     }
     router.push(result.data.redirectTo)
@@ -176,6 +206,8 @@ export function BookingForm({
         checkout={checkout}
         calculating={calculating}
       />
+
+      <CouponField coupon={coupon} />
 
       {formError === MISSING_NAME_ERROR ? (
         <div className="border-destructive/30 bg-destructive/5 space-y-3 rounded-2xl border p-4">
