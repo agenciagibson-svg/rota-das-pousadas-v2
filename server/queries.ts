@@ -34,6 +34,7 @@ import {
   getOwnerCalendar as ownerCalendar,
   listOwnerReviews,
 } from '@/features/gestao/services/pms.service'
+import { getOccupancyBoard as occupancyBoard } from '@/features/gestao/services/occupancy.service'
 import {
   listPending,
   isPlatformAdmin as platformAdmin,
@@ -173,6 +174,10 @@ export const getOwnerReservations = cache((filters: GestaoReservationFilters = {
   listOwnerReservations(filters),
 )
 export const getOwnerCalendar = cache(() => ownerCalendar())
+/** Mapa de ocupação (quartos × noites) da pousada ativa — `booking:manage`. */
+export const getOwnerOccupancy = cache((inicio?: string, dias?: string) =>
+  occupancyBoard({ inicio, dias }),
+)
 export const getOwnerReviews = cache(() => listOwnerReviews())
 export const canRespondReviews = cache(async () => {
   const state = await resolveTenantAccess()

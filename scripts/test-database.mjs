@@ -87,6 +87,8 @@ try {
     'calendario-compartilhar-0094.sql',
     // 0095: mapa (coordenadas da pousada).
     'mapa-0095.sql',
+    // 0096: mapa de ocupação (mover reserva).
+    'mover-reserva-0096.sql',
     // 0097: relatório do mês por e-mail e fichas completadas pelo perfil.
     'relatorio-mensal-0097.sql',
   ]) {
@@ -103,6 +105,19 @@ try {
     !bookings.some((result) => result.output.includes('bookings_no_overlap'))
   ) {
     throw new Error(`Concorrência de reservas: ${JSON.stringify(bookings)}`)
+  }
+  // 0096: duas mudanças para o mesmo quarto/datas — a segunda espera o lock do
+  // quarto e é recusada pela checagem (com o código da primeira), não pela EXCLUDE.
+  const concurrentMove = readFileSync(`${root}/supabase/tests/concurrent-move.sql`, 'utf8')
+  const moves = await Promise.all([
+    sqlAsync(concurrentMove.replaceAll('MOVE_ID', '96300000-0000-0000-0000-0000000000a1')),
+    sqlAsync(concurrentMove.replaceAll('MOVE_ID', '96300000-0000-0000-0000-0000000000a2')),
+  ])
+  if (
+    moves.filter((result) => result.code === 0).length !== 1 ||
+    !moves.some((result) => /Já existe uma reserva \(RACE-MOV-[12]\)/.test(result.output))
+  ) {
+    throw new Error(`Concorrência ao mover reservas: ${JSON.stringify(moves)}`)
   }
   const payment = `select reconcile_marketplace_payment('30000000-0000-0000-0000-000000000001', '999', 1000, 'aprovado', 'pix', 'BRL', '2026-10-01T12:00:00Z', 0);`
   const payments = await Promise.all([sqlAsync(payment), sqlAsync(payment)])

@@ -3079,6 +3079,18 @@ export type Database = {
       }
       expire_overdue_pending_bookings: { Args: never; Returns: Json }
       expire_pending_booking: { Args: { p_booking_id: string }; Returns: Json }
+      /** 0096 — mapa de ocupação: muda quarto e/ou datas (valor só com p_reprice). */
+      move_booking: {
+        Args: {
+          p_booking_id: string
+          p_version: number
+          p_room_id: string
+          p_checkin: string
+          p_checkout: string
+          p_reprice?: boolean
+        }
+        Returns: Json
+      }
       get_booking_notification_context: {
         Args: { p_booking_id: string }
         Returns: Json

@@ -6,6 +6,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { ReservationsCalendar } from './reservations-calendar'
 import { OwnerReservationsTable } from './owner-reservations-table'
 import { ORIGIN_LABEL } from './origin-labels'
+import { ReservationsViewsNav } from './reservations-views-nav'
 import { BOOKING_STATUS } from '@/features/reservas'
 import type { DateRange, RoomDay } from '../calendar'
 import type { OwnerReservation } from '../types'
@@ -51,6 +52,11 @@ export function OwnerReservationsView({
       subtitle="Gerencie reservas e a disponibilidade da sua pousada."
       user={{ name: displayName, role: 'Proprietário' }}
     >
+      {canManageBookings && (
+        <div className="mb-5">
+          <ReservationsViewsNav current="lista" />
+        </div>
+      )}
       {/*
         Calendário de disponibilidade: só para quem lança e mexe em reservas. O
         financeiro consulta a lista; antes via um calendário vazio pedindo para

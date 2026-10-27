@@ -7,6 +7,7 @@ import {
   dateActionSchema,
   geocodeAddressActionSchema,
   pousadaLocationSchema,
+  moveBookingSchema,
   pousadaSettingsSchema,
   reservationStatusActionSchema,
   reviewResponseActionSchema,
@@ -20,6 +21,7 @@ import {
   updateOwnerReservationStatus,
 } from './services/pms.service'
 import { geocodeOwnerPousadaAddress, updateOwnerPousadaLocation } from './services/location.service'
+import { moveOwnerBooking } from './services/occupancy.service'
 
 export const blockDateAction = createAction(dateActionSchema, async (input) => {
   const { affected } = await blockOwnerDate(input.date, input.roomId)
@@ -31,6 +33,17 @@ export const unblockDateAction = createAction(dateActionSchema, async (input) =>
   const { affected } = await unblockOwnerDate(input.date, input.roomId)
   revalidatePath('/dashboard/reservas')
   return { date: input.date, affected }
+})
+
+/** Mapa de ocupação (0096): mover reserva para outro quarto e/ou datas. */
+export const moveBookingAction = createAction(moveBookingSchema, async (input) => {
+  const result = await moveOwnerBooking(input)
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/reservas')
+  revalidatePath('/dashboard/reservas/ocupacao')
+  revalidatePath(`/dashboard/reservas/${input.bookingId}`)
+  revalidatePath('/minhas-reservas')
+  return result
 })
 
 export const updateReservationStatusAction = createAction(

@@ -30,6 +30,30 @@ export const reservationStatusActionSchema = z.object({
 })
 export type ReservationStatusActionInput = z.infer<typeof reservationStatusActionSchema>
 
+const civilDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
+  .refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)), 'Data inválida.')
+
+/**
+ * Mapa de ocupação (0096): mover reserva para outro quarto/datas. O valor nunca
+ * vem do cliente — `reprice` só pede ao banco para usar as tarifas.
+ */
+export const moveBookingSchema = z
+  .object({
+    bookingId: z.string().uuid('Reserva inválida.'),
+    version: z.number().int().min(0),
+    roomId: z.string().uuid('Escolha o quarto.'),
+    checkin: civilDate,
+    checkout: civilDate,
+    reprice: z.boolean(),
+  })
+  .refine((v) => v.checkout > v.checkin, {
+    message: 'A data de saída deve ser posterior à de entrada.',
+    path: ['checkout'],
+  })
+export type MoveBookingInput = z.infer<typeof moveBookingSchema>
+
 export const bookingIdActionSchema = z.object({ bookingId: z.string().uuid('Reserva inválida.') })
 export type BookingIdActionInput = z.infer<typeof bookingIdActionSchema>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarSearch, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -72,15 +72,24 @@ const VISIBLE_FIELDS = [
   'initialStatus',
 ]
 
-export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
+export function NewBookingForm({
+  rooms,
+  initial,
+}: {
+  rooms: ManagedRoom[]
+  /** Vindo do mapa de ocupação (clique num dia livre): quarto e datas já escolhidos. */
+  initial?: { roomId?: string; checkin?: string; checkout?: string }
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  const [checkin, setCheckin] = useState('')
-  const [checkout, setCheckout] = useState('')
+  const [checkin, setCheckin] = useState(initial?.checkin ?? '')
+  const [checkout, setCheckout] = useState(initial?.checkout ?? '')
+  /** Quarto a escolher sozinho quando a consulta automática voltar (se estiver livre). */
+  const autoSelectRoomId = useRef<string | null>(initial?.roomId ?? null)
   const [adults, setAdults] = useState(2)
   const [children, setChildren] = useState(0)
   const [infants, setInfants] = useState(0)
@@ -132,6 +141,12 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
           return
         }
         setResults(result.data)
+        const autoRoom = autoSelectRoomId.current
+        autoSelectRoomId.current = null
+        const preselected = autoRoom
+          ? result.data.find((r) => r.roomId === autoRoom && r.available)
+          : undefined
+        if (preselected) selectRoom(preselected)
       } catch {
         setError(QUERY_FAILED_MESSAGE)
       } finally {
@@ -167,6 +182,17 @@ export function NewBookingForm({ rooms }: { rooms: ManagedRoom[] }) {
       })
       .catch(() => undefined)
   }
+
+  // Veio do mapa de ocupação com quarto e datas: já consulta a disponibilidade
+  // (e escolhe o quarto, se continuar livre) para a recepção só preencher o hóspede.
+  useEffect(() => {
+    if (!initial?.checkin || !initial?.checkout) return
+    // Fora do ciclo do efeito; a limpeza evita consulta dobrada no StrictMode.
+    const timer = setTimeout(runAvailabilityCheck, 0)
+    return () => clearTimeout(timer)
+    // Só na abertura da tela.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function submit(formData: FormData) {
     if (!selectedRoomId) {

@@ -96,3 +96,35 @@ on conflict (user_id, pousada_id) do nothing;
 - Testes: `features/dashboard/metrics.test.ts`,
   `repositories/room-blocks.repository.test.ts` e
   `features/gestao/schemas.test.ts`.
+
+## Mapa de ocupação (0096, 26/10/2026)
+
+`/dashboard/reservas/ocupacao` (aba "Mapa de ocupação" ao lado de "Lista e
+calendário"; mesmo acesso de Nova reserva, `booking:manage`). Quartos nas
+linhas, noites nas colunas (a coluna do dia D é a noite D→D+1; a saída não
+ocupa coluna). Janela de 14 ou 30 dias navegável, começando ontem.
+
+- Barras com a cor do status (`BOOKING_STATUS` → variantes do `Badge`);
+  bloqueios e noites vendidas no Airbnb/Booking (iCal, `channel_events`) como
+  faixas fixas tracejadas.
+- Noite livre → "Nova reserva" com `?quarto=&entrada=&saida=`; o formulário
+  consulta a disponibilidade sozinho e escolhe o quarto se continuar livre.
+- Computador: arrastar a barra (outro quarto/datas, mesma duração) ou puxar a
+  borda direita (mudar a saída), com Pointer Events nativos. Celular e
+  teclado: tocar/Enter na barra → "Mover" (formulário de quarto e datas).
+- Ao soltar: confirmação com de/para e o valor. Regra do valor: o total
+  combinado fica; o recalculado pelas tarifas (só as diárias trocam; desconto,
+  acréscimo e serviços ficam) aparece como opção que a pessoa precisa marcar,
+  e nunca abaixo do que já foi pago.
+- Banco: RPC `move_booking` (0096) — permissão antes do lock; advisory lock
+  por quarto (ordem de uuid) e depois `for update` na reserva; pending e
+  confirmed mudam tudo; checked_in só a saída; origem Airbnb/Booking/Expedia
+  não se move (espelho do canal); mesma checagem de disponibilidade da
+  criação/edição; auditoria `booking.period_changed`/`room_changed`/
+  `values_changed` com `via = 'mapa_ocupacao'`.
+- Lógica pura em `features/gestao/occupancy.ts` (espelha as regras da RPC só
+  para avisar na hora; o banco decide).
+- Testes: `features/gestao/occupancy.test.ts`,
+  `features/gestao/services/occupancy.service.test.ts`,
+  `features/gestao/components/occupancy-grid.test.tsx`,
+  `supabase/tests/mover-reserva-0096.sql` e `concurrent-move.sql`.
