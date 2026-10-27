@@ -227,6 +227,19 @@ grant execute on function release_monthly_report(uuid, date) to service_role;
 -- (B) Fichas antigas completadas pelo perfil do viajante
 -- ----------------------------------------------------------------------------
 
+-- Cada ficha é completada UMA vez (revisão de 26/10/2026, LGPD/finalidade):
+-- se a recepção apagar depois um campo da ficha, rodar a rotina de novo não
+-- traz de volta o dado (nem a versão mais nova do perfil). Tabela sem acesso
+-- direto para ninguém além das RPCs abaixo.
+create table if not exists guest_profile_backfills (
+  guest_id uuid primary key references guests(id) on delete cascade,
+  done_at  timestamptz not null default now()
+);
+alter table guest_profile_backfills enable row level security;
+revoke all on guest_profile_backfills from public, anon, authenticated;
+comment on table guest_profile_backfills is
+  '0097: fichas já completadas pelo perfil do viajante (uma vez por ficha). Escrita só por apply_guest_profile_backfill (service_role).';
+
 -- Campos da ficha que estão vazios e que o perfil do viajante tem. Vazio =
 -- nulo ou só espaço (texto), '{}' (contato de emergência). Ficha elegível só
 -- quando o próprio viajante (guests.user_id) fez reserva nesta pousada — a
@@ -271,6 +284,7 @@ as $$
   from guests g
   join traveler_profiles tp on tp.user_id = g.user_id
   where g.id = p_guest_id
+    and not exists (select 1 from guest_profile_backfills d where d.guest_id = g.id)
     and exists (
       select 1 from bookings b
       where b.pousada_id = g.pousada_id
@@ -336,6 +350,7 @@ declare
   v_tp traveler_profiles%rowtype;
   v_fields text[];
   v_doc boolean;
+  v_doc_pending boolean;
 begin
   select * into v_g from guests where id = p_guest_id for update;
   if not found or v_g.user_id is null then return '{}'; end if;
@@ -346,6 +361,7 @@ begin
   select * into v_tp from traveler_profiles where user_id = v_g.user_id;
   if not found then return '{}'; end if;
 
+  v_doc_pending := 'document' = any(v_fields);
   v_doc := 'document' = any(v_fields)
     and nullif(trim(coalesce(p_document_number, '')), '') is not null
     and p_document_number_hash is not null
@@ -374,6 +390,14 @@ begin
     accessibility_needs  = case when 'accessibility_needs' = any(v_fields) then v_tp.accessibility_needs else accessibility_needs end,
     updated_at           = now()
   where id = p_guest_id;
+
+  -- Marca como feita só quando tudo o que faltava entrou. Um documento que o
+  -- app não conseguiu decifrar fica para a próxima rodada (só ele: os outros
+  -- campos já estão preenchidos e não são mais "vazios").
+  if not (v_doc_pending and not v_doc) then
+    insert into guest_profile_backfills (guest_id) values (p_guest_id)
+    on conflict (guest_id) do nothing;
+  end if;
 
   insert into audit_log (actor_id, action, target_table, target_id, metadata)
   values (null, 'guest.profile_backfill', 'guests', p_guest_id,

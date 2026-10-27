@@ -44,7 +44,10 @@
 -- continua garantida pela EXCLUDE `bookings_no_overlap` (0033).
 -- Limite conhecido: `create_booking` e `create_room_block` não pegam o lock do
 -- quarto; uma criação de bloqueio simultânea a uma mudança ainda pode passar
--- (o mesmo vale hoje para criação de reserva x bloqueio).
+-- (o mesmo vale hoje para criação de reserva x bloqueio). O lock por quarto
+-- só enfileira `move_booking` entre si: uma `move_booking` cruzada com uma
+-- `update_booking` em sentido contrário pode cair em deadlock na EXCLUDE —
+-- o Postgres detecta e uma das duas falha; o app mostra a mensagem de erro.
 --
 -- Auditoria: as mesmas ações que `update_booking` grava
 -- (`booking.period_changed`, `booking.room_changed`, `booking.values_changed`),
@@ -96,6 +99,12 @@ begin
      or not (auth_has_guest_access(v_pousada) or auth_has_active_grant(v_pousada)) then
     raise exception 'Você não tem permissão para mover esta reserva.';
   end if;
+  -- O quarto de destino precisa ser da mesma pousada ANTES de travar qualquer
+  -- coisa (sem isto dava para segurar o lock de quarto de outra pousada, e a
+  -- mensagem confirmava que o quarto existia).
+  if not exists (select 1 from rooms where id = p_room_id and pousada_id = v_pousada) then
+    raise exception 'Quarto não encontrado nesta pousada.';
+  end if;
 
   -- 2) Locks na ordem fixa: quartos (uuid menor primeiro), depois a reserva.
   v_first_lock := least(v_room_before, p_room_id);
@@ -120,6 +129,9 @@ begin
   -- 4) Status e datas.
   if v_b.status not in ('pending', 'confirmed', 'checked_in') then
     raise exception 'Só dá para mover reserva aguardando pagamento, confirmada ou em estadia.';
+  end if;
+  if v_b.status = 'pending' and v_b.payment_due_at is not null and v_b.payment_due_at < now() then
+    raise exception 'O prazo de pagamento desta reserva já venceu. Prorrogue o prazo ou confirme o pagamento antes de mover.';
   end if;
   if p_room_id = v_b.room_id and p_checkin = v_b.checkin and p_checkout = v_b.checkout then
     raise exception 'A reserva já está nesse quarto e nessas datas.';
@@ -148,11 +160,17 @@ begin
       and payment_due_at is not null and payment_due_at < now()
       and checkin < p_checkout and checkout > p_checkin
   loop
+    -- A condição se repete no UPDATE: se a reserva foi paga/aprovada entre a
+    -- leitura do laço e o lock da linha, o Postgres reavalia o WHERE e ela
+    -- fica de fora (sem isto, uma reserva recém-paga era cancelada).
     update bookings set status = 'cancelled', cancellation_reason = 'Prazo de pagamento expirado',
       cancelled_at = now(), version = version + 1
-    where id = v_stale.id;
-    insert into audit_log (actor_id, action, target_table, target_id, metadata)
-    values (null, 'booking.expired', 'bookings', v_stale.id, jsonb_build_object('reason', 'payment_due_at_passed'));
+    where id = v_stale.id and status = 'pending'
+      and payment_due_at is not null and payment_due_at < now();
+    if found then
+      insert into audit_log (actor_id, action, target_table, target_id, metadata)
+      values (null, 'booking.expired', 'bookings', v_stale.id, jsonb_build_object('reason', 'payment_due_at_passed'));
+    end if;
   end loop;
 
   -- 6) Disponibilidade (a linha ainda tem as datas antigas: o eco do iCal

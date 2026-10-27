@@ -153,7 +153,7 @@ begin
                          '2096-02-10', '2096-02-12');
     raise exception 'TEST: moveu para quarto de outra pousada';
   exception when raise_exception then
-    if sqlerrm <> 'Acomodação não pertence a esta pousada.' then raise; end if;
+    if sqlerrm <> 'Quarto não encontrado nesta pousada.' then raise; end if;
   end;
   -- capacidade: família de 4 num chalé de 2
   begin

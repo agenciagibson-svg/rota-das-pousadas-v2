@@ -6,7 +6,7 @@ import type { PriceCalendarDay } from '@/features/reservas/price-calendar'
 /**
  * Diária "a partir de", vaga e estadia mínima por noite (0094,
  * `public_price_calendar`). A RPC é pública (anon) e só responde para pousada
- * publicada, com janela de no máximo 120 dias — o limite é do banco.
+ * publicada, com janela de no máximo 62 dias — o limite é do banco.
  *
  * Modo demonstração (sem banco): nenhuma noite conhecida; o calendário mostra
  * os dias sem preço e a reserva segue pelo caminho normal.

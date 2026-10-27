@@ -79,11 +79,11 @@ select test_assert((select count(*) from cal_base b, public_price_calendar('pous
   'pousada não publicada não mostra calendário');
 select test_assert((select count(*) from cal_base b, public_price_calendar('nao-existe', b.d, b.d + 30, 1)) = 0,
   'slug inexistente: vazio');
-select test_assert((select count(*) from cal_base b, public_price_calendar('pousada-cal', b.d, b.d + 120, 2)) = 120,
-  'janela de 120 dias é aceita');
+select test_assert((select count(*) from cal_base b, public_price_calendar('pousada-cal', b.d, b.d + 62, 2)) = 62,
+  'janela de 62 dias é aceita');
 do $$ declare v_d date := (select d from cal_base); begin
   begin
-    perform * from public_price_calendar('pousada-cal', v_d, v_d + 121, 1);
+    perform * from public_price_calendar('pousada-cal', v_d, v_d + 63, 1);
     raise exception 'TEST: aceitou janela acima do limite';
   exception when raise_exception then
     if sqlerrm <> 'Período do calendário inválido.' then raise; end if;
@@ -189,6 +189,36 @@ select revoke_my_booking_share('94000000-0000-0000-0000-000000000031');
 reset role;
 select test_assert(not exists(select 1 from booking_share_links where booking_id = '94000000-0000-0000-0000-000000000031'),
   'revogar apaga o link');
+
+-- Revisão de 26/10: só reserva ativa gera link, e o link expira 7 dias depois da saída.
+update bookings set status = 'checked_out' where id = '94000000-0000-0000-0000-000000000031';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000942', false);
+do $$ begin
+  begin
+    perform share_my_booking('94000000-0000-0000-0000-000000000031');
+    raise exception 'TEST: gerou link de estadia encerrada';
+  exception when raise_exception then
+    if sqlerrm <> 'Só dá para compartilhar uma reserva ativa.' then raise; end if;
+  end;
+end $$;
+reset role;
+update bookings set status = 'confirmed' where id = '94000000-0000-0000-0000-000000000031';
+set role authenticated;
+insert into share_tokens values ('expira', share_my_booking('94000000-0000-0000-0000-000000000031'));
+reset role;
+update bookings set status = 'checked_out', checkin = current_date - 12, checkout = current_date - 10
+  where id = '94000000-0000-0000-0000-000000000031';
+set role anon;
+select test_assert(get_shared_booking((select token from share_tokens where label = 'expira')) is null,
+  'link deixa de abrir 7 dias depois da saída');
+reset role;
+update bookings set checkin = current_date - 4, checkout = current_date - 2
+  where id = '94000000-0000-0000-0000-000000000031';
+set role anon;
+select test_assert(get_shared_booking((select token from share_tokens where label = 'expira'))->>'status' = 'finished',
+  'até 7 dias depois da saída o link ainda abre como estadia concluída');
+reset role;
 
 -- Conta excluída (0090 zera guest_id): o link deixa de abrir.
 update bookings set status = 'confirmed' where id = '94000000-0000-0000-0000-000000000031';

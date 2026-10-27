@@ -237,14 +237,35 @@ select test_assert(apply_guest_profile_backfill('40000000-0000-0000-0000-0000000
 reset role;
 select test_assert((select document_number = 'cifrado-de-novo' from guests where id = '40000000-0000-0000-0000-000000009711'),
   'documento existente nunca é sobrescrito');
+-- Uma vez por ficha: se a pousada apagar um campo depois, a rotina não o traz de volta.
+update guests set phone = null where id = '40000000-0000-0000-0000-000000009711';
+set role service_role;
+select test_assert(not exists (select 1 from list_guests_pending_profile_backfill(null, 500)
+                               where guest_id = '40000000-0000-0000-0000-000000009711'),
+  'ficha já completada não volta à lista');
+select test_assert(apply_guest_profile_backfill('40000000-0000-0000-0000-000000009711') = '{}',
+  'ficha já completada não recebe o campo apagado de novo');
+reset role;
+select test_assert((select phone is null from guests where id = '40000000-0000-0000-0000-000000009711'),
+  'campo apagado pela pousada continua apagado');
+set role authenticated;
+do $$ begin
+  begin
+    perform 1 from guest_profile_backfills;
+    raise exception 'TEST: authenticated leu guest_profile_backfills';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
 select test_assert((select phone is null and document_number is null from guests where id = '40000000-0000-0000-0000-000000009712'),
   'conta sem reserva continua sem dados do perfil');
 
--- Cursor: p_after pula as fichas já vistas.
-update guests set phone = null where id = '40000000-0000-0000-0000-000000009711';
+-- Cursor: p_after pula as fichas já vistas. (Tira a marca de "feita" só para
+-- o teste: a ficha volta a ter o telefone pendente.)
+delete from guest_profile_backfills where guest_id = '40000000-0000-0000-0000-000000009711';
 set role service_role;
 select test_assert(exists (select 1 from list_guests_pending_profile_backfill(null, 500) where guest_id = '40000000-0000-0000-0000-000000009711'),
-  'telefone apagado volta a ficar pendente');
+  'sem a marca, o telefone apagado aparece como pendente');
 select test_assert(not exists (select 1 from list_guests_pending_profile_backfill('40000000-0000-0000-0000-000000009711', 500)
                                where guest_id = '40000000-0000-0000-0000-000000009711'), 'cursor pula a ficha');
 reset role;

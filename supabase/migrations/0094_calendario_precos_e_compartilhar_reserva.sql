@@ -1,7 +1,7 @@
 -- 0094 — Calendário com preço por dia (h6) e link da reserva para o acompanhante (h9)
 --
 -- 1. public_price_calendar(): para uma pousada PUBLICADA e um intervalo curto
---    (até 120 dias), devolve por noite: a menor diária entre as acomodações
+--    (até 62 dias), devolve por noite: a menor diária entre as acomodações
 --    livres ("a partir de"), se há alguma livre e a estadia mínima que vale
 --    naquela noite. Não reimplementa nada:
 --      - "livre" = bookable_rooms_core(slug, dia, dia + 1, hóspedes), o mesmo
@@ -31,9 +31,11 @@
 -- ---------------------------------------------------------------------------
 -- 1. Calendário com preço
 -- ---------------------------------------------------------------------------
--- Tamanho máximo da janela que `anon` pode pedir numa chamada (≈ 4 meses).
+-- Tamanho máximo da janela que `anon` pode pedir numa chamada (2 meses; o
+-- site pede um mês por vez). Revisão de 26/10: 120 dias custava ~400 ms/chamada
+-- numa pousada grande, e a função é pública.
 create or replace function public_calendar_max_days() returns integer
-language sql immutable as $$ select 120 $$;
+language sql immutable as $$ select 62 $$;
 
 create or replace function public_price_calendar(
   p_slug text,
@@ -130,6 +132,11 @@ begin
   if v_status in ('cancelled', 'no_show') then
     raise exception 'Esta reserva foi cancelada.';
   end if;
+  -- Só reserva ativa (revisão de 26/10: cotação e estadia encerrada não têm
+  -- o que compartilhar).
+  if v_status not in ('pending', 'confirmed', 'checked_in') then
+    raise exception 'Só dá para compartilhar uma reserva ativa.';
+  end if;
 
   if not coalesce(p_renew, false) then
     select l.token into v_token from booking_share_links l where l.booking_id = p_booking_id;
@@ -185,6 +192,9 @@ begin
   join pousadas p on p.id = b.pousada_id
   where l.token = p_token and b.guest_id is not null;
   if not found then return null; end if;
+  -- O link deixa de abrir 7 dias depois da saída (revisão de 26/10: antes
+  -- valia para sempre) e não existe para cotação.
+  if v.status = 'quote' or v.checkout < current_date - 7 then return null; end if;
 
   if v.status in ('cancelled', 'no_show')
      or (v.status = 'pending' and v.payment_due_at is not null and v.payment_due_at <= now()) then

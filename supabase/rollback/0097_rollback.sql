@@ -4,6 +4,7 @@
 drop function if exists public.apply_guest_profile_backfill(uuid, text, text, text);
 drop function if exists public.list_guests_pending_profile_backfill(uuid, integer);
 drop function if exists public.guest_profile_backfill_fields(uuid);
+drop table if exists public.guest_profile_backfills;
 
 drop function if exists public.release_monthly_report(uuid, date);
 drop function if exists public.mark_monthly_report_sent(uuid, date, integer);
