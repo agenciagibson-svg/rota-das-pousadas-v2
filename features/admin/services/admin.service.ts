@@ -1,4 +1,5 @@
 import 'server-only'
+import { normalizeCadasturNumber } from '@/lib/cadastur'
 import { buildReport, type ReportData, type ReportPeriod } from '@/features/admin/report-metrics'
 import { loadReportInput } from '@/repositories/admin-reports.repository'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
@@ -144,6 +145,7 @@ export async function createPousadaAsAdmin(
     gallery,
     notificationEmail: (input.contactEmail ?? '').trim().toLowerCase(),
     whatsapp: input.whatsapp ?? '',
+    cadastur: normalizeCadasturNumber(input.cadastur ?? ''),
     status: input.publishNow ? 'publicada' : 'rascunho',
   })
 

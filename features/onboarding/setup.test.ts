@@ -17,6 +17,7 @@ const pronta: SetupInput = {
   cardConnected: false,
   channels: 0,
   teamMembers: 1,
+  cadastur: '',
 }
 
 describe('configuração guiada', () => {
@@ -56,5 +57,16 @@ describe('configuração guiada', () => {
       (s) => s.id === 'descricao',
     )
     expect(step?.done).toBe(false)
+  })
+
+  it('Cadastur é opcional e leva direto ao campo', () => {
+    const sem = summarizeSetup(buildSetupSteps(pronta))
+    const passo = sem.steps.find((s) => s.id === 'cadastur')
+    expect(passo?.optional).toBe(true)
+    expect(passo?.done).toBe(false)
+    expect(passo?.href).toBe('/dashboard/configuracoes#cadastur')
+    expect(sem.complete).toBe(true)
+    const com = summarizeSetup(buildSetupSteps({ ...pronta, cadastur: '26.012345.10.0001-6' }))
+    expect(com.steps.find((s) => s.id === 'cadastur')?.done).toBe(true)
   })
 })

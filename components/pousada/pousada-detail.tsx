@@ -1,10 +1,11 @@
-import { AtSign, MapPin, Star } from 'lucide-react'
+import { AtSign, MapPin, ShieldCheck, Star } from 'lucide-react'
 import type { Pousada } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { Container } from '@/components/ui/container'
 import { Gallery } from '@/components/ui/gallery'
 import { cn } from '@/lib/utils'
+import { showCadasturSeal, todayIso } from '@/lib/cadastur'
 import { FavoriteButton } from './favorite-button'
 import { PousadaBooking, type BookableRoomInfo } from './pousada-booking'
 import {
@@ -135,6 +136,18 @@ export function PousadaDetail({
                     <AtSign className="size-4" />
                     Instagram
                   </a>
+                )}
+                {pousada.cadastur && showCadasturSeal(pousada.cadastur, todayIso()) && (
+                  <span
+                    className="text-foreground inline-flex items-center gap-1.5 font-semibold"
+                    title={`Cadastrada no Ministério do Turismo · Cadastur ${pousada.cadastur.number}`}
+                  >
+                    <ShieldCheck className="text-primary size-4" />
+                    Cadastur
+                    <span className="sr-only">
+                      : cadastrada no Ministério do Turismo, nº {pousada.cadastur.number}
+                    </span>
+                  </span>
                 )}
               </div>
             </div>

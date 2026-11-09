@@ -9,6 +9,7 @@ import { ImageUpload } from '@/components/ui/image-upload'
 import type { OwnerPousadaSettings } from '../types'
 import { updatePousadaSettingsAction } from '../actions'
 import { keepValuesOnSubmit } from '@/lib/forms'
+import { CadasturFields } from './cadastur-fields'
 
 /** Fusos do Brasil com nome amigável; o valor gravado é o nome IANA. */
 const TIME_ZONES: { value: string; label: string }[] = [
@@ -110,6 +111,8 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
       notificationEmail: String(formData.get('notificationEmail') ?? ''),
       houseRules: String(formData.get('houseRules') ?? ''),
       cancellationPolicy: String(formData.get('cancellationPolicy') ?? ''),
+      cadastur: String(formData.get('cadastur') ?? ''),
+      cadasturValidUntil: String(formData.get('cadasturValidUntil') ?? ''),
     }
 
     startTransition(async () => {
@@ -242,6 +245,13 @@ export function OwnerSettingsForm({ settings }: { settings: OwnerPousadaSettings
           defaultValue={settings.checkoutTime}
         />
       </div>
+
+      <CadasturFields
+        number={settings.cadastur}
+        validUntil={settings.cadasturValidUntil}
+        timeZone={settings.timezone || undefined}
+        errors={fieldErrors}
+      />
 
       <div className="grid gap-4">
         <label className="flex flex-col gap-1.5">

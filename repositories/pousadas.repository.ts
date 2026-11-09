@@ -7,6 +7,7 @@ import { createSupabaseStaticClient } from '@/lib/supabase/static'
 import type { Database } from '@/lib/supabase/database.types'
 import { normalizeCatalogText, parseCatalogQuery } from '@/features/pousadas/search'
 import { pointFromColumns } from '@/lib/geo/coordinates'
+import { cadasturFromColumns } from '@/lib/cadastur'
 
 /**
  * Contrato de acesso a dados de Pousadas. Única camada que fala com o banco.
@@ -77,7 +78,7 @@ type PousadaRow = Database['public']['Tables']['pousadas']['Row']
  * do deploy deste código — sem as colunas, a página da pousada quebra.
  */
 export const PUBLIC_POUSADA_COLUMNS =
-  'id, slug, name, city, state, destination_id, image, gallery, rating, reviews, price_per_night, tags, description, status, created_at, updated_at, checkin_time, checkout_time, contact_phone, house_rules, cancellation_policy, tenant_status, whatsapp, address, country, timezone, currency, language, instagram, cep, latitude, longitude'
+  'id, slug, name, city, state, destination_id, image, gallery, rating, reviews, price_per_night, tags, description, status, created_at, updated_at, checkin_time, checkout_time, contact_phone, house_rules, cancellation_policy, tenant_status, whatsapp, address, country, timezone, currency, language, instagram, cep, latitude, longitude, cadastur, cadastur_valid_until'
 
 export type PublicPousadaRow = Omit<
   PousadaRow,
@@ -113,6 +114,8 @@ export function rowToPousada(r: PublicPousadaRow): Pousada {
     contactPhone: r.contact_phone,
     // Vem também na busca (0095), para o mapa de `/pousadas`.
     coordinates: pointFromColumns(r.latitude, r.longitude),
+    // Some na busca (a RPC do card não traz); a página de detalhe lê.
+    cadastur: cadasturFromColumns(r.cadastur, r.cadastur_valid_until),
   }
 }
 
@@ -187,6 +190,7 @@ export type NewPousadaAdmin = {
   gallery: string[]
   notificationEmail: string
   whatsapp: string
+  cadastur: string
   status: PousadaRow['status']
 }
 
@@ -214,6 +218,7 @@ export async function insertPousadaAsAdmin(
       gallery: input.gallery,
       notification_email: input.notificationEmail,
       whatsapp: input.whatsapp,
+      cadastur: input.cadastur,
       status: input.status,
     })
     .select('id, slug')

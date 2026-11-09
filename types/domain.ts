@@ -1,3 +1,4 @@
+import type { Cadastur } from '@/lib/cadastur'
 /**
  * Canonical domain model for Rota das Pousadas.
  *
@@ -65,6 +66,8 @@ export type Pousada = {
    * a página e a busca não inventam um ponto a partir da cidade.
    */
   coordinates?: GeoPoint | null
+  /** Cadastur informado pela pousada (0102); `null`/ausente = não informado. */
+  cadastur?: Cadastur | null
 }
 
 export type Room = {

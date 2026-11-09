@@ -56,7 +56,7 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
   const { data, error } = await supabase
     .from('pousadas')
     .select(
-      'id, slug, name, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, house_rules, cancellation_policy, latitude, longitude',
+      'id, slug, name, city, state, country, address, cep, image, gallery, description, tags, timezone, currency, language, checkin_time, checkout_time, contact_phone, whatsapp, house_rules, cancellation_policy, latitude, longitude, cadastur, cadastur_valid_until',
     )
     .eq('id', pousadaId)
     .maybeSingle()
@@ -97,6 +97,8 @@ export async function getPousadaSettings(pousadaId: string): Promise<OwnerPousad
     notificationEmail: priv?.notification_email ?? '',
     houseRules: data.house_rules,
     cancellationPolicy: data.cancellation_policy,
+    cadastur: data.cadastur ?? '',
+    cadasturValidUntil: data.cadastur_valid_until ?? '',
     location: pointFromColumns(data.latitude, data.longitude),
   }
 }
@@ -124,6 +126,9 @@ export type UpdatePousadaSettingsRow = {
   notificationEmail: string
   houseRules: string
   cancellationPolicy: string
+  cadastur: string
+  /** `null` apaga a validade. */
+  cadasturValidUntil: string | null
 }
 
 export async function updatePousadaSettings(
@@ -156,6 +161,8 @@ export async function updatePousadaSettings(
       notification_email: input.notificationEmail,
       house_rules: input.houseRules,
       cancellation_policy: input.cancellationPolicy,
+      cadastur: input.cadastur,
+      cadastur_valid_until: input.cadasturValidUntil,
     })
     .eq('id', pousadaId)
   if (error) throw error
