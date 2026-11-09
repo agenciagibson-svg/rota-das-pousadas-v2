@@ -67,6 +67,10 @@ export type OwnerPousadaSettings = {
   notificationEmail: string
   houseRules: string
   cancellationPolicy: string
+  /** Número do Cadastur (0102); '' = não informado. */
+  cadastur: string
+  /** Validade do certificado Cadastur (YYYY-MM-DD) ou ''. */
+  cadasturValidUntil: string
   /** Ponto marcado no mapa (0095); `null` enquanto o dono não marcar. */
   location: GeoPoint | null
 }

@@ -4,6 +4,7 @@ import { ufSchema, phoneSchema, cepSchema } from '@/lib/validation/br'
 import { isValidTimeZone } from '@/lib/dates'
 import { geoPointSchema } from '@/lib/geo/coordinates'
 import type { BookingStatus } from '@/features/reservas/types'
+import { isValidCadasturNumber } from '@/lib/cadastur'
 
 /** Ação sobre uma data do calendário, como bloquear ou desbloquear. */
 export const dateActionSchema = z.object({
@@ -125,6 +126,17 @@ export const pousadaSettingsSchema = z.object({
   notificationEmail: z.string().trim().email('E-mail inválido.').or(z.literal('')),
   houseRules: z.string().trim().max(1500, 'Regras muito longas.'),
   cancellationPolicy: z.string().trim().max(1500, 'Política muito longa.'),
+  // 0102: opcional. O formato muda entre PF, MEI e empresa (lib/cadastur.ts).
+  cadastur: z
+    .string()
+    .trim()
+    .max(40, 'Número muito longo.')
+    .refine((v) => v === '' || isValidCadasturNumber(v), 'Confira o número do Cadastur.'),
+  cadasturValidUntil: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
+    .or(z.literal('')),
 })
 export type PousadaSettingsInput = z.infer<typeof pousadaSettingsSchema>
 

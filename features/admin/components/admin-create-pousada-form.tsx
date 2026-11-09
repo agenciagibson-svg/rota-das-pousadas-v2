@@ -31,6 +31,7 @@ export function AdminCreatePousadaForm() {
       instagram: '',
       contactEmail: '',
       whatsapp: '',
+      cadastur: '',
       images: [],
       publishNow: true,
     },
@@ -127,6 +128,14 @@ export function AdminCreatePousadaForm() {
           {...register('whatsapp')}
         />
       </div>
+
+      <Input
+        label="Cadastur (opcional)"
+        placeholder="Número como está no certificado"
+        inputMode="numeric"
+        error={errors.cadastur?.message}
+        {...register('cadastur')}
+      />
 
       <label className="text-foreground flex items-center gap-2 text-sm">
         <input

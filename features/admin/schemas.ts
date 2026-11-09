@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { ufSchema, phoneSchema } from '@/lib/validation/br'
+import { isValidCadasturNumber } from '@/lib/cadastur'
 
 export const pousadaIdSchema = z.object({
   id: z.string().uuid('Identificador inválido.'),
@@ -61,6 +62,13 @@ export const createPousadaAdminSchema = z.object({
     .optional()
     .refine((v) => !v || z.string().email().safeParse(v).success, 'E-mail inválido.'),
   whatsapp: phoneSchema.optional().or(z.literal('')),
+  // 0102: opcional; confere só a quantidade de dígitos (lib/cadastur.ts).
+  cadastur: z
+    .string()
+    .trim()
+    .max(40, 'Número muito longo.')
+    .refine((v) => v === '' || isValidCadasturNumber(v), 'Confira o número do Cadastur.')
+    .optional(),
   images: z.array(z.string().url('URL de imagem inválida.')).min(1, 'Envie ao menos uma foto.'),
   publishNow: z.boolean(),
 })

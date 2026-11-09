@@ -1686,6 +1686,8 @@ export type Database = {
       pousadas: {
         Row: {
           address: string
+          cadastur: string
+          cadastur_valid_until: string | null
           cancellation_policy: string
           cep: string | null
           checkin_time: string
@@ -1724,6 +1726,8 @@ export type Database = {
         }
         Insert: {
           address?: string
+          cadastur?: string
+          cadastur_valid_until?: string | null
           cancellation_policy?: string
           cep?: string | null
           checkin_time?: string
@@ -1762,6 +1766,8 @@ export type Database = {
         }
         Update: {
           address?: string
+          cadastur?: string
+          cadastur_valid_until?: string | null
           cancellation_policy?: string
           cep?: string | null
           checkin_time?: string

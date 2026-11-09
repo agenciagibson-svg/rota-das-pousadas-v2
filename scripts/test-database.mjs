@@ -95,6 +95,7 @@ try {
     'cupons-0100.sql',
     // 0101: link de demonstração (captação).
     'demo-link-0101.sql',
+    'cadastur-0102.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

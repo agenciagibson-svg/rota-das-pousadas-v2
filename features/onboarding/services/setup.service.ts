@@ -56,6 +56,7 @@ export async function getSetupProgress(): Promise<SetupProgress | null> {
       cardConnected: Boolean(card?.connected),
       channels: channels?.length ?? 0,
       teamMembers: (team ?? []).filter((m) => m.status === 'active').length,
+      cadastur: settings.cadastur,
     }),
   )
 }

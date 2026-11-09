@@ -24,6 +24,8 @@ const base = {
   notificationEmail: '',
   houseRules: '',
   cancellationPolicy: '',
+  cadastur: '',
+  cadasturValidUntil: '',
 }
 
 function imageResult(image: string) {
@@ -80,5 +82,19 @@ describe('galeria de fotos', () => {
     expect(ok.success).toBe(true)
     const bad = pousadaSettingsSchema.safeParse({ ...base, gallery: ['foto da piscina'] })
     expect(bad.success).toBe(false)
+  })
+
+  it('Cadastur é opcional; quando informado, confere o número e a data', () => {
+    expect(
+      pousadaSettingsSchema.safeParse({ ...base, cadastur: '26.012345.10.0001-6' }).success,
+    ).toBe(true)
+    expect(pousadaSettingsSchema.safeParse({ ...base, cadastur: 'abc' }).success).toBe(false)
+    expect(
+      pousadaSettingsSchema.safeParse({
+        ...base,
+        cadastur: '26.012345.10.0001-6',
+        cadasturValidUntil: '30/06/2027',
+      }).success,
+    ).toBe(false)
   })
 })

@@ -29,6 +29,7 @@ import type {
 } from '@/features/gestao/types'
 import type { PousadaSettingsInput } from '@/features/gestao/schemas'
 import type { BookingStatus } from '@/features/reservas/types'
+import { normalizeCadasturNumber } from '@/lib/cadastur'
 
 /**
  * Resolve a pousada gerida a partir do CONTEXTO ATIVO (lib/auth/tenant-context.ts),
@@ -90,6 +91,10 @@ export async function updateOwnerSettings(input: PousadaSettingsInput): Promise<
     notificationEmail: input.notificationEmail,
     houseRules: input.houseRules,
     cancellationPolicy: input.cancellationPolicy,
+    cadastur: normalizeCadasturNumber(input.cadastur),
+    // Validade sem número não faz sentido (o banco também recusa).
+    cadasturValidUntil:
+      input.cadastur.trim() && input.cadasturValidUntil ? input.cadasturValidUntil : null,
   })
 
   await logAudit({

@@ -129,4 +129,36 @@ describe('PousadaDetail em modo demonstração (0101)', () => {
       .filter((src) => /\/(capa|a|b)\.jpg/.test(src))
     expect(srcs[0]).toMatch(/capa\.jpg/)
   })
+
+  it('mostra o selo do Cadastur só com o cadastro em dia', () => {
+    const { unmount } = render(
+      <PousadaDetail
+        pousada={{ ...pousada, cadastur: { number: '26.012345.10.0001-6', validUntil: null } }}
+        room={null}
+        rooms={rooms}
+        reviews={[]}
+        favorite={false}
+        isLoggedIn={false}
+        demo
+      />,
+    )
+    expect(screen.getByTitle(/Cadastur 26\.012345\.10\.0001-6/)).toBeTruthy()
+    unmount()
+
+    render(
+      <PousadaDetail
+        pousada={{
+          ...pousada,
+          cadastur: { number: '26.012345.10.0001-6', validUntil: '2000-01-01' },
+        }}
+        room={null}
+        rooms={rooms}
+        reviews={[]}
+        favorite={false}
+        isLoggedIn={false}
+        demo
+      />,
+    )
+    expect(screen.queryByTitle(/Cadastur/)).toBeNull()
+  })
 })

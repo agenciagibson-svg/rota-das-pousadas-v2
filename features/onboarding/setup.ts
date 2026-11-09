@@ -15,6 +15,7 @@ export type SetupStepId =
   | 'pix'
   | 'assinatura'
   | 'cartao'
+  | 'cadastur'
   | 'canais'
   | 'equipe'
 
@@ -45,6 +46,8 @@ export type SetupInput = {
   cardConnected: boolean
   channels: number
   teamMembers: number
+  /** Número do Cadastur informado (0102); '' = não informado. */
+  cadastur: string
 }
 
 /** Mínimo de fotos para a vitrine não parecer vazia (capa + 2). */
@@ -126,6 +129,14 @@ export function buildSetupSteps(i: SetupInput): SetupStep[] {
       hint: 'Opcional. Para quem quer parcelar.',
       href: '/dashboard/configuracoes',
       done: i.cardConnected,
+      optional: true,
+    },
+    {
+      id: 'cadastur',
+      label: 'Cadastur',
+      hint: 'Cadastro do Ministério do Turismo. Mostra o selo na página da pousada.',
+      href: '/dashboard/configuracoes#cadastur',
+      done: i.cadastur.trim().length > 0,
       optional: true,
     },
     {
