@@ -12,8 +12,13 @@ describe('shouldShowWholePhoto', () => {
     expect(shouldShowWholePhoto(9 / 16, 1)).toBe(true)
   })
 
+  it('aceita cortar as laterais de uma foto deitada num quadro quase quadrado', () => {
+    expect(shouldShowWholePhoto(16 / 9, 1.1)).toBe(false)
+  })
+
   it('mostra inteiro o panorama em quadro em pé', () => {
     expect(shouldShowWholePhoto(3, 3 / 4)).toBe(true)
+    expect(shouldShowWholePhoto(16 / 9, 0.6)).toBe(true)
   })
 
   it('ignora medidas inválidas', () => {
