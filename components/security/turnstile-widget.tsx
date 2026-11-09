@@ -57,6 +57,10 @@ export function TurnstileWidget({
   const [scriptReady, setScriptReady] = useState(
     () => typeof window !== 'undefined' && Boolean(window.turnstile),
   )
+  // A Cloudflare recusou ou não conseguiu verificar (rede instável, extensão
+  // que bloqueia, navegador automatizado). Sem isto a pessoa via só a caixa
+  // vermelha e o botão de entrar recusando, sem saber o que fazer.
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     onVerifyRef.current = onVerify
@@ -71,9 +75,15 @@ export function TurnstileWidget({
     widgetIdRef.current = turnstile.render(container, {
       sitekey: siteKey,
       language: 'pt-br',
-      callback: (token) => onVerifyRef.current(token),
+      callback: (token) => {
+        setFailed(false)
+        onVerifyRef.current(token)
+      },
       'expired-callback': () => onVerifyRef.current(''),
-      'error-callback': () => onVerifyRef.current(''),
+      'error-callback': () => {
+        setFailed(true)
+        onVerifyRef.current('')
+      },
     })
 
     return () => {
@@ -82,6 +92,14 @@ export function TurnstileWidget({
     }
   }, [siteKey, scriptReady])
 
+  const restart = useCallback(() => {
+    setFailed(false)
+    onVerifyRef.current('')
+    if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current)
+  }, [])
+
+  // Depois de cada envio: descarta o token gasto e pede outro. O aviso de
+  // falha (se houver) some quando a Cloudflare responder de novo.
   useEffect(() => {
     if (resetKey === 0) return
     onVerifyRef.current('')
@@ -99,6 +117,25 @@ export function TurnstileWidget({
         onReady={() => setScriptReady(true)}
       />
       <div ref={containerRef} className="min-h-[65px]" />
+      {failed && (
+        <div
+          role="alert"
+          className="text-destructive -mt-1 flex flex-wrap items-center gap-x-2 text-sm"
+        >
+          <span>A verificação de segurança não passou.</span>
+          <button
+            type="button"
+            onClick={restart}
+            className="text-primary min-h-11 font-semibold underline underline-offset-4"
+          >
+            Tentar de novo
+          </button>
+          <span className="text-muted-foreground w-full text-xs">
+            Se continuar, recarregue a página ou use outro navegador. Extensões de bloqueio podem
+            atrapalhar.
+          </span>
+        </div>
+      )}
     </>
   )
 }
