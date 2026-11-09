@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState, type UIEvent } from 'react'
+import { useEffect, useState, type UIEvent } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { Modal } from './modal'
 import { cn } from '@/lib/utils'
-import { shouldShowWholePhoto } from '@/lib/photo-fit'
 
 export type GalleryImage = { src: string; alt: string }
 
@@ -16,73 +15,6 @@ function mosaicTile(total: number, i: number): string {
   if (n === 2) return 'col-span-2 row-span-2'
   if (n === 3 || (n === 4 && i === 1)) return 'col-span-2'
   return ''
-}
-
-/**
- * Foto que preenche o quadro. Quando preencher cortaria demais (foto vertical
- * em quadro deitado, panorama em quadro em pé), mostra a foto inteira sobre
- * uma cópia desfocada dela mesma, em vez de cortar.
- */
-function FitImage({
-  src,
-  alt,
-  sizes,
-  priority,
-  zoomOnHover = false,
-}: {
-  src: string
-  alt: string
-  sizes: string
-  priority?: boolean
-  zoomOnHover?: boolean
-}) {
-  const boxRef = useRef<HTMLSpanElement>(null)
-  const [photoRatio, setPhotoRatio] = useState<number | null>(null)
-  const [boxRatio, setBoxRatio] = useState<number | null>(null)
-
-  useEffect(() => {
-    const el = boxRef.current
-    if (!el) return
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect
-      if (width > 0 && height > 0) setBoxRatio(width / height)
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  const whole =
-    photoRatio !== null && boxRatio !== null && shouldShowWholePhoto(photoRatio, boxRatio)
-  const zoom = zoomOnHover
-    ? 'transition-transform duration-(--motion-reveal) group-hover:scale-105'
-    : ''
-
-  return (
-    <span ref={boxRef} className="bg-breu absolute inset-0 block overflow-hidden">
-      {whole && (
-        <Image
-          src={src}
-          alt=""
-          aria-hidden
-          fill
-          sizes={sizes}
-          className="scale-110 object-cover opacity-70 blur-2xl"
-        />
-      )}
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={sizes}
-        priority={priority}
-        onLoad={(e) => {
-          const img = e.currentTarget
-          if (img.naturalHeight > 0) setPhotoRatio(img.naturalWidth / img.naturalHeight)
-        }}
-        className={cn(whole ? 'object-contain' : 'object-cover', zoom)}
-      />
-    </span>
-  )
 }
 
 /**
@@ -139,11 +71,12 @@ export function Gallery({
               className="group relative aspect-[4/3] overflow-hidden rounded-2xl"
               aria-label={`Abrir imagem: ${img.alt}`}
             >
-              <FitImage
+              <Image
                 src={img.src}
                 alt={img.alt}
+                fill
                 sizes="(max-width: 640px) 50vw, 33vw"
-                zoomOnHover
+                className="object-cover transition-transform duration-(--motion-reveal) group-hover:scale-105"
               />
             </button>
           ))}
@@ -163,11 +96,13 @@ export function Gallery({
                 className="relative h-full w-full shrink-0 snap-center"
                 aria-label={`Abrir foto ${i + 1} de ${images.length}`}
               >
-                <FitImage
+                <Image
                   src={img.src}
                   alt={img.alt}
+                  fill
                   sizes="100vw"
                   priority={priority && i === 0}
+                  className="object-cover"
                 />
               </button>
             ))}
@@ -186,12 +121,13 @@ export function Gallery({
                 className={cn('group relative overflow-hidden', mosaicTile(images.length, i))}
                 aria-label={`Abrir foto ${i + 1} de ${images.length}`}
               >
-                <FitImage
+                <Image
                   src={img.src}
                   alt={img.alt}
+                  fill
                   sizes={i === 0 ? '50vw' : '25vw'}
                   priority={priority && i === 0}
-                  zoomOnHover
+                  className="object-cover transition-transform duration-(--motion-reveal) group-hover:scale-105"
                 />
                 {i === 4 && images.length > 5 && (
                   <span className="glass-dark text-primary-foreground absolute right-3 bottom-3 rounded-full border px-3 py-1.5 text-sm font-semibold">
