@@ -83,12 +83,10 @@ describe('parseDemoResponse', () => {
 })
 
 describe('withoutSeedRating', () => {
-  const base = { rating: 4.9, reviews: 0 } as Pousada
-  it('sem avaliação real, nota zerada', () => {
-    expect(withoutSeedRating(base).rating).toBe(0)
-  })
-  it('com avaliação real, mantém', () => {
-    expect(withoutSeedRating({ ...base, reviews: 3 }).rating).toBe(4.9)
+  it('a demonstração nunca mostra nota, nem a de cadastro antigo', () => {
+    const p = withoutSeedRating({ rating: 4.8, reviews: 214 } as Pousada)
+    expect(p.rating).toBe(0)
+    expect(p.reviews).toBe(0)
   })
 })
 

@@ -104,7 +104,11 @@ export function parseDemoResponse(raw: unknown): DemoResult | null {
   return { kind: 'demo', pousadaRow: p, rooms }
 }
 
-/** A pousada da demonstração nunca mostra nota inventada: sem avaliação real, zera. */
+/**
+ * A demonstração nunca mostra nota: a pousada ainda não recebeu hóspede pela
+ * Rota, e a coluna pode trazer número de cadastro antigo (as pousadas de
+ * exemplo tinham "4,8 · 214 avaliações" inventados). A página mostra "Nova na Rota".
+ */
 export function withoutSeedRating(pousada: Pousada): Pousada {
-  return pousada.reviews > 0 ? pousada : { ...pousada, rating: 0, reviews: 0 }
+  return { ...pousada, rating: 0, reviews: 0 }
 }
