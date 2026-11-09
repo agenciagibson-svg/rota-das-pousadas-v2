@@ -10,6 +10,11 @@ import { signupSchema, type SignupInput } from '../schemas'
 import { signUpAction } from '../actions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  CAPTCHA_PENDING_MESSAGE,
+  TurnstileWidget,
+  useCaptcha,
+} from '@/components/security/turnstile-widget'
 import { safeNextPath } from '@/features/auth/profile'
 
 type SignupFormProps = {
@@ -22,6 +27,7 @@ export function SignupForm({ next }: SignupFormProps) {
   const loginHref = safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : '/login'
   const [formError, setFormError] = useState<string | null>(null)
   const [sentTo, setSentTo] = useState<string | null>(null)
+  const captcha = useCaptcha()
   const {
     register,
     handleSubmit,
@@ -34,7 +40,16 @@ export function SignupForm({ next }: SignupFormProps) {
   async function onSubmit(values: SignupInput) {
     setFormError(null)
     setSentTo(null)
-    const result = await signUpAction({ ...values, next: safeNext ?? undefined })
+    if (!captcha.ready) {
+      setFormError(CAPTCHA_PENDING_MESSAGE)
+      return
+    }
+    const result = await signUpAction({
+      ...values,
+      next: safeNext ?? undefined,
+      captchaToken: captcha.token || undefined,
+    })
+    captcha.renew()
     if (!result.ok) {
       setFormError(result.error)
       return
@@ -73,6 +88,7 @@ export function SignupForm({ next }: SignupFormProps) {
         error={errors.password?.message}
         {...register('password')}
       />
+      <TurnstileWidget {...captcha.widgetProps} />
       {formError && (
         <p role="alert" className="text-destructive text-sm font-medium">
           {formError}{' '}
