@@ -263,10 +263,12 @@ export function ReviewsSection({
       title={
         <span className="flex items-center gap-3">
           Avaliações
-          <span className="bg-card text-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-sans text-sm font-semibold tabular-nums">
-            <Star className="fill-ipe text-ipe size-4" />
-            {pousada.rating.toFixed(1)}
-          </span>
+          {pousada.reviews > 0 && (
+            <span className="bg-card text-foreground inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-sans text-sm font-semibold tabular-nums">
+              <Star className="fill-ipe text-ipe size-4" />
+              {pousada.rating.toFixed(1)}
+            </span>
+          )}
         </span>
       }
     >

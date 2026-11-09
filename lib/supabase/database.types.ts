@@ -219,6 +219,39 @@ export type Database = {
           },
         ]
       }
+      pousada_demo_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          first_viewed_at: string | null
+          last_viewed_at: string | null
+          pousada_id: string
+          revoked_at: string | null
+          token: string
+          views: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          first_viewed_at?: string | null
+          last_viewed_at?: string | null
+          pousada_id: string
+          revoked_at?: string | null
+          token: string
+          views?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          first_viewed_at?: string | null
+          last_viewed_at?: string | null
+          pousada_id?: string
+          revoked_at?: string | null
+          token?: string
+          views?: number
+        }
+        Relationships: []
+      }
       booking_share_links: {
         Row: {
           booking_id: string
@@ -3768,6 +3801,30 @@ export type Database = {
       get_shared_booking: {
         Args: { p_token: string }
         Returns: Json
+      }
+      get_demo_pousada: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      create_pousada_demo_link: {
+        Args: { p_pousada_id: string; p_renew?: boolean }
+        Returns: string
+      }
+      revoke_pousada_demo_link: {
+        Args: { p_pousada_id: string }
+        Returns: undefined
+      }
+      list_pousada_demo_links: {
+        Args: never
+        Returns: {
+          active: boolean
+          created_at: string
+          first_viewed_at: string | null
+          last_viewed_at: string | null
+          pousada_id: string
+          token: string | null
+          views: number
+        }[]
       }
       save_channel_calendar: {
         Args: {

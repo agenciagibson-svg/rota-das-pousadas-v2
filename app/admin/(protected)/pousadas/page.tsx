@@ -8,6 +8,7 @@ import {
   canLinkOwner,
 } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
+import { canManageDemoLinks, listDemoLinks } from '@/features/demonstracao/services/demo.service'
 import type { Enums } from '@/lib/supabase/database.types'
 
 export const metadata: Metadata = {
@@ -32,12 +33,15 @@ export default async function AdminPousadasPage({
 }) {
   const { status } = await searchParams
   const filter = VALID_STATUSES.find((s) => s === status)
-  const [user, pousadas, grantsAllowed, linkOwnerAllowed] = await Promise.all([
-    getCurrentUser(),
-    listPousadasAdmin(filter),
-    canManageGrants(),
-    canLinkOwner(),
-  ])
+  const [user, pousadas, grantsAllowed, linkOwnerAllowed, demosAllowed, demoLinks] =
+    await Promise.all([
+      getCurrentUser(),
+      listPousadasAdmin(filter),
+      canManageGrants(),
+      canLinkOwner(),
+      canManageDemoLinks(),
+      listDemoLinks(),
+    ])
 
   return (
     <AdminShell
@@ -51,6 +55,8 @@ export default async function AdminPousadasPage({
           items={pousadas}
           canManageGrants={grantsAllowed}
           canLinkOwner={linkOwnerAllowed}
+          canManageDemos={demosAllowed}
+          demoLinks={demoLinks}
         />
       </Card>
     </AdminShell>
