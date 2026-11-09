@@ -9,9 +9,11 @@ export const LEGAL = {
   site: 'rotadaspousadas.com.br',
   legalName: 'DME Soluções Integradas Ltda' as string | null,
   cnpj: '43.133.012/0001-05' as string | null,
-  /** Endereço da sede (Decreto 7.962/2013: comércio eletrônico identifica o fornecedor). */
-  address: 'Rua Ronan Manoel Pereira, 992, Santa Mônica, Uberlândia/MG, CEP 38408-274' as
-    string | null,
+  /**
+   * Endereço da sede (Decreto 7.962/2013). `null` até o endereço do CNPJ ser
+   * atualizado na Receita — o cadastro ainda mostra a sede antiga.
+   */
+  address: null as string | null,
   /** Canal para dúvidas, suporte e pedidos sobre dados pessoais (LGPD). */
   contactEmail: 'agenciagibson@gmail.com',
   updatedAt: '9 de novembro de 2026',
