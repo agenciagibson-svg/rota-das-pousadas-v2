@@ -12,7 +12,6 @@ import {
   type EmailLinkType,
 } from '../passwordless'
 import { safeNextPath } from '../profile'
-import { CAPTCHA_FAILED_MESSAGE, captchaOption, isCaptchaError } from '../captcha'
 
 /**
  * Entrar sem senha: código de 6 números por e-mail (Supabase `signInWithOtp`
@@ -65,7 +64,6 @@ export async function requestEmailCode(params: {
   next: string | undefined
   ip: string | null
   redirectOrigin: string
-  captchaToken?: string
 }): Promise<void> {
   const email = params.email.trim().toLowerCase()
   await assertLoginNotLocked(email, params.ip)
@@ -77,11 +75,9 @@ export async function requestEmailCode(params: {
       shouldCreateUser: true,
       // Link do e-mail (se o template trouxer link): volta para a reserva.
       emailRedirectTo: `${params.redirectOrigin}${authCallbackPath(params.next)}`,
-      ...captchaOption(params.captchaToken),
     },
   })
   if (!error) return
-  if (isCaptchaError(error)) throw new Error(CAPTCHA_FAILED_MESSAGE)
   // Mesmo e-mail pedindo de novo antes de 1 minuto (o Supabase diz quantos
   // segundos faltam). Não é "muitas tentativas": o código já foi.
   const wait = /after (\d+) seconds?/i.exec(error.message)

@@ -10,11 +10,6 @@ import { loginSchema, type LoginInput } from '../schemas'
 import { signInAction, signInAdminAction } from '../actions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  CAPTCHA_PENDING_MESSAGE,
-  TurnstileWidget,
-  useCaptcha,
-} from '@/components/security/turnstile-widget'
 import { safeNextPath } from '@/features/auth/profile'
 
 type LoginVariant = 'guest' | 'partner' | 'admin'
@@ -36,7 +31,6 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
   const safeNext = safeNextPath(next)
   const signupHref = safeNext ? `/cadastro?next=${encodeURIComponent(safeNext)}` : '/cadastro'
   const [formError, setFormError] = useState<string | null>(null)
-  const captcha = useCaptcha()
   const forgotHref =
     variant === 'guest'
       ? '/esqueci-senha'
@@ -52,17 +46,11 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
 
   async function onSubmit(values: LoginInput) {
     setFormError(null)
-    if (!captcha.ready) {
-      setFormError(CAPTCHA_PENDING_MESSAGE)
-      return
-    }
-    const input = { ...values, captchaToken: captcha.token || undefined }
     // Admin precisa confirmar platformRole no servidor DEPOIS da senha bater
     // (e desloga se não for staff) — hóspede/parceiro reaproveitam a mesma
     // action, só muda o destino do redirect no cliente.
-    const result = variant === 'admin' ? await signInAdminAction(input) : await signInAction(input)
-    // O token do CAPTCHA vale uma vez: a próxima tentativa precisa de outro.
-    captcha.renew()
+    const result =
+      variant === 'admin' ? await signInAdminAction(values) : await signInAction(values)
     if (!result.ok) {
       setFormError(result.error)
       return
@@ -95,7 +83,6 @@ export function LoginForm({ next, variant = 'guest' }: LoginFormProps) {
       >
         Esqueci minha senha
       </Link>
-      <TurnstileWidget {...captcha.widgetProps} />
       {formError && (
         <p role="alert" className="text-destructive text-sm font-medium">
           {formError}

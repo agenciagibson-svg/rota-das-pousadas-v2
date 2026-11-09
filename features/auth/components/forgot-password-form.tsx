@@ -11,11 +11,6 @@ import { requestPasswordResetAction } from '../actions'
 import { LOGIN_PATH, type ResetAudience } from '../password-reset'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  CAPTCHA_PENDING_MESSAGE,
-  TurnstileWidget,
-  useCaptcha,
-} from '@/components/security/turnstile-widget'
 
 export function ForgotPasswordForm({
   audience = 'hospede',
@@ -26,7 +21,6 @@ export function ForgotPasswordForm({
 }) {
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
-  const captcha = useCaptcha()
   const {
     register,
     handleSubmit,
@@ -39,16 +33,7 @@ export function ForgotPasswordForm({
 
   async function onSubmit(values: ForgotPasswordInput) {
     setFormError(null)
-    if (!captcha.ready) {
-      setFormError(CAPTCHA_PENDING_MESSAGE)
-      return
-    }
-    const result = await requestPasswordResetAction({
-      ...values,
-      audience,
-      captchaToken: captcha.token || undefined,
-    })
-    captcha.renew()
+    const result = await requestPasswordResetAction({ ...values, audience })
     if (!result.ok) {
       setFormError(result.error)
       return
@@ -72,12 +57,6 @@ export function ForgotPasswordForm({
             </p>
           </div>
         </div>
-        <TurnstileWidget {...captcha.widgetProps} />
-        {formError && (
-          <p role="alert" className="text-destructive text-sm font-medium">
-            {formError}
-          </p>
-        )}
         <Button
           type="button"
           variant="outline"
@@ -107,12 +86,7 @@ export function ForgotPasswordForm({
         error={errors.email?.message}
         {...register('email')}
       />
-      <TurnstileWidget {...captcha.widgetProps} />
-      {formError && (
-        <p role="alert" className="text-destructive text-sm font-medium">
-          {formError}
-        </p>
-      )}
+      {formError && <p className="text-destructive text-sm font-medium">{formError}</p>}
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? 'Enviando…' : 'Enviar link para nova senha'}
       </Button>

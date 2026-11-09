@@ -16,11 +16,6 @@ import { requestEmailCodeAction, verifyEmailCodeAction } from '../actions'
 import { resendSecondsLeft } from '../passwordless'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  CAPTCHA_PENDING_MESSAGE,
-  TurnstileWidget,
-  useCaptcha,
-} from '@/components/security/turnstile-widget'
 
 /**
  * Entrar sem senha: a pessoa informa o e-mail, recebe um código de 6 números
@@ -58,7 +53,6 @@ export function EmailCodeForm({ next }: { next?: string }) {
 
 function EmailStep({ next, onSent }: { next?: string; onSent: (email: string) => void }) {
   const [formError, setFormError] = useState<string | null>(null)
-  const captcha = useCaptcha()
   const {
     register,
     handleSubmit,
@@ -70,16 +64,7 @@ function EmailStep({ next, onSent }: { next?: string; onSent: (email: string) =>
 
   async function onSubmit(values: EmailCodeRequestInput) {
     setFormError(null)
-    if (!captcha.ready) {
-      setFormError(CAPTCHA_PENDING_MESSAGE)
-      return
-    }
-    const result = await requestEmailCodeAction({
-      email: values.email,
-      next,
-      captchaToken: captcha.token || undefined,
-    })
-    captcha.renew()
+    const result = await requestEmailCodeAction({ email: values.email, next })
     if (!result.ok) {
       setFormError(result.error)
       return
@@ -98,7 +83,6 @@ function EmailStep({ next, onSent }: { next?: string; onSent: (email: string) =>
         error={errors.email?.message}
         {...register('email')}
       />
-      <TurnstileWidget {...captcha.widgetProps} />
       {formError && (
         <p role="alert" className="text-destructive text-sm font-medium">
           {formError}
@@ -139,9 +123,6 @@ function CodeStep({
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
-  // Só o "Reenviar código" pede CAPTCHA; conferir o código não (o Supabase
-  // não protege a verificação, e a trava de 5 erros já cobre).
-  const captcha = useCaptcha()
   const [done, setDone] = useState(false)
   const {
     register,
@@ -168,17 +149,8 @@ function CodeStep({
   async function resend() {
     setFormError(null)
     setNotice(null)
-    if (!captcha.ready) {
-      setFormError(CAPTCHA_PENDING_MESSAGE)
-      return
-    }
     setResending(true)
-    const result = await requestEmailCodeAction({
-      email,
-      next,
-      captchaToken: captcha.token || undefined,
-    })
-    captcha.renew()
+    const result = await requestEmailCodeAction({ email, next })
     setResending(false)
     if (!result.ok) {
       setFormError(result.error)
@@ -224,7 +196,6 @@ function CodeStep({
       <Button type="submit" size="lg" disabled={isSubmitting || done} className="w-full">
         {isSubmitting || done ? 'Entrando…' : 'Entrar'}
       </Button>
-      {secondsLeft === 0 && <TurnstileWidget {...captcha.widgetProps} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button
           type="button"
