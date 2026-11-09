@@ -5,18 +5,19 @@ import { revalidatePath } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createAction } from '@/actions/create-action'
 import { reportError } from '@/lib/observability/report-error'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 import { publicEnv } from '@/lib/env'
 import { assertLoginNotLocked, recordLoginAttempt } from '@/repositories/auth-rate-limit.repository'
 import { getCurrentUser, updateMyName } from './services/auth.service'
 import {
-  emailCodeRequestSchema,
+  emailCodeRequestActionSchema,
   emailCodeVerifySchema,
   emailLinkConfirmSchema,
-  forgotPasswordSchema,
+  forgotPasswordActionSchema,
   googleSignInSchema,
-  loginSchema,
+  loginActionSchema,
   resetPasswordSchema,
-  signupSchema,
+  signupActionSchema,
   updateNameSchema,
 } from './schemas'
 import { requestPasswordReset, resetPassword } from './services/password-reset.service'
@@ -31,6 +32,7 @@ import {
   verifyEmailCode,
 } from './services/passwordless.service'
 import { authCallbackPath, authRedirectOrigin } from './passwordless'
+import { CAPTCHA_FAILED_MESSAGE, captchaOption, isCaptchaError } from './captcha'
 
 /**
  * Server Actions de autenticação. Toda entrada é validada por Zod (createAction)
@@ -78,6 +80,9 @@ async function finishSignIn(email: string, ip: string | null, error: SignInError
     await recordLoginAttempt(email, ip, true)
     return
   }
+  // CAPTCHA recusado (token ausente, vencido ou já usado): não é senha errada,
+  // não soma tentativa na trava.
+  if (isCaptchaError(error)) throw new Error(CAPTCHA_FAILED_MESSAGE)
   const message = error.message.toLowerCase()
   if (error.code === 'email_not_confirmed' || message.includes('email not confirmed')) {
     // O Supabase só responde isto com a senha certa — não é tentativa falha.
@@ -101,7 +106,7 @@ async function finishSignIn(email: string, ip: string | null, error: SignInError
   throw new Error('Não foi possível entrar agora. Tente de novo em instantes.')
 }
 
-export const signInAction = createAction(loginSchema, async (input) => {
+export const signInAction = createAction(loginActionSchema, async (input) => {
   const ip = await clientIp()
   await assertLoginNotLocked(input.email, ip)
 
@@ -109,6 +114,7 @@ export const signInAction = createAction(loginSchema, async (input) => {
   const { error } = await supabase.auth.signInWithPassword({
     email: input.email,
     password: input.password,
+    ...(input.captchaToken && { options: captchaOption(input.captchaToken) }),
   })
   await finishSignIn(input.email, ip, error)
   revalidatePath('/', 'layout')
@@ -122,7 +128,7 @@ export const signInAction = createAction(loginSchema, async (input) => {
  * confirmamos `platformRole` DEPOIS da senha bater, e deslogamos de novo se
  * não for staff, em vez de deixar uma sessão autenticada sem propósito.
  */
-export const signInAdminAction = createAction(loginSchema, async (input) => {
+export const signInAdminAction = createAction(loginActionSchema, async (input) => {
   const ip = await clientIp()
   await assertLoginNotLocked(input.email, ip)
 
@@ -130,6 +136,7 @@ export const signInAdminAction = createAction(loginSchema, async (input) => {
   const { error } = await supabase.auth.signInWithPassword({
     email: input.email,
     password: input.password,
+    ...(input.captchaToken && { options: captchaOption(input.captchaToken) }),
   })
   await finishSignIn(input.email, ip, error)
 
@@ -149,7 +156,9 @@ export const signInAdminAction = createAction(loginSchema, async (input) => {
  * Com "Confirm email" ligado no projeto, o próprio Supabase não revela se o
  * e-mail já tem conta — o caso "already registered" só aparece sem confirmação.
  */
-function signUpErrorMessage(message: string): string {
+function signUpErrorMessage(error: { message: string; code?: string }): string {
+  if (isCaptchaError(error)) return CAPTCHA_FAILED_MESSAGE
+  const message = error.message
   const m = message.toLowerCase()
   if (m.includes('already registered') || m.includes('already been registered')) {
     return 'Este e-mail já tem uma conta. Entre com sua senha para continuar.'
@@ -165,7 +174,7 @@ function signUpErrorMessage(message: string): string {
   return 'Não foi possível criar a conta agora. Tente de novo em instantes.'
 }
 
-export const signUpAction = createAction(signupSchema, async (input) => {
+export const signUpAction = createAction(signupActionSchema, async (input) => {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
@@ -174,9 +183,10 @@ export const signUpAction = createAction(signupSchema, async (input) => {
       data: { full_name: input.name },
       // O link do e-mail de confirmação volta para onde a pessoa estava (a reserva).
       emailRedirectTo: `${await redirectOrigin()}${authCallbackPath(input.next)}`,
+      ...captchaOption(input.captchaToken),
     },
   })
-  if (error) throw new Error(signUpErrorMessage(error.message))
+  if (error) throw new Error(signUpErrorMessage(error))
   revalidatePath('/', 'layout')
   // Sem sessão = projeto exige confirmação de e-mail.
   return { needsEmailConfirmation: !data.session, redirectTo: '/minhas-reservas' as const }
@@ -199,11 +209,20 @@ export async function signOutAction() {
  * "Esqueci minha senha". Resposta idêntica exista ou não a conta (ver
  * `requestPasswordReset`) — a UI sempre mostra "se houver conta, enviamos".
  */
-export const requestPasswordResetAction = createAction(forgotPasswordSchema, async (input) => {
-  const ip = await clientIp()
-  await requestPasswordReset({ email: input.email, ip, audience: input.audience })
-  return { sent: true as const }
-})
+export const requestPasswordResetAction = createAction(
+  forgotPasswordActionSchema,
+  async (input) => {
+    const ip = await clientIp()
+    // O link de nova senha sai pelo nosso servidor (service_role), não pelo
+    // Supabase Auth — então o CAPTCHA é conferido aqui. Recusa ANTES de tocar
+    // no e-mail: a mensagem é a mesma exista ou não a conta.
+    if (!(await verifyTurnstileToken(input.captchaToken ?? '', ip))) {
+      throw new Error(CAPTCHA_FAILED_MESSAGE)
+    }
+    await requestPasswordReset({ email: input.email, ip, audience: input.audience })
+    return { sent: true as const }
+  },
+)
 
 /** Nova senha a partir do link do e-mail; já deixa a pessoa logada. */
 export const resetPasswordAction = createAction(resetPasswordSchema, async (input) => {
@@ -240,9 +259,15 @@ export const deleteMyAccountAction = createAction(deleteAccountSchema, async (in
  * "Receber código por e-mail" (passo 1). A resposta é a mesma exista ou não
  * a conta — a conta nova é criada por trás no primeiro código.
  */
-export const requestEmailCodeAction = createAction(emailCodeRequestSchema, async (input) => {
+export const requestEmailCodeAction = createAction(emailCodeRequestActionSchema, async (input) => {
   const [ip, origin] = await Promise.all([clientIp(), redirectOrigin()])
-  await requestEmailCode({ email: input.email, next: input.next, ip, redirectOrigin: origin })
+  await requestEmailCode({
+    email: input.email,
+    next: input.next,
+    ip,
+    redirectOrigin: origin,
+    captchaToken: input.captchaToken,
+  })
   return { sent: true as const }
 })
 
