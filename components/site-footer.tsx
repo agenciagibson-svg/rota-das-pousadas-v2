@@ -54,6 +54,17 @@ export function SiteFooter({ withBottomBar = false }: { withBottomBar?: boolean 
           <div className="space-y-1">
             <p>&copy; {new Date().getFullYear()} Rota das Pousadas. Feito no Brasil.</p>
             {companyFooterLine() && <p className="text-linen/40 text-xs">{companyFooterLine()}</p>}
+            <p className="text-linen/40 text-xs">
+              Desenvolvido por{' '}
+              <a
+                href="https://www.studioimpacto.com.br/"
+                target="_blank"
+                rel="noopener"
+                className="text-linen/60 hover:text-linen underline-offset-4 hover:underline"
+              >
+                Studio Impacto
+              </a>
+            </p>
           </div>
           <div className="flex gap-6">
             <Link href="/termos" className="hover:text-linen">
