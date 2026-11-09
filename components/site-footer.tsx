@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowUpRight, CalendarDays, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { companyFooterLine } from '@/lib/legal'
 import { FooterBrandCard } from '@/components/footer-brand-card'
 import { FooterCompanyCard } from '@/components/footer-company-card'
 import { FooterExploreCard } from '@/components/footer-explore-card'
@@ -50,7 +51,10 @@ export function SiteFooter({ withBottomBar = false }: { withBottomBar?: boolean 
         </nav>
 
         <div className="border-linen/10 text-linen/50 mt-8 flex flex-col gap-4 border-t pt-8 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; {new Date().getFullYear()} Rota das Pousadas. Feito no Brasil.</p>
+          <div className="space-y-1">
+            <p>&copy; {new Date().getFullYear()} Rota das Pousadas. Feito no Brasil.</p>
+            {companyFooterLine() && <p className="text-linen/40 text-xs">{companyFooterLine()}</p>}
+          </div>
           <div className="flex gap-6">
             <Link href="/termos" className="hover:text-linen">
               Termos

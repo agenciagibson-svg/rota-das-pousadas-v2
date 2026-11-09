@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LegalPage, type LegalSection } from '@/components/legal/legal-page'
-import { LEGAL, operatorLine } from '@/lib/legal'
+import { LEGAL, companyFooterLine, operatorLine } from '@/lib/legal'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidade',
@@ -241,7 +241,12 @@ const sections: LegalSection[] = [
   {
     id: 'contato',
     title: 'Fale com a gente',
-    body: <p>Dúvidas ou pedidos sobre seus dados: {email}.</p>,
+    body: (
+      <>
+        <p>Dúvidas ou pedidos sobre seus dados: {email}.</p>
+        {companyFooterLine() && <p>{companyFooterLine()}</p>}
+      </>
+    ),
   },
 ]
 
