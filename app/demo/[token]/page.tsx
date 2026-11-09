@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { PousadaDetail } from '@/components/pousada/pousada-detail'
 import { getDemoPage } from '@/server/queries'
+import { getCityCenter } from '@/lib/geo/city-center'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,10 @@ export default async function DemoPage({ params }: Props) {
   const page = await getDemoPage(token)
   if (!page) notFound()
   if (page.kind === 'published') redirect(`/pousada/${encodeURIComponent(page.slug)}`)
+  // Sem ponto marcado: mapa da região da cidade (cache de 30 dias por cidade).
+  const areaCenter = page.pousada.coordinates
+    ? null
+    : await getCityCenter(page.pousada.city, page.pousada.state)
 
   return (
     <div className="bg-background min-h-screen">
@@ -49,6 +54,7 @@ export default async function DemoPage({ params }: Props) {
           favorite={false}
           isLoggedIn={false}
           demo
+          areaCenter={areaCenter}
         />
       </main>
       <div

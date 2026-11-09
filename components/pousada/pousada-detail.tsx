@@ -6,6 +6,7 @@ import { Container } from '@/components/ui/container'
 import { Gallery } from '@/components/ui/gallery'
 import { cn } from '@/lib/utils'
 import { showCadasturSeal, todayIso } from '@/lib/cadastur'
+import type { GeoPoint } from '@/lib/geo/coordinates'
 import { FavoriteButton } from './favorite-button'
 import { PousadaBooking, type BookableRoomInfo } from './pousada-booking'
 import {
@@ -44,6 +45,7 @@ export function PousadaDetail({
   bookingOrigin,
   featuredCoupon,
   demo = false,
+  areaCenter = null,
 }: {
   pousada: Pousada
   room: BookableRoomInfo | null
@@ -65,6 +67,8 @@ export function PousadaDetail({
    * o que o hóspede faria ali.
    */
   demo?: boolean
+  /** Centro da cidade para o mapa da região quando a pousada não marcou o ponto. */
+  areaCenter?: GeoPoint | null
 }) {
   // A capa (`image`) abre o mosaico; o cadastro pelo admin guarda só as
   // demais fotos em `gallery`, então sem ela a capa sumia da página.
@@ -226,7 +230,7 @@ export function PousadaDetail({
               <ReviewsSection pousada={pousada} reviews={reviews} />
             </div>
             <div className="lg:col-start-1">
-              <LocationSection pousada={pousada} />
+              <LocationSection pousada={pousada} areaCenter={areaCenter} />
             </div>
           </div>
         </Container>

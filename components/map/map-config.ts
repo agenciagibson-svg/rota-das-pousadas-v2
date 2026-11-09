@@ -25,6 +25,8 @@ export type MapStyleName = keyof typeof MAP_STYLES
 export const STREET_ZOOM = 16
 /** Zoom de cidade (a busca achou só a cidade). */
 export const CITY_ZOOM = 13
+/** Mapa da região na página da pousada sem ponto marcado: a cidade e arredores. */
+export const AREA_ZOOM = 11
 /** Brasil inteiro (painel, antes de marcar). */
 export const COUNTRY_ZOOM = 3.5
 /** Mapa da busca: não aproximar além disso ao enquadrar os resultados. */

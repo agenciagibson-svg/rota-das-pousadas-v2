@@ -19,7 +19,8 @@ import { formatBRL } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Gallery } from '@/components/ui/gallery'
 import { PousadaLocationMap } from '@/components/map/pousada-location-map'
-import { directionsLinks } from '@/lib/geo/coordinates'
+import { PousadaAreaMap } from '@/components/map/pousada-area-map'
+import { directionsLinks, type GeoPoint } from '@/lib/geo/coordinates'
 
 /** Avaliação pública (sem nome do autor — ver `reviews.repository.ts::listPublicReviewsByPousada`). */
 export type PublicReview = {
@@ -313,7 +314,14 @@ export function ReviewsSection({
   )
 }
 
-export function LocationSection({ pousada }: { pousada: Pousada }) {
+export function LocationSection({
+  pousada,
+  areaCenter = null,
+}: {
+  pousada: Pousada
+  /** Centro da cidade (lib/geo/city-center.ts) para o mapa da região, sem ponto marcado. */
+  areaCenter?: GeoPoint | null
+}) {
   const point = pousada.coordinates ?? null
   // Com o ponto marcado pelo dono (0095), os apps de rota vão direto a ele;
   // sem ponto, buscam pelo endereço em texto, como antes.
@@ -323,14 +331,18 @@ export function LocationSection({ pousada }: { pousada: Pousada }) {
   )
   return (
     <Block id={sectionIds.localizacao} title="Localização">
-      {/* Sem coordenadas, sem mapa: nada de alfinete chutado no centro da cidade. */}
-      {point && <PousadaLocationMap point={point} name={pousada.name} />}
+      {/* Sem o ponto da pousada, mostra só a região da cidade — nunca um alfinete chutado. */}
+      {point ? (
+        <PousadaLocationMap point={point} name={pousada.name} />
+      ) : (
+        areaCenter && <PousadaAreaMap center={areaCenter} city={pousada.city} name={pousada.name} />
+      )}
       <Card
         radius="3xl"
         border={false}
         className={cn(
           'flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center',
-          point && 'mt-4',
+          (point || areaCenter) && 'mt-4',
         )}
       >
         <div className="flex items-start gap-3 text-base">

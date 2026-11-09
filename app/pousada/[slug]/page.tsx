@@ -22,6 +22,7 @@ import {
 } from '@/server/queries'
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
+import { getCityCenter } from '@/lib/geo/city-center'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,11 +73,13 @@ export default async function PousadaPage({
       : 0
   if (!pousada) notFound()
 
-  const [nearby, reviews, featuredCoupon] = await Promise.all([
+  const [nearby, reviews, featuredCoupon, areaCenter] = await Promise.all([
     getNearbyPousadas(slug, 3),
     getPublicReviews(pousada.id),
     // Cupom divulgado (0100): sem cupom valendo hoje, nada aparece.
     getPublicFeaturedCoupon(slug),
+    // Sem ponto marcado: mapa da região da cidade (cache de 30 dias por cidade).
+    pousada.coordinates ? Promise.resolve(null) : getCityCenter(pousada.city, pousada.state),
   ])
 
   return (
@@ -97,6 +100,7 @@ export default async function PousadaPage({
           }}
           favorite={favorite}
           isLoggedIn={Boolean(currentUser)}
+          areaCenter={areaCenter}
           bookingOrigin={bioOriginFromParam(initialBooking.origem)}
           featuredCoupon={featuredCoupon}
         />
