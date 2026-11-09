@@ -93,6 +93,8 @@ try {
     'relatorio-mensal-0097.sql',
     // 0100: cupons para quem reserva direto (prepara também o teste de concorrência abaixo).
     'cupons-0100.sql',
+    // 0101: link de demonstração (captação).
+    'demo-link-0101.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

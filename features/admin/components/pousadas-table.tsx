@@ -3,11 +3,13 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MapPin, ShieldCheck } from 'lucide-react'
+import { Eye, MapPin, ShieldCheck } from 'lucide-react'
 import { changePousadaStatusAction } from '../actions'
 import { LinkPousadaOwner } from './link-pousada-owner'
 import { Badge } from '@/components/ui/badge'
 import type { AdminPousadaRow } from '../types'
+import { DemoLinkPanel } from '@/features/demonstracao/components/demo-link-panel'
+import type { DemoLinkInfo } from '@/features/demonstracao/demo'
 
 const STATUS_LABEL: Record<string, string> = {
   rascunho: 'Rascunho',
@@ -34,17 +36,23 @@ export function PousadasTable({
   items,
   canManageGrants,
   canLinkOwner,
+  canManageDemos = false,
+  demoLinks = {},
 }: {
   items: AdminPousadaRow[]
   /** `platform:grant:manage` (só master) — mostra o link de acesso institucional. */
   canManageGrants: boolean
   /** `pousada:link_owner` (comercial/master) — mostra o botão de vincular proprietário. */
   canLinkOwner: boolean
+  /** `pousada:approve` (comercial/master) — link de demonstração das pousadas não publicadas (0101). */
+  canManageDemos?: boolean
+  demoLinks?: Record<string, DemoLinkInfo>
 }) {
   const router = useRouter()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [openDemoId, setOpenDemoId] = useState<string | null>(null)
 
   if (items.length === 0) {
     return <p className="text-muted-foreground text-sm">Nenhuma pousada encontrada.</p>
@@ -67,53 +75,69 @@ export function PousadasTable({
     <div className="space-y-2">
       {items.map((p) => {
         const action = nextAction(p.status)
+        const demoAllowed = canManageDemos && p.status !== 'publicada' && p.status !== 'arquivada'
+        const demo = demoLinks[p.id]
+        const demoActive = Boolean(demo?.active)
         return (
-          <div
-            key={p.id}
-            className="bg-secondary/50 flex items-center justify-between gap-3 rounded-xl p-3"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-foreground truncate font-medium">{p.name}</span>
-                <Badge size="sm" variant="secondary">
-                  {STATUS_LABEL[p.status] ?? p.status}
-                </Badge>
-              </div>
-              <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-                <span className="flex items-center gap-1">
-                  <MapPin className="size-3" /> {p.city}, {p.state}
-                </span>
-                {p.ownerName ? (
-                  <span>
-                    Proprietário: {p.ownerName}
-                    {p.ownerEmail && p.ownerEmail !== p.ownerName ? ` (${p.ownerEmail})` : ''}
+          <div key={p.id} className="bg-secondary/50 flex flex-col gap-3 rounded-xl p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground truncate font-medium">{p.name}</span>
+                  <Badge size="sm" variant="secondary">
+                    {STATUS_LABEL[p.status] ?? p.status}
+                  </Badge>
+                </div>
+                <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="size-3" /> {p.city}, {p.state}
                   </span>
-                ) : (
-                  <span className="text-destructive">Sem proprietário vinculado</span>
+                  {p.ownerName ? (
+                    <span>
+                      Proprietário: {p.ownerName}
+                      {p.ownerEmail && p.ownerEmail !== p.ownerName ? ` (${p.ownerEmail})` : ''}
+                    </span>
+                  ) : (
+                    <span className="text-destructive">Sem proprietário vinculado</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                {demoAllowed && (
+                  <button
+                    type="button"
+                    aria-expanded={openDemoId === p.id}
+                    onClick={() => setOpenDemoId(openDemoId === p.id ? null : p.id)}
+                    className="border-border text-foreground hover:bg-secondary inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                  >
+                    <Eye className="size-3.5" />
+                    {demoActive ? `Demonstração · ${demo?.views ?? 0}` : 'Demonstração'}
+                  </button>
+                )}
+                {canLinkOwner && !p.ownerName && <LinkPousadaOwner pousadaId={p.id} />}
+                {canManageGrants && (
+                  <Link
+                    href={`/admin/pousadas/${p.id}/acessos`}
+                    className="border-border text-foreground hover:bg-secondary inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                  >
+                    <ShieldCheck className="size-3.5" />
+                    Acessos
+                  </Link>
+                )}
+                {action && (
+                  <button
+                    disabled={isPending && pendingId === p.id}
+                    onClick={() => run(p.id, action.target)}
+                    className="border-border text-foreground hover:bg-secondary rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {action.label}
+                  </button>
                 )}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {canLinkOwner && !p.ownerName && <LinkPousadaOwner pousadaId={p.id} />}
-              {canManageGrants && (
-                <Link
-                  href={`/admin/pousadas/${p.id}/acessos`}
-                  className="border-border text-foreground hover:bg-secondary inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
-                >
-                  <ShieldCheck className="size-3.5" />
-                  Acessos
-                </Link>
-              )}
-              {action && (
-                <button
-                  disabled={isPending && pendingId === p.id}
-                  onClick={() => run(p.id, action.target)}
-                  className="border-border text-foreground hover:bg-secondary rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
-                >
-                  {action.label}
-                </button>
-              )}
-            </div>
+            {demoAllowed && openDemoId === p.id && (
+              <DemoLinkPanel pousadaId={p.id} pousadaName={p.name} link={demo ?? null} />
+            )}
           </div>
         )
       })}

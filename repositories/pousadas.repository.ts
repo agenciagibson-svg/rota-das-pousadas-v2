@@ -84,7 +84,7 @@ export type PublicPousadaRow = Omit<
   'owner_id' | 'notification_email' | 'legal_name' | 'tax_id'
 >
 
-function rowToPousada(r: PublicPousadaRow): Pousada {
+export function rowToPousada(r: PublicPousadaRow): Pousada {
   return {
     slug: r.slug,
     name: r.name,

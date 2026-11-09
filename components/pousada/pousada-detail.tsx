@@ -19,6 +19,7 @@ import {
   type PublicRoomInfo,
 } from './pousada-sections'
 import { ShareButton } from './share-button'
+import { DemoBookingCard } from './demo-booking-card'
 import { DirectBookingPerk } from '@/features/cupons/components/direct-booking-perk'
 import type { FeaturedCoupon } from '@/features/cupons/types'
 
@@ -41,6 +42,7 @@ export function PousadaDetail({
   isLoggedIn,
   bookingOrigin,
   featuredCoupon,
+  demo = false,
 }: {
   pousada: Pousada
   room: BookableRoomInfo | null
@@ -56,6 +58,12 @@ export function PousadaDetail({
   bookingOrigin?: 'link_bio'
   /** Cupom divulgado pela pousada (0100), já filtrado: só vem se vale hoje. */
   featuredCoupon?: FeaturedCoupon | null
+  /**
+   * Link de demonstração (0101): pousada que ainda não é cliente. Sem
+   * favoritar, compartilhar nem reservar — o card de reserva explica ao dono
+   * o que o hóspede faria ali.
+   */
+  demo?: boolean
 }) {
   const photos = pousada.gallery.length ? pousada.gallery : [pousada.image || '/placeholder.svg']
   const images = photos.map((src, i) => ({ src, alt: `${pousada.name} - foto ${i + 1}` }))
@@ -72,15 +80,17 @@ export function PousadaDetail({
     <div className="pb-28 lg:pb-16">
       <div className="relative md:mx-auto md:max-w-7xl md:px-5 md:pt-28 lg:px-8">
         <Gallery layout="hero" images={images} priority />
-        <div className="absolute top-24 right-4 z-10 flex gap-2 md:hidden">
-          <ShareButton name={pousada.name} variant="glass" />
-          <FavoriteButton
-            slug={pousada.slug}
-            initialFavorite={favorite}
-            isLoggedIn={isLoggedIn}
-            variant="glass"
-          />
-        </div>
+        {!demo && (
+          <div className="absolute top-24 right-4 z-10 flex gap-2 md:hidden">
+            <ShareButton name={pousada.name} variant="glass" />
+            <FavoriteButton
+              slug={pousada.slug}
+              initialFavorite={favorite}
+              isLoggedIn={isLoggedIn}
+              variant="glass"
+            />
+          </div>
+        )}
       </div>
 
       <div className="bg-background relative z-10 -mt-6 rounded-t-3xl md:mt-0 md:rounded-none">
@@ -96,13 +106,18 @@ export function PousadaDetail({
               </div>
               <h1 className="text-display-l text-foreground mt-4">{pousada.name}</h1>
               <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-base">
-                <span className="text-foreground inline-flex items-center gap-1.5 font-semibold tabular-nums">
-                  <Star className="fill-ipe text-ipe size-4" />
-                  {pousada.rating.toFixed(1)}
-                  <span className="text-muted-foreground font-normal">
-                    ({pousada.reviews} avaliações)
+                {pousada.reviews > 0 ? (
+                  <span className="text-foreground inline-flex items-center gap-1.5 font-semibold tabular-nums">
+                    <Star className="fill-ipe text-ipe size-4" />
+                    {pousada.rating.toFixed(1)}
+                    <span className="text-muted-foreground font-normal">
+                      ({pousada.reviews} avaliações)
+                    </span>
                   </span>
-                </span>
+                ) : (
+                  // Sem avaliação real ainda: nada de "0.0 (0 avaliações)".
+                  <span className="text-foreground font-semibold">Nova na Rota</span>
+                )}
                 <span className="inline-flex items-center gap-1.5">
                   <MapPin className="size-4" />
                   {pousada.city}, {pousada.state}
@@ -120,14 +135,16 @@ export function PousadaDetail({
                 )}
               </div>
             </div>
-            <div className="hidden shrink-0 gap-2 md:flex">
-              <ShareButton name={pousada.name} />
-              <FavoriteButton
-                slug={pousada.slug}
-                initialFavorite={favorite}
-                isLoggedIn={isLoggedIn}
-              />
-            </div>
+            {!demo && (
+              <div className="hidden shrink-0 gap-2 md:flex">
+                <ShareButton name={pousada.name} />
+                <FavoriteButton
+                  slug={pousada.slug}
+                  initialFavorite={favorite}
+                  isLoggedIn={isLoggedIn}
+                />
+              </div>
+            )}
           </header>
 
           {/* Abas em pílula: atalhos para as seções, presas abaixo do cabeçalho. */}
@@ -158,15 +175,30 @@ export function PousadaDetail({
             </div>
             <aside className="py-4 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:py-10">
               <div className="lg:sticky lg:top-40">
-                {featuredCoupon && <DirectBookingPerk coupon={featuredCoupon} className="mb-4" />}
-                <PousadaBooking
-                  slug={pousada.slug}
-                  rating={pousada.rating}
-                  room={room}
-                  initialBooking={initialBooking}
-                  bookingOrigin={bookingOrigin}
-                  couponCode={featuredCoupon?.code}
-                />
+                {demo ? (
+                  <DemoBookingCard
+                    pousadaName={pousada.name}
+                    from={
+                      rooms.length
+                        ? Math.min(...rooms.map((r) => r.nightly))
+                        : pousada.pricePerNight
+                    }
+                  />
+                ) : (
+                  <>
+                    {featuredCoupon && (
+                      <DirectBookingPerk coupon={featuredCoupon} className="mb-4" />
+                    )}
+                    <PousadaBooking
+                      slug={pousada.slug}
+                      rating={pousada.rating}
+                      room={room}
+                      initialBooking={initialBooking}
+                      bookingOrigin={bookingOrigin}
+                      couponCode={featuredCoupon?.code}
+                    />
+                  </>
+                )}
               </div>
             </aside>
             {showInfo && (

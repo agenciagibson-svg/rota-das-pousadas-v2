@@ -23,6 +23,7 @@ import {
 } from '@/features/reservas/services/bookings.service'
 import { getMyPrecheckin } from '@/features/reservas/services/precheckin.service'
 import { getPublicPriceCalendar } from '@/features/reservas/services/price-calendar.service'
+import { getDemoPage as demoPage } from '@/features/demonstracao/services/demo.service'
 import {
   getMyBookingCalendarFile,
   getSharedTrip as sharedTrip,
@@ -144,6 +145,11 @@ export const getBookableRoom = cache(
 
 /** Arquivo .ics da reserva do hóspede logado (0094). `null` = não é dele. */
 export const getMyBookingIcs = cache((bookingId: string) => getMyBookingCalendarFile(bookingId))
+/**
+ * Link de demonstração (0101). Memoizado: `generateMetadata` e a página leem a
+ * mesma resposta, e a abertura é contada uma vez por visita.
+ */
+export const getDemoPage = cache((token: string) => demoPage(token))
 /** Página pública do link da reserva para o acompanhante (0094). */
 export const getSharedTrip = cache((token: string) => sharedTrip(token))
 
