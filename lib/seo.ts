@@ -24,7 +24,7 @@ export const siteConfig = {
    * Perfis oficiais da marca (Organization.sameAs). Ajudam o Google a ligar o
    * site às redes. Preencha só com perfis que existem e são da Rota.
    */
-  sameAs: [] as string[],
+  sameAs: ['https://www.instagram.com/rotadaspousadasoficial/'] as string[],
   url: cleanUrl(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rotadaspousadas.com.br'),
   locale: 'pt_BR',
   themeColor: '#0F1716',
@@ -76,7 +76,6 @@ export const baseMetadata: Metadata = {
     title: `${siteConfig.name} — Cada destino tem uma história`,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
-    creator: siteConfig.twitter,
   },
   // Search Console: defina NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION na Vercel.
   ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION

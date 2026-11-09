@@ -2,30 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, Camera, HeartHandshake, Play, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Camera, HeartHandshake } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 
+// Só perfis que existem: link "#" ou número inventado não entram no rodapé.
 const channels = [
   {
     label: 'Instagram',
-    href: '#',
+    href: 'https://www.instagram.com/rotadaspousadasoficial/',
     icon: Camera,
-    pulse: 'Stories de pousadas reais, bastidores e achados pelo Brasil.',
-    stat: '180 destinos',
-  },
-  {
-    label: 'YouTube',
-    href: '#',
-    icon: Play,
-    pulse: 'Roteiros em vídeo, reviews de hospedagens e guias por temporada.',
-    stat: 'Rotas em vídeo',
-  },
-  {
-    label: 'TikTok',
-    href: '#',
-    icon: Sparkles,
-    pulse: 'Descobertas rápidas, lugares escondidos e ideias para viajar agora.',
-    stat: 'Achados virais',
+    pulse: 'Pousadas reais, bastidores e achados pelo Brasil.',
+    stat: '@rotadaspousadasoficial',
   },
 ]
 
@@ -73,13 +60,15 @@ export function FooterBrandCard() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-4 grid grid-cols-1 gap-2">
           {channels.map((channel, index) => {
             const selected = activeIndex === index
             return (
               <Link
                 key={channel.label}
                 href={channel.href}
+                target="_blank"
+                rel="noopener"
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
                 onClick={() => setActiveIndex(index)}
