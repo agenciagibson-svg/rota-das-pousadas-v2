@@ -1,11 +1,23 @@
 import { z } from 'zod'
 
+/**
+ * Token do CAPTCHA (Cloudflare Turnstile) que acompanha login, cadastro,
+ * pedido de código e "esqueci a senha". Fica fora dos schemas dos
+ * formulários (não é campo digitado): só os schemas das Server Actions
+ * (`…ActionSchema`) o recebem. Opcional e sem `.default()` — tipo de entrada
+ * e de saída iguais (ver o aviso do `createAction`). Quem decide se ele é
+ * obrigatório é o Supabase Auth (proteção por CAPTCHA ligada no projeto) e,
+ * no "esqueci a senha", `verifyTurnstileToken`.
+ */
+const captchaToken = z.string().max(4096).optional()
+
 /** Validação de login (client + server). */
 export const loginSchema = z.object({
   email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
   password: z.string().min(8, 'A senha deve ter ao menos 8 caracteres.'),
 })
 export type LoginInput = z.infer<typeof loginSchema>
+export const loginActionSchema = loginSchema.extend({ captchaToken })
 
 /** Validação de cadastro. */
 export const signupSchema = z.object({
@@ -19,6 +31,7 @@ export const signupSchema = z.object({
     .max(72, 'A senha deve ter no máximo 72 caracteres.'),
 })
 export type SignupInput = z.infer<typeof signupSchema>
+export const signupActionSchema = signupSchema.extend({ captchaToken })
 
 /** Completar/corrigir o nome de um cadastro que chegou sem nome (conta de teste, magic link). */
 export const updateNameSchema = z.object({
@@ -34,6 +47,7 @@ export const forgotPasswordSchema = z.object({
   audience,
 })
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export const forgotPasswordActionSchema = forgotPasswordSchema.extend({ captchaToken })
 
 /** Nova senha a partir do link do e-mail. Mesmas regras do cadastro. */
 export const resetPasswordSchema = z
@@ -61,6 +75,7 @@ export const emailCodeRequestSchema = z.object({
   next: nextField,
 })
 export type EmailCodeRequestInput = z.infer<typeof emailCodeRequestSchema>
+export const emailCodeRequestActionSchema = emailCodeRequestSchema.extend({ captchaToken })
 
 /** Passo 2: o código de 6 números que chegou no e-mail. */
 export const emailCodeVerifySchema = emailCodeRequestSchema.extend({

@@ -6,7 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { submitQuoteRequestAction } from '../actions'
-import { TurnstileWidget } from './turnstile-widget'
+import { TurnstileWidget } from '@/components/security/turnstile-widget'
 import { keepValuesOnSubmit } from '@/lib/forms'
 
 /**
