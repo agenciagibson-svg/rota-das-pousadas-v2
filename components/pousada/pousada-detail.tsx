@@ -65,7 +65,10 @@ export function PousadaDetail({
    */
   demo?: boolean
 }) {
-  const photos = pousada.gallery.length ? pousada.gallery : [pousada.image || '/placeholder.svg']
+  // A capa (`image`) abre o mosaico; o cadastro pelo admin guarda só as
+  // demais fotos em `gallery`, então sem ela a capa sumia da página.
+  const unique = [...new Set([pousada.image, ...pousada.gallery].filter(Boolean))]
+  const photos = unique.length ? unique : ['/placeholder.svg']
   const images = photos.map((src, i) => ({ src, alt: `${pousada.name} - foto ${i + 1}` }))
   const showInfo = hasImportantInfo(pousada)
   const tabs = [

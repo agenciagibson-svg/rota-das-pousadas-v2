@@ -111,4 +111,22 @@ describe('PousadaDetail em modo demonstração (0101)', () => {
     expect(screen.queryByText(/0 avaliações/)).toBeNull()
     expect(screen.queryByText('0.0')).toBeNull()
   })
+
+  it('abre o mosaico com a capa, mesmo quando ela não está na galeria', () => {
+    render(
+      <PousadaDetail
+        pousada={{ ...pousada, image: '/capa.jpg', gallery: ['/a.jpg', '/capa.jpg', '/b.jpg'] }}
+        room={null}
+        rooms={rooms}
+        reviews={[]}
+        favorite={false}
+        isLoggedIn={false}
+        demo
+      />,
+    )
+    const srcs = [...document.querySelectorAll('img')]
+      .map((img) => decodeURIComponent(img.getAttribute('src') ?? ''))
+      .filter((src) => /\/(capa|a|b)\.jpg/.test(src))
+    expect(srcs[0]).toMatch(/capa\.jpg/)
+  })
 })
