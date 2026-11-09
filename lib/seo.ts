@@ -17,7 +17,14 @@ export const siteConfig = {
   name: 'Rota das Pousadas',
   shortName: 'Rota',
   description:
-    'O maior ecossistema digital de pousadas do Brasil. Encontre refúgios exclusivos na serra, praia, cachoeiras e natureza. Toda grande viagem começa por uma rota.',
+    'Rota das Pousadas: pousadas independentes com reserva direta, sem intermediário. Escolha seu refúgio na serra, praia, cachoeiras e natureza e pague com Pix ou cartão.',
+  /** Outros nomes que as pessoas digitam para achar o site (WebSite.alternateName). */
+  alternateNames: ['Rota Pousadas', 'Rota das Pousadas Brasil', 'rotadaspousadas.com.br'],
+  /**
+   * Perfis oficiais da marca (Organization.sameAs). Ajudam o Google a ligar o
+   * site às redes. Preencha só com perfis que existem e são da Rota.
+   */
+  sameAs: [] as string[],
   url: cleanUrl(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rotadaspousadas.com.br'),
   locale: 'pt_BR',
   themeColor: '#0F1716',
@@ -40,6 +47,9 @@ export const baseMetadata: Metadata = {
   applicationName: siteConfig.name,
   generator: 'Next.js',
   keywords: [
+    'Rota das Pousadas',
+    'rota pousadas',
+    'reserva direta pousada',
     'pousadas',
     'viagem',
     'Brasil',
@@ -68,6 +78,10 @@ export const baseMetadata: Metadata = {
     images: [siteConfig.ogImage],
     creator: siteConfig.twitter,
   },
+  // Search Console: defina NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION na Vercel.
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } }
+    : {}),
   robots: {
     index: true,
     follow: true,
@@ -123,25 +137,58 @@ export function pousadaJsonLd(pousada: Pousada) {
       addressRegion: pousada.state,
       addressCountry: 'BR',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: pousada.rating,
-      reviewCount: pousada.reviews,
-      bestRating: 5,
-    },
+    // Sem avaliação real, nada de nota: o Google trata nota zerada como dado inválido.
+    ...(pousada.reviews > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: pousada.rating,
+            reviewCount: pousada.reviews,
+            bestRating: 5,
+          },
+        }
+      : {}),
     priceRange: `R$ ${pousada.pricePerNight}`,
     amenityFeature: pousada.tags.map((t) => ({ '@type': 'LocationFeatureSpecification', name: t })),
   }
 }
 
-/** Organization structured data for the site root. */
+/**
+ * Organização + site (schema.org) na raiz. O WebSite com `alternateName` e a
+ * busca interna ajudam o Google a mostrar "Rota das Pousadas" como nome do
+ * site e a ligar a marca a buscas parecidas ("rota pousadas").
+ */
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: siteConfig.name,
-    url: siteConfig.url,
-    logo: absoluteUrl('/icon.svg'),
-    description: siteConfig.description,
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${siteConfig.url}/#organizacao`,
+        name: siteConfig.name,
+        url: siteConfig.url,
+        // Raster quadrado: o Google não usa SVG como logo.
+        logo: absoluteUrl('/icon-512.png'),
+        description: siteConfig.description,
+        ...(siteConfig.sameAs.length ? { sameAs: siteConfig.sameAs } : {}),
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${siteConfig.url}/#site`,
+        name: siteConfig.name,
+        alternateName: siteConfig.alternateNames,
+        url: siteConfig.url,
+        inLanguage: 'pt-BR',
+        publisher: { '@id': `${siteConfig.url}/#organizacao` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${siteConfig.url}/pousadas?busca={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+    ],
   }
 }
