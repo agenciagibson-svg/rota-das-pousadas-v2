@@ -19,13 +19,12 @@ export const LEGAL = {
   updatedAt: '9 de novembro de 2026',
 } as const
 
-/** "Rota das Pousadas, operada por X (CNPJ Y)" — só com o que estiver preenchido. */
+/** "Rota das Pousadas (operada por X, CNPJ Y)" — só com o que estiver preenchido. */
 export function operatorLine(): string {
-  const parts: string[] = [LEGAL.brand]
-  if (LEGAL.legalName) {
-    parts.push(`operada por ${LEGAL.legalName}${LEGAL.cnpj ? `, CNPJ ${LEGAL.cnpj}` : ''}`)
-  }
-  return parts.join(', ')
+  if (!LEGAL.legalName) return LEGAL.brand
+  const cnpj = LEGAL.cnpj ? `, CNPJ ${LEGAL.cnpj}` : ''
+  // Entre parênteses para a frase seguir ("A Rota ... (operada por X) é uma plataforma").
+  return `${LEGAL.brand} (operada por ${LEGAL.legalName}${cnpj})`
 }
 
 /** Linha do rodapé: razão social, CNPJ e endereço — só o que estiver preenchido. */
