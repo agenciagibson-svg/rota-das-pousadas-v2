@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { PousadaDetail } from '@/components/pousada/pousada-detail'
 import { getDemoPage } from '@/server/queries'
+import { DEMO_COMMISSION_LABEL } from '@/features/demonstracao/demo'
 import { getCityCenter } from '@/lib/geo/city-center'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: name ? `${name} na Rota das Pousadas (demonstração)` : 'Demonstração',
     description: name
-      ? `Veja como a ${name} ficaria na Rota das Pousadas, com reserva direta e sem comissão.`
+      ? `Veja como a ${name} ficaria na Rota das Pousadas, com reserva direta, sem mensalidade e só ${DEMO_COMMISSION_LABEL} por reserva.`
       : undefined,
     robots: { index: false, follow: false, nocache: true },
     referrer: 'no-referrer',
