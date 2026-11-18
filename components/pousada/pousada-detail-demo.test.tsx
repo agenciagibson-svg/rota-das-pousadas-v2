@@ -93,6 +93,12 @@ describe('PousadaDetail em modo demonstração (0101)', () => {
     expect(screen.queryByRole('button', { name: /compartilh/i })).toBeNull()
     // "a partir de" usa a acomodação mais barata.
     expect(document.getElementById('reservar')?.textContent).toMatch(/a partir de\s*R\$\s*430/)
+    // Comissão por reserva (não assinatura), com a conta feita na diária da pousada.
+    const card = document.getElementById('reservar')?.textContent ?? ''
+    expect(card).toContain('Só 5% por reserva, sem mensalidade')
+    expect(card).toMatch(/Comissão da Rota \(5%\)\s*−\s*R\$\s*21,50/)
+    expect(card).toMatch(/Fica com a pousada\s*R\$\s*408,50/)
+    expect(card).not.toMatch(/assinatura|Sem comissão/i)
   })
 
   it('sem avaliação real não mostra "0.0 (0 avaliações)"', () => {

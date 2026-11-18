@@ -21,9 +21,29 @@ export function demoPath(token: string): string {
   return `/demo/${token}`
 }
 
+/**
+ * Comissão da Rota por reserva feita pela plataforma: 5%, sem mensalidade
+ * (modelo comercial informado pela equipe em 18/11/2026). Aqui ela só alimenta
+ * os textos da demonstração; a cobrança não lê este valor.
+ */
+export const DEMO_COMMISSION_RATE = 0.05
+
+/** "5%" — a comissão como aparece nos textos. */
+export const DEMO_COMMISSION_LABEL = `${Math.round(DEMO_COMMISSION_RATE * 100)}%`
+
+/**
+ * Divide uma diária entre a comissão da Rota e o que fica com a pousada.
+ * Conta em centavos para os dois valores sempre somarem a diária.
+ */
+export function demoCommissionSplit(nightly: number): { fee: number; net: number } {
+  const cents = Number.isFinite(nightly) ? Math.round(Math.max(0, nightly) * 100) : 0
+  const feeCents = Math.round(cents * DEMO_COMMISSION_RATE)
+  return { fee: feeCents / 100, net: (cents - feeCents) / 100 }
+}
+
 /** Texto pronto para mandar no WhatsApp junto com o link. */
 export function demoWhatsappText(pousadaName: string, url: string): string {
-  return `Olá! Preparei uma demonstração de como a ${pousadaName} ficaria na Rota das Pousadas, com reserva direta e sem comissão: ${url}`
+  return `Olá! Preparei uma demonstração de como a ${pousadaName} ficaria na Rota das Pousadas, com reserva direta, sem mensalidade e só ${DEMO_COMMISSION_LABEL} por reserva: ${url}`
 }
 
 export function demoWhatsappHref(pousadaName: string, url: string): string {

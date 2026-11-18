@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  demoCommissionSplit,
   demoPath,
   demoWhatsappHref,
   isDemoToken,
@@ -29,6 +30,28 @@ describe('links', () => {
     const text = decodeURIComponent(href.split('text=')[1] ?? '')
     expect(text).toContain('Pousada Exemplo & Cia')
     expect(text).toContain('https://rotadaspousadas.com.br/demo/x')
+    // Modelo comercial: comissão por reserva, não assinatura.
+    expect(text).toContain('só 5% por reserva')
+    expect(text).not.toMatch(/sem comissão|assinatura/i)
+  })
+})
+
+describe('demoCommissionSplit', () => {
+  it('tira 5% da diária e o resto fica com a pousada', () => {
+    expect(demoCommissionSplit(470)).toEqual({ fee: 23.5, net: 446.5 })
+    expect(demoCommissionSplit(1031)).toEqual({ fee: 51.55, net: 979.45 })
+  })
+
+  it('arredonda em centavos sem perder nem criar dinheiro', () => {
+    const { fee, net } = demoCommissionSplit(329)
+    expect(fee).toBe(16.45)
+    expect(net).toBe(312.55)
+    expect(Math.round((fee + net) * 100)).toBe(32900)
+  })
+
+  it('valor inválido ou negativo vira zero', () => {
+    expect(demoCommissionSplit(Number.NaN)).toEqual({ fee: 0, net: 0 })
+    expect(demoCommissionSplit(-10)).toEqual({ fee: 0, net: 0 })
   })
 })
 
