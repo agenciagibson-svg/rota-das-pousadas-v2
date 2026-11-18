@@ -8,6 +8,7 @@
  */
 import type { Pousada } from '@/types'
 import type { PublicRoomInfo } from '@/components/pousada/pousada-sections'
+import { PLATFORM_COMMISSION_LABEL, PLATFORM_COMMISSION_RATE } from '@/lib/platform-commission'
 
 /** Mesmo formato que o banco aceita (0101, gerador da 0094). */
 export const DEMO_TOKEN_RE = /^[A-Za-z0-9_-]{40,64}$/
@@ -21,15 +22,11 @@ export function demoPath(token: string): string {
   return `/demo/${token}`
 }
 
-/**
- * Comissão da Rota por reserva feita pela plataforma: 5%, sem mensalidade
- * (modelo comercial informado pela equipe em 18/11/2026). Aqui ela só alimenta
- * os textos da demonstração; a cobrança não lê este valor.
- */
-export const DEMO_COMMISSION_RATE = 0.05
+/** Comissão da Rota como a demonstração a apresenta — ver `lib/platform-commission.ts`. */
+export const DEMO_COMMISSION_RATE = PLATFORM_COMMISSION_RATE
 
 /** "5%" — a comissão como aparece nos textos. */
-export const DEMO_COMMISSION_LABEL = `${Math.round(DEMO_COMMISSION_RATE * 100)}%`
+export const DEMO_COMMISSION_LABEL = PLATFORM_COMMISSION_LABEL
 
 /**
  * Divide uma diária entre a comissão da Rota e o que fica com a pousada.

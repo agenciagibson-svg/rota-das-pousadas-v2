@@ -7,6 +7,7 @@ import {
 import { Reveal } from '@/components/reveal'
 import { Container } from '@/components/ui/container'
 import { SectionHeading } from '@/components/ui/section-heading'
+import { PLATFORM_COMMISSION_LABEL } from '@/lib/platform-commission'
 
 const faqs = [
   {
@@ -31,8 +32,7 @@ const faqs = [
   },
   {
     question: 'Como cadastro minha pousada na plataforma?',
-    answer:
-      'É gratuito: cadastre pelo painel do parceiro, nossa equipe revisa em pouco tempo e você não paga comissão sobre reservas.',
+    answer: `O cadastro é gratuito e não tem mensalidade: cadastre pelo painel do parceiro e nossa equipe revisa em pouco tempo. A Rota fica com ${PLATFORM_COMMISSION_LABEL} de cada reserva feita pela plataforma.`,
   },
   {
     question: 'Preciso criar conta pra reservar?',
