@@ -15,6 +15,7 @@ import {
   Sparkles,
   Tags,
 } from 'lucide-react'
+import { PLATFORM_COMMISSION_LABEL } from '@/lib/platform-commission'
 
 /**
  * Links do rodapé, com os textos dos cartões interativos do desktop. Ficam
@@ -83,7 +84,7 @@ export const ownerActions = [
     icon: Plus,
     title: 'Coloque sua pousada na rota',
     detail: 'Cadastro rápido, análise de curadoria e publicação para receber reservas diretas.',
-    metric: '0% comissão',
+    metric: `${PLATFORM_COMMISSION_LABEL} por reserva`,
   },
   {
     label: 'Dashboard',

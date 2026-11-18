@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { FormPageShell } from '@/components/layout/form-page-shell'
 import { CreatePousadaForm } from '@/features/onboarding'
 import { getCurrentUser } from '@/server/queries'
+import { PLATFORM_COMMISSION_LABEL } from '@/lib/platform-commission'
 
 export const metadata: Metadata = {
   title: 'Anuncie sua pousada',
@@ -17,7 +18,7 @@ export default async function AnunciarPage() {
     <FormPageShell
       eyebrow="Para pousadas"
       title="Anuncie sua pousada"
-      description="Cadastre sua pousada, gerencie reservas e ganhe distribuição no maior ecossistema de pousadas do Brasil. Sem comissão sobre reservas."
+      description={`Cadastre sua pousada, gerencie reservas e ganhe distribuição no maior ecossistema de pousadas do Brasil. Sem mensalidade: só ${PLATFORM_COMMISSION_LABEL} por reserva.`}
       backHref="/dashboard"
       backLabel="Ir para o painel"
     >
