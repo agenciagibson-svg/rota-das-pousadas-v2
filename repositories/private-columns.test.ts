@@ -16,7 +16,17 @@ const ROOTS = ['repositories', 'features', 'server', 'app', 'lib'].map((d) =>
 )
 
 const PRIVATE: Record<string, string[]> = {
-  pousadas: ['owner_id', 'notification_email', 'legal_name', 'tax_id'],
+  pousadas: [
+    'owner_id',
+    'notification_email',
+    'legal_name',
+    'tax_id',
+    // 0103: sem SELECT para a API.
+    'first_published_at',
+    'founder_rank',
+    'commission_exempt_until',
+    'commission_rate_locked_until',
+  ],
   reviews: ['author_id', 'booking_id'],
 }
 

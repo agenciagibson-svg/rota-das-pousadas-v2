@@ -8,6 +8,7 @@ import { getOwnerSubscriptionStatus } from '@/features/pagamentos/services/subsc
 import { getOwnerPaymentAccountStatus } from '@/features/pagamentos/services/oauth.service'
 import { listChannels } from '@/features/canais/services/channels.service'
 import { listTeam } from '@/features/membros/services/team.service'
+import { getContractSetupInfo } from '@/features/contrato/services/contract.service'
 import { buildSetupSteps, summarizeSetup, type SetupProgress } from '../setup'
 
 /** Leitura que falhou conta como "não feito" — o passo continua visível, nunca some por erro. */
@@ -27,7 +28,7 @@ export async function getSetupProgress(): Promise<SetupProgress | null> {
   const role = await getActiveTenantRole()
   if (!role || !can(role, 'pousada:edit')) return null
 
-  const [settings, rooms, pix, subscription, card, channels, team] = await Promise.all([
+  const [settings, rooms, pix, subscription, card, channels, team, contract] = await Promise.all([
     getOwnerSettings(),
     orNull(() => getOwnerRooms()),
     orNull(() => getOwnerPixSettings()),
@@ -35,6 +36,8 @@ export async function getSetupProgress(): Promise<SetupProgress | null> {
     orNull(() => getOwnerPaymentAccountStatus()),
     orNull(() => listChannels()),
     orNull(() => listTeam()),
+    // Já devolve `null` em caso de erro: o passo do contrato some, o resto fica.
+    getContractSetupInfo(),
   ])
   if (!settings) return null
 
@@ -57,6 +60,7 @@ export async function getSetupProgress(): Promise<SetupProgress | null> {
       channels: channels?.length ?? 0,
       teamMembers: (team ?? []).filter((m) => m.status === 'active').length,
       cadastur: settings.cadastur,
+      contract,
     }),
   )
 }

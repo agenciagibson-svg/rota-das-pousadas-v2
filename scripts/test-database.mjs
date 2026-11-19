@@ -96,6 +96,8 @@ try {
     // 0101: link de demonstração (captação).
     'demo-link-0101.sql',
     'cadastur-0102.sql',
+    // 0103: contrato com aceite eletrônico e fundadoras (prepara a corrida abaixo).
+    'contrato-0103.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)
@@ -194,6 +196,26 @@ try {
     if (select amount_received from bookings where id = '30000000-0000-0000-0000-000000000001') <> 1000 then raise exception 'Saldo duplicado'; end if;
   end $$;`)
   console.log('Concorrência de reservas e webhooks: OK')
+  // 0103: duas pousadas com aceite publicadas ao mesmo tempo, com 29 fundadoras
+  // já marcadas. Só uma pode ficar com a 30ª posição; a outra é publicada sem
+  // a condição de lançamento.
+  const publish = (id) =>
+    sqlAsync(
+      `begin; update pousadas set status = 'publicada' where id = '${id}'; select pg_sleep(1); commit;`,
+    )
+  const founders = await Promise.all([
+    publish('10000000-0000-0000-0000-0000001030f1'),
+    publish('10000000-0000-0000-0000-0000001030f2'),
+  ])
+  if (founders.some((result) => result.code !== 0)) {
+    throw new Error(`Concorrência de fundadoras: ${JSON.stringify(founders)}`)
+  }
+  sql(`do $$ begin
+    if (select count(*) from pousadas where founder_rank is not null) <> 30 then raise exception 'Passou de 30 fundadoras'; end if;
+    if (select count(*) from pousadas where slug like 'corrida-fundadora-%' and founder_rank = 30 and commission_exempt_until is not null) <> 1 then raise exception 'A 30ª posição não ficou com exatamente uma pousada'; end if;
+    if (select count(*) from pousadas where slug like 'corrida-fundadora-%' and status = 'publicada' and first_published_at is not null) <> 2 then raise exception 'Uma das pousadas não foi publicada'; end if;
+  end $$;`)
+  console.log('Concorrência de fundadoras: OK')
 } finally {
   // Remove apenas o container criado por este processo, sem volumes do usuário.
   spawnSync('docker', ['rm', '--force', container], { encoding: 'utf8' })

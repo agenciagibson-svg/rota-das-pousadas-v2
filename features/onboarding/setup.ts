@@ -7,6 +7,7 @@
  */
 
 export type SetupStepId =
+  | 'contrato'
   | 'fotos'
   | 'descricao'
   | 'politica'
@@ -48,6 +49,11 @@ export type SetupInput = {
   teamMembers: number
   /** Número do Cadastur informado (0102); '' = não informado. */
   cadastur: string
+  /**
+   * Contrato com a Rota (0103). O passo só existe quando há contrato vigente
+   * (`active`); sem isso (ou sem o dado) a lista fica como era.
+   */
+  contract?: { active: boolean; accepted: boolean } | null
 }
 
 /** Mínimo de fotos para a vitrine não parecer vazia (capa + 2). */
@@ -58,7 +64,21 @@ export const MIN_DESCRIPTION_CHARS = 80
 export function buildSetupSteps(i: SetupInput): SetupStep[] {
   const photos =
     i.gallery.filter(Boolean).length + (i.image && !i.gallery.includes(i.image) ? 1 : 0)
+  // Primeiro da lista quando existe: sem o aceite a pousada não é publicada.
+  const contractStep: SetupStep[] = i.contract?.active
+    ? [
+        {
+          id: 'contrato',
+          label: 'Contrato com a Rota',
+          hint: 'O proprietário lê e aceita. Sem o aceite a pousada não é publicada.',
+          href: '/dashboard/configuracoes/contrato',
+          done: i.contract.accepted,
+          optional: false,
+        },
+      ]
+    : []
   return [
+    ...contractStep,
     {
       id: 'fotos',
       label: 'Fotos da pousada',

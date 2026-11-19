@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import {
   Clock3,
   CreditCard,
+  FileSignature,
   Mail,
   MapPin,
   Phone,
@@ -13,6 +15,7 @@ import {
 } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { ownerDashboardNav } from '@/components/dashboard/owner-nav'
+import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConnectMpButton } from '@/features/pagamentos/components/connect-mp-button'
@@ -47,8 +50,11 @@ export function OwnerSettingsView({
   subscription,
   pix,
   guestSettings = null,
+  contract = null,
 }: {
   guestSettings?: GuestSettings | null
+  /** Contrato com a Rota (0103); `null` = sem contrato vigente ou papel que não vê. */
+  contract?: { accepted: boolean } | null
   displayName: string
   pousadaName: string
   settings: OwnerPousadaSettings | null
@@ -178,6 +184,27 @@ export function OwnerSettingsView({
                 </>
               )}
             </Card>
+            {contract && (
+              <Card className="p-5">
+                <div className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                  <FileSignature className="text-primary size-4" />
+                  Contrato com a Rota
+                </div>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  {contract.accepted
+                    ? 'Contrato aceito. Você pode ler e imprimir a cópia guardada.'
+                    : 'Aguardando o aceite do proprietário. Sem ele a pousada não é publicada.'}
+                </p>
+                <div className="mt-3">
+                  <Link
+                    href="/dashboard/configuracoes/contrato"
+                    className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                  >
+                    {contract.accepted ? 'Ver o contrato' : 'Ler e aceitar'}
+                  </Link>
+                </div>
+              </Card>
+            )}
             {guestSettings && (
               <Card className="p-5">
                 <div className="text-foreground flex items-center gap-2 text-sm font-semibold">

@@ -13,6 +13,8 @@ import {
   listPousadasAdmin,
   canManageRoles,
 } from '@/features/admin/services/admin.service'
+import { ContractVersionsManager } from '@/features/contrato/components/contract-versions-manager'
+import { listContractVersions } from '@/features/contrato/services/contract.service'
 import { getCurrentUser } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -22,15 +24,20 @@ export const metadata: Metadata = {
 
 export default async function AdminConfiguracoesPage() {
   const [user, canManage] = await Promise.all([getCurrentUser(), canManageRoles()])
-  const [team, pousadas] = canManage
+  const [team, pousadas, contractVersions] = canManage
     ? await Promise.all([
         listPlatformTeamAdmin(),
         listPousadasAdmin().catch((error: unknown) => {
           console.error('[admin] falha ao listar pousadas para a prévia do relatório', error)
           return []
         }),
+        // `null` = não deu para ler (ex.: migration 0103 ainda não aplicada): o bloco some.
+        listContractVersions().catch((error: unknown) => {
+          console.error('[admin] falha ao listar as versões do contrato', error)
+          return null
+        }),
       ])
-    : [[], []]
+    : [[], [], null]
 
   return (
     <AdminShell
@@ -50,6 +57,11 @@ export default async function AdminConfiguracoesPage() {
           />
         )}
       </Card>
+      {canManage && contractVersions && (
+        <Card className="mt-5 p-6">
+          <ContractVersionsManager versions={contractVersions} />
+        </Card>
+      )}
       {canManage && (
         <Card className="mt-5 p-6">
           <SentryTest />
