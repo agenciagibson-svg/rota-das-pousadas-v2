@@ -3,6 +3,11 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import type { PixKeyType } from '@/lib/pix/brcode'
 import type { PaymentReviewKind } from '@/features/pagamentos/pix'
+import type {
+  PlatformPixAudit,
+  PlatformPixAuditItem,
+  PlatformPixAuditMonth,
+} from '@/features/pagamentos/pix-audit'
 
 /** Pix direto (0075). Tudo com a sessão do usuário — RLS/RPCs decidem quem pode o quê. */
 
@@ -335,4 +340,69 @@ export async function claimPaymentReviewsToNotify(): Promise<
     kind: r.kind as PaymentReviewKind,
     amount: Number(r.amount),
   }))
+}
+
+// ----------------------------------------------------------------------------
+// Auditoria dos comprovantes no /admin (0105)
+// ----------------------------------------------------------------------------
+type RawAudit = Record<string, unknown>
+const auditStr = (v: unknown): string => (typeof v === 'string' ? v : '')
+const auditNum = (v: unknown): number => {
+  const n = Number(v ?? 0)
+  return Number.isFinite(n) ? n : 0
+}
+const auditRows = (v: unknown): RawAudit[] => (Array.isArray(v) ? (v as RawAudit[]) : [])
+
+/**
+ * Comprovantes de Pix de todas as pousadas no mês, para o financeiro da
+ * plataforma. A RPC confere o papel; o storage libera a imagem para o mesmo
+ * papel, então o link temporário sai com a sessão do usuário.
+ */
+export async function listPlatformPixProofsRpc(month: string | null): Promise<PlatformPixAudit> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc(
+    'list_platform_pix_proofs',
+    month ? { p_month: month } : {},
+  )
+  if (error) throw new Error(error.message)
+  const r = (data ?? {}) as RawAudit
+  const items = auditRows(r.items)
+  const paths = items.map((i) => auditStr(i.filePath)).filter(Boolean)
+  const urlByPath = new Map<string, string>()
+  if (paths.length) {
+    const { data: signed } = await supabase.storage
+      .from('payment-proofs')
+      .createSignedUrls(paths, 600)
+    for (const s of signed ?? []) if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl)
+  }
+  return {
+    month: auditStr(r.month),
+    months: auditRows(r.months).map((m): PlatformPixAuditMonth => ({
+      month: auditStr(m.month),
+      total: auditNum(m.total),
+      submitted: auditNum(m.submitted),
+      approved: auditNum(m.approved),
+      rejected: auditNum(m.rejected),
+      cancelledAfterApproval: auditNum(m.cancelledAfterApproval),
+    })),
+    items: items.map((i): PlatformPixAuditItem => ({
+      proofId: auditStr(i.proofId),
+      bookingId: auditStr(i.bookingId),
+      bookingCode: auditStr(i.bookingCode),
+      bookingStatus: auditStr(i.bookingStatus),
+      checkin: auditStr(i.checkin),
+      checkout: auditStr(i.checkout),
+      bookingTotal: auditNum(i.bookingTotal),
+      pousadaId: auditStr(i.pousadaId),
+      pousadaName: auditStr(i.pousadaName),
+      amount: auditNum(i.amount),
+      approvedAmount: i.approvedAmount == null ? null : auditNum(i.approvedAmount),
+      status: auditStr(i.status) as PlatformPixAuditItem['status'],
+      createdAt: auditStr(i.createdAt),
+      reviewedAt: auditStr(i.reviewedAt) || null,
+      rejectionReason: auditStr(i.rejectionReason) || null,
+      cancelledAfterApproval: i.cancelledAfterApproval === true,
+      url: urlByPath.get(auditStr(i.filePath)) ?? null,
+    })),
+  }
 }

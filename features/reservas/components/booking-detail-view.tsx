@@ -28,6 +28,7 @@ import { publicEnv } from '@/lib/env'
 import { isoDateInTimeZone } from '@/lib/dates'
 import { precheckinPath } from '../precheckin'
 import { PrecheckinBadge } from './precheckin-badge'
+import { ContactHiddenNote } from './contact-hidden-note'
 import { CopyPrecheckinLink } from './copy-precheckin-link'
 import type { BookingPayments } from '@/features/pagamentos/services/booking-payment.service'
 
@@ -160,7 +161,11 @@ export function BookingDetailView({
                   {booking.guestName}
                 </Link>
               </p>
-              {isEmail(booking.guestEmail) ? (
+              {!booking.contactReleased ? (
+                <p>
+                  <ContactHiddenNote detailed />
+                </p>
+              ) : isEmail(booking.guestEmail) ? (
                 <p className="truncate">
                   <a
                     href={`mailto:${booking.guestEmail}`}
@@ -172,7 +177,7 @@ export function BookingDetailView({
               ) : (
                 <p>E-mail não informado</p>
               )}
-              {booking.guestPhone ? (
+              {!booking.contactReleased ? null : booking.guestPhone ? (
                 <p>
                   {whatsappLink(booking.guestPhone) ? (
                     <a

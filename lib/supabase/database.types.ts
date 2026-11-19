@@ -282,7 +282,9 @@ export type Database = {
         Row: {
           adults: number
           amount_received: number
+          booked_by_traveler: boolean
           balance_due: number | null
+          contact_released_at: string | null
           cancellation_policy_snapshot: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -339,7 +341,9 @@ export type Database = {
         Insert: {
           adults?: number
           amount_received?: number
+          booked_by_traveler?: boolean
           balance_due?: number | null
+          contact_released_at?: string | null
           cancellation_policy_snapshot?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -396,7 +400,9 @@ export type Database = {
         Update: {
           adults?: number
           amount_received?: number
+          booked_by_traveler?: boolean
           balance_due?: number | null
+          contact_released_at?: string | null
           cancellation_policy_snapshot?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3845,6 +3851,34 @@ export type Database = {
       list_platform_commissions: {
         Args: { p_month?: string }
         Returns: Json
+      }
+      list_platform_pix_proofs: {
+        Args: { p_month?: string }
+        Returns: Json
+      }
+      get_booking_guest_contacts: {
+        Args: { p_booking_ids: string[] }
+        Returns: {
+          booking_id: string
+          released: boolean
+          email: string | null
+          phone: string | null
+          guest_phone: string | null
+        }[]
+      }
+      get_guest_contacts: {
+        Args: { p_guest_ids: string[] }
+        Returns: {
+          guest_id: string
+          released: boolean
+          email: string | null
+          phone: string | null
+          whatsapp: string | null
+        }[]
+      }
+      search_guest_ids_by_contact: {
+        Args: { p_pousada_id: string; p_email?: string; p_phone?: string }
+        Returns: string[]
       }
       list_contract_versions: {
         Args: never

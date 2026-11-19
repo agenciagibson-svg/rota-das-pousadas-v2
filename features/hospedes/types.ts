@@ -1,4 +1,5 @@
-export type GuestSource = 'platform_account' | 'front_desk' | 'owner' | 'public_booking' | 'import' | 'other'
+export type GuestSource =
+  'platform_account' | 'front_desk' | 'owner' | 'public_booking' | 'import' | 'other'
 
 export type EmergencyContact = {
   name?: string
@@ -12,6 +13,8 @@ export type GuestListItem = {
   preferredName: string | null
   email: string | null
   phone: string | null
+  /** 0105: `false` = viajante do site sem pagamento confirmado; contato oculto. */
+  contactReleased: boolean
   city: string | null
   documentMasked: string | null
   bookingsCount: number
@@ -40,6 +43,11 @@ export type GuestDetail = {
   email: string | null
   phone: string | null
   whatsapp: string | null
+  /**
+   * 0105: `false` = viajante que reservou pelo site e ainda não tem pagamento
+   * confirmado. E-mail, telefone e WhatsApp vêm vazios e a edição não os altera.
+   */
+  contactReleased: boolean
   documentType: string | null
   documentNumber: string | null
   birthDate: string | null

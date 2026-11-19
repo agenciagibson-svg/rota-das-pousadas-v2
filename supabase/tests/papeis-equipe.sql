@@ -338,8 +338,9 @@ reset role;
 -- ---------------------------------------------------------------------------
 :COMO_FINANCEIRO
 -- Mesmas leituras de features/financeiro/services/finance.service.ts getFinance.
-select test_assert((select count(*) from (select id, code, guest_name, guest_email, guest_phone, responsible_guest_id, room_id,
-  checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at
+select test_assert((select count(*) from (select id, code, guest_name, responsible_guest_id, room_id,
+  checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at,
+  booked_by_traveler, contact_released_at
   from bookings where pousada_id = :'P') r) = 3, 'financeiro lê as reservas (receita)');
 select test_assert((select count(*) from expenses where pousada_id = :'P') = 2, 'financeiro lê as despesas');
 select test_assert((select delivered from consumption_totals_by_pousada(:'P') where booking_id = test_id('b1')) = 12,

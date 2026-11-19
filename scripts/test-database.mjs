@@ -100,6 +100,8 @@ try {
     'contrato-0103.sql',
     // 0104: registro da comissão por reserva e extratos.
     'comissao-0104.sql',
+    // 0105: contato do hóspede só depois do pagamento; usa o master de priorities.sql.
+    'contato-0105.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

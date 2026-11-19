@@ -139,6 +139,11 @@ export type BookingDetail = {
   guestName: string
   guestEmail: string | null
   guestPhone: string | null
+  /**
+   * 0105: reserva feita no site só libera e-mail e telefone depois do
+   * pagamento confirmado. `false` = contato oculto (os dois vêm `null`).
+   */
+  contactReleased: boolean
   travelerUserId: string | null
   checkin: string
   checkout: string

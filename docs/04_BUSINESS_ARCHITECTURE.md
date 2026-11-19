@@ -689,6 +689,10 @@ flowchart LR
   no pagamento, pela conta Mercado Pago da própria pousada.
 - **Pousada → Rota (comissão), PIX direto:** o hóspede envia o comprovante pela
   plataforma, a pousada aprova e a Rota cobra a comissão em fatura mensal.
+- **Contato do hóspede:** em reserva feita pelo site, e-mail e telefone só
+  aparecem para a pousada depois do pagamento confirmado (Pix aprovado por ela,
+  cartão aprovado ou confirmação manual). A Rota acompanha os comprovantes no
+  /admin → Financeiro (migration 0105, `docs/features/contato-hospede.md`).
 
 **Regras do modelo**
 

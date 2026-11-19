@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { BOOKING_STATUS } from '@/features/reservas'
 import { formatISODate, isEmail, plural, whatsappLink } from '@/lib/format'
 import type { OwnerPousadaSettings, OwnerReservation } from '../types'
+import { ContactHiddenNote } from '@/features/reservas/components/contact-hidden-note'
 
 const DAY_MS = 86_400_000
 
@@ -263,7 +264,10 @@ export function OwnerMessagesView({
                         </a>
                       )}
                       <CopyButton text={message} label="Copiar mensagem" />
-                      {!wa && !hasEmail && (
+                      {!r.contactReleased && (
+                        <ContactHiddenNote className="text-muted-foreground self-center text-xs" />
+                      )}
+                      {r.contactReleased && !wa && !hasEmail && (
                         <span className="text-muted-foreground self-center text-xs">
                           Sem telefone nem e-mail —{' '}
                           <Link

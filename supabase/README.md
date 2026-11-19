@@ -38,3 +38,8 @@ supabase/
 - **Dupla barreira:** RBAC na aplicação (`lib/auth/rbac.ts`) + RLS no banco.
 - **Auditoria:** escrita em `audit_log` apenas via service role (server-side).
 - **Idempotência:** webhooks de pagamento devem usar `provider_ref` como chave.
+- **SELECT por coluna em `pousadas`, `reviews`, `bookings` e `guests`:** a API
+  não lê colunas privadas (0084) nem o contato do hóspede (0105). Coluna nova
+  nessas tabelas precisa de `grant select (coluna) on public.<tabela> to anon,
+authenticated;` na própria migration; `supabase/tests/contato-0105.sql` falha
+  se faltar em `bookings`/`guests`.

@@ -7,7 +7,13 @@ describe('painel da pousada — demonstração', () => {
   it('reservas sintéticas: e-mails fictícios e nenhum telefone', () => {
     const list = demoOwnerReservations('2026-10-13')
     expect(list.length).toBeGreaterThan(20)
-    expect(list.every((r) => r.guestEmail.endsWith('@exemplo.com.br'))).toBe(true)
+    // 0105: reserva do site ainda não paga vem com o contato oculto.
+    expect(
+      list.every((r) =>
+        r.contactReleased ? r.guestEmail.endsWith('@exemplo.com.br') : r.guestEmail === '',
+      ),
+    ).toBe(true)
+    expect(list.some((r) => !r.contactReleased)).toBe(true)
     expect(list.every((r) => !r.guestPhone)).toBe(true)
     expect(new Set(list.map((r) => r.id)).size).toBe(list.length)
   })
