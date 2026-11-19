@@ -15,8 +15,8 @@ export const LEGAL = {
    */
   address: null as string | null,
   /** Canal para dúvidas, suporte e pedidos sobre dados pessoais (LGPD). */
-  contactEmail: 'agenciagibson@gmail.com',
-  updatedAt: '9 de novembro de 2026',
+  contactEmail: 'contatorotadaspousadas@gmail.com',
+  updatedAt: '19 de novembro de 2026',
 } as const
 
 /** "Rota das Pousadas (operada por X, CNPJ Y)" — só com o que estiver preenchido. */

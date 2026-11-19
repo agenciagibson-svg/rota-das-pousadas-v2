@@ -15,6 +15,7 @@ import {
   Sparkles,
   Tags,
 } from 'lucide-react'
+import { LEGAL } from '@/lib/legal'
 import { PLATFORM_COMMISSION_LABEL } from '@/lib/platform-commission'
 
 /**
@@ -158,7 +159,8 @@ export const companyLinks = [
   },
   {
     label: 'Contato',
-    href: 'mailto:agenciagibson@gmail.com',
+    // Mesmo canal dos Termos e da Privacidade: muda num lugar só (lib/legal.ts).
+    href: `mailto:${LEGAL.contactEmail}`,
     icon: Mail,
     title: 'Fale com a Rota das Pousadas',
     detail: 'Parcerias, suporte, imprensa e oportunidades podem começar por uma mensagem simples.',

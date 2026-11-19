@@ -96,7 +96,19 @@ describe('acceptContract', () => {
     expect(owner.text).toContain('a'.repeat(64))
   })
 
-  it('sem caixa da Rota configurada, só o proprietário recebe', async () => {
+  it('sem a variável, a cópia da Rota vai para o e-mail de contato', async () => {
+    mocks.acceptContractRpc.mockResolvedValue({
+      acceptedAt: ACCEPTED.acceptedAt,
+      versionCode: 'teste-v1',
+      already: false,
+    })
+    await acceptContract(INPUT, REQUEST)
+    const recipients = mocks.sendEmail.mock.calls.map(([params]) => params.to)
+    expect(recipients).toEqual(['pessoa@example.test', 'contatorotadaspousadas@gmail.com'])
+  })
+
+  it('quem aceita com o próprio e-mail da Rota não recebe duas vezes', async () => {
+    vi.stubEnv('CONTRACTS_NOTIFY_EMAIL', 'Pessoa@Example.test')
     mocks.acceptContractRpc.mockResolvedValue({
       acceptedAt: ACCEPTED.acceptedAt,
       versionCode: 'teste-v1',

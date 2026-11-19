@@ -53,9 +53,9 @@ branco.
   exclusão da conta de quem aceitou só zera `accepted_by`; nome e e-mail ficam.
 - IP e navegador são registro, não regra: quem chama a RPC direto pode mandar
   outro valor. O que decide o aceite é papel, versão e hash.
-- Depois do aceite: e-mail com o texto completo para o proprietário e, se
-  `CONTRACTS_NOTIFY_EMAIL` estiver configurada, para a Rota. Falha de e-mail não
-  desfaz o aceite.
+- Depois do aceite: e-mail com o texto completo para o proprietário e para a
+  Rota. A cópia da Rota vai para `CONTRACTS_NOTIFY_EMAIL`; sem a variável, para
+  o e-mail de contato de `lib/legal.ts`. Falha de e-mail não desfaz o aceite.
 - A cópia aceita fica em Configurações → Contrato, com botão Imprimir (o
   navegador salva em PDF). Não há PDF gerado no servidor nesta entrega.
 

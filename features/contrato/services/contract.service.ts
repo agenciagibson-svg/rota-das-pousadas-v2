@@ -2,6 +2,7 @@ import 'server-only'
 import { requireCapability } from '@/lib/auth/require-capability'
 import { can } from '@/lib/auth/rbac'
 import { absoluteUrl } from '@/lib/seo'
+import { LEGAL } from '@/lib/legal'
 import { sendEmail } from '@/lib/email/mailer'
 import { contractAcceptedEmail } from '@/lib/email/contract-email'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
@@ -65,9 +66,10 @@ export async function acceptContract(
 }
 
 /**
- * E-mail com o texto aceito para o proprietário e, se `CONTRACTS_NOTIFY_EMAIL`
- * estiver configurado, para a Rota. Falha no envio não desfaz o aceite: a
- * prova está no banco e o painel mostra o contrato.
+ * E-mail com o texto aceito para o proprietário e para a Rota. A cópia da Rota
+ * vai para `CONTRACTS_NOTIFY_EMAIL` quando configurado; sem a variável, para o
+ * e-mail de contato (`LEGAL.contactEmail`). Falha no envio não desfaz o aceite:
+ * a prova está no banco e o painel mostra o contrato.
  */
 async function notifyContractAccepted(pousadaId: string): Promise<void> {
   try {
@@ -89,8 +91,9 @@ async function notifyContractAccepted(pousadaId: string): Promise<void> {
       const email = contractAcceptedEmail({ ...base, recipient: 'owner' })
       sends.push(sendEmail({ to: accepted.acceptedByEmail, ...email }))
     }
-    const rota = process.env.CONTRACTS_NOTIFY_EMAIL?.trim()
-    if (rota) {
+    const rota = process.env.CONTRACTS_NOTIFY_EMAIL?.trim() || LEGAL.contactEmail
+    // Quem aceitou com o próprio e-mail da Rota (teste) não recebe duas vezes.
+    if (rota && rota.toLowerCase() !== accepted.acceptedByEmail.toLowerCase()) {
       const email = contractAcceptedEmail({ ...base, recipient: 'rota' })
       sends.push(sendEmail({ to: rota, ...email }))
     }
