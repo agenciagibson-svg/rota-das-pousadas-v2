@@ -6,6 +6,7 @@ import './globals.css'
 import { baseMetadata, organizationJsonLd } from '@/lib/seo'
 import { isSupabaseConfigured } from '@/lib/env'
 import { MotionProvider } from '@/components/motion-provider'
+import { SameHashScroll } from '@/components/layout/same-hash-scroll'
 import { JsonLd } from '@/components/seo/json-ld'
 
 // Marca (out/2026, docs/Marca.md): Funnel Display nos títulos, Figtree no
@@ -53,6 +54,7 @@ export default async function RootLayout({
         </a>
         <JsonLd data={organizationJsonLd()} />
         <MotionProvider>{children}</MotionProvider>
+        <SameHashScroll />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
