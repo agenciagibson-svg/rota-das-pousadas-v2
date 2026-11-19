@@ -2,6 +2,7 @@ import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { setBookingStatusRpc } from '@/repositories/bookings.repository'
 import { roomNamesById } from '@/repositories/room-names.repository'
+import { bookingContactOf, bookingContactsById } from '@/repositories/guest-contacts.repository'
 import {
   blockCalendarDay,
   unblockCalendarDay,
@@ -212,7 +213,7 @@ export async function listReservationsByPousada(
   let query = supabase
     .from('bookings')
     .select(
-      'id, code, guest_name, guest_email, guest_phone, responsible_guest_id, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at, precheckin_completed_at',
+      'id, code, guest_name, responsible_guest_id, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at, precheckin_completed_at',
     )
     .eq('pousada_id', pousadaId)
     .order('checkin', { ascending: true })
@@ -235,40 +236,40 @@ export async function listReservationsByPousada(
     (data ?? []).map((r) => r.room_id),
   )
 
-  // Telefone: o da reserva ou, se vazio, o WhatsApp/telefone da ficha do hóspede.
-  const guestIds = [
-    ...new Set((data ?? []).filter((r) => !r.guest_phone).map((r) => r.responsible_guest_id)),
-  ].filter(Boolean) as string[]
-  const { data: guestRows } = guestIds.length
-    ? await supabase.from('guests').select('id, phone, whatsapp').in('id', guestIds)
-    : { data: [] }
-  const guestPhoneById = new Map(
-    (guestRows ?? []).map((g) => [g.id, (g.whatsapp || g.phone || null) as string | null]),
+  // 0105: contato pela RPC — oculto até o pagamento de reserva feita no site.
+  // Telefone: o da reserva ou, se vazio, o WhatsApp/telefone da ficha.
+  const contacts = await bookingContactsById(
+    supabase,
+    (data ?? []).map((r) => r.id),
   )
 
   const now = new Date().toISOString()
-  return (data ?? []).map((r) => ({
-    id: r.id,
-    code: r.code,
-    guestName: r.guest_name ?? 'Hóspede',
-    guestEmail: r.guest_email ?? 'E-mail não informado',
-    guestPhone: r.guest_phone || guestPhoneById.get(r.responsible_guest_id) || null,
-    roomName: roomNames.get(r.room_id) ?? 'Acomodação',
-    checkin: r.checkin,
-    checkout: r.checkout,
-    nights: nightsBetween(r.checkin, r.checkout),
-    guests: r.guests ?? 0,
-    subtotal: Number(r.subtotal),
-    fee: Number(r.fee),
-    total: Number(r.total),
-    balanceDue: Number(r.balance_due),
-    status: r.status as BookingStatus,
-    origin: r.origin as OwnerReservation['origin'],
-    paymentDueAt: r.payment_due_at,
-    createdAt: r.created_at,
-    needsAttention: r.status === 'pending' && !!r.payment_due_at && r.payment_due_at < now,
-    precheckinDone: r.precheckin_completed_at !== null,
-  }))
+  return (data ?? []).map((r) => {
+    const contact = bookingContactOf(contacts, r.id)
+    return {
+      id: r.id,
+      code: r.code,
+      guestName: r.guest_name ?? 'Hóspede',
+      contactReleased: contact.released,
+      guestEmail: contact.email ?? (contact.released ? 'E-mail não informado' : ''),
+      guestPhone: contact.phone || contact.guestPhone || null,
+      roomName: roomNames.get(r.room_id) ?? 'Acomodação',
+      checkin: r.checkin,
+      checkout: r.checkout,
+      nights: nightsBetween(r.checkin, r.checkout),
+      guests: r.guests ?? 0,
+      subtotal: Number(r.subtotal),
+      fee: Number(r.fee),
+      total: Number(r.total),
+      balanceDue: Number(r.balance_due),
+      status: r.status as BookingStatus,
+      origin: r.origin as OwnerReservation['origin'],
+      paymentDueAt: r.payment_due_at,
+      createdAt: r.created_at,
+      needsAttention: r.status === 'pending' && !!r.payment_due_at && r.payment_due_at < now,
+      precheckinDone: r.precheckin_completed_at !== null,
+    }
+  })
 }
 
 /** [Ciclo 4] Confirmar/cancelar/no-show passam a chamar a RPC transacional (set_booking_status) — nunca `.update()` direto. */

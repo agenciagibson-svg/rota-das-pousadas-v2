@@ -10,6 +10,7 @@ import { formatBRL, formatDateTime, formatISODate, isEmail, plural } from '@/lib
 import { OwnerReservationActions } from './owner-reservation-actions'
 import { PrecheckinBadge } from '@/features/reservas/components/precheckin-badge'
 import { isoDateInTimeZone } from '@/lib/dates'
+import { ContactHiddenNote } from '@/features/reservas/components/contact-hidden-note'
 
 export function OwnerReservationsTable({
   reservations,
@@ -104,13 +105,17 @@ export function OwnerReservationsTable({
                     </dd>
                   </div>
                   <div className="flex min-w-0 items-center gap-2">
-                    <Mail className="text-primary size-4 shrink-0" />
+                    {reservation.contactReleased && (
+                      <Mail className="text-primary size-4 shrink-0" />
+                    )}
                     <dt className="sr-only">E-mail</dt>
                     <dd
                       className="min-w-0 truncate"
                       title={hasEmail ? reservation.guestEmail : undefined}
                     >
-                      {hasEmail ? (
+                      {!reservation.contactReleased ? (
+                        <ContactHiddenNote />
+                      ) : hasEmail ? (
                         <a
                           href={`mailto:${reservation.guestEmail}`}
                           className="hover:text-foreground hover:underline"

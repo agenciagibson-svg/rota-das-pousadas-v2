@@ -1,6 +1,11 @@
 import 'server-only'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import {
+  guestContactOf,
+  guestContactsById,
+  searchGuestIdsByContact,
+} from '@/repositories/guest-contacts.repository'
+import {
   documentNumberLast4,
   encryptDocumentNumber,
   hashDocumentNumberForLookup,
@@ -30,8 +35,6 @@ type GuestRow = {
   id: string
   full_name: string
   preferred_name: string | null
-  email: string | null
-  phone: string | null
   document_number: string | null
   document_last4: string | null
   city: string | null
@@ -46,15 +49,21 @@ export async function listGuestsByPousada(
 
   let query = supabase
     .from('guests')
-    .select(
-      'id, full_name, preferred_name, email, phone, document_number, document_last4, city, created_at',
-    )
+    .select('id, full_name, preferred_name, document_number, document_last4, city, created_at')
     .eq('pousada_id', pousadaId)
     .order('created_at', { ascending: false })
 
   if (filters.name) query = query.ilike('full_name', `%${filters.name}%`)
-  if (filters.email) query = query.ilike('email', `%${filters.email}%`)
-  if (filters.phone) query = query.ilike('phone', `%${filters.phone}%`)
+  // 0105: e-mail e telefone não são lidos direto; a busca por contato vai pela
+  // RPC, que só encontra ficha com contato liberado.
+  if (filters.email || filters.phone) {
+    const ids = await searchGuestIdsByContact(supabase, pousadaId, {
+      email: filters.email,
+      phone: filters.phone,
+    })
+    if (ids.length === 0) return []
+    query = query.in('id', ids)
+  }
 
   const { data, error } = await query
   if (error) throw error
@@ -74,6 +83,7 @@ export async function listGuestsByPousada(
   }
 
   const guestIds = rows.map((r) => r.id)
+  const contacts = await guestContactsById(supabase, guestIds)
   const { data: bookingRows } = await supabase
     .from('bookings')
     .select('responsible_guest_id, checkin')
@@ -88,19 +98,24 @@ export async function listGuestsByPousada(
     if (!prev || b.checkin > prev) lastByGuest.set(id, b.checkin)
   }
 
-  let items: GuestListItem[] = rows.map((r) => ({
-    id: r.id,
-    fullName: r.full_name,
-    preferredName: r.preferred_name,
-    email: r.email,
-    phone: r.phone,
-    city: r.city,
-    documentMasked: maskDocument(r.document_last4),
-    bookingsCount: countByGuest.get(r.id) ?? 0,
-    lastBookingAt: lastByGuest.get(r.id) ?? null,
-    isIncomplete: !r.email && !r.phone,
-    createdAt: r.created_at,
-  }))
+  let items: GuestListItem[] = rows.map((r) => {
+    const contact = guestContactOf(contacts, r.id)
+    return {
+      id: r.id,
+      fullName: r.full_name,
+      preferredName: r.preferred_name,
+      email: contact.email,
+      phone: contact.phone || contact.whatsapp,
+      contactReleased: contact.released,
+      city: r.city,
+      documentMasked: maskDocument(r.document_last4),
+      bookingsCount: countByGuest.get(r.id) ?? 0,
+      lastBookingAt: lastByGuest.get(r.id) ?? null,
+      // Contato oculto não conta como ficha incompleta.
+      isIncomplete: contact.released && !contact.email && !contact.phone && !contact.whatsapp,
+      createdAt: r.created_at,
+    }
+  })
 
   if (filters.recurrentOnly) items = items.filter((g) => g.bookingsCount > 1)
   if (filters.incompleteOnly) items = items.filter((g) => g.isIncomplete)
@@ -116,13 +131,14 @@ export async function getGuestById(
   const { data, error } = await supabase
     .from('guests')
     .select(
-      'id, pousada_id, user_id, full_name, preferred_name, email, phone, whatsapp, document_type, document_number, birth_date, nationality, country, city, state, address, cep, emergency_contact, preferences, dietary_restrictions, accessibility_needs, internal_notes, marketing_consent, source, created_at, updated_at',
+      'id, pousada_id, user_id, full_name, preferred_name, document_type, document_number, birth_date, nationality, country, city, state, address, cep, emergency_contact, preferences, dietary_restrictions, accessibility_needs, internal_notes, marketing_consent, source, created_at, updated_at',
     )
     .eq('id', guestId)
     .eq('pousada_id', pousadaId)
     .maybeSingle()
   if (error) throw error
   if (!data) return null
+  const contact = guestContactOf(await guestContactsById(supabase, [data.id]), data.id)
 
   const { data: bookingRows } = await supabase
     .from('bookings')
@@ -152,9 +168,10 @@ export async function getGuestById(
     userId: data.user_id,
     fullName: data.full_name,
     preferredName: data.preferred_name,
-    email: data.email,
-    phone: data.phone,
-    whatsapp: data.whatsapp,
+    email: contact.email,
+    phone: contact.phone,
+    whatsapp: contact.whatsapp,
+    contactReleased: contact.released,
     documentType: data.document_type,
     documentNumber: safeDecryptDocumentNumber(data.document_number),
     birthDate: data.birth_date,

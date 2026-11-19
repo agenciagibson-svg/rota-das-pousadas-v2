@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { saveGuestAction } from '../actions'
 import type { GuestDetail } from '../types'
 import { SAVE_FAILED_MESSAGE, formErrorMessage, keepValuesOnSubmit } from '@/lib/forms'
+import { ContactHiddenNote } from '@/features/reservas/components/contact-hidden-note'
 
 function Field({
   label,
@@ -147,36 +148,45 @@ export function GuestEditForm({ guest }: { guest: GuestDetail }) {
         </Field>
       </section>
 
-      {/* E-mail ocupa a linha inteira: endereço longo ficava cortado em 1/3. */}
-      <section className="grid gap-3 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <Field label="E-mail" error={fieldErrors.email}>
+      {/* 0105: viajante do site sem pagamento confirmado — contato oculto e
+          travado. Os campos não vão no formulário; o banco também não deixa
+          a equipe alterá-los enquanto estiver oculto. */}
+      {!guest.contactReleased ? (
+        <section className="border-border bg-secondary text-muted-foreground rounded-2xl border p-4 text-sm">
+          <ContactHiddenNote detailed />
+        </section>
+      ) : (
+        /* E-mail ocupa a linha inteira: endereço longo ficava cortado em 1/3. */
+        <section className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Field label="E-mail" error={fieldErrors.email}>
+              <input
+                name="email"
+                aria-invalid={fieldErrors.email ? true : undefined}
+                type="email"
+                defaultValue={guest.email ?? ''}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          <Field label="Telefone" error={fieldErrors.phone}>
             <input
-              name="email"
-              aria-invalid={fieldErrors.email ? true : undefined}
-              type="email"
-              defaultValue={guest.email ?? ''}
+              name="phone"
+              aria-invalid={fieldErrors.phone ? true : undefined}
+              defaultValue={guest.phone ?? ''}
               className={inputClass}
             />
           </Field>
-        </div>
-        <Field label="Telefone" error={fieldErrors.phone}>
-          <input
-            name="phone"
-            aria-invalid={fieldErrors.phone ? true : undefined}
-            defaultValue={guest.phone ?? ''}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="WhatsApp" error={fieldErrors.whatsapp}>
-          <input
-            name="whatsapp"
-            aria-invalid={fieldErrors.whatsapp ? true : undefined}
-            defaultValue={guest.whatsapp ?? ''}
-            className={inputClass}
-          />
-        </Field>
-      </section>
+          <Field label="WhatsApp" error={fieldErrors.whatsapp}>
+            <input
+              name="whatsapp"
+              aria-invalid={fieldErrors.whatsapp ? true : undefined}
+              defaultValue={guest.whatsapp ?? ''}
+              className={inputClass}
+            />
+          </Field>
+        </section>
+      )}
 
       <section className="grid gap-3 sm:grid-cols-4">
         <Field label="Tipo de documento" error={fieldErrors.documentType}>

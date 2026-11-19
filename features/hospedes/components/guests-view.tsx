@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table'
 import type { GuestFilters } from '../schemas'
 import type { GuestListItem } from '../types'
+import { ContactHiddenNote } from '@/features/reservas/components/contact-hidden-note'
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '—'
@@ -140,8 +141,14 @@ export function GuestsView({
                         </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        <div>{guest.email ?? '—'}</div>
-                        <div className="text-xs">{guest.phone ?? '—'}</div>
+                        {guest.contactReleased ? (
+                          <>
+                            <div>{guest.email ?? '—'}</div>
+                            <div className="text-xs">{guest.phone ?? '—'}</div>
+                          </>
+                        ) : (
+                          <ContactHiddenNote className="text-xs" />
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{guest.city ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">

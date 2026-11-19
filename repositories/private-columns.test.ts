@@ -28,6 +28,9 @@ const PRIVATE: Record<string, string[]> = {
     'commission_rate_locked_until',
   ],
   reviews: ['author_id', 'booking_id'],
+  // 0105: contato do hóspede só pelas RPCs de repositories/guest-contacts.repository.ts.
+  bookings: ['guest_email', 'guest_phone'],
+  guests: ['email', 'phone', 'whatsapp', 'email_normalized', 'phone_normalized'],
 }
 
 function sources(dir: string): string[] {
@@ -47,6 +50,35 @@ function selectsOf(code: string, table: string): string[] {
   for (const m of code.matchAll(re)) out.push(m[1])
   return out
 }
+
+/**
+ * Filtro (`.eq`, `.ilike`…) numa coluna sem SELECT também é recusado pelo
+ * banco. `guest_email`/`guest_phone` só existem em `bookings`; para `guests`,
+ * vale qualquer filtro por e-mail/telefone num arquivo que consulta `guests`.
+ */
+describe('contato do hóspede fora de filtro direto (0105)', () => {
+  const files = ROOTS.flatMap(sources)
+  const filterOn = (col: string) =>
+    new RegExp(`\\.(eq|neq|ilike|like|in|is|or|not|filter|match)\\(\\s*'${col}'`)
+
+  it('nenhuma consulta filtra pelo contato', () => {
+    const offenders: string[] = []
+    for (const file of files) {
+      const code = readFileSync(file, 'utf8')
+      const cols = [
+        'guest_email',
+        'guest_phone',
+        ...(code.includes(".from('guests')")
+          ? ['email', 'phone', 'whatsapp', 'email_normalized', 'phone_normalized']
+          : []),
+      ]
+      for (const c of cols)
+        if (filterOn(c).test(code))
+          offenders.push(`${relative(process.cwd(), file)}: filtro em ${c}`)
+    }
+    expect(offenders).toEqual([])
+  })
+})
 
 describe('colunas privadas fora da leitura direta', () => {
   const files = ROOTS.flatMap(sources)

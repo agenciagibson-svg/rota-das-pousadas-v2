@@ -67,11 +67,15 @@ function reservation(
   const fee = Math.round(subtotal * 0.05)
   const total = subtotal + fee
   const paid = status !== 'pending' && status !== 'quote'
+  const origin = ORIGINS[i % ORIGINS.length]!
+  // 0105: reserva do site ainda não paga mostra o contato oculto.
+  const contactReleased = paid || (origin !== 'rota_das_pousadas' && origin !== 'link_bio')
   return {
     id: `00000000-0000-4000-8000-${String(900000000000 + i).padStart(12, '0')}`,
     code: `RP-D${String(100 + i)}`,
     guestName,
-    guestEmail: `${guestName.split(' ')[0]!.toLowerCase()}@exemplo.com.br`,
+    contactReleased,
+    guestEmail: contactReleased ? `${guestName.split(' ')[0]!.toLowerCase()}@exemplo.com.br` : '',
     guestPhone: null,
     roomName: ROOMS[i % ROOMS.length]!,
     checkin,
@@ -83,7 +87,7 @@ function reservation(
     total,
     balanceDue: paid ? 0 : total,
     status,
-    origin: ORIGINS[i % ORIGINS.length]!,
+    origin,
     paymentDueAt: status === 'pending' ? `${addDays(createdAt, 1)}T18:00:00-03:00` : null,
     createdAt: `${createdAt}T10:00:00-03:00`,
     needsAttention: false,

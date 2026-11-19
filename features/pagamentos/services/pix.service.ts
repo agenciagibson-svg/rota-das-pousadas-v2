@@ -19,6 +19,7 @@ import {
   getPousadaAlertEmails,
   listOpenPaymentReviews,
   listOpenProofDeadlines,
+  listPlatformPixProofsRpc,
   listProofsForBooking,
   releasePaymentReviewsNotification,
   resolvePaymentReviewRpc,
@@ -40,6 +41,8 @@ import type {
   SubmitProofInput,
 } from '../pix'
 import { reportError } from '@/lib/observability/report-error'
+import { getCurrentUser } from '@/features/auth/services/auth.service'
+import type { PlatformPixAudit } from '../pix-audit'
 
 // ---------------------------------------------------------------------------
 // Pousada: configurar a chave
@@ -271,4 +274,17 @@ export async function notifyPaymentReviews(): Promise<{ notified: number; failed
     )
   }
   return { notified, failed: toRetry.length }
+}
+
+/**
+ * 0105: comprovantes de Pix de todas as pousadas — /admin → Financeiro.
+ * Primeira barreira aqui (`platform_finance:manage`); a segunda é a RPC
+ * `list_platform_pix_proofs` (`auth_can_manage_platform_finance`).
+ */
+export async function listPlatformPixProofs(month: string | null): Promise<PlatformPixAudit> {
+  const user = await getCurrentUser()
+  if (!user?.platformRole || !can(user.platformRole, 'platform_finance:manage')) {
+    throw new Error('O financeiro da plataforma é exclusivo de financeiro_plataforma/master.')
+  }
+  return listPlatformPixProofsRpc(month)
 }

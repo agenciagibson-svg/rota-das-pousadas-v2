@@ -185,6 +185,8 @@ select test_assert(
   (upsert_guest(p_pousada_id := '10000000-0000-0000-0000-000000000001', p_full_name := 'Maria',
     p_email := ' MARIA@example.test', p_phone := '(31) 98888-7777')->>'id') = '40000000-0000-0000-0000-000000000010',
   'nova reserva reaproveita o hóspede pelo e-mail');
+-- 0105: e-mail e telefone da ficha não são lidos direto pela API; confere como superusuário.
+reset role;
 select test_assert((select full_name = 'Maria Aparecida da Silva' and birth_date = '1980-05-20'
     and city = 'Belo Horizonte' and state = 'MG' and address = 'Rua das Flores, 10'
     and internal_notes = 'Prefere quarto térreo' and document_type = 'cpf'
@@ -193,6 +195,7 @@ select test_assert((select full_name = 'Maria Aparecida da Silva' and birth_date
   from guests where id = '40000000-0000-0000-0000-000000000010'), 'nova reserva não apaga a ficha do hóspede');
 select test_assert((select phone from guests where id = '40000000-0000-0000-0000-000000000010') = '(31) 98888-7777',
   'contato informado na reserva atualiza a ficha');
+set role authenticated;
 -- A edição pelo perfil (com o id) continua gravando exatamente o que o formulário envia.
 select upsert_guest(p_pousada_id := '10000000-0000-0000-0000-000000000001',
   p_guest_id := '40000000-0000-0000-0000-000000000010', p_full_name := 'Maria Aparecida da Silva',

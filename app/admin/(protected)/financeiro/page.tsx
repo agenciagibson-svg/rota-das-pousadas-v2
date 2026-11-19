@@ -7,6 +7,8 @@ import { PlatformFinance } from '@/features/admin/components/platform-finance'
 import { PlatformCommissionsCard } from '@/features/comissao/components/platform-commissions-card'
 import { listPlatformCommissions } from '@/features/comissao/services/commission.service'
 import { parseMonthParam } from '@/features/comissao'
+import { PlatformPixAuditCard } from '@/features/pagamentos/components/platform-pix-audit-card'
+import { listPlatformPixProofs } from '@/features/pagamentos/services/pix.service'
 import {
   listPlatformExpensesAdmin,
   canManagePlatformFinance,
@@ -21,13 +23,13 @@ export const metadata: Metadata = {
 export default async function AdminFinanceiroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string | string[] }>
+  searchParams: Promise<{ mes?: string | string[]; pix?: string | string[] }>
 }) {
-  const { mes } = await searchParams
+  const { mes, pix } = await searchParams
   const [user, canManage] = await Promise.all([getCurrentUser(), canManagePlatformFinance()])
   // Modelo v1.2 (19/11/2026): a receita da Rota é a comissão por reserva. O
   // plano de assinatura, o MRR e as faturas de assinatura saíram desta tela.
-  const [expenses, commissions] = canManage
+  const [expenses, commissions, pixAudit] = canManage
     ? await Promise.all([
         listPlatformExpensesAdmin(),
         // `null` = não deu para ler (ex.: migration 0104 ainda não aplicada): o bloco some.
@@ -35,8 +37,13 @@ export default async function AdminFinanceiroPage({
           console.error('[admin] falha ao ler as comissões', error)
           return null
         }),
+        // 0105: comprovantes de Pix de todas as pousadas; some se a RPC faltar.
+        listPlatformPixProofs(parseMonthParam(pix)).catch((error: unknown) => {
+          console.error('[admin] falha ao ler os comprovantes de Pix', error)
+          return null
+        }),
       ])
-    : [[], null]
+    : [[], null, null]
 
   return (
     <AdminShell
@@ -48,6 +55,10 @@ export default async function AdminFinanceiroPage({
       <div className="space-y-6">
         {canManage && commissions && (
           <PlatformCommissionsCard data={commissions} basePath="/admin/financeiro" />
+        )}
+
+        {canManage && pixAudit && (
+          <PlatformPixAuditCard data={pixAudit} basePath="/admin/financeiro" />
         )}
 
         <Card className="p-6">

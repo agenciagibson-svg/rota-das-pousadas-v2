@@ -2,6 +2,12 @@ import 'server-only'
 import { listMyBookingIdsAwaitingApproval } from './pix.repository'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { roomNamesById } from './room-names.repository'
+import {
+  bookingContactOf,
+  bookingContactsById,
+  guestContactOf,
+  guestContactsById,
+} from './guest-contacts.repository'
 import { createSupabaseServiceRoleClient } from '@/lib/supabase/service'
 import {
   encryptDocumentNumber,
@@ -373,7 +379,7 @@ export async function getBookingDetailById(
   const { data, error } = await supabase
     .from('bookings')
     .select(
-      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, precheckin_completed_at, version, created_at, updated_at',
+      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, precheckin_completed_at, version, created_at, updated_at',
     )
     .eq('id', bookingId)
     .eq('pousada_id', pousadaId)
@@ -381,7 +387,11 @@ export async function getBookingDetailById(
   if (error) throw error
   if (!data) return null
 
-  const roomNames = await roomNamesById(supabase, pousadaId, [data.room_id])
+  const [roomNames, contacts] = await Promise.all([
+    roomNamesById(supabase, pousadaId, [data.room_id]),
+    bookingContactsById(supabase, [data.id]),
+  ])
+  const contact = bookingContactOf(contacts, data.id)
   const { data: companionRows } = await supabase
     .from('booking_guests')
     .select(
@@ -409,8 +419,9 @@ export async function getBookingDetailById(
     roomName: roomNames.get(data.room_id) ?? 'Acomodação',
     responsibleGuestId: data.responsible_guest_id,
     guestName: data.guest_name ?? 'Hóspede',
-    guestEmail: data.guest_email,
-    guestPhone: data.guest_phone,
+    guestEmail: contact.email,
+    guestPhone: contact.phone || contact.guestPhone,
+    contactReleased: contact.released,
     travelerUserId: data.guest_id,
     checkin: data.checkin,
     checkout: data.checkout,
@@ -464,7 +475,7 @@ export async function getBookingFnrhData(
   const { data, error } = await supabase
     .from('bookings')
     .select(
-      'id, code, room_id, responsible_guest_id, guest_name, guest_email, guest_phone, checkin, checkout, adults, children, infants',
+      'id, code, room_id, responsible_guest_id, guest_name, checkin, checkout, adults, children, infants',
     )
     .eq('id', bookingId)
     .eq('pousada_id', pousadaId)
@@ -472,12 +483,12 @@ export async function getBookingFnrhData(
   if (error) throw error
   if (!data) return null
 
-  const [{ data: room }, { data: guest }, { data: companionRows }] = await Promise.all([
+  const [{ data: room }, { data: guest }, { data: companionRows }, contacts] = await Promise.all([
     supabase.from('rooms').select('name').eq('id', data.room_id).maybeSingle(),
     supabase
       .from('guests')
       .select(
-        'full_name, email, phone, document_type, document_number, birth_date, nationality, country, city, state, address, cep',
+        'full_name, document_type, document_number, birth_date, nationality, country, city, state, address, cep',
       )
       .eq('id', data.responsible_guest_id)
       .maybeSingle(),
@@ -487,7 +498,16 @@ export async function getBookingFnrhData(
       .eq('booking_id', bookingId)
       .neq('guest_type', 'responsible')
       .order('created_at', { ascending: true }),
+    bookingContactsById(supabase, [data.id]),
   ])
+  // 0105: contato pela RPC (ficha do hóspede primeiro, como antes).
+  const contact = bookingContactOf(contacts, data.id)
+  const guestContact = data.responsible_guest_id
+    ? guestContactOf(
+        await guestContactsById(supabase, [data.responsible_guest_id]),
+        data.responsible_guest_id,
+      )
+    : null
 
   return {
     booking: {
@@ -504,8 +524,8 @@ export async function getBookingFnrhData(
       // `guests` pode não ter linha (reserva antiga ou hóspede removido) — cai
       // para o snapshot da reserva, igual a `getBookingDetailById`.
       fullName: guest?.full_name ?? data.guest_name ?? 'Hóspede',
-      email: guest?.email ?? data.guest_email,
-      phone: guest?.phone ?? data.guest_phone,
+      email: guestContact?.email ?? contact.email,
+      phone: guestContact?.phone ?? contact.phone,
       documentType: guest?.document_type ?? null,
       documentNumber: guest?.document_number
         ? safeDecryptDocumentNumber(guest.document_number)

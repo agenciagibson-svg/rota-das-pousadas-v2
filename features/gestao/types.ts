@@ -6,7 +6,13 @@ export type OwnerReservation = {
   id: string
   code: string
   guestName: string
+  /** Vazio quando o contato ainda não foi liberado (`contactReleased = false`). */
   guestEmail: string
+  /**
+   * 0105: reserva feita no site só mostra e-mail e telefone depois do
+   * pagamento confirmado (Pix aprovado, cartão pago ou confirmação manual).
+   */
+  contactReleased: boolean
   /** Telefone/WhatsApp da reserva ou da ficha do hóspede. */
   guestPhone?: string | null
   roomName: string
