@@ -4,16 +4,9 @@ import { ArrowRight } from 'lucide-react'
 import { Marker } from '@/components/brand/logo'
 import { Reveal } from '@/components/reveal'
 import { buttonVariants } from '@/components/ui/button'
-import { Container, Section } from '@/components/ui/container'
+import { Section } from '@/components/ui/container'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { cn } from '@/lib/utils'
-
-const stats = [
-  { value: '3.400+', label: 'pousadas curadas' },
-  { value: '180', label: 'destinos no Brasil' },
-  { value: '4.9', label: 'avaliação média' },
-  { value: '96%', label: 'hóspedes voltam' },
-]
 
 const seasonalPoints = [
   'Recomendações que acompanham a estação do ano',
@@ -24,18 +17,8 @@ const seasonalPoints = [
 export function Editorial() {
   return (
     <>
-      {/* Faixa de números em Breu, número leve e rótulo em Líquen. */}
-      <section className="bg-breu text-neblina">
-        <Container className="grid grid-cols-2 gap-8 py-12 lg:grid-cols-4 lg:py-16">
-          {stats.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.08}>
-              <div className="text-display-l font-light tabular-nums">{s.value}</div>
-              <div className="text-liquen mt-2 text-sm">{s.label}</div>
-            </Reveal>
-          ))}
-        </Container>
-      </section>
-
+      {/* A faixa de números (pousadas, destinos, nota, retorno) saiu em
+          19/11/2026: eram números de exemplo. Volta quando vier do banco. */}
       {/* A home viva: texto ao lado de uma foto vertical grande. */}
       <Section
         id="editorial"

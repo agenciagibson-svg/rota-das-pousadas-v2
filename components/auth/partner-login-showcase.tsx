@@ -28,11 +28,6 @@ const perks = [
   },
 ]
 
-const stats = [
-  { value: '3.400+', label: 'pousadas na plataforma' },
-  { value: '4.9', label: 'avaliação média dos hóspedes' },
-]
-
 function BrandMark({ dark = false }: { dark?: boolean }) {
   return (
     <Link
@@ -100,15 +95,6 @@ export function PartnerLoginShowcase({
                   <p className="text-base leading-snug font-semibold">{perk.title}</p>
                   <p className="text-linen/70 mt-1 text-sm leading-relaxed">{perk.text}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-linen/15 mt-9 flex gap-10 border-t pt-7">
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <div className="text-display-l font-light tabular-nums">{stat.value}</div>
-                <div className="text-linen/65 mt-1 text-sm">{stat.label}</div>
               </div>
             ))}
           </div>

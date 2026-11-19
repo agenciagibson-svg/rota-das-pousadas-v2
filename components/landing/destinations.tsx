@@ -36,10 +36,13 @@ export function Destinations({ destinations }: { destinations: Destination[] }) 
       <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:auto-rows-[15rem] lg:grid-cols-4">
         {destinations.map((d, i) => {
           const featured = i === 0
+          // Nota e "a partir de" só fazem sentido com pousada publicada no
+          // destino; sem nenhuma, o card mostra só o lugar.
+          const hasPousadas = d.pousadas > 0
           return (
             <Reveal key={d.slug} delay={(i % 4) * 0.06} className={tileLayout(i)}>
               <Link
-                href={`/pousada/refugio-das-nuvens`}
+                href={`/pousadas?busca=${encodeURIComponent(d.name)}`}
                 className="group relative block h-full overflow-hidden rounded-3xl"
               >
                 <Image
@@ -55,19 +58,25 @@ export function Destinations({ destinations }: { destinations: Destination[] }) 
 
                 <div className="text-primary-foreground absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 lg:p-6">
                   <span className="text-primary-foreground/80 text-xs font-medium">
-                    {d.state} · {d.pousadas} pousadas
+                    {hasPousadas
+                      ? `${d.state} · ${d.pousadas === 1 ? '1 pousada' : `${d.pousadas} pousadas`}`
+                      : d.state}
                   </span>
                   <h3 className={cn(featured ? 'text-h1' : 'text-h3')}>{d.name}</h3>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Badge variant="glass" size="sm" className="tabular-nums">
-                      <Star className="fill-ipe text-ipe size-3" />
-                      {d.rating.toFixed(1)}
-                    </Badge>
-                    <span className="text-primary-foreground/90 text-xs font-medium sm:text-sm">
-                      A partir de{' '}
-                      <span className="font-semibold tabular-nums">{formatPrice(d.priceFrom)}</span>
-                    </span>
-                  </div>
+                  {hasPousadas && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Badge variant="glass" size="sm" className="tabular-nums">
+                        <Star className="fill-ipe text-ipe size-3" />
+                        {d.rating.toFixed(1)}
+                      </Badge>
+                      <span className="text-primary-foreground/90 text-xs font-medium sm:text-sm">
+                        A partir de{' '}
+                        <span className="font-semibold tabular-nums">
+                          {formatPrice(d.priceFrom)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </Link>
             </Reveal>
