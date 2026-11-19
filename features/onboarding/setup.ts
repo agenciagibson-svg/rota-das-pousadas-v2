@@ -14,7 +14,6 @@ export type SetupStepId =
   | 'contato'
   | 'acomodacoes'
   | 'pix'
-  | 'assinatura'
   | 'cartao'
   | 'cadastur'
   | 'canais'
@@ -43,7 +42,6 @@ export type SetupInput = {
   /** Acomodações ativas sem foto própria (galeria do quarto vazia). */
   roomsWithoutPhotos: number
   pixEnabled: boolean
-  subscriptionActive: boolean
   cardConnected: boolean
   channels: number
   teamMembers: number
@@ -133,14 +131,6 @@ export function buildSetupSteps(i: SetupInput): SetupStep[] {
       hint: 'O hóspede paga direto na conta da pousada.',
       href: '/dashboard/configuracoes',
       done: i.pixEnabled,
-      optional: false,
-    },
-    {
-      id: 'assinatura',
-      label: 'Assinatura da Rota',
-      hint: 'Ativa o sistema para a pousada depois do período de teste.',
-      href: '/dashboard/configuracoes',
-      done: i.subscriptionActive,
       optional: false,
     },
     {

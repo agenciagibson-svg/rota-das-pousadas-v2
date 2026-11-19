@@ -13,7 +13,6 @@ const pronta: SetupInput = {
   sellableRooms: 3,
   roomsWithoutPhotos: 0,
   pixEnabled: true,
-  subscriptionActive: true,
   cardConnected: false,
   channels: 0,
   teamMembers: 1,

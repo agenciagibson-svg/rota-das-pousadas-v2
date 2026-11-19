@@ -122,12 +122,15 @@ export function buildPayer(payer: CreatePreferenceParams['payer']) {
 }
 
 /**
- * ⚠️ `marketplace_fee` foi removido de propósito (13/09/2026). A Rota é SaaS por
- * assinatura: não cobra comissão sobre reserva, não faz split e não custodia
- * fundos — o pagamento vai integralmente para a conta da pousada. Reintroduzir
- * esse campo muda o modelo de negócio e a exposição regulatória (KYC de
- * marketplace, chargeback); exige revisar `docs/04_BUSINESS_ARCHITECTURE.md §9`
- * antes, não apenas alterar este arquivo.
+ * ⚠️ `marketplace_fee` foi removido de propósito (13/09/2026) e CONTINUA fora:
+ * hoje o pagamento vai integralmente para a conta da pousada.
+ *
+ * A §9 do documento de negócio (v1.2, 19/11/2026) passou a prever comissão por
+ * reserva, com a separação automática no cartão por este campo. Religar NÃO é
+ * só alterar este arquivo: depende do contrato revisado pelo advogado, do
+ * parecer do contador (enquadramento e nota fiscal), do aceite do contrato pela
+ * pousada (0103) e da regra de isenção das fundadoras. A Rota segue sem
+ * custodiar o valor da hospedagem.
  */
 export async function createCheckoutPreference(
   params: CreatePreferenceParams,

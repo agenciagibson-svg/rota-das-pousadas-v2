@@ -3,7 +3,6 @@
 import { z } from 'zod'
 import { createAction } from '@/actions/create-action'
 import { getConnectAuthorizationUrl } from './services/oauth.service'
-import { startSubscriptionAuthorization } from './services/subscription.service'
 import { revalidatePath } from 'next/cache'
 import {
   resolvePaymentReview,
@@ -21,11 +20,10 @@ export const connectMercadoPagoAction = createAction(z.object({}), async () => {
   return { redirectTo: url }
 })
 
-/** Inicia a autorização da assinatura da plataforma — só `subscription:manage` (proprietario/master). */
-export const startSubscriptionAuthorizationAction = createAction(z.object({}), async () => {
-  const { initPoint } = await startSubscriptionAuthorization()
-  return { redirectTo: initPoint }
-})
+// A ação que iniciava a assinatura mensal da plataforma saiu em 19/11/2026: o
+// modelo passou a ser comissão por reserva, sem mensalidade
+// (docs/04_BUSINESS_ARCHITECTURE.md §9, v1.2). O serviço e o webhook de
+// assinaturas ficam para as assinaturas que já existirem.
 
 /** Chave Pix da pousada (0075) — só o proprietário (`payment:connect_account`). */
 export const savePixSettingsAction = createAction(pixSettingsSchema, async (input) => {
