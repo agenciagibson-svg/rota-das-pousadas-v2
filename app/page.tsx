@@ -4,9 +4,7 @@ import { Hero } from '@/components/landing/hero'
 import { Destinations } from '@/components/landing/destinations'
 import { Experiences } from '@/components/landing/experiences'
 import { FeaturedPousadas } from '@/components/landing/featured-pousadas'
-import { SeasonalOffers } from '@/components/landing/seasonal-offers'
 import { HowItWorks } from '@/components/landing/how-it-works'
-import { SocialProof } from '@/components/landing/social-proof'
 import { Faq } from '@/components/landing/faq'
 import { Editorial } from '@/components/landing/editorial'
 import { getDestinations, getExperiences, getPousadas } from '@/server/queries'
@@ -28,17 +26,20 @@ export default async function Page() {
 
   // Ordem (redesign out/2026): as pousadas logo depois do hero, para o
   // caminho até "Reservar agora" começar cedo; inspiração depois.
+  //
+  // Fora da home desde 19/11/2026, até existirem dados reais para mostrar:
+  // "Ofertas da estação" (preços inventados por destino) e "Prova social"
+  // (depoimentos e números de exemplo). Os componentes continuam em
+  // components/landing/. A seção de pousadas só aparece com pousada publicada.
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader />
       <main id="conteudo" tabIndex={-1}>
         <Hero featured={pousadas.items[0]} />
-        <FeaturedPousadas pousadas={pousadas.items} />
+        {pousadas.items.length > 0 && <FeaturedPousadas pousadas={pousadas.items} />}
         <Experiences experiences={experiences} />
         <Destinations destinations={destinations} />
-        <SeasonalOffers />
         <HowItWorks />
-        <SocialProof />
         <Faq />
         <Editorial />
       </main>
