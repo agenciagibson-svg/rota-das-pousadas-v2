@@ -97,6 +97,12 @@ export type Action =
   // 0100 — cupons da pousada para quem reserva direto. Espelha
   // `auth_can_manage_pousada` (dono e gestor), o mesmo grupo das tarifas.
   | 'coupon:manage'
+  // 0103 — contrato da pousada com a Rota. `view` espelha
+  // `auth_can_manage_pousada` (dono e gestor veem a situação); `accept` espelha
+  // `auth_is_active_owner_of`: só o proprietário assina. Nem o master aceita
+  // no lugar da pousada.
+  | 'contract:view'
+  | 'contract:accept'
   // 0078 — estoque e pedidos do hóspede
   | 'inventory:view'
   | 'inventory:manage'
@@ -135,6 +141,8 @@ const MATRIX: Record<Role, Action[]> = {
     'payout:receive',
     'payment:connect_account',
     'subscription:manage',
+    'contract:view',
+    'contract:accept',
     'pousada:create',
     'pousada:edit',
     'pousada:delete',
@@ -185,6 +193,7 @@ const MATRIX: Record<Role, Action[]> = {
     'calendar:manage',
     'pricing:manage',
     'coupon:manage',
+    'contract:view',
     'review:respond',
     'checkin:perform',
     'checkout:perform',
@@ -306,6 +315,7 @@ const MATRIX: Record<Role, Action[]> = {
     'calendar:manage',
     'pricing:manage',
     'coupon:manage',
+    'contract:view',
     'coupon:platform:create',
     'review:respond',
     'content:moderate',

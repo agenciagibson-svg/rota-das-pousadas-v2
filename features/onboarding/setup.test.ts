@@ -28,6 +28,34 @@ describe('configuração guiada', () => {
     expect(p.steps.filter((s) => s.optional).every((s) => !s.done || s.id === 'cartao')).toBe(true)
   })
 
+  it('contrato (0103): o passo só existe com contrato vigente e é o primeiro', () => {
+    const sem = buildSetupSteps(pronta)
+    expect(sem.some((s) => s.id === 'contrato')).toBe(false)
+    expect(buildSetupSteps({ ...pronta, contract: null }).some((s) => s.id === 'contrato')).toBe(
+      false,
+    )
+    const inativo = buildSetupSteps({ ...pronta, contract: { active: false, accepted: false } })
+    expect(inativo.some((s) => s.id === 'contrato')).toBe(false)
+
+    const pendente = summarizeSetup(
+      buildSetupSteps({ ...pronta, contract: { active: true, accepted: false } }),
+    )
+    expect(pendente.steps[0]).toMatchObject({
+      id: 'contrato',
+      done: false,
+      optional: false,
+      href: '/dashboard/configuracoes/contrato',
+    })
+    expect(pendente.complete).toBe(false)
+    expect(pendente.missingRequired).toBe(1)
+
+    const aceito = summarizeSetup(
+      buildSetupSteps({ ...pronta, contract: { active: true, accepted: true } }),
+    )
+    expect(aceito.steps[0]).toMatchObject({ id: 'contrato', done: true })
+    expect(aceito.complete).toBe(true)
+  })
+
   it('cada falta derruba só o próprio passo', () => {
     const p = summarizeSetup(
       buildSetupSteps({ ...pronta, gallery: ['/a.jpg'], image: '/a.jpg', pixEnabled: false }),

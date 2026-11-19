@@ -1688,6 +1688,10 @@ export type Database = {
           address: string
           cadastur: string
           cadastur_valid_until: string | null
+          first_published_at: string | null
+          founder_rank: number | null
+          commission_exempt_until: string | null
+          commission_rate_locked_until: string | null
           cancellation_policy: string
           cep: string | null
           checkin_time: string
@@ -1728,6 +1732,10 @@ export type Database = {
           address?: string
           cadastur?: string
           cadastur_valid_until?: string | null
+          first_published_at?: string | null
+          founder_rank?: number | null
+          commission_exempt_until?: string | null
+          commission_rate_locked_until?: string | null
           cancellation_policy?: string
           cep?: string | null
           checkin_time?: string
@@ -1768,6 +1776,10 @@ export type Database = {
           address?: string
           cadastur?: string
           cadastur_valid_until?: string | null
+          first_published_at?: string | null
+          founder_rank?: number | null
+          commission_exempt_until?: string | null
+          commission_rate_locked_until?: string | null
           cancellation_policy?: string
           cep?: string | null
           checkin_time?: string
@@ -3807,6 +3819,41 @@ export type Database = {
       get_shared_booking: {
         Args: { p_token: string }
         Returns: Json
+      }
+      get_pousada_contract_state: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      accept_pousada_contract: {
+        Args: {
+          p_pousada_id: string
+          p_version_id: string
+          p_body_sha256: string
+          p_ip?: string
+          p_user_agent?: string
+        }
+        Returns: Json
+      }
+      get_pousada_contract_acceptance: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      list_contract_versions: {
+        Args: never
+        Returns: Json
+      }
+      save_contract_version_draft: {
+        Args: {
+          p_code: string
+          p_title: string
+          p_body_template: string
+          p_requires_reaccept?: boolean
+        }
+        Returns: string
+      }
+      publish_contract_version: {
+        Args: { p_code: string }
+        Returns: string
       }
       get_demo_pousada: {
         Args: { p_token: string }

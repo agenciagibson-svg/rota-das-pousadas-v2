@@ -52,6 +52,10 @@ import {
 import { listCategories } from '@/features/acomodacoes/services/categories.service'
 import { listRateRules } from '@/features/acomodacoes/services/rates.service'
 import { getFeaturedCoupon, listCoupons } from '@/features/cupons/services/coupons.service'
+import {
+  getAcceptedContract,
+  getContractState,
+} from '@/features/contrato/services/contract.service'
 import { listBlocks } from '@/features/acomodacoes/services/blocks.service'
 import { listAmenitiesCatalog } from '@/repositories/rooms.repository'
 import { getFavoriteState, listMyFavorites } from '@/features/favoritos/services/favorites.service'
@@ -215,6 +219,21 @@ export const getOwnerCoupons = cache(async () => {
   const state = await resolveTenantAccess()
   if (state.status !== 'ok' || !can(state.membership.role, 'coupon:manage')) return null
   return listCoupons()
+})
+/**
+ * Contrato da pousada com a Rota (0103): `null` para quem não vê o contrato
+ * (recepção, governança, financeiro).
+ */
+export const getOwnerContractState = cache(async () => {
+  const state = await resolveTenantAccess()
+  if (state.status !== 'ok' || !can(state.membership.role, 'contract:view')) return null
+  return getContractState()
+})
+/** Cópia guardada do contrato aceito; `null` se a pousada ainda não aceitou. */
+export const getOwnerAcceptedContract = cache(async () => {
+  const state = await resolveTenantAccess()
+  if (state.status !== 'ok' || !can(state.membership.role, 'contract:view')) return null
+  return getAcceptedContract()
 })
 /** Cupom divulgado da pousada (bio e página pública); `null` = nada aparece. */
 export const getPublicFeaturedCoupon = cache((slug: string) => getFeaturedCoupon(slug))

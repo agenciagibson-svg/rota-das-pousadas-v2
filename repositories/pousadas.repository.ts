@@ -82,7 +82,16 @@ export const PUBLIC_POUSADA_COLUMNS =
 
 export type PublicPousadaRow = Omit<
   PousadaRow,
-  'owner_id' | 'notification_email' | 'legal_name' | 'tax_id'
+  | 'owner_id'
+  | 'notification_email'
+  | 'legal_name'
+  | 'tax_id'
+  // 0103: primeira publicação e condição de fundadora ficam fora da vitrine
+  // (sem SELECT para a API; quem lê é `get_pousada_contract_state`).
+  | 'first_published_at'
+  | 'founder_rank'
+  | 'commission_exempt_until'
+  | 'commission_rate_locked_until'
 >
 
 export function rowToPousada(r: PublicPousadaRow): Pousada {
