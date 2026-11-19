@@ -4,12 +4,12 @@ import { AdminShell } from '@/features/admin/components/admin-shell'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PlatformFinance } from '@/features/admin/components/platform-finance'
-import { BillingOverview } from '@/features/admin/components/billing-overview'
+import { PlatformCommissionsCard } from '@/features/comissao/components/platform-commissions-card'
+import { listPlatformCommissions } from '@/features/comissao/services/commission.service'
+import { parseMonthParam } from '@/features/comissao'
 import {
   listPlatformExpensesAdmin,
   canManagePlatformFinance,
-  getPlatformPlanStatus,
-  getBillingOverview,
 } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 
@@ -18,27 +18,41 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default async function AdminFinanceiroPage() {
+export default async function AdminFinanceiroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string | string[] }>
+}) {
+  const { mes } = await searchParams
   const [user, canManage] = await Promise.all([getCurrentUser(), canManagePlatformFinance()])
-  const [expenses, planStatus, billing] = canManage
+  // Modelo v1.2 (19/11/2026): a receita da Rota é a comissão por reserva. O
+  // plano de assinatura, o MRR e as faturas de assinatura saíram desta tela.
+  const [expenses, commissions] = canManage
     ? await Promise.all([
         listPlatformExpensesAdmin(),
-        getPlatformPlanStatus(),
-        getBillingOverview(),
+        // `null` = não deu para ler (ex.: migration 0104 ainda não aplicada): o bloco some.
+        listPlatformCommissions(parseMonthParam(mes)).catch((error: unknown) => {
+          console.error('[admin] falha ao ler as comissões', error)
+          return null
+        }),
       ])
-    : [[], null, null]
+    : [[], null]
 
   return (
     <AdminShell
       active="financeiro"
       title="Financeiro"
-      subtitle="Contas a pagar da própria Rota e cobrança de assinatura"
+      subtitle="Comissões das reservas e contas a pagar da própria Rota"
       displayName={user?.name || user?.email || 'Equipe'}
     >
       <div className="space-y-6">
+        {canManage && commissions && (
+          <PlatformCommissionsCard data={commissions} basePath="/admin/financeiro" />
+        )}
+
         <Card className="p-6">
           {canManage ? (
-            <PlatformFinance initialExpenses={expenses} planStatus={planStatus} />
+            <PlatformFinance initialExpenses={expenses} planStatus={null} />
           ) : (
             <EmptyState
               icon={ShieldOff}
@@ -47,15 +61,6 @@ export default async function AdminFinanceiroPage() {
             />
           )}
         </Card>
-
-        {canManage && billing && (
-          <BillingOverview
-            metrics={billing.metrics}
-            cashFlow={billing.cashFlow}
-            receivables={billing.receivables}
-            recentInvoices={billing.recentInvoices}
-          />
-        )}
       </div>
     </AdminShell>
   )

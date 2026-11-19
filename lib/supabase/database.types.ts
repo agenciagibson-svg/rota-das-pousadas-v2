@@ -3838,6 +3838,14 @@ export type Database = {
         Args: { p_pousada_id: string }
         Returns: Json
       }
+      get_pousada_commission_statement: {
+        Args: { p_pousada_id: string; p_month?: string }
+        Returns: Json
+      }
+      list_platform_commissions: {
+        Args: { p_month?: string }
+        Returns: Json
+      }
       list_contract_versions: {
         Args: never
         Returns: Json

@@ -6,12 +6,19 @@ import {
   canViewFinance,
   getCurrentUser,
   getFinance,
+  getOwnerCommissionStatement,
   getOwnerPousada,
 } from '@/server/queries'
+import { CommissionStatementCard } from '@/features/comissao/components/commission-statement-card'
+import { parseMonthParam } from '@/features/comissao'
 import { FinanceView } from '@/features/financeiro'
 import { EmptyState } from '@/components/ui/empty-state'
 
-export default async function DashboardFinanceiroPage() {
+export default async function DashboardFinanceiroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string | string[] }>
+}) {
   if (await sectionDenied('financeiro'))
     return <NoSectionAccess section="financeiro" title="Financeiro" />
 
@@ -34,7 +41,18 @@ export default async function DashboardFinanceiroPage() {
     )
   }
 
-  const [finance, canEdit] = await Promise.all([getFinance(), canManageExpenses()])
+  const { mes } = await searchParams
+  const [finance, canEdit, commission] = await Promise.all([
+    getFinance(),
+    canManageExpenses(),
+    // O extrato da comissão não pode derrubar o Financeiro: sem leitura, o bloco some.
+    getOwnerCommissionStatement(parseMonthParam(mes)).catch((error: unknown) => {
+      console.error('[financeiro] falha ao ler o extrato de comissão', error)
+      return null
+    }),
+  ])
+  // Só aparece para pousada com contrato aceito (ou que já tenha comissão registrada).
+  const showCommission = commission && (commission.hasContract || commission.months.length > 0)
   const displayName = user?.name || user?.email || 'Proprietário'
 
   return (
@@ -44,6 +62,10 @@ export default async function DashboardFinanceiroPage() {
       summary={finance.summary}
       transactions={finance.transactions}
       canManageExpenses={canEdit}
-    />
+    >
+      {showCommission && (
+        <CommissionStatementCard statement={commission} basePath="/dashboard/financeiro" />
+      )}
+    </FinanceView>
   )
 }
