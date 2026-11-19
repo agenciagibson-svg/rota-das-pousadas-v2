@@ -5,14 +5,14 @@
 > Documentos irmãos: `Architecture.md` (o _como_ técnico), `DesignSystem.md`,
 > `DesignFoundations.md`, `AI_RULES.md`.
 
-| Campo | Valor |
-|---|---|
-| Versão | 1.0 |
-| Status | Aprovado como referência |
-| Data | 17/07/2026 |
-| Responsáveis | CPO · Solution Architect · Staff Engineer |
-| Escopo | Documentação de negócio (sem código, sem BD, sem auth) |
-| Público | Produto, Engenharia, Design, Comercial, Liderança |
+| Campo        | Valor                                                  |
+| ------------ | ------------------------------------------------------ |
+| Versão       | 1.0                                                    |
+| Status       | Aprovado como referência                               |
+| Data         | 17/07/2026                                             |
+| Responsáveis | CPO · Solution Architect · Staff Engineer              |
+| Escopo       | Documentação de negócio (sem código, sem BD, sem auth) |
+| Público      | Produto, Engenharia, Design, Comercial, Liderança      |
 
 ## Sumário
 
@@ -50,19 +50,19 @@ uma **rota** a ser descoberta.
 
 ### 1.2 Qual problema resolve
 
-| Dor | Quem sofre | Como a Rota resolve |
-|---|---|---|
-| Pousadas dependem de OTAs caras e sem relacionamento com o hóspede | Proprietários | Canal próprio, CRM e comissões justas |
-| Gestão manual (WhatsApp, caderno, planilha) | Proprietários | Dashboard de reservas, calendário e financeiro |
-| Falta de ferramentas de marketing | Proprietários | Marketing assistido por IA, destaques, fidelidade |
-| Descoberta ruim: busca genérica, sem curadoria | Viajantes | Home viva por estação + busca por experiência |
-| Insegurança na reserva de pequenos estabelecimentos | Viajantes | Avaliações verificadas, pagamento protegido, suporte |
-| Experiência fragmentada (reserva, passeios, transporte) | Viajantes | Marketplace de experiências integrado (futuro) |
+| Dor                                                                | Quem sofre    | Como a Rota resolve                                  |
+| ------------------------------------------------------------------ | ------------- | ---------------------------------------------------- |
+| Pousadas dependem de OTAs caras e sem relacionamento com o hóspede | Proprietários | Canal próprio, CRM e comissões justas                |
+| Gestão manual (WhatsApp, caderno, planilha)                        | Proprietários | Dashboard de reservas, calendário e financeiro       |
+| Falta de ferramentas de marketing                                  | Proprietários | Marketing assistido por IA, destaques, fidelidade    |
+| Descoberta ruim: busca genérica, sem curadoria                     | Viajantes     | Home viva por estação + busca por experiência        |
+| Insegurança na reserva de pequenos estabelecimentos                | Viajantes     | Avaliações verificadas, pagamento protegido, suporte |
+| Experiência fragmentada (reserva, passeios, transporte)            | Viajantes     | Marketplace de experiências integrado (futuro)       |
 
 ### 1.3 Clientes vs. Usuários
 
-- **Clientes (quem paga / gera receita):** proprietários de pousadas (assinatura
-  e/ou comissão), anunciantes e parceiros de experiências.
+- **Clientes (quem paga / gera receita):** proprietários de pousadas (comissão
+  por reserva originada, ver §9), anunciantes e parceiros de experiências.
 - **Usuários (quem usa):** viajantes/hóspedes (lado da demanda) e as equipes
   operacionais das pousadas (lado da oferta). Ver seção 2.
 
@@ -138,6 +138,7 @@ Para cada perfil: **objetivo · permissões · limitações · funcionalidades �
 fluxo**.
 
 ### 2.1 Visitante (não autenticado)
+
 - **Objetivo:** descobrir destinos e pousadas, avaliar a proposta de valor.
 - **Permissões:** navegar, buscar, ver pousadas, ler avaliações, ler blog.
 - **Limitações:** não reserva, não favorita, não avalia, não conversa.
@@ -145,6 +146,7 @@ fluxo**.
 - **Fluxo:** entra → explora → é convidado a criar conta ao tentar reservar/favoritar.
 
 ### 2.2 Viajante (autenticado, sem reserva ativa)
+
 - **Objetivo:** planejar viagens, comparar, salvar favoritos, reservar.
 - **Permissões:** tudo do visitante + favoritos, wishlist, iniciar reserva, chat, perfil.
 - **Limitações:** não gerencia pousadas; só acessa suas próprias reservas.
@@ -152,6 +154,7 @@ fluxo**.
 - **Fluxo:** login → busca → favorita → reserva → paga.
 
 ### 2.3 Hóspede (viajante com reserva confirmada)
+
 - **Objetivo:** ter uma estadia tranquila do check-in ao check-out.
 - **Permissões:** viajante + gerenciar sua reserva (detalhes, mensagens, check-in), avaliar após a estadia.
 - **Limitações:** só a própria reserva; avalia apenas estadias concluídas.
@@ -159,6 +162,7 @@ fluxo**.
 - **Fluxo:** confirmação → pré-estadia → check-in → hospedagem → check-out → avaliação.
 
 ### 2.4 Proprietário (dono da pousada / conta-mãe)
+
 - **Objetivo:** maximizar ocupação e receita; gerir o negócio.
 - **Permissões:** CRUD da(s) sua(s) pousada(s), quartos, tarifas, calendário; ver financeiro; responder avaliações; criar promoções; gerir equipe.
 - **Limitações:** apenas suas propriedades; não vê dados de outras pousadas nem da plataforma.
@@ -166,6 +170,7 @@ fluxo**.
 - **Fluxo:** cadastro → aprovação → publicação → gestão contínua → payout.
 
 ### 2.5 Administrador da Pousada (gerente delegado)
+
 - **Objetivo:** operar a pousada em nome do proprietário.
 - **Permissões:** quase tudo do proprietário, **exceto** dados bancários/payout e exclusão da pousada.
 - **Limitações:** não altera titularidade nem recebe pagamentos.
@@ -173,6 +178,7 @@ fluxo**.
 - **Fluxo:** convidado pelo proprietário → aceita → opera.
 
 ### 2.6 Recepcionista (operação de linha de frente)
+
 - **Objetivo:** executar check-in/out e atender hóspedes.
 - **Permissões:** ver reservas, realizar check-in/out, responder mensagens, bloquear datas pontuais.
 - **Limitações:** não vê financeiro, não altera tarifas, não gere equipe.
@@ -180,6 +186,7 @@ fluxo**.
 - **Fluxo:** login → agenda do dia → check-in → atendimento → check-out.
 
 ### 2.7 Financeiro da Pousada
+
 - **Objetivo:** conciliar receitas, payouts e notas fiscais.
 - **Permissões:** ver reservas e valores, relatórios financeiros, dados de payout, emissão fiscal.
 - **Limitações:** não altera tarifas/quartos nem responde hóspedes.
@@ -187,6 +194,7 @@ fluxo**.
 - **Fluxo:** login → conciliação → relatórios → fechamento mensal.
 
 ### 2.8 Equipe Comercial (Plataforma)
+
 - **Objetivo:** captar e ativar pousadas (aquisição de oferta).
 - **Permissões:** ver pipeline de anfitriões, aprovar cadastros, aplicar planos/condições comerciais.
 - **Limitações:** não acessa dados sensíveis do hóspede além do necessário; não altera reservas.
@@ -194,6 +202,7 @@ fluxo**.
 - **Fluxo:** prospecção → cadastro → aprovação → ativação.
 
 ### 2.9 Equipe de Marketing (Plataforma)
+
 - **Objetivo:** crescer demanda e engajamento.
 - **Permissões:** gerir home viva, destaques, campanhas, blog, cupons de plataforma, SEO.
 - **Limitações:** não acessa financeiro individual das pousadas.
@@ -201,6 +210,7 @@ fluxo**.
 - **Fluxo:** planejamento → publicação → medição → otimização.
 
 ### 2.10 Equipe Financeira (Plataforma)
+
 - **Objetivo:** gerir receita da plataforma, repasses e compliance.
 - **Permissões:** relatórios globais, comissões, payouts, antifraude financeiro, conciliação.
 - **Limitações:** não altera conteúdo de pousadas.
@@ -208,6 +218,7 @@ fluxo**.
 - **Fluxo:** conciliação → repasses → fechamento → relatórios à liderança.
 
 ### 2.11 Equipe de Suporte (Plataforma)
+
 - **Objetivo:** resolver problemas de hóspedes e anfitriões.
 - **Permissões:** ver reservas/contas (com trilha de auditoria), mediar disputas, emitir reembolsos dentro de política, moderar conteúdo.
 - **Limitações:** ações sensíveis exigem justificativa e ficam logadas; sem acesso a segredos.
@@ -215,6 +226,7 @@ fluxo**.
 - **Fluxo:** ticket → diagnóstico → ação → resolução → registro.
 
 ### 2.12 Administrador Master (Plataforma)
+
 - **Objetivo:** governar toda a plataforma.
 - **Permissões:** acesso total, configuração global, gestão de papéis/permissões, auditoria.
 - **Limitações:** ações críticas exigem duplo controle e auditoria (princípio de menor privilégio mesmo para admin).
@@ -222,6 +234,7 @@ fluxo**.
 - **Fluxo:** governança contínua, supervisão de métricas e exceções.
 
 ### 2.13 Sistema IA (agente)
+
 - **Objetivo:** ampliar hóspedes (concierge) e anfitriões (copiloto de receita/marketing) e apoiar operação (moderação, suporte).
 - **Permissões:** somente as concedidas por escopo/contexto; sempre com humano no circuito para ações sensíveis.
 - **Limitações:** não executa pagamentos, aprovações irreversíveis ou moderação punitiva sem confirmação humana.
@@ -234,38 +247,38 @@ fluxo**.
 
 Cada módulo é uma _feature_ isolável (ver `Architecture.md` → Feature First).
 
-| # | Módulo | Descrição | Usuários primários | Fase |
-|---|---|---|---|---|
-| 1 | **Autenticação & Contas** | Cadastro, login, sessões, papéis, MFA | Todos | MVP |
-| 2 | **Perfis** | Dados de viajante e de anfitrião, preferências | Viajante, Proprietário | MVP |
-| 3 | **Destinos** | Curadoria de destinos (Gramado, Bonito…) | Viajante, Marketing | MVP |
-| 4 | **Regiões / Geo** | Estado, cidade, região, geolocalização | Plataforma | MVP |
-| 5 | **Experiências** | Taxonomia (chalé, natureza, luxo, pet…) | Viajante | MVP |
-| 6 | **Pousadas** | Catálogo, perfil, mídia, comodidades | Proprietário, Viajante | MVP |
-| 7 | **Quartos / Acomodações** | Tipos, capacidade, tarifas base | Proprietário | MVP |
-| 8 | **Disponibilidade** | Estoque por data e acomodação | Proprietário, Sistema | MVP |
-| 9 | **Calendário** | Bloqueios, temporadas, mín. de noites | Proprietário, Recepção | MVP |
-| 10 | **Reservas** | Ciclo de vida do booking | Viajante, Pousada | MVP |
-| 11 | **Pagamentos** | Cobrança, split, payout, reembolso | Viajante, Financeiro | V2 |
-| 12 | **Cupons & Promoções** | Descontos, campanhas, regras | Marketing, Proprietário | V2 |
-| 13 | **Avaliações** | Reviews verificados + resposta | Hóspede, Proprietário | V2 |
-| 14 | **Favoritos / Wishlist** | Salvar e organizar desejos | Viajante | MVP |
-| 15 | **Chat / Mensageria** | Hóspede ↔ pousada, suporte | Todos | V2 |
-| 16 | **Notificações** | E-mail, push, WhatsApp | Todos | V2 |
-| 17 | **CRM** | Pipeline de anfitriões e de hóspedes | Comercial, Proprietário | V2 |
-| 18 | **Marketing** | Home viva, destaques, campanhas, SEO | Marketing | V2 |
-| 19 | **Programa de Fidelidade** | Pontos, níveis, benefícios | Viajante | V3 |
-| 20 | **Blog / Conteúdo** | Editorial, guias, SEO | Marketing | V2 |
-| 21 | **IA Concierge** | Assistente do viajante | Viajante | V3 |
-| 22 | **IA Copiloto (Receita/Marketing)** | Sugestões ao anfitrião | Proprietário | V3 |
-| 23 | **Relatórios & BI** | Métricas por pousada e globais | Proprietário, Master | V2 |
-| 24 | **Dashboard Proprietário** | Painel operacional da pousada | Proprietário, equipe | MVP→ |
-| 25 | **Dashboard Master** | Painel executivo da rede | Master, liderança | MVP→ |
-| 26 | **Configurações** | Preferências de conta/pousada/plataforma | Todos | MVP |
-| 27 | **Auditoria** | Trilha de ações sensíveis | Master, Suporte | V2 |
-| 28 | **Logs & Observabilidade** | Telemetria técnica e de negócio | Engenharia | V2 |
-| 29 | **Marketplace de Experiências** | Passeios, transporte, seguro | Viajante, Parceiros | Enterprise |
-| 30 | **Emissão Fiscal** | Notas e obrigações | Financeiro | Enterprise |
+| #   | Módulo                              | Descrição                                      | Usuários primários      | Fase       |
+| --- | ----------------------------------- | ---------------------------------------------- | ----------------------- | ---------- |
+| 1   | **Autenticação & Contas**           | Cadastro, login, sessões, papéis, MFA          | Todos                   | MVP        |
+| 2   | **Perfis**                          | Dados de viajante e de anfitrião, preferências | Viajante, Proprietário  | MVP        |
+| 3   | **Destinos**                        | Curadoria de destinos (Gramado, Bonito…)       | Viajante, Marketing     | MVP        |
+| 4   | **Regiões / Geo**                   | Estado, cidade, região, geolocalização         | Plataforma              | MVP        |
+| 5   | **Experiências**                    | Taxonomia (chalé, natureza, luxo, pet…)        | Viajante                | MVP        |
+| 6   | **Pousadas**                        | Catálogo, perfil, mídia, comodidades           | Proprietário, Viajante  | MVP        |
+| 7   | **Quartos / Acomodações**           | Tipos, capacidade, tarifas base                | Proprietário            | MVP        |
+| 8   | **Disponibilidade**                 | Estoque por data e acomodação                  | Proprietário, Sistema   | MVP        |
+| 9   | **Calendário**                      | Bloqueios, temporadas, mín. de noites          | Proprietário, Recepção  | MVP        |
+| 10  | **Reservas**                        | Ciclo de vida do booking                       | Viajante, Pousada       | MVP        |
+| 11  | **Pagamentos**                      | Cobrança, split, payout, reembolso             | Viajante, Financeiro    | V2         |
+| 12  | **Cupons & Promoções**              | Descontos, campanhas, regras                   | Marketing, Proprietário | V2         |
+| 13  | **Avaliações**                      | Reviews verificados + resposta                 | Hóspede, Proprietário   | V2         |
+| 14  | **Favoritos / Wishlist**            | Salvar e organizar desejos                     | Viajante                | MVP        |
+| 15  | **Chat / Mensageria**               | Hóspede ↔ pousada, suporte                     | Todos                   | V2         |
+| 16  | **Notificações**                    | E-mail, push, WhatsApp                         | Todos                   | V2         |
+| 17  | **CRM**                             | Pipeline de anfitriões e de hóspedes           | Comercial, Proprietário | V2         |
+| 18  | **Marketing**                       | Home viva, destaques, campanhas, SEO           | Marketing               | V2         |
+| 19  | **Programa de Fidelidade**          | Pontos, níveis, benefícios                     | Viajante                | V3         |
+| 20  | **Blog / Conteúdo**                 | Editorial, guias, SEO                          | Marketing               | V2         |
+| 21  | **IA Concierge**                    | Assistente do viajante                         | Viajante                | V3         |
+| 22  | **IA Copiloto (Receita/Marketing)** | Sugestões ao anfitrião                         | Proprietário            | V3         |
+| 23  | **Relatórios & BI**                 | Métricas por pousada e globais                 | Proprietário, Master    | V2         |
+| 24  | **Dashboard Proprietário**          | Painel operacional da pousada                  | Proprietário, equipe    | MVP→       |
+| 25  | **Dashboard Master**                | Painel executivo da rede                       | Master, liderança       | MVP→       |
+| 26  | **Configurações**                   | Preferências de conta/pousada/plataforma       | Todos                   | MVP        |
+| 27  | **Auditoria**                       | Trilha de ações sensíveis                      | Master, Suporte         | V2         |
+| 28  | **Logs & Observabilidade**          | Telemetria técnica e de negócio                | Engenharia              | V2         |
+| 29  | **Marketplace de Experiências**     | Passeios, transporte, seguro                   | Viajante, Parceiros     | Enterprise |
+| 30  | **Emissão Fiscal**                  | Notas e obrigações                             | Financeiro              | Enterprise |
 
 ---
 
@@ -332,11 +345,11 @@ stateDiagram-v2
 - **RB-30** Cada pousada escolhe uma **política de cancelamento** (Flexível, Moderada, Rígida).
 - **RB-31** O reembolso é calculado pela política vigente **no momento da reserva** e pela antecedência do cancelamento.
 
-| Política | Reembolso total se… | Reembolso parcial | Sem reembolso |
-|---|---|---|---|
-| Flexível | cancelar até 24h antes do check-in | — | após o check-in |
-| Moderada | cancelar até 5 dias antes | 50% até 48h antes | < 48h |
-| Rígida | cancelar até 14 dias antes | 50% até 7 dias | < 7 dias |
+| Política | Reembolso total se…                | Reembolso parcial | Sem reembolso   |
+| -------- | ---------------------------------- | ----------------- | --------------- |
+| Flexível | cancelar até 24h antes do check-in | —                 | após o check-in |
+| Moderada | cancelar até 5 dias antes          | 50% até 48h antes | < 48h           |
+| Rígida   | cancelar até 14 dias antes         | 50% até 7 dias    | < 7 dias        |
 
 - **RB-32** Taxas de serviço podem ser não reembolsáveis (informado no checkout).
 - **RB-33** Cancelamento pela **pousada** gera reembolso integral ao hóspede + penalidade/realocação assistida.
@@ -405,7 +418,7 @@ flowchart LR
     S --> F[Filtros: experiência, preço, comodidades]
     F --> R[Resultados paginados]
     R --> P[Detalhe da pousada]
-    P --> W[Favoritar] 
+    P --> W[Favoritar]
     P --> B[Iniciar reserva]
 ```
 
@@ -506,30 +519,30 @@ erDiagram
 
 ### 6.2 Catálogo de entidades
 
-| Entidade | Descrição | Principais atributos | Relaciona-se com |
-|---|---|---|---|
-| **Usuário** | Qualquer conta (viajante ou membro de equipe) | id, nome, e-mail, papéis, preferências, status | Reserva, Avaliação, Favorito, Pousada |
-| **Perfil** | Extensão do usuário (viajante/anfitrião) | bio, documento, contato, payout (anfitrião) | Usuário |
-| **Estado** | UF do Brasil | sigla, nome | Cidade |
-| **Cidade** | Município | nome, estado, geo | Estado, Destino |
-| **Destino** | Cluster turístico curado | slug, nome, imagem, estação, rating | Cidade, Pousada |
-| **Região** | Agrupamento macro (SE, S, NE…) | código, nome | Estado |
-| **Experiência** | Taxonomia de estilo | slug, nome, ícone, descrição | Pousada |
-| **Comodidade** | Recurso oferecido | nome, categoria | Pousada, Quarto |
-| **Pousada** | Estabelecimento | slug, nome, cidade/estado, descrição, status, política, rating | Quarto, Imagem, Avaliação, Destino |
-| **Quarto/Acomodação** | Unidade vendável | nome, capacidade, tamanho, tarifa base | Pousada, Disponibilidade, Reserva |
-| **Categoria** | Tipo de acomodação | nome, descrição | Quarto |
-| **Imagem / Vídeo** | Mídia da pousada/quarto | url, alt, ordem, tipo | Pousada, Quarto |
-| **Disponibilidade** | Estoque por data | data, quarto, status, tarifa do dia | Quarto |
-| **Reserva** | Booking | código, período, hóspedes, valores, status | Usuário, Quarto, Pagamento |
-| **Pagamento** | Transação financeira | valor, método, status, split, reembolsos | Reserva, Financeiro |
-| **Cupom** | Desconto | código, tipo, valor, regras, validade | Reserva |
-| **Avaliação** | Review verificado | nota, texto, resposta, status | Usuário, Pousada, Reserva |
-| **Mensagem** | Comunicação | remetente, conteúdo, timestamp, canal | Reserva, Usuário |
-| **Notificação** | Aviso multicanal | tipo, canal, status de leitura | Usuário |
-| **Evento** | Log de negócio/auditoria | ator, ação, alvo, timestamp, metadados | Usuário |
-| **Financeiro** | Lançamento/repasse | tipo, valor, competência, status | Pagamento, Pousada |
-| **Relatório** | Agregação analítica | escopo, período, métricas | Pousada, Plataforma |
+| Entidade              | Descrição                                     | Principais atributos                                           | Relaciona-se com                      |
+| --------------------- | --------------------------------------------- | -------------------------------------------------------------- | ------------------------------------- |
+| **Usuário**           | Qualquer conta (viajante ou membro de equipe) | id, nome, e-mail, papéis, preferências, status                 | Reserva, Avaliação, Favorito, Pousada |
+| **Perfil**            | Extensão do usuário (viajante/anfitrião)      | bio, documento, contato, payout (anfitrião)                    | Usuário                               |
+| **Estado**            | UF do Brasil                                  | sigla, nome                                                    | Cidade                                |
+| **Cidade**            | Município                                     | nome, estado, geo                                              | Estado, Destino                       |
+| **Destino**           | Cluster turístico curado                      | slug, nome, imagem, estação, rating                            | Cidade, Pousada                       |
+| **Região**            | Agrupamento macro (SE, S, NE…)                | código, nome                                                   | Estado                                |
+| **Experiência**       | Taxonomia de estilo                           | slug, nome, ícone, descrição                                   | Pousada                               |
+| **Comodidade**        | Recurso oferecido                             | nome, categoria                                                | Pousada, Quarto                       |
+| **Pousada**           | Estabelecimento                               | slug, nome, cidade/estado, descrição, status, política, rating | Quarto, Imagem, Avaliação, Destino    |
+| **Quarto/Acomodação** | Unidade vendável                              | nome, capacidade, tamanho, tarifa base                         | Pousada, Disponibilidade, Reserva     |
+| **Categoria**         | Tipo de acomodação                            | nome, descrição                                                | Quarto                                |
+| **Imagem / Vídeo**    | Mídia da pousada/quarto                       | url, alt, ordem, tipo                                          | Pousada, Quarto                       |
+| **Disponibilidade**   | Estoque por data                              | data, quarto, status, tarifa do dia                            | Quarto                                |
+| **Reserva**           | Booking                                       | código, período, hóspedes, valores, status                     | Usuário, Quarto, Pagamento            |
+| **Pagamento**         | Transação financeira                          | valor, método, status, split, reembolsos                       | Reserva, Financeiro                   |
+| **Cupom**             | Desconto                                      | código, tipo, valor, regras, validade                          | Reserva                               |
+| **Avaliação**         | Review verificado                             | nota, texto, resposta, status                                  | Usuário, Pousada, Reserva             |
+| **Mensagem**          | Comunicação                                   | remetente, conteúdo, timestamp, canal                          | Reserva, Usuário                      |
+| **Notificação**       | Aviso multicanal                              | tipo, canal, status de leitura                                 | Usuário                               |
+| **Evento**            | Log de negócio/auditoria                      | ator, ação, alvo, timestamp, metadados                         | Usuário                               |
+| **Financeiro**        | Lançamento/repasse                            | tipo, valor, competência, status                               | Pagamento, Pousada                    |
+| **Relatório**         | Agregação analítica                           | escopo, período, métricas                                      | Pousada, Plataforma                   |
 
 ---
 
@@ -541,30 +554,30 @@ Papéis: VIS=Visitante · VJ=Viajante/Hóspede · PROP=Proprietário · ADM=Admi
 Pousada · REC=Recepcionista · FIN=Financeiro Pousada · SUP=Suporte · COM=Comercial
 · MKT=Marketing · MST=Admin Master · IA=Sistema IA.
 
-| Ação | VIS | VJ | PROP | ADM | REC | FIN | SUP | COM | MKT | MST | IA |
-|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Visualizar catálogo público | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Buscar / filtrar | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Favoritar | — | ✓ | ✓ | ○ | — | — | — | — | — | ✓ | — |
-| Criar reserva | — | ✓ | ○ | ○ | ○ | — | ○ | — | — | ✓ | — |
-| Cancelar reserva | — | ○ | ○ | ○ | ○ | — | ✓L | — | — | ✓L | — |
-| Pagar | — | ✓ | — | — | — | — | — | — | — | — | — |
-| Receber pagamentos (payout) | — | — | ✓ | — | — | ○ | — | — | — | ✓L | — |
-| Criar/editar pousada | — | — | ✓ | ✓ | — | — | — | ○ | — | ✓ | — |
-| Excluir pousada | — | — | ✓ | — | — | — | — | — | — | ✓L | — |
-| Aprovar pousada | — | — | — | — | — | — | — | ✓L | — | ✓L | ○ (triagem) |
-| Gerenciar quartos | — | — | ✓ | ✓ | ○ | — | — | — | — | ✓ | — |
-| Gerenciar calendário/bloqueios | — | — | ✓ | ✓ | ○ | — | — | — | — | ✓ | ○ (sugestão) |
-| Definir tarifas/promoções | — | — | ✓ | ✓ | — | — | — | — | ○ | ✓ | ○ (sugestão) |
-| Criar cupom de plataforma | — | — | — | — | — | — | — | — | ✓ | ✓ | — |
-| Responder avaliações | — | — | ✓ | ✓ | — | — | ○ | — | — | ✓ | ○ (rascunho) |
-| Moderar conteúdo | — | — | — | — | — | — | ✓L | — | ○ | ✓L | ○ (triagem) |
-| Realizar check-in/out | — | ○ (self) | ✓ | ✓ | ✓ | — | — | — | — | ✓ | — |
-| Ver financeiro da pousada | — | — | ✓ | ○ | — | ✓ | ○ | — | — | ✓ | — |
-| Ver relatórios globais | — | — | — | — | — | — | ○ | ○ | ○ | ✓ | — |
-| Administrar usuários/papéis | — | — | ○ (equipe) | — | — | — | — | — | — | ✓L | — |
-| Configurar plataforma / flags | — | — | — | — | — | — | — | — | — | ✓L | — |
-| Ver trilha de auditoria | — | — | ○ (própria) | — | — | — | ✓ | — | — | ✓ | — |
+| Ação                           | VIS |    VJ    |    PROP     | ADM | REC | FIN | SUP | COM | MKT | MST |      IA      |
+| ------------------------------ | :-: | :------: | :---------: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :----------: |
+| Visualizar catálogo público    |  ✓  |    ✓     |      ✓      |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |      ✓       |
+| Buscar / filtrar               |  ✓  |    ✓     |      ✓      |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |      ✓       |
+| Favoritar                      |  —  |    ✓     |      ✓      |  ○  |  —  |  —  |  —  |  —  |  —  |  ✓  |      —       |
+| Criar reserva                  |  —  |    ✓     |      ○      |  ○  |  ○  |  —  |  ○  |  —  |  —  |  ✓  |      —       |
+| Cancelar reserva               |  —  |    ○     |      ○      |  ○  |  ○  |  —  | ✓L  |  —  |  —  | ✓L  |      —       |
+| Pagar                          |  —  |    ✓     |      —      |  —  |  —  |  —  |  —  |  —  |  —  |  —  |      —       |
+| Receber pagamentos (payout)    |  —  |    —     |      ✓      |  —  |  —  |  ○  |  —  |  —  |  —  | ✓L  |      —       |
+| Criar/editar pousada           |  —  |    —     |      ✓      |  ✓  |  —  |  —  |  —  |  ○  |  —  |  ✓  |      —       |
+| Excluir pousada                |  —  |    —     |      ✓      |  —  |  —  |  —  |  —  |  —  |  —  | ✓L  |      —       |
+| Aprovar pousada                |  —  |    —     |      —      |  —  |  —  |  —  |  —  | ✓L  |  —  | ✓L  | ○ (triagem)  |
+| Gerenciar quartos              |  —  |    —     |      ✓      |  ✓  |  ○  |  —  |  —  |  —  |  —  |  ✓  |      —       |
+| Gerenciar calendário/bloqueios |  —  |    —     |      ✓      |  ✓  |  ○  |  —  |  —  |  —  |  —  |  ✓  | ○ (sugestão) |
+| Definir tarifas/promoções      |  —  |    —     |      ✓      |  ✓  |  —  |  —  |  —  |  —  |  ○  |  ✓  | ○ (sugestão) |
+| Criar cupom de plataforma      |  —  |    —     |      —      |  —  |  —  |  —  |  —  |  —  |  ✓  |  ✓  |      —       |
+| Responder avaliações           |  —  |    —     |      ✓      |  ✓  |  —  |  —  |  ○  |  —  |  —  |  ✓  | ○ (rascunho) |
+| Moderar conteúdo               |  —  |    —     |      —      |  —  |  —  |  —  | ✓L  |  —  |  ○  | ✓L  | ○ (triagem)  |
+| Realizar check-in/out          |  —  | ○ (self) |      ✓      |  ✓  |  ✓  |  —  |  —  |  —  |  —  |  ✓  |      —       |
+| Ver financeiro da pousada      |  —  |    —     |      ✓      |  ○  |  —  |  ✓  |  ○  |  —  |  —  |  ✓  |      —       |
+| Ver relatórios globais         |  —  |    —     |      —      |  —  |  —  |  —  |  ○  |  ○  |  ○  |  ✓  |      —       |
+| Administrar usuários/papéis    |  —  |    —     | ○ (equipe)  |  —  |  —  |  —  |  —  |  —  |  —  | ✓L  |      —       |
+| Configurar plataforma / flags  |  —  |    —     |      —      |  —  |  —  |  —  |  —  |  —  |  —  | ✓L  |      —       |
+| Ver trilha de auditoria        |  —  |    —     | ○ (própria) |  —  |  —  |  —  |  ✓  |  —  |  —  |  ✓  |      —       |
 
 > **Princípio:** menor privilégio por padrão; ações irreversíveis ou sensíveis
 > sempre logadas (**L**) e, quando críticas, sob aprovação (**A**). A IA nunca
@@ -579,12 +592,12 @@ entrega → métrica-chave**.
 
 ### 8.1 Visitante — de curioso a cadastrado
 
-| Fase | Objetivo | Ações | Entrega da Rota | Métrica |
-|---|---|---|---|---|
-| Descoberta | Entender o valor | Chega via SEO/mídia, vê a home viva | Curadoria por estação, estética forte | Bounce rate |
-| Exploração | Encontrar algo que encante | Busca, filtra por experiência | Resultados relevantes, fotos ricas | Buscas/sessão |
-| Consideração | Confiar | Lê avaliações, vê detalhes | Prova social, transparência de preço | Tempo no detalhe |
-| Conversão do cadastro | Guardar/reservar | Tenta favoritar/reservar → cria conta | Cadastro rápido, sem fricção | Signup rate |
+| Fase                  | Objetivo                   | Ações                                 | Entrega da Rota                       | Métrica          |
+| --------------------- | -------------------------- | ------------------------------------- | ------------------------------------- | ---------------- |
+| Descoberta            | Entender o valor           | Chega via SEO/mídia, vê a home viva   | Curadoria por estação, estética forte | Bounce rate      |
+| Exploração            | Encontrar algo que encante | Busca, filtra por experiência         | Resultados relevantes, fotos ricas    | Buscas/sessão    |
+| Consideração          | Confiar                    | Lê avaliações, vê detalhes            | Prova social, transparência de preço  | Tempo no detalhe |
+| Conversão do cadastro | Guardar/reservar           | Tenta favoritar/reservar → cria conta | Cadastro rápido, sem fricção          | Signup rate      |
 
 **Momento crítico:** o "muro" de cadastro deve aparecer só quando há intenção
 (favoritar/reservar), nunca antes — reduz atrito e maximiza descoberta.
@@ -617,14 +630,14 @@ instruções de check-in no D-1, suporte responsivo, pedido de avaliação no ti
 
 ### 8.3 Proprietário — de cadastro a receita recorrente
 
-| Fase | Objetivo | Ações | Entrega da Rota | Métrica |
-|---|---|---|---|---|
-| Aquisição | Descobrir a Rota | Indicação/comercial/mídia | Proposta de valor clara | Leads |
-| Onboarding | Publicar rápido | Cadastra pousada, quartos, fotos | Onboarding assistido + IA de conteúdo | Tempo até publicar |
-| Ativação | Primeira reserva | Ajusta tarifas e calendário | Sugestões de precificação (IA) | Time-to-first-booking |
-| Operação | Gerir o dia a dia | Reservas, mensagens, check-in | Dashboard + notificações | Ocupação |
-| Crescimento | Aumentar receita | Promoções, destaques, campanhas | Copiloto de receita/marketing | RevPAR, GMV |
-| Retenção | Continuar na Rota | Vê valor financeiro | Relatórios, payout confiável | Churn de anfitrião |
+| Fase        | Objetivo          | Ações                            | Entrega da Rota                       | Métrica               |
+| ----------- | ----------------- | -------------------------------- | ------------------------------------- | --------------------- |
+| Aquisição   | Descobrir a Rota  | Indicação/comercial/mídia        | Proposta de valor clara               | Leads                 |
+| Onboarding  | Publicar rápido   | Cadastra pousada, quartos, fotos | Onboarding assistido + IA de conteúdo | Tempo até publicar    |
+| Ativação    | Primeira reserva  | Ajusta tarifas e calendário      | Sugestões de precificação (IA)        | Time-to-first-booking |
+| Operação    | Gerir o dia a dia | Reservas, mensagens, check-in    | Dashboard + notificações              | Ocupação              |
+| Crescimento | Aumentar receita  | Promoções, destaques, campanhas  | Copiloto de receita/marketing         | RevPAR, GMV           |
+| Retenção    | Continuar na Rota | Vê valor financeiro              | Relatórios, payout confiável          | Churn de anfitrião    |
 
 ### 8.4 Administrador Master — governança
 
@@ -648,56 +661,93 @@ tempo de fechamento, precisão de repasse, inadimplência.
 
 ## 9. Monetização e modelo de pagamento
 
-> **Decisão de modelo (v1.1, substitui o anterior de comissão/marketplace):** a
-> Rota é uma **empresa de software (SaaS)**, não uma processadora de pagamentos.
-> A receita vem da **assinatura** que as pousadas pagam pelo sistema de gestão e
-> automação. **O pagamento do hóspede vai direto para a pousada** — a Rota não
-> retém, não faz split, não repassa, e portanto **não é instituição de pagamento**
-> (evita regulação de meios de pagamento, KYC de marketplace, custódia e risco de
-> chargeback).
+> **Decisão de modelo (v1.2, 19/11/2026 — substitui a v1.1 de assinatura):** a
+> receita da Rota é uma **comissão de 6% sobre cada reserva originada pela
+> plataforma**, paga pela pousada, **sem mensalidade nem taxa de adesão**. O
+> painel de gestão vem incluído. **O pagamento do hóspede continua indo direto
+> para a pousada**: a Rota não recebe nem guarda o valor da hospedagem.
+>
+> Histórico: v1.0, comissão com custódia e repasse (marketplace); v1.1
+> (13/09/2026), SaaS por assinatura, sem comissão; v1.2 (19/11/2026), comissão
+> sem custódia.
 
 ### 9.1 Fluxo financeiro
 
 ```mermaid
 flowchart LR
-    H[Hóspede] -->|paga a reserva - DIRETO| P[Conta da Pousada - Stripe/MP Connect ou PIX]
-    PO[Pousada] -->|assinatura mensal do plano| R[(Receita da Rota - SaaS)]
-    R -.processada pela Rota.-> R
-    P -.NUNCA passa pela Rota.-> X[Rota não custodia fundos]
+    H[Hóspede] -->|paga a reserva - DIRETO| P[Conta da Pousada - Mercado Pago ou PIX]
+    P -->|cartão: 6% separados no pagamento| R[(Receita da Rota - comissão)]
+    PO[Pousada] -->|PIX direto: 6% em fatura mensal| R
+    P -.o valor da hospedagem NUNCA passa pela Rota.-> X[Rota não custodia fundos]
 ```
 
 - **Hóspede → Pousada (reserva):** processado pela **conta própria da pousada**
-  (Stripe/Mercado Pago Connect ou chave PIX da pousada). O dinheiro é da pousada.
-- **Pousada → Rota (assinatura):** recorrência processada **pela Rota** — é a
-  receita da empresa.
+  (Mercado Pago conectado ou chave PIX da pousada). O dinheiro é da pousada. O
+  hóspede paga exatamente o preço da pousada: **nenhuma taxa é somada ao total
+  dele** (RB-23).
+- **Pousada → Rota (comissão), cartão:** a comissão é separada automaticamente
+  no pagamento, pela conta Mercado Pago da própria pousada.
+- **Pousada → Rota (comissão), PIX direto:** o hóspede envia o comprovante pela
+  plataforma, a pousada aprova e a Rota cobra a comissão em fatura mensal.
+
+**Regras do modelo**
+
+- **Reserva originada:** a reserva criada pelo hóspede pela plataforma (site,
+  página da pousada, link da bio). Reserva lançada pela pousada no painel e
+  reserva de outros canais (Airbnb, Booking) não geram comissão.
+- **Base de cálculo:** o total cobrado do hóspede pela hospedagem, sem abater a
+  tarifa do meio de pagamento, que é da pousada. Consumo durante a estadia não
+  entra.
+- **Contrato:** a pousada aceita o contrato dentro do painel antes da primeira
+  publicação (migration 0103, `docs/features/contrato.md`).
+- **Condição de lançamento:** as 30 primeiras pousadas publicadas têm 60 dias
+  sem comissão, contados da publicação, para reservas criadas no período e com
+  check-in até 90 dias depois do fim dele, e os 6% garantidos por 12 meses.
+- **Sem custódia:** esta decisão **não** autoriza a Rota a receber o valor da
+  hospedagem para repassar depois. Um modelo assim muda a exposição regulatória
+  e exige nova revisão desta seção.
+
+**Estado da implementação (19/11/2026)**
+
+A cobrança ainda **não está construída**: `SERVICE_FEE_RATE` segue zerado,
+`marketplace_fee` segue fora da preferência do Mercado Pago e nada é descontado
+da reserva. O que existe é o aceite do contrato e as datas da condição de
+lançamento (0103). Antes de ligar a cobrança: contrato revisado pelo advogado,
+parecer do contador (enquadramento como intermediação, Cadastur, nota fiscal da
+comissão) e ajuste dos Termos de Uso.
+
+A assinatura mensal (Mercado Pago Assinaturas) foi **descontinuada para novas
+pousadas**: saiu do painel e da configuração guiada. As tabelas, o webhook e as
+telas do /admin ficam para as assinaturas que já existirem.
 
 ### 9.2 Fontes de receita
 
-| Fonte | Como funciona | Paga | Prioridade |
-|---|---|---|---|
-| **Assinatura por plano (SaaS)** | recorrência por pousada; tiers com limites/recursos de gestão e automação | Pousada → Rota | **Principal** |
-| **Add-ons / Premium** | IA avançada, multipropriedade, integrações fiscais, canais/OTA | Pousada → Rota | Futuro |
-| **Destaques no marketplace** | impulsionar visibilidade da pousada na busca/home | Pousada → Rota | Futuro |
-| **Experiências / afiliados** | comissão de parceiros (passeios, seguro, transfer) — nunca da reserva da pousada | Parceiro | Enterprise |
+| Fonte                              | Como funciona                                                                                                   | Paga           | Prioridade    |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------- | ------------- |
+| **Comissão por reserva originada** | 6% sobre o valor da reserva feita pela plataforma; separada no cartão ou cobrada em fatura mensal no PIX direto | Pousada → Rota | **Principal** |
+| **Add-ons / Premium**              | IA avançada, multipropriedade, integrações fiscais, canais/OTA                                                  | Pousada → Rota | Futuro        |
+| **Destaques no marketplace**       | impulsionar visibilidade da pousada na busca/home                                                               | Pousada → Rota | Futuro        |
+| **Experiências / afiliados**       | comissão de parceiros (passeios, seguro, transfer)                                                              | Parceiro       | Enterprise    |
 
-> **Estratégia:** a automação operacional (§9.3) cria o valor que sustenta a
-> assinatura. Sem take rate sobre reserva, o alinhamento com a pousada é total —
-> a Rota ganha quando a pousada tem sucesso operacional, não uma fatia de cada venda.
+> **Estratégia:** a Rota só ganha quando traz reserva para a pousada. O painel
+> de gestão e a automação (§9.3) entram sem custo e são o que mantém a pousada
+> usando a plataforma no dia a dia; a comissão, bem abaixo da cobrada pelas
+> grandes plataformas, é o que a faz preferir a reserva direta pela Rota.
 
 ### 9.3 Escopo: sistema de gestão completo da pousada (PMS + ERP)
 
 A "grande sacada" é ser o **sistema operacional único** que substitui o
 caderno + planilha + WhatsApp + várias ferramentas avulsas. Módulos de gestão:
 
-| Domínio | Inclui |
-|---|---|
-| **Hospedagem (PMS)** | reservas, calendário/disponibilidade, bloqueio de datas, check-in/out, quartos/tarifas |
-| **Financeiro (ERP)** | contas a receber/pagar, fluxo de caixa, faturamento, conciliação de pagamentos (das contas da pousada), relatórios, emissão fiscal (NF) |
-| **RH / Funcionários** | cadastro de equipe, papéis/permissões (RBAC), escalas/turnos, controle de ponto, tarefas |
-| **Hóspedes / CRM** | histórico, preferências, mensageria (WhatsApp/e-mail), pós-estadia |
-| **Comercial / Marketing** | promoções, campanhas, canais/OTA, destaque no marketplace |
-| **Gestão / BI** | dashboards, metas, relatórios executivos |
-| **Automação / IA (transversal)** | precificação, marketing, concierge, copiloto — sobre todos os módulos |
+| Domínio                          | Inclui                                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hospedagem (PMS)**             | reservas, calendário/disponibilidade, bloqueio de datas, check-in/out, quartos/tarifas                                                  |
+| **Financeiro (ERP)**             | contas a receber/pagar, fluxo de caixa, faturamento, conciliação de pagamentos (das contas da pousada), relatórios, emissão fiscal (NF) |
+| **RH / Funcionários**            | cadastro de equipe, papéis/permissões (RBAC), escalas/turnos, controle de ponto, tarefas                                                |
+| **Hóspedes / CRM**               | histórico, preferências, mensageria (WhatsApp/e-mail), pós-estadia                                                                      |
+| **Comercial / Marketing**        | promoções, campanhas, canais/OTA, destaque no marketplace                                                                               |
+| **Gestão / BI**                  | dashboards, metas, relatórios executivos                                                                                                |
+| **Automação / IA (transversal)** | precificação, marketing, concierge, copiloto — sobre todos os módulos                                                                   |
 
 > O marketplace (demanda) e o sistema de gestão (oferta) se retroalimentam: a
 > pousada adere pela gestão e ganha distribuição; o hóspede encontra e reserva; a
@@ -710,21 +760,21 @@ caderno + planilha + WhatsApp + várias ferramentas avulsas. Módulos de gestão
 Cada integração entra atrás de uma **abstração** na camada `services/` — trocável
 sem impacto na UI.
 
-| Categoria | Integração | Uso | Fase |
-|---|---|---|---|
-| Pagamentos | **Stripe** | Cobrança internacional, split, payout | V2 |
-| Pagamentos | **Mercado Pago** | Meios locais, carteira | V2 |
-| Pagamentos | **PIX** | Pagamento instantâneo BR | V2 |
-| Mapas | **Google Maps / Places** | Geolocalização, autocomplete, mapa | V2 |
-| Comunicação | **WhatsApp Business** | Notificações e atendimento | V2 |
-| Social | **Instagram / Facebook** | Login social, marketing, catálogo | V3 |
-| IA | **OpenAI / LLM** | Concierge, copiloto, moderação | V3 |
-| Dados/Backend | **Supabase** (ou Postgres gerenciado) | Persistência, auth, storage | V2 |
-| Infra | **Vercel** | Hosting, edge, ISR | MVP |
-| Infra/CDN | **Cloudflare** | CDN, WAF, imagens | V2 |
-| Analytics | **Vercel/GA/Umami** | Produto e marketing | MVP→ |
-| Backoffice | **ERP** | Financeiro e operações | Enterprise |
-| Fiscal | **Emissor de NF-e/NFS-e** | Obrigações fiscais | Enterprise |
+| Categoria     | Integração                            | Uso                                   | Fase       |
+| ------------- | ------------------------------------- | ------------------------------------- | ---------- |
+| Pagamentos    | **Stripe**                            | Cobrança internacional, split, payout | V2         |
+| Pagamentos    | **Mercado Pago**                      | Meios locais, carteira                | V2         |
+| Pagamentos    | **PIX**                               | Pagamento instantâneo BR              | V2         |
+| Mapas         | **Google Maps / Places**              | Geolocalização, autocomplete, mapa    | V2         |
+| Comunicação   | **WhatsApp Business**                 | Notificações e atendimento            | V2         |
+| Social        | **Instagram / Facebook**              | Login social, marketing, catálogo     | V3         |
+| IA            | **OpenAI / LLM**                      | Concierge, copiloto, moderação        | V3         |
+| Dados/Backend | **Supabase** (ou Postgres gerenciado) | Persistência, auth, storage           | V2         |
+| Infra         | **Vercel**                            | Hosting, edge, ISR                    | MVP        |
+| Infra/CDN     | **Cloudflare**                        | CDN, WAF, imagens                     | V2         |
+| Analytics     | **Vercel/GA/Umami**                   | Produto e marketing                   | MVP→       |
+| Backoffice    | **ERP**                               | Financeiro e operações                | Enterprise |
+| Fiscal        | **Emissor de NF-e/NFS-e**             | Obrigações fiscais                    | Enterprise |
 
 ```mermaid
 flowchart TB
@@ -747,18 +797,18 @@ Meta: **100.000 pousadas · 10 milhões de usuários · 100 milhões de reservas
 sem reestruturação. A base técnica (ver `Architecture.md`) já contempla os
 contratos; abaixo, as decisões de negócio que sustentam a escala.
 
-| Dimensão | Estratégia |
-|---|---|
-| **Catálogo (100k pousadas)** | SSG + ISR por pousada; geração sob demanda + cache; sem build proibitivo |
-| **Busca em escala** | Índice dedicado (Postgres FTS → Meilisearch/Typesense/Algolia); busca facetada por experiência/região |
-| **Leitura massiva (10M usuários)** | Server Components + CDN + cache por request; estado de cliente mínimo |
-| **Escrita (100M reservas)** | Idempotência no checkout, filas para efeitos colaterais (e-mail, payout), particionamento por período |
-| **Disponibilidade** | Modelo estoque por data com reservas idempotentes e locks curtos; sem overbooking |
-| **Pagamentos** | Split e payout assíncronos, reconciliação por eventos |
-| **Multi-tenant** | Isolamento por pousada/anfitrião; RBAC; dados de uma pousada nunca vazam para outra |
-| **Internacional** | i18n e multi-moeda previstos como camada, não retrofit |
-| **Observabilidade** | Métricas de negócio + técnicas, auditoria de ações sensíveis |
-| **Custo** | Cache agressivo, imagens em CDN, edge; custo marginal por página tende a zero |
+| Dimensão                           | Estratégia                                                                                            |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Catálogo (100k pousadas)**       | SSG + ISR por pousada; geração sob demanda + cache; sem build proibitivo                              |
+| **Busca em escala**                | Índice dedicado (Postgres FTS → Meilisearch/Typesense/Algolia); busca facetada por experiência/região |
+| **Leitura massiva (10M usuários)** | Server Components + CDN + cache por request; estado de cliente mínimo                                 |
+| **Escrita (100M reservas)**        | Idempotência no checkout, filas para efeitos colaterais (e-mail, payout), particionamento por período |
+| **Disponibilidade**                | Modelo estoque por data com reservas idempotentes e locks curtos; sem overbooking                     |
+| **Pagamentos**                     | Split e payout assíncronos, reconciliação por eventos                                                 |
+| **Multi-tenant**                   | Isolamento por pousada/anfitrião; RBAC; dados de uma pousada nunca vazam para outra                   |
+| **Internacional**                  | i18n e multi-moeda previstos como camada, não retrofit                                                |
+| **Observabilidade**                | Métricas de negócio + técnicas, auditoria de ações sensíveis                                          |
+| **Custo**                          | Cache agressivo, imagens em CDN, edge; custo marginal por página tende a zero                         |
 
 ```mermaid
 flowchart LR
@@ -786,13 +836,13 @@ flowchart LR
 
 Fases orientadas a resultado. Datas relativas ao início (T0 = lançamento do MVP).
 
-| Fase | Foco | Escopo principal | Sucesso |
-|---|---|---|---|
-| **MVP** | Descoberta + oferta curada | Catálogo, busca, detalhe, favoritos, dashboards (visão), onboarding de anfitrião, SEO | Oferta curada crescendo, tráfego qualificado |
-| **V2** | Transação | Reservas, pagamentos (Stripe/MP/PIX), avaliações, chat, notificações, cupons, relatórios | Primeira reserva ponta a ponta; GMV inicial |
-| **V3** | Inteligência + retenção | IA concierge, copiloto de receita, fidelidade, blog, afiliados, marketing avançado | Retenção de ambos os lados; take rate saudável |
-| **Enterprise** | Ecossistema + backoffice | Marketplace de experiências, seguro/transfer, ERP, emissão fiscal, SSO/RBAC avançado | Diversificação de receita; grandes contas |
-| **Internacional** | Expansão | Multi-idioma, multi-moeda, compliance regional, marca global | Operação fora do Brasil |
+| Fase              | Foco                       | Escopo principal                                                                         | Sucesso                                        |
+| ----------------- | -------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **MVP**           | Descoberta + oferta curada | Catálogo, busca, detalhe, favoritos, dashboards (visão), onboarding de anfitrião, SEO    | Oferta curada crescendo, tráfego qualificado   |
+| **V2**            | Transação                  | Reservas, pagamentos (Stripe/MP/PIX), avaliações, chat, notificações, cupons, relatórios | Primeira reserva ponta a ponta; GMV inicial    |
+| **V3**            | Inteligência + retenção    | IA concierge, copiloto de receita, fidelidade, blog, afiliados, marketing avançado       | Retenção de ambos os lados; take rate saudável |
+| **Enterprise**    | Ecossistema + backoffice   | Marketplace de experiências, seguro/transfer, ERP, emissão fiscal, SSO/RBAC avançado     | Diversificação de receita; grandes contas      |
+| **Internacional** | Expansão                   | Multi-idioma, multi-moeda, compliance regional, marca global                             | Operação fora do Brasil                        |
 
 ```mermaid
 gantt
@@ -837,23 +887,22 @@ Princípios oficiais — critérios de decisão quando houver dúvida ou conflit
 
 ## 14. Glossário
 
-| Termo | Definição |
-|---|---|
-| **GMV** | _Gross Merchandise Value_ — valor total transacionado em reservas. |
-| **Take rate** | Percentual do GMV que a plataforma retém como receita. |
-| **RevPAR** | Receita por acomodação disponível — eficiência de ocupação × diária. |
-| **OTA** | _Online Travel Agency_ (Booking, Expedia…) — canal de distribuição. |
-| **Payout** | Repasse financeiro à pousada após a reserva. |
-| **Split** | Divisão do pagamento entre plataforma e pousada. |
-| **ISR** | _Incremental Static Regeneration_ — geração estática incremental (Next.js). |
-| **RBAC** | Controle de acesso baseado em papéis. |
-| **No-show** | Hóspede que não comparece na data reservada. |
-| **Network effect** | Mais oferta atrai mais demanda e vice-versa. |
-| **TTL** | _Time to live_ — janela em que o estoque fica reservado durante o checkout. |
-| **NPS / CSAT** | Métricas de satisfação (recomendação / atendimento). |
+| Termo              | Definição                                                                   |
+| ------------------ | --------------------------------------------------------------------------- |
+| **GMV**            | _Gross Merchandise Value_ — valor total transacionado em reservas.          |
+| **Take rate**      | Percentual do GMV que a plataforma retém como receita.                      |
+| **RevPAR**         | Receita por acomodação disponível — eficiência de ocupação × diária.        |
+| **OTA**            | _Online Travel Agency_ (Booking, Expedia…) — canal de distribuição.         |
+| **Payout**         | Repasse financeiro à pousada após a reserva.                                |
+| **Split**          | Divisão do pagamento entre plataforma e pousada.                            |
+| **ISR**            | _Incremental Static Regeneration_ — geração estática incremental (Next.js). |
+| **RBAC**           | Controle de acesso baseado em papéis.                                       |
+| **No-show**        | Hóspede que não comparece na data reservada.                                |
+| **Network effect** | Mais oferta atrai mais demanda e vice-versa.                                |
+| **TTL**            | _Time to live_ — janela em que o estoque fica reservado durante o checkout. |
+| **NPS / CSAT**     | Métricas de satisfação (recomendação / atendimento).                        |
 
 ---
 
 > _Documento vivo._ Alterações relevantes devem ser versionadas e comunicadas ao
 > time de produto. Esta é a **referência-mãe de negócio** da Rota das Pousadas.
-

@@ -193,9 +193,10 @@ const sections: LegalSection[] = [
     title: 'Para pousadas parceiras',
     body: (
       <p>
-        O uso do painel de gestão pelas pousadas também segue as condições do plano contratado. A
-        pousada é responsável pelo uso que faz dos dados dos seus hóspedes, dentro das finalidades
-        da hospedagem e da lei, e deve manter o acesso da sua equipe atualizado.
+        O uso do painel de gestão pelas pousadas também segue as condições do contrato de parceria
+        aceito pela pousada. A pousada é responsável pelo uso que faz dos dados dos seus hóspedes,
+        dentro das finalidades da hospedagem e da lei, e deve manter o acesso da sua equipe
+        atualizado.
       </p>
     ),
   },

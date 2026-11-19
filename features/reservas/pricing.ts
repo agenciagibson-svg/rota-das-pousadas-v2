@@ -1,12 +1,13 @@
 import type { PriceBreakdown } from './types'
 
 /**
- * Taxa de serviço da plataforma — **desativada** (RB-23 revisada em 13/09/2026).
+ * Taxa de serviço cobrada DO HÓSPEDE — **desativada** (RB-23 revisada em 13/09/2026).
  *
- * A Rota é SaaS por assinatura: a receita vem do plano pago pela pousada, não de
- * comissão sobre reserva. O hóspede paga exatamente o preço definido pela
- * pousada, e o dinheiro vai direto para ela — a plataforma não entra na
- * transação (ver `docs/04_BUSINESS_ARCHITECTURE.md §9`).
+ * O hóspede paga exatamente o preço definido pela pousada. Isso não muda com o
+ * modelo de 19/11/2026 (`docs/04_BUSINESS_ARCHITECTURE.md §9`, v1.2): a
+ * comissão da Rota é paga PELA POUSADA, sobre a reserva originada pela
+ * plataforma, e nunca é somada ao total do hóspede. Esta constante continua
+ * zerada; a comissão não passa por aqui.
  *
  * Mantido como constante zerada, e não removido, porque `bookings.fee` continua
  * existindo no banco: reservas anteriores a esta data guardam a taxa que foi

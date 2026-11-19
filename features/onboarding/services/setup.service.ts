@@ -4,7 +4,6 @@ import { can } from '@/lib/auth/rbac'
 import { getOwnerSettings } from '@/features/gestao/services/pms.service'
 import { getOwnerRooms } from '@/features/acomodacoes/services/rooms.service'
 import { getOwnerPixSettings } from '@/features/pagamentos/services/pix.service'
-import { getOwnerSubscriptionStatus } from '@/features/pagamentos/services/subscription.service'
 import { getOwnerPaymentAccountStatus } from '@/features/pagamentos/services/oauth.service'
 import { listChannels } from '@/features/canais/services/channels.service'
 import { listTeam } from '@/features/membros/services/team.service'
@@ -28,11 +27,10 @@ export async function getSetupProgress(): Promise<SetupProgress | null> {
   const role = await getActiveTenantRole()
   if (!role || !can(role, 'pousada:edit')) return null
 
-  const [settings, rooms, pix, subscription, card, channels, team, contract] = await Promise.all([
+  const [settings, rooms, pix, card, channels, team, contract] = await Promise.all([
     getOwnerSettings(),
     orNull(() => getOwnerRooms()),
     orNull(() => getOwnerPixSettings()),
-    orNull(() => getOwnerSubscriptionStatus()),
     orNull(() => getOwnerPaymentAccountStatus()),
     orNull(() => listChannels()),
     orNull(() => listTeam()),
@@ -55,7 +53,6 @@ export async function getSetupProgress(): Promise<SetupProgress | null> {
       sellableRooms: activeRooms.filter((r) => (r.basePrice ?? 0) > 0).length,
       roomsWithoutPhotos: activeRooms.filter((r) => r.gallery.length === 0).length,
       pixEnabled: Boolean(pix?.settings?.enabled && pix.settings.pixKey),
-      subscriptionActive: subscription?.status === 'authorized',
       cardConnected: Boolean(card?.connected),
       channels: channels?.length ?? 0,
       teamMembers: (team ?? []).filter((m) => m.status === 'active').length,

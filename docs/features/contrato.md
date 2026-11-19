@@ -4,12 +4,12 @@ A pousada lê e aceita o contrato com a Rota dentro do painel. O sistema guarda 
 cópia exata do texto aceito e a pousada só é publicada pela primeira vez depois
 do aceite. As 30 primeiras pousadas publicadas ganham a condição de lançamento.
 
-> **Sobre o modelo de negócio.** `docs/04_BUSINESS_ARCHITECTURE.md §9` (v1.1)
-> ainda descreve a Rota como SaaS por assinatura, sem comissão. A decisão
-> comercial de 19/11/2026 é comissão de 6% por reserva originada, sem
-> mensalidade. Esta entrega **não cobra nada**: só registra o aceite e as datas
-> da condição de lançamento. A §9 precisa de uma revisão explícita (v1.2) antes
-> de qualquer mudança no pagamento (`SERVICE_FEE_RATE`, `marketplace_fee`).
+> **Sobre o modelo de negócio.** `docs/04_BUSINESS_ARCHITECTURE.md §9` (v1.2,
+> 19/11/2026) define comissão de 6% por reserva originada, sem mensalidade e
+> sem custódia. Esta entrega **não cobra nada**: só registra o aceite e as datas
+> da condição de lançamento. A cobrança (`marketplace_fee` no cartão, fatura do
+> Pix direto) é uma entrega seguinte e depende do contrato revisado e do parecer
+> do contador.
 
 ## O interruptor é a versão publicada
 

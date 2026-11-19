@@ -8,9 +8,9 @@ import { createCheckoutPreference as createMpPreference } from './mp-client'
 
 /**
  * Cria a preferência de checkout (Checkout Pro) do Mercado Pago usando o
- * token da PRÓPRIA pousada — o dinheiro vai **integralmente** para ela. A
- * plataforma não retém comissão nem faz split: a receita da Rota é a assinatura
- * do plano (ver `docs/04_BUSINESS_ARCHITECTURE.md §9` e o comentário sobre
+ * token da PRÓPRIA pousada — hoje o dinheiro vai **integralmente** para ela. A
+ * comissão por reserva prevista na v1.2 do modelo ainda não é separada aqui
+ * (ver `docs/04_BUSINESS_ARCHITECTURE.md §9` e o comentário sobre
  * `marketplace_fee` em `mp-client.ts`). O `bookingId` vai como query param no
  * `notification_url` para o webhook saber de qual pousada é o token antes
  * mesmo de reconsultar o pagamento na API do Mercado Pago.
