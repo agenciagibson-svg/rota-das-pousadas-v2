@@ -257,6 +257,13 @@ html:has([data-stay-app][data-theme='dark']) body {
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
   }
+  /* Vidro do cabeçalho rolado: mais opaco que `.glass`, para o menu continuar
+     legível quando passa por cima de botões claros ou do rodapé escuro. */
+  .glass-solid {
+    background: color-mix(in oklab, white 92%, transparent);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+  }
   /* Vidro escuro sobre foto: Breu 45%, desfoque 18px, borda branca 18%. */
   .glass-dark {
     background: color-mix(in oklab, var(--breu) 45%, transparent);

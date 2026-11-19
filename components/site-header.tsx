@@ -99,7 +99,7 @@ export function SiteHeader({ forceSolid = false }: { forceSolid?: boolean }) {
           className={cn(
             'mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full border pr-2 pl-5 transition-colors duration-(--motion-fade) lg:pl-6',
             solid
-              ? 'glass border-border/70 text-foreground shadow-floating'
+              ? 'glass-solid border-border/70 text-foreground shadow-floating'
               : 'glass-dark text-primary-foreground',
           )}
         >
