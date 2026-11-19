@@ -31,21 +31,21 @@ describe('links', () => {
     expect(text).toContain('Pousada Exemplo & Cia')
     expect(text).toContain('https://rotadaspousadas.com.br/demo/x')
     // Modelo comercial: comissão por reserva, não assinatura.
-    expect(text).toContain('só 5% por reserva')
+    expect(text).toContain('só 6% por reserva')
     expect(text).not.toMatch(/sem comissão|assinatura/i)
   })
 })
 
 describe('demoCommissionSplit', () => {
-  it('tira 5% da diária e o resto fica com a pousada', () => {
-    expect(demoCommissionSplit(470)).toEqual({ fee: 23.5, net: 446.5 })
-    expect(demoCommissionSplit(1031)).toEqual({ fee: 51.55, net: 979.45 })
+  it('tira 6% da diária e o resto fica com a pousada', () => {
+    expect(demoCommissionSplit(470)).toEqual({ fee: 28.2, net: 441.8 })
+    expect(demoCommissionSplit(1031)).toEqual({ fee: 61.86, net: 969.14 })
   })
 
   it('arredonda em centavos sem perder nem criar dinheiro', () => {
     const { fee, net } = demoCommissionSplit(329)
-    expect(fee).toBe(16.45)
-    expect(net).toBe(312.55)
+    expect(fee).toBe(19.74)
+    expect(net).toBe(309.26)
     expect(Math.round((fee + net) * 100)).toBe(32900)
   })
 
