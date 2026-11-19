@@ -25,7 +25,7 @@ export function demoPath(token: string): string {
 /** Comissão da Rota como a demonstração a apresenta — ver `lib/platform-commission.ts`. */
 export const DEMO_COMMISSION_RATE = PLATFORM_COMMISSION_RATE
 
-/** "5%" — a comissão como aparece nos textos. */
+/** "6%" — a comissão como aparece nos textos. */
 export const DEMO_COMMISSION_LABEL = PLATFORM_COMMISSION_LABEL
 
 /**
