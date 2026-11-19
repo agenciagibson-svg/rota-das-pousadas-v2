@@ -52,6 +52,7 @@ import {
 import { listCategories } from '@/features/acomodacoes/services/categories.service'
 import { listRateRules } from '@/features/acomodacoes/services/rates.service'
 import { getFeaturedCoupon, listCoupons } from '@/features/cupons/services/coupons.service'
+import { getCommissionStatement } from '@/features/comissao/services/commission.service'
 import {
   getAcceptedContract,
   getContractState,
@@ -234,6 +235,15 @@ export const getOwnerAcceptedContract = cache(async () => {
   const state = await resolveTenantAccess()
   if (state.status !== 'ok' || !can(state.membership.role, 'contract:view')) return null
   return getAcceptedContract()
+})
+/**
+ * Extrato da comissão da Rota (0104) da pousada ativa: `null` para quem não vê
+ * o financeiro. `month` = `YYYY-MM-01` ou `null` (mês mais recente).
+ */
+export const getOwnerCommissionStatement = cache(async (month: string | null) => {
+  const state = await resolveTenantAccess()
+  if (state.status !== 'ok' || !can(state.membership.role, 'finance:pousada:view')) return null
+  return getCommissionStatement(month)
 })
 /** Cupom divulgado da pousada (bio e página pública); `null` = nada aparece. */
 export const getPublicFeaturedCoupon = cache((slug: string) => getFeaturedCoupon(slug))

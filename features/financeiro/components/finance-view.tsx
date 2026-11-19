@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Wallet, TrendingUp, Clock, ArrowDownCircle, Scale, Check, RotateCcw } from 'lucide-react'
@@ -53,7 +53,10 @@ export function FinanceView({
   summary,
   transactions,
   canManageExpenses,
+  children,
 }: {
+  /** Blocos extras no fim da página (ex.: extrato da comissão da Rota, 0104). */
+  children?: ReactNode
   displayName: string
   pousadaName: string
   summary: FinanceSummary
@@ -258,6 +261,7 @@ export function FinanceView({
           </Card>
         )}
       </div>
+      {children}
     </DashboardShell>
   )
 }

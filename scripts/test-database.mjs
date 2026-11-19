@@ -98,6 +98,8 @@ try {
     'cadastur-0102.sql',
     // 0103: contrato com aceite eletrônico e fundadoras (prepara a corrida abaixo).
     'contrato-0103.sql',
+    // 0104: registro da comissão por reserva e extratos.
+    'comissao-0104.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

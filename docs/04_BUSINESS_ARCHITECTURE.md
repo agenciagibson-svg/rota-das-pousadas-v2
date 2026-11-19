@@ -712,7 +712,8 @@ flowchart LR
 A cobrança ainda **não está construída**: `SERVICE_FEE_RATE` segue zerado,
 `marketplace_fee` segue fora da preferência do Mercado Pago e nada é descontado
 da reserva. O que existe é o aceite do contrato e as datas da condição de
-lançamento (0103). Antes de ligar a cobrança: contrato revisado pelo advogado,
+lançamento (0103), e o registro da comissão de cada reserva com o extrato no
+painel e no /admin (0104, `docs/features/comissao.md`). Antes de ligar a cobrança: contrato revisado pelo advogado,
 parecer do contador (enquadramento como intermediação, Cadastur, nota fiscal da
 comissão) e ajuste dos Termos de Uso.
 
