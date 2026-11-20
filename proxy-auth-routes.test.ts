@@ -37,4 +37,11 @@ describe('proxy: rotas de retorno do login', () => {
       'https://rotadaspousadas.com.br/login?next=%2Fminhas-reservas',
     )
   })
+
+  it('/anunciar abre sem login (apresentação para pousadas, indexada pelo Google)', async () => {
+    const { default: proxy } = await import('./proxy')
+    const response = await proxy(new NextRequest('https://rotadaspousadas.com.br/anunciar'))
+
+    expect(response.headers.get('location')).toBeNull()
+  })
 })
