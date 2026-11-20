@@ -84,7 +84,7 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
         {photo ? (
           // Capa com a foto da cidade (cadastrada em /admin → Destinos).
           <header className="relative mt-6 overflow-hidden rounded-3xl">
-            <div className="relative aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9]">
+            <div className="relative aspect-[4/5] sm:aspect-[16/9] lg:aspect-[2/1]">
               <Image
                 src={photo}
                 alt={photoAlt}

@@ -40,9 +40,9 @@ const unsplash = (id: string) =>
 export const CITY_GUIDES: Record<string, CityGuide> = {
   'tiradentes-mg': {
     hero: {
-      src: unsplash('photo-1642894538682-ca7adc79caa8'),
-      alt: 'Casario de Tiradentes com a Matriz de Santo Antônio no alto e a Serra de São José ao fundo',
-      credit: 'Lohane Gonçalves Diogo',
+      src: unsplash('photo-1632798121054-c6b73cc9e8b0'),
+      alt: 'Rua de pedra em Tiradentes descendo entre casarões coloniais, com a Serra de São José ao fundo',
+      credit: 'Nathalia Segato',
     },
     tagline:
       'Cidade barroca aos pés da Serra de São José, com ruas de pedra, igrejas do século XVIII, ateliês e a melhor cozinha mineira.',
@@ -51,9 +51,9 @@ export const CITY_GUIDES: Record<string, CityGuide> = {
         title: 'Centro histórico',
         text: 'Ruas de pedra, casarões coloniais, ateliês e lojas de artesanato. Tudo perto, para conhecer a pé e sem pressa.',
         photo: {
-          src: unsplash('photo-1632798121054-c6b73cc9e8b0'),
-          alt: 'Rua de pedra em Tiradentes descendo entre casarões brancos, com a serra ao fundo',
-          credit: 'Nathalia Segato',
+          src: unsplash('photo-1642894538682-ca7adc79caa8'),
+          alt: 'Casario de Tiradentes com a Matriz de Santo Antônio no alto',
+          credit: 'Lohane Gonçalves Diogo',
         },
       },
       {

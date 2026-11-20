@@ -24,8 +24,8 @@ Local conferido na página de cada foto.
 
 | Cidade          | Uso                     | Foto (Unsplash) | Autor                  |
 | --------------- | ----------------------- | --------------- | ---------------------- |
-| Tiradentes (MG) | Capa                    | GyPorc4BBR0     | Lohane Gonçalves Diogo |
-| Tiradentes (MG) | Centro histórico        | KiS0X-J65jw     | Nathalia Segato        |
+| Tiradentes (MG) | Capa                    | KiS0X-J65jw     | Nathalia Segato        |
+| Tiradentes (MG) | Centro histórico        | GyPorc4BBR0     | Lohane Gonçalves Diogo |
 | Tiradentes (MG) | Matriz de Santo Antônio | 8vXlsJN8Daw     | Lohane Gonçalves Diogo |
 | Tiradentes (MG) | Casarões coloridos      | YmDEa56WL84     | Lohane Gonçalves Diogo |
 | Tiradentes (MG) | Serra de São José       | \_X3Gk83iqsU    | Douglas Mendes         |
