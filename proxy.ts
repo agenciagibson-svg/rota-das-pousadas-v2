@@ -132,8 +132,10 @@ const PROTECTED: { prefix: string; loginPath: string }[] = [
   { prefix: '/dashboard', loginPath: '/parceiros/login' },
   { prefix: '/minhas-reservas', loginPath: '/login' },
   { prefix: '/conta', loginPath: '/login' },
-  { prefix: '/anunciar', loginPath: '/login' },
   { prefix: '/estadia', loginPath: '/login' },
+  // `/anunciar` saiu daqui em 20/11/2026: sem login a página mostra a
+  // apresentação para pousadas (é ela que o Google indexa); logado, o
+  // formulário. A própria página decide.
 ]
 
 /** Páginas de login dedicadas — sempre públicas, mesmo vivendo sob um prefixo protegido. */
