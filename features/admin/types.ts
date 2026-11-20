@@ -196,3 +196,11 @@ export type PlatformExpense = {
   paid: boolean
   createdAt: string
 }
+
+/** Último envio do guia de links (boas-vindas, 0107) de uma pousada. */
+export type WelcomeGuideSend = {
+  pousadaId: string
+  channel: 'email' | 'whatsapp'
+  trigger: 'auto' | 'manual'
+  sentAt: string
+}

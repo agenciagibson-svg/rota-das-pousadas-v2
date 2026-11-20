@@ -37,6 +37,11 @@ import {
   sendSentryTestAdmin,
   sendEmailTestAdmin,
 } from './services/admin.service'
+import {
+  sendWelcomeGuideEmailAdmin,
+  setWelcomeGuideAutoAdmin,
+  welcomeGuideWhatsappAdmin,
+} from './services/welcome-guide.service'
 
 export const createPousadaAdminAction = createAction(createPousadaAdminSchema, async (input) => {
   const { slug } = await createPousadaAsAdmin(input)
@@ -173,3 +178,25 @@ export const bootstrapPlatformPlanAction = createAction(z.object({}), async () =
 export const sendSentryTestAction = createAction(z.object({}), async () => sendSentryTestAdmin())
 
 export const sendEmailTestAction = createAction(z.object({}), async () => sendEmailTestAdmin())
+
+// 0107 — guia de boas-vindas (links com a origem marcada).
+export const sendWelcomeGuideEmailAction = createAction(pousadaIdSchema, async ({ id }) => {
+  const result = await sendWelcomeGuideEmailAdmin(id)
+  revalidatePath('/admin/pousadas')
+  return result
+})
+
+export const welcomeGuideWhatsappAction = createAction(pousadaIdSchema, async ({ id }) => {
+  const result = await welcomeGuideWhatsappAdmin(id)
+  revalidatePath('/admin/pousadas')
+  return result
+})
+
+export const setWelcomeGuideAutoAction = createAction(
+  z.object({ enabled: z.boolean() }),
+  async ({ enabled }) => {
+    await setWelcomeGuideAutoAdmin(enabled)
+    revalidatePath('/admin/configuracoes')
+    return { enabled }
+  },
+)

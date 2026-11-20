@@ -3,9 +3,11 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, MapPin, ShieldCheck } from 'lucide-react'
+import { Eye, MapPin, Send, ShieldCheck } from 'lucide-react'
 import { changePousadaStatusAction } from '../actions'
 import { LinkPousadaOwner } from './link-pousada-owner'
+import { WelcomeGuidePanel } from './welcome-guide-panel'
+import type { WelcomeGuideSend } from '../types'
 import { Badge } from '@/components/ui/badge'
 import type { AdminPousadaRow } from '../types'
 import { DemoLinkPanel } from '@/features/demonstracao/components/demo-link-panel'
@@ -38,6 +40,7 @@ export function PousadasTable({
   canLinkOwner,
   canManageDemos = false,
   demoLinks = {},
+  guideSends = {},
 }: {
   items: AdminPousadaRow[]
   /** `platform:grant:manage` (só master) — mostra o link de acesso institucional. */
@@ -47,12 +50,15 @@ export function PousadasTable({
   /** `pousada:approve` (comercial/master) — link de demonstração das pousadas não publicadas (0101). */
   canManageDemos?: boolean
   demoLinks?: Record<string, DemoLinkInfo>
+  /** 0107: último envio do guia de links por pousada (mesma permissão da demonstração). */
+  guideSends?: Record<string, WelcomeGuideSend>
 }) {
   const router = useRouter()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [openDemoId, setOpenDemoId] = useState<string | null>(null)
+  const [openGuideId, setOpenGuideId] = useState<string | null>(null)
 
   if (items.length === 0) {
     return <p className="text-muted-foreground text-sm">Nenhuma pousada encontrada.</p>
@@ -78,6 +84,8 @@ export function PousadasTable({
         const demoAllowed = canManageDemos && p.status !== 'publicada' && p.status !== 'arquivada'
         const demo = demoLinks[p.id]
         const demoActive = Boolean(demo?.active)
+        const guideAllowed = canManageDemos && p.status === 'publicada'
+        const guideSent = guideSends[p.id]
         return (
           <div key={p.id} className="bg-secondary/50 flex flex-col gap-3 rounded-xl p-3">
             <div className="flex items-center justify-between gap-3">
@@ -114,6 +122,17 @@ export function PousadasTable({
                     {demoActive ? `Demonstração · ${demo?.views ?? 0}` : 'Demonstração'}
                   </button>
                 )}
+                {guideAllowed && (
+                  <button
+                    type="button"
+                    aria-expanded={openGuideId === p.id}
+                    onClick={() => setOpenGuideId(openGuideId === p.id ? null : p.id)}
+                    className="border-border text-foreground hover:bg-secondary inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                  >
+                    <Send className="size-3.5" />
+                    {guideSent ? 'Guia de links ✓' : 'Guia de links'}
+                  </button>
+                )}
                 {canLinkOwner && !p.ownerName && <LinkPousadaOwner pousadaId={p.id} />}
                 {canManageGrants && (
                   <Link
@@ -135,6 +154,13 @@ export function PousadasTable({
                 )}
               </div>
             </div>
+            {guideAllowed && openGuideId === p.id && (
+              <WelcomeGuidePanel
+                pousadaId={p.id}
+                hasOwner={Boolean(p.ownerEmail)}
+                last={guideSent ?? null}
+              />
+            )}
             {demoAllowed && openDemoId === p.id && (
               <DemoLinkPanel pousadaId={p.id} pousadaName={p.name} link={demo ?? null} />
             )}

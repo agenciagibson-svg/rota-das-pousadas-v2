@@ -16,6 +16,8 @@ import {
 import { ContractVersionsManager } from '@/features/contrato/components/contract-versions-manager'
 import { listContractVersions } from '@/features/contrato/services/contract.service'
 import { getCurrentUser } from '@/server/queries'
+import { WelcomeGuideSettings } from '@/features/admin/components/welcome-guide-settings'
+import { getWelcomeGuideAutoAdmin } from '@/features/admin/services/welcome-guide.service'
 
 export const metadata: Metadata = {
   title: 'Configurações — Admin',
@@ -38,6 +40,13 @@ export default async function AdminConfiguracoesPage() {
         }),
       ])
     : [[], [], null]
+  // 0107: `null` = migration ainda não aplicada (o bloco some).
+  const welcomeGuideAuto = canManage
+    ? await getWelcomeGuideAutoAdmin().catch((error: unknown) => {
+        console.error('[admin] falha ao ler o envio automático do guia', error)
+        return null
+      })
+    : null
 
   return (
     <AdminShell
@@ -57,6 +66,11 @@ export default async function AdminConfiguracoesPage() {
           />
         )}
       </Card>
+      {canManage && welcomeGuideAuto !== null && (
+        <Card className="mt-5 p-6">
+          <WelcomeGuideSettings initialEnabled={welcomeGuideAuto} />
+        </Card>
+      )}
       {canManage && contractVersions && (
         <Card className="mt-5 p-6">
           <ContractVersionsManager versions={contractVersions} />

@@ -9,6 +9,7 @@ import {
 } from '@/features/admin/services/admin.service'
 import { getCurrentUser } from '@/server/queries'
 import { canManageDemoLinks, listDemoLinks } from '@/features/demonstracao/services/demo.service'
+import { listLastWelcomeGuideSends } from '@/features/admin/services/welcome-guide.service'
 import type { Enums } from '@/lib/supabase/database.types'
 
 export const metadata: Metadata = {
@@ -42,6 +43,13 @@ export default async function AdminPousadasPage({
       canManageDemoLinks(),
       listDemoLinks(),
     ])
+  // 0107: sem a migration (ou sem permissão), a tela segue sem o histórico.
+  const guideSends = demosAllowed
+    ? await listLastWelcomeGuideSends().catch((error: unknown) => {
+        console.error('[admin] falha ao ler os envios do guia de links', error)
+        return {}
+      })
+    : {}
 
   return (
     <AdminShell
@@ -57,6 +65,7 @@ export default async function AdminPousadasPage({
           canLinkOwner={linkOwnerAllowed}
           canManageDemos={demosAllowed}
           demoLinks={demoLinks}
+          guideSends={guideSends}
         />
       </Card>
     </AdminShell>

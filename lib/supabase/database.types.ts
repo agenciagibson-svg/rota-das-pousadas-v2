@@ -326,6 +326,57 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          key: string
+          value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          key: string
+          value: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          key?: string
+          value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pousada_welcome_guide_sends: {
+        Row: {
+          id: string
+          pousada_id: string
+          channel: string
+          trigger: string
+          recipient_domain: string | null
+          sent_by: string | null
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          pousada_id: string
+          channel: string
+          trigger: string
+          recipient_domain?: string | null
+          sent_by?: string | null
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          pousada_id?: string
+          channel?: string
+          trigger?: string
+          recipient_domain?: string | null
+          sent_by?: string | null
+          sent_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           adults: number

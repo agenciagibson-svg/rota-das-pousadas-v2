@@ -1,4 +1,5 @@
 import 'server-only'
+import { sendWelcomeGuideIfAuto } from './welcome-guide.service'
 import { normalizeCadasturNumber } from '@/lib/cadastur'
 import { buildReport, type ReportData, type ReportPeriod } from '@/features/admin/report-metrics'
 import { loadReportInput } from '@/repositories/admin-reports.repository'
@@ -241,6 +242,7 @@ export async function changePousadaStatus(id: string, status: PousadaStatus): Pr
     targetId: id,
     metadata: { status },
   })
+  if (status === 'publicada') await sendWelcomeGuideIfAuto(id)
 }
 
 /** Anfitriões (proprietários) ativos em toda a plataforma. */
@@ -253,6 +255,8 @@ export async function approvePousada(id: string): Promise<string | null> {
   await assertCanApprove()
   const slug = await getPousadaSlugById(id)
   await setPousadaStatus(id, 'publicada')
+  // 0107: guia de links para o proprietário (se o automático estiver ligado).
+  await sendWelcomeGuideIfAuto(id)
   return slug
 }
 
@@ -288,6 +292,8 @@ export async function canLinkOwner(): Promise<boolean> {
 export async function linkPousadaOwner(input: { pousadaId: string; email: string }): Promise<void> {
   await assertCanLinkOwner()
   await linkPousadaOwnerRpc(input.pousadaId, input.email.trim().toLowerCase())
+  // Pousada já publicada que ganhou dono agora: o guia vai para ele (0107).
+  await sendWelcomeGuideIfAuto(input.pousadaId)
 }
 
 /** Apenas quem pode gerenciar concessões (master) acessa dados sensíveis de forma justificada. */

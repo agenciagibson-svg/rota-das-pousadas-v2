@@ -12,7 +12,14 @@ export {
   type QuoteRequestStatus,
   type UnmetDemand,
 } from './types'
-export { buildHighlights, calculateRates, rate, seriesPeak, type ReportHighlight, type ReportRates } from './report'
+export {
+  buildHighlights,
+  calculateRates,
+  rate,
+  seriesPeak,
+  type ReportHighlight,
+  type ReportRates,
+} from './report'
 export {
   quoteRequestSchema,
   quoteStatusSchema,
