@@ -72,4 +72,15 @@ describe('Destinations', () => {
     for (const link of screen.getAllByRole('link'))
       expect(link.getAttribute('href')).not.toContain('refugio-das-nuvens')
   })
+
+  it('destino com página de cidade leva para ela; sem nota, não mostra estrela', () => {
+    render(
+      <Destinations
+        destinations={[{ ...comUma, href: '/destinos/praia-exemplo-ba', rating: 0 }]}
+      />,
+    )
+    const card = screen.getByRole('link', { name: /Praia de Exemplo/ })
+    expect(card.getAttribute('href')).toBe('/destinos/praia-exemplo-ba')
+    expect(card.textContent).not.toMatch(/0[.,]0/)
+  })
 })

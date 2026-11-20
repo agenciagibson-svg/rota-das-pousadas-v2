@@ -7,7 +7,8 @@ import { FeaturedPousadas } from '@/components/landing/featured-pousadas'
 import { HowItWorks } from '@/components/landing/how-it-works'
 import { Faq } from '@/components/landing/faq'
 import { Editorial } from '@/components/landing/editorial'
-import { getDestinations, getExperiences, getPousadas } from '@/server/queries'
+import { getCityDestinations, getDestinations, getExperiences, getPousadas } from '@/server/queries'
+import { withCityPages } from '@/features/destinos'
 
 /**
  * Renderização por requisição, explícita. Com o Supabase configurado a página
@@ -18,11 +19,14 @@ export const dynamic = 'force-dynamic'
 
 export default async function Page() {
   // Fluxo obrigatório: Server Component → Server Query → Service → Repository.
-  const [destinations, experiences, pousadas] = await Promise.all([
+  const [curatedDestinations, cities, experiences, pousadas] = await Promise.all([
     getDestinations(),
+    getCityDestinations(),
     getExperiences(),
     getPousadas(),
   ])
+  // Destino com pousada publicada leva à página da cidade, com números reais.
+  const destinations = withCityPages(curatedDestinations, cities)
 
   // Ordem (redesign out/2026): as pousadas logo depois do hero, para o
   // caminho até "Reservar agora" começar cedo; inspiração depois.

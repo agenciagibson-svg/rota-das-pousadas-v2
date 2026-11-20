@@ -36,11 +36,14 @@ export function absoluteUrl(path = '') {
   return `${siteConfig.url}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+const homeTitle = `Pousadas com reserva direta no Brasil | ${siteConfig.name}`
+
 /** Base metadata shared by the whole site (merged/overridden per route). */
 export const baseMetadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — Cada destino tem uma história`,
+    // "pousadas" logo no começo: é o que as pessoas digitam no Google.
+    default: homeTitle,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -67,13 +70,13 @@ export const baseMetadata: Metadata = {
     locale: siteConfig.locale,
     url: siteConfig.url,
     siteName: siteConfig.name,
-    title: `${siteConfig.name} — Cada destino tem uma história`,
+    title: homeTitle,
     description: siteConfig.description,
     images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: siteConfig.name }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${siteConfig.name} — Cada destino tem uma história`,
+    title: homeTitle,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
   },

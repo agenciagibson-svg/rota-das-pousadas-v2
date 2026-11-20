@@ -18,6 +18,8 @@ export interface PousadaRepository {
   findBySlug(slug: string): Promise<Pousada | null>
   listSlugs(): Promise<string[]>
   listExcluding(slug: string, limit: number): Promise<Pousada[]>
+  /** Todas as publicadas e ativas, para montar as páginas por destino. */
+  listPublished(): Promise<Pousada[]>
 }
 
 const DEFAULT_PAGE_SIZE = 24
@@ -59,6 +61,9 @@ const mockRepository: PousadaRepository = {
   },
   async listExcluding(slug, limit) {
     return mockData.filter((p) => p.slug !== slug).slice(0, limit)
+  },
+  async listPublished() {
+    return mockData
   },
 }
 
@@ -176,6 +181,20 @@ const supabaseRepository: PousadaRepository = {
       .eq('status', 'publicada')
       .neq('slug', slug)
       .limit(limit)
+    if (error) throw error
+    return (data ?? []).map(rowToPousada)
+  },
+  async listPublished() {
+    // Sitemap e páginas de destino — cliente sem cookies. Mesma regra da
+    // busca pública: publicada e com a conta ativa (ou em implantação).
+    const supabase = createSupabaseStaticClient()
+    const { data, error } = await supabase
+      .from('pousadas')
+      .select(PUBLIC_POUSADA_COLUMNS)
+      .eq('status', 'publicada')
+      .in('tenant_status', ['onboarding', 'active'])
+      .order('name', { ascending: true })
+      .limit(2000)
     if (error) throw error
     return (data ?? []).map(rowToPousada)
   },

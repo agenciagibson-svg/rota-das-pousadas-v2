@@ -19,6 +19,8 @@ export type Destination = {
   rating: number
   priceFrom: number
   season: Season[]
+  /** Página da cidade (`/destinos/<cidade-uf>`) quando já há pousada publicada lá. */
+  href?: string
 }
 
 export type Experience = {
