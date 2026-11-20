@@ -16,7 +16,7 @@ export function FooterOwnerCard() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-linen text-sm font-semibold">Para pousadas</h2>
-          <p className="text-linen/55 mt-1 text-xs leading-relaxed">Central do parceiro</p>
+          <p className="text-linen/70 mt-1 text-xs leading-relaxed">Central do parceiro</p>
         </div>
         <span className="bg-linen/10 text-linen flex size-10 shrink-0 items-center justify-center rounded-full">
           <Hotel className="size-5" />
@@ -29,7 +29,7 @@ export function FooterOwnerCard() {
             <ActiveIcon className="size-4" />
             {active.metric}
           </span>
-          <Bot className="text-linen/40 size-4" />
+          <Bot className="text-linen/65 size-4" />
         </div>
 
         <motion.div

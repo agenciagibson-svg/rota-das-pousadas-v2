@@ -26,7 +26,7 @@ export function FooterBrandCard() {
       <div className="relative">
         <div>
           <Logo className="text-linen h-7" />
-          <p className="text-linen/45 mt-3 text-xs font-semibold">Passaporte vivo</p>
+          <p className="text-linen/65 mt-3 text-xs font-semibold">Passaporte vivo</p>
         </div>
 
         <div className="border-linen/10 bg-stone-deep/55 mt-6 rounded-xl border p-4">
@@ -42,7 +42,7 @@ export function FooterBrandCard() {
             {['curadoria', 'reserva', 'gestão'].map((item, index) => (
               <div key={item} className="border-linen/10 bg-linen/[0.04] rounded-lg border p-3">
                 <div className="text-linen text-lg font-semibold">{index + 1}</div>
-                <div className="text-linen/45 mt-1 text-xs">{item}</div>
+                <div className="text-linen/65 mt-1 text-xs">{item}</div>
               </div>
             ))}
           </div>
@@ -55,7 +55,7 @@ export function FooterBrandCard() {
             </span>
             <div className="min-w-0">
               <p className="text-linen text-sm font-semibold">{active.stat}</p>
-              <p className="text-linen/55 mt-0.5 text-xs leading-relaxed">{active.pulse}</p>
+              <p className="text-linen/70 mt-0.5 text-xs leading-relaxed">{active.pulse}</p>
             </div>
           </div>
         </div>
