@@ -62,7 +62,14 @@ export async function ogCard({
           alt=""
           width={1200}
           height={630}
-          style={{ position: 'absolute', inset: 0, objectFit: 'cover' }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 1200,
+            height: 630,
+            objectFit: 'cover',
+          }}
         />
       ) : null}
       <div
