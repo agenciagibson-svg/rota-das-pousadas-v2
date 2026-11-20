@@ -9,7 +9,7 @@ export const serraDaCanastraSaoRoque: BlogPost = {
   place: 'Serra da Canastra',
   cities: [{ slug: 'sao-roque-de-minas-mg', name: 'São Roque de Minas' }],
   publishedAt: '2026-11-20',
-  status: 'rascunho',
+  status: 'publicado',
   cover: commons({
     file: "Cachoeira_Casca_D'anta,_parte_baixa.jpg",
     hash: 'c/c5',
