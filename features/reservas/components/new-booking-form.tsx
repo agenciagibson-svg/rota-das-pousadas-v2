@@ -433,12 +433,12 @@ export function NewBookingForm({
               <p className="text-muted-foreground mt-3 text-sm">
                 Pelas tarifas de temporada, estas {seasonQuote.nights}{' '}
                 {seasonQuote.nights === 1 ? 'noite saem' : 'noites saem'} por{' '}
-                <strong className="text-foreground">{formatBRL(seasonQuote.total)}</strong>. Você pode
-                ajustar os valores acima.
+                <strong className="text-foreground">{formatBRL(seasonQuote.total)}</strong>. Você
+                pode ajustar os valores acima.
                 {seasonQuote.minNights > seasonQuote.nights && (
                   <span className="text-destructive block">
-                    Atenção: nestas datas a estadia mínima é de {seasonQuote.minNights} noites (regra do
-                    site; no balcão você decide).
+                    Atenção: nestas datas a estadia mínima é de {seasonQuote.minNights} noites
+                    (regra do site; no balcão você decide).
                   </span>
                 )}
               </p>

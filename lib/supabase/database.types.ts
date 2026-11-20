@@ -278,6 +278,54 @@ export type Database = {
           },
         ]
       }
+      booking_attribution: {
+        Row: {
+          booking_id: string
+          pousada_id: string
+          channel: string
+          utm_source: string | null
+          utm_medium: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_term: string | null
+          referrer_host: string | null
+          landing_path: string | null
+          click_id: string | null
+          first_seen_at: string | null
+          created_at: string
+        }
+        Insert: {
+          booking_id: string
+          pousada_id: string
+          channel: string
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_term?: string | null
+          referrer_host?: string | null
+          landing_path?: string | null
+          click_id?: string | null
+          first_seen_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          booking_id?: string
+          pousada_id?: string
+          channel?: string
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_term?: string | null
+          referrer_host?: string | null
+          landing_path?: string | null
+          click_id?: string | null
+          first_seen_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           adults: number
@@ -3855,6 +3903,29 @@ export type Database = {
       list_platform_pix_proofs: {
         Args: { p_month?: string }
         Returns: Json
+      }
+      list_platform_booking_channels: {
+        Args: { p_month?: string }
+        Returns: Json
+      }
+      record_booking_attribution: {
+        Args: {
+          p_booking_id: string
+          p_utm_source?: string
+          p_utm_medium?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_term?: string
+          p_referrer_host?: string
+          p_landing_path?: string
+          p_click_id?: string
+          p_first_seen_at?: string
+        }
+        Returns: string
+      }
+      booking_channel: {
+        Args: { p_source: string; p_medium: string; p_referrer_host: string; p_click_id: string }
+        Returns: string
       }
       get_booking_guest_contacts: {
         Args: { p_booking_ids: string[] }

@@ -19,6 +19,7 @@ import type {
 import type { Database } from '@/lib/supabase/database.types'
 import { pointFromColumns } from '@/lib/geo/coordinates'
 import type { GeoPoint } from '@/types'
+import { bookingOriginsById, type BookingVisitOrigin } from '@/repositories/attribution.repository'
 
 type BookingOriginColumn = Database['public']['Enums']['booking_origin']
 
@@ -238,10 +239,16 @@ export async function listReservationsByPousada(
 
   // 0105: contato pela RPC — oculto até o pagamento de reserva feita no site.
   // Telefone: o da reserva ou, se vazio, o WhatsApp/telefone da ficha.
-  const contacts = await bookingContactsById(
-    supabase,
-    (data ?? []).map((r) => r.id),
-  )
+  const [contacts, origins] = await Promise.all([
+    bookingContactsById(
+      supabase,
+      (data ?? []).map((r) => r.id),
+    ),
+    // 0106: canal de origem; sem acesso ou erro, a lista sai sem ele.
+    bookingOriginsById((data ?? []).map((r) => r.id)).catch(
+      () => new Map<string, BookingVisitOrigin>(),
+    ),
+  ])
 
   const now = new Date().toISOString()
   return (data ?? []).map((r) => {
@@ -251,6 +258,7 @@ export async function listReservationsByPousada(
       code: r.code,
       guestName: r.guest_name ?? 'Hóspede',
       contactReleased: contact.released,
+      channel: origins.get(r.id)?.channel ?? null,
       guestEmail: contact.email ?? (contact.released ? 'E-mail não informado' : ''),
       guestPhone: contact.phone || contact.guestPhone || null,
       roomName: roomNames.get(r.room_id) ?? 'Acomodação',

@@ -75,6 +75,7 @@ function reservation(
     code: `RP-D${String(100 + i)}`,
     guestName,
     contactReleased,
+    channel: origin === 'link_bio' ? 'instagram' : origin === 'rota_das_pousadas' ? 'google' : null,
     guestEmail: contactReleased ? `${guestName.split(' ')[0]!.toLowerCase()}@exemplo.com.br` : '',
     guestPhone: null,
     roomName: ROOMS[i % ROOMS.length]!,

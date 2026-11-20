@@ -11,6 +11,7 @@ import { OwnerReservationActions } from './owner-reservation-actions'
 import { PrecheckinBadge } from '@/features/reservas/components/precheckin-badge'
 import { isoDateInTimeZone } from '@/lib/dates'
 import { ContactHiddenNote } from '@/features/reservas/components/contact-hidden-note'
+import { channelLabel } from '@/features/origem/origin'
 
 export function OwnerReservationsTable({
   reservations,
@@ -77,6 +78,11 @@ export function OwnerReservationsTable({
                     {reservation.code}
                   </span>
                   <span>{ORIGIN_LABEL[reservation.origin]}</span>
+                  {reservation.channel && reservation.channel !== 'direto' && (
+                    <span title="De onde veio a visita que gerou a reserva">
+                      via {channelLabel(reservation.channel)}
+                    </span>
+                  )}
                   <span aria-hidden="true">·</span>
                   <span>Criada em {formatDateTime(reservation.createdAt)}</span>
                 </div>

@@ -26,6 +26,7 @@ import type {
 } from '@/features/reservas/types'
 import { orNull } from '@/lib/supabase/rpc-args'
 import type { Database } from '@/lib/supabase/database.types'
+import { bookingOriginsById, type BookingVisitOrigin } from './attribution.repository'
 
 export type CreateBookingParams = {
   pousadaId: string
@@ -387,10 +388,12 @@ export async function getBookingDetailById(
   if (error) throw error
   if (!data) return null
 
-  const [roomNames, contacts] = await Promise.all([
+  const [roomNames, contacts, origins] = await Promise.all([
     roomNamesById(supabase, pousadaId, [data.room_id]),
     bookingContactsById(supabase, [data.id]),
+    bookingOriginsById([data.id]).catch(() => new Map<string, BookingVisitOrigin>()),
   ])
+  const origin = origins.get(data.id)
   const contact = bookingContactOf(contacts, data.id)
   const { data: companionRows } = await supabase
     .from('booking_guests')
@@ -422,6 +425,8 @@ export async function getBookingDetailById(
     guestEmail: contact.email,
     guestPhone: contact.phone || contact.guestPhone,
     contactReleased: contact.released,
+    channel: origin?.channel ?? null,
+    channelCampaign: origin?.campaign ?? null,
     travelerUserId: data.guest_id,
     checkin: data.checkin,
     checkout: data.checkout,

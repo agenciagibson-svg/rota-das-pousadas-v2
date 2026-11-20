@@ -193,6 +193,7 @@ export function LinkReportView({
   displayName,
   pousadaName,
   bioUrl,
+  trackedLinks,
   report,
   quotes,
   canManage,
@@ -201,6 +202,8 @@ export function LinkReportView({
   displayName: string
   pousadaName: string
   bioUrl: string
+  /** 0106: links com a origem marcada; ausente quando a pousada ainda não tem endereço. */
+  trackedLinks?: { googleProfile: string; instagramBio: string; whatsapp: string }
   report: LinkReport
   quotes: QuoteRequest[]
   canManage: boolean
@@ -221,6 +224,38 @@ export function LinkReportView({
       user={{ name: displayName, role: 'Proprietário' }}
     >
       <CopyLink url={bioUrl} />
+
+      {trackedLinks && (
+        <Card className="mt-5 p-5">
+          <h2 className="text-foreground font-semibold">Links com a origem marcada</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Use estes links no lugar do link comum. Assim cada reserva mostra de onde o hóspede veio
+            e você vê qual canal traz reserva paga.
+          </p>
+          <div className="mt-4 space-y-4">
+            <div>
+              <p className="text-foreground text-sm font-medium">Bio do Instagram</p>
+              <div className="mt-1.5">
+                <CopyLink url={trackedLinks.instagramBio} />
+              </div>
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-medium">
+                Perfil da pousada no Google (botão Site ou Reservar)
+              </p>
+              <div className="mt-1.5">
+                <CopyLink url={trackedLinks.googleProfile} />
+              </div>
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-medium">Mensagens no WhatsApp</p>
+              <div className="mt-1.5">
+                <CopyLink url={trackedLinks.whatsapp} />
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Destaques primeiro: é a leitura, não o número, que muda a semana. */}
       <div className="mt-5 flex flex-col gap-2.5">
