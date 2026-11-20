@@ -121,7 +121,8 @@ const sections: LegalSection[] = [
           <li>
             <strong>Provedores de tecnologia</strong> que mantêm a plataforma funcionando, sob
             contrato e só para esse fim: Supabase (banco de dados e login), Vercel (hospedagem do
-            site e estatísticas de visitas) e Google (envio dos e-mails).
+            site e estatísticas de visitas) e Google (envio dos e-mails e, se você aceitar os
+            cookies de medição, o Google Analytics).
           </li>
           <li>
             <strong>Serviços de CEP</strong> (ViaCEP e BrasilAPI) — recebem apenas o número do CEP
@@ -211,9 +212,18 @@ const sections: LegalSection[] = [
           sua sessão. Sem eles, o login e as reservas não funcionam.
         </p>
         <p>
-          As estatísticas de visitas são coletadas de forma agregada e sem cookies de rastreamento.
-          Não usamos cookies de publicidade nem compartilhamos sua navegação com anunciantes.
+          As estatísticas básicas de visitas são coletadas de forma agregada e sem cookies de
+          rastreamento.
         </p>
+        <p>
+          Com o seu aceite no aviso que aparece no site, usamos também os{' '}
+          <strong>cookies do Google Analytics</strong>, para saber por onde as pessoas chegam
+          (busca, Instagram, link de uma pousada) e em que ponto da reserva desistem. Não enviamos
+          ao Google seu nome, e-mail, telefone nem documento. Se você recusar, nada do Google
+          Analytics é carregado. Para mudar a escolha, apague os dados do site no seu navegador e o
+          aviso aparece de novo.
+        </p>
+        <p>Não usamos cookies de publicidade nem compartilhamos sua navegação com anunciantes.</p>
       </>
     ),
   },

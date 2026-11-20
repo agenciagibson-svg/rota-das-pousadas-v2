@@ -14,6 +14,7 @@ import { couponFromParam } from '@/features/cupons/schemas'
 import { getPousada, getCurrentUser, getBookableRoom, getMyProfile } from '@/server/queries'
 import { buttonVariants } from '@/components/ui/button'
 import { formatPrice } from '@/lib/format'
+import { TrackEvent } from '@/components/analytics/track-event'
 
 export const metadata: Metadata = {
   title: 'Reservar',
@@ -139,6 +140,10 @@ export default async function ReservarPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
+      <TrackEvent
+        name="begin_checkout"
+        params={{ pousada_id: pousada.id, pousada_nome: pousada.name, cidade: pousada.city }}
+      />
       <main id="conteudo" tabIndex={-1} className="pt-28 pb-24">
         <Container className="max-w-5xl">
           <Breadcrumb

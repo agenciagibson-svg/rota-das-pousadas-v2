@@ -59,3 +59,13 @@ describe('CSP do mapa (h8)', () => {
     }
   })
 })
+
+describe('CSP sem Google Analytics', () => {
+  it('sem ID de medição, nenhum domínio do Google entra na política', async () => {
+    const { default: proxy } = await import('./proxy')
+    const response = await proxy(new NextRequest('http://localhost:3000/'))
+    const csp = response.headers.get('content-security-policy') ?? ''
+    expect(csp).not.toContain('googletagmanager')
+    expect(csp).not.toContain('google-analytics')
+  })
+})

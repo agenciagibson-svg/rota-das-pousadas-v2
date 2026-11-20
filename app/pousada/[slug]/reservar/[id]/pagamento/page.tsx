@@ -17,6 +17,7 @@ import {
 } from '@/features/pagamentos/services/pix.service'
 import { PixPaymentPanel } from '@/features/pagamentos/components/pix-payment-panel'
 import { formatBRL, formatDateTime, formatISODate } from '@/lib/format'
+import { TrackEvent } from '@/components/analytics/track-event'
 
 export const metadata: Metadata = {
   title: 'Pagamento',
@@ -108,6 +109,13 @@ export default async function PagamentoReservaPage({
   return (
     <div className="bg-background min-h-screen">
       <SiteHeader forceSolid />
+      {/* Reserva recém-criada, ainda a pagar: conta como reserva iniciada no GA4. */}
+      {awaitingPayment && (
+        <TrackEvent
+          name="reserva_criada"
+          params={{ pousada_nome: booking.pousadaName, value: booking.total, currency: 'BRL' }}
+        />
+      )}
       <main id="conteudo" tabIndex={-1} className="pt-28 pb-24">
         <Container className="max-w-2xl">
           <Breadcrumb

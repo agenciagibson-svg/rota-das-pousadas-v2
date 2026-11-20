@@ -6,6 +6,7 @@ import { Check, Clock3, Copy, FileUp, Loader2, QrCode, XCircle } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { submitPaymentProofAction } from '../actions'
+import { track } from '@/lib/analytics/track'
 import {
   PROOF_MAX_BYTES,
   PROOF_MIME_TYPES,
@@ -111,6 +112,7 @@ export function PixPaymentPanel({
         sizeBytes: file.size,
       })
       if (!result.ok) throw new Error(result.error)
+      track('add_payment_info', { metodo: 'pix' })
       setJustSent(true)
       router.refresh()
     } catch (e) {
