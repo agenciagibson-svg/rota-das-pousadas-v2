@@ -66,7 +66,13 @@ export function SiteFooter({ withBottomBar = false }: { withBottomBar?: boolean 
               </a>
             </p>
           </div>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link href="/blog" className="hover:text-linen">
+              Blog
+            </Link>
+            <Link href="/feriados" className="hover:text-linen">
+              Feriados
+            </Link>
             <Link href="/termos" className="hover:text-linen">
               Termos
             </Link>

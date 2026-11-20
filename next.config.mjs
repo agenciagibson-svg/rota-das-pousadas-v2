@@ -5,6 +5,12 @@ const nextConfig = {
     remotePatterns: [
       // Fotos do banco Unsplash (lib/stock-images.ts).
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/photo-*' },
+      // Fotos do Wikimedia Commons nos textos do blog (features/blog/photos.ts).
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        pathname: '/wikipedia/commons/thumb/**',
+      },
       ...(storageUrl
         ? [
             {

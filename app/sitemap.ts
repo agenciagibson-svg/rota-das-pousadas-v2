@@ -7,6 +7,7 @@ import {
   getStayTypePages,
 } from '@/server/queries'
 import { stayTypeIndexable } from '@/features/pousadas/amenities'
+import { visiblePosts } from '@/features/blog/posts'
 import { stateIndexable } from '@/features/destinos'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -96,5 +97,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]
     : []
 
-  return [...staticRoutes, ...destinationRoutes, ...typeRoutes, ...pousadaRoutes]
+  // Blog: só textos publicados (rascunho nunca entra).
+  const posts = visiblePosts(false)
+  const blogRoutes: MetadataRoute.Sitemap = posts.length
+    ? [
+        {
+          url: `${siteConfig.url}/blog`,
+          lastModified: now,
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        },
+        ...posts.map((p) => ({
+          url: `${siteConfig.url}/blog/${p.slug}`,
+          lastModified: new Date(p.updatedAt ?? p.publishedAt),
+          changeFrequency: 'monthly' as const,
+          priority: 0.7,
+        })),
+      ]
+    : []
+
+  return [...staticRoutes, ...destinationRoutes, ...typeRoutes, ...blogRoutes, ...pousadaRoutes]
 }

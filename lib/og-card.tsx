@@ -16,7 +16,13 @@ async function photoDataUrl(src: string | null | undefined): Promise<string | nu
       url = url.replace(/([?&])fm=[^&]*/g, '$1').replace(/[?&]$/, '')
       url += `${url.includes('?') ? '&' : '?'}fm=jpg&w=1200&h=630&fit=crop`
     }
-    const res = await fetch(url, { headers: { Accept: 'image/jpeg,image/png' } })
+    // User-Agent: o Wikimedia recusa pedido sem identificação.
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'image/jpeg,image/png',
+        'User-Agent': 'RotaDasPousadas/1.0 (+https://rotadaspousadas.com.br)',
+      },
+    })
     if (!res.ok) return null
     const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim()
     if (type !== 'image/jpeg' && type !== 'image/png') return null
