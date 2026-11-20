@@ -19,6 +19,13 @@ const nextConfig = {
               port: new URL(storageUrl).port,
               pathname: '/storage/v1/object/public/pousadas/**',
             },
+            // Fotos das dicas dos leitores nos guias (bucket privado, URL assinada — 0108).
+            {
+              protocol: new URL(storageUrl).protocol === 'https:' ? 'https' : 'http',
+              hostname: new URL(storageUrl).hostname,
+              port: new URL(storageUrl).port,
+              pathname: '/storage/v1/object/sign/blog-tips/**',
+            },
           ]
         : []),
     ],

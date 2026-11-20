@@ -3,6 +3,7 @@ import {
   Building2,
   Globe,
   LayoutDashboard,
+  Newspaper,
   Rocket,
   ScrollText,
   Settings,
@@ -16,6 +17,7 @@ export type AdminSection =
   | 'pousadas'
   | 'anfitrioes'
   | 'destinos'
+  | 'blog'
   | 'relatorios'
   | 'plano'
   | 'configuracoes'
@@ -33,6 +35,7 @@ export function adminNav(active: AdminSection): NavItem[] {
       active: active === 'anfitrioes',
     },
     { label: 'Destinos', icon: Globe, href: '/admin/destinos', active: active === 'destinos' },
+    { label: 'Blog', icon: Newspaper, href: '/admin/blog', active: active === 'blog' },
     {
       label: 'Relatórios',
       icon: BarChart3,

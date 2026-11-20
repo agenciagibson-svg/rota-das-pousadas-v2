@@ -5,13 +5,14 @@ import { notFound } from 'next/navigation'
 import { ChevronDown, Clock } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
-import { PousadaCard } from '@/components/pousada/pousada-card'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { buttonVariants } from '@/components/ui/button'
 import { JsonLd } from '@/components/seo/json-ld'
 import { absoluteUrl, siteConfig } from '@/lib/seo'
-import { cn } from '@/lib/utils'
-import { getCityDestinations } from '@/server/queries'
+import { getBlogTips, getCityDestinations, getHolidayStays } from '@/server/queries'
+import type { MapResult } from '@/components/map/result-card'
+import { GuideMap } from '@/features/blog/components/guide-map'
+import { ReaderTips } from '@/features/blog/components/reader-tips'
+import { WhereToStay } from '@/features/blog/components/where-to-stay'
 import { PostBody } from '@/features/blog/components/post-body'
 import { findPost, formatPostDate, readingMinutes, visiblePosts } from '@/features/blog/posts'
 
@@ -56,6 +57,28 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     .filter((p) => p.slug !== post.slug)
     .slice(0, 3)
   const mainCity = post.cities[0]
+  const [holiday, tips] = await Promise.all([
+    mainCity ? getHolidayStays(mainCity.name) : null,
+    getBlogTips(post.slug),
+  ])
+  // No mapa só entra pousada com ponto marcado pelo dono (0095).
+  const mapStays: MapResult[] = stays.flatMap((p) =>
+    p.coordinates
+      ? [
+          {
+            slug: p.slug,
+            name: p.name,
+            city: p.city,
+            state: p.state,
+            image: p.image,
+            price: p.pricePerNight,
+            href: `/pousada/${p.slug}`,
+            point: p.coordinates,
+          },
+        ]
+      : [],
+  )
+  const places = post.places ?? []
   const photos = [post.cover, ...post.blocks.flatMap((b) => (b.type === 'image' ? [b.photo] : []))]
   const credits = [...new Map(photos.map((p) => [p.sourceUrl, p])).values()]
   const path = `/blog/${post.slug}`
@@ -151,49 +174,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div className="mx-auto mt-10 max-w-3xl">
             <PostBody blocks={post.blocks} />
 
-            {mainCity && (
-              <section aria-labelledby="onde-ficar" className="mt-14">
-                <h2 id="onde-ficar" className="text-h2 text-foreground">
-                  Onde ficar em {mainCity.name}
+            {(places.length > 0 || mapStays.length > 0) && (
+              <section aria-labelledby="no-mapa" className="mt-14">
+                <h2 id="no-mapa" className="text-h2 text-foreground mb-6">
+                  No mapa
                 </h2>
-                {stays.length === 0 ? (
-                  <div className="bg-card mt-4 rounded-2xl p-6">
-                    <p className="text-muted-foreground text-base">
-                      Reserve direto com a pousada, sem intermediário, e pague por Pix ou cartão.
-                    </p>
-                    <Link
-                      href={`/pousadas?busca=${encodeURIComponent(mainCity.name)}`}
-                      className={cn(buttonVariants({ size: 'pill' }), 'mt-4 w-fit')}
-                    >
-                      Ver pousadas em {mainCity.name}
-                    </Link>
-                  </div>
-                ) : (
-                  <>
-                    <ul className="mt-6 grid gap-6 sm:grid-cols-2">
-                      {stays.map((pousada) => (
-                        <li key={pousada.slug}>
-                          <PousadaCard
-                            pousada={pousada}
-                            href={`/pousada/${pousada.slug}`}
-                            cta="Ver pousada"
-                            showReviews
-                            maxTags={3}
-                            sizes="(max-width: 640px) 100vw, 384px"
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href={`/destinos/${mainCity.slug}`}
-                      className="text-foreground mt-4 inline-flex text-sm font-semibold underline underline-offset-4"
-                    >
-                      Todas as pousadas em {mainCity.name}
-                    </Link>
-                  </>
-                )}
+                <GuideMap places={places} stays={mapStays} />
               </section>
             )}
+
+            {mainCity && <WhereToStay city={mainCity} stays={stays} holiday={holiday} />}
+
+            <ReaderTips postSlug={post.slug} place={post.place} tips={tips} />
 
             {post.faq && post.faq.length > 0 && (
               <section aria-labelledby="perguntas" className="mt-14">

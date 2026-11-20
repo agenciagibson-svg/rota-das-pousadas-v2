@@ -1,5 +1,6 @@
 import type { BlogPost } from '../types'
 import { commons } from '../photos'
+import { PLACES } from '../places'
 
 export const natalReveillonCanastra: BlogPost = {
   slug: 'natal-e-reveillon-na-serra-da-canastra',
@@ -160,5 +161,12 @@ export const natalReveillonCanastra: BlogPost = {
       answer:
         'O quanto antes. As pousadas da região têm poucos quartos e lotam no fim de ano, e muitas pedem estadia mínima nos feriados.',
     },
+  ],
+  places: [
+    PLACES.saoRoque,
+    PLACES.nascenteSaoFrancisco,
+    PLACES.cascaDAnta,
+    PLACES.vargemBonita,
+    PLACES.delfinopolis,
   ],
 }

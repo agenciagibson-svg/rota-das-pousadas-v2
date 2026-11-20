@@ -11,6 +11,8 @@
 import 'server-only'
 import { requireAnyCapability } from '@/lib/auth/require-capability'
 import { cache } from 'react'
+import { holidayStays } from '@/features/blog/services/holiday-stays.service'
+import { tipsForPost } from '@/features/blog/services/tips.service'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
 import { citySlug, groupByCity, groupByState } from '@/features/destinos/destinos'
@@ -121,6 +123,10 @@ export const getStateDestinations = cache(async () => groupByState(await getCity
 export const getStateDestination = cache(
   async (slug: string) => (await getStateDestinations()).find((s) => s.slug === slug) ?? null,
 )
+
+// Blog: próximo feriadão com vaga na cidade do guia e dicas aprovadas dos leitores.
+export const getHolidayStays = cache((city: string) => holidayStays(city))
+export const getBlogTips = cache((postSlug: string) => tipsForPost(postSlug))
 
 export const getDestinations = cache(() => destinations.listDestinations())
 export const getDestination = cache((slug: string) => destinations.getDestinationBySlug(slug))

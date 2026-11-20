@@ -106,6 +106,8 @@ try {
     'origem-0106.sql',
     // 0107: guia de boas-vindas; usa master e comercial de priorities.sql.
     'guia-0107.sql',
+    // 0108: dicas dos leitores; usa master, marketing e comercial de priorities.sql.
+    'dicas-0108.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)
