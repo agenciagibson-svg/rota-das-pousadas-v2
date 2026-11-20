@@ -8,8 +8,8 @@ export const pirenopolisOQueFazer: BlogPost = {
     'Ruas de pedra do século XVIII, cachoeiras a poucos minutos do centro, pôr do sol nos Pireneus e as Cavalhadas: um roteiro para curtir Piri sem pressa.',
   place: 'Pirenópolis',
   cities: [{ slug: 'pirenopolis-go', name: 'Pirenópolis' }],
-  publishedAt: '2026-11-21',
-  status: 'rascunho',
+  publishedAt: '2026-11-20',
+  status: 'publicado',
   cover: commons({
     file: 'Rua_Nossa_Senhora_do_Rosário,_Pirenópolis,_agosto_de_2023_(7).jpg',
     hash: '2/2e',
