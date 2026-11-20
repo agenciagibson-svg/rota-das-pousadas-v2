@@ -181,3 +181,19 @@ describe('cityPhoto', () => {
     expect(cityPhoto(city!, [d('Tiradentes', 'MG', ' ')])).toBeNull()
   })
 })
+
+describe('guias das cidades', () => {
+  it('cada guia tem capa, passeios com foto do Unsplash e crédito', async () => {
+    const { CITY_GUIDES, guideCredits } = await import('./guias')
+    for (const [slug, guide] of Object.entries(CITY_GUIDES)) {
+      expect(slug).toMatch(/^[a-z0-9-]+-[a-z]{2}$/)
+      for (const photo of [guide.hero, ...guide.highlights.map((h) => h.photo)]) {
+        expect(photo.src).toMatch(/^https:\/\/images\.unsplash\.com\/photo-/)
+        expect(photo.alt.length).toBeGreaterThan(10)
+        expect(photo.credit).toBeTruthy()
+      }
+      expect(guide.highlights.length).toBeGreaterThanOrEqual(3)
+      expect(guideCredits(guide).length).toBeGreaterThan(0)
+    }
+  })
+})

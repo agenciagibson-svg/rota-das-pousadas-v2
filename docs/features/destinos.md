@@ -21,6 +21,13 @@ frequentes. Objetivo: aparecer no Google para "pousada em <cidade>".
 - JSON-LD: `BreadcrumbList`, `ItemList` das pousadas e `FAQPage` (`features/destinos/seo.ts`).
 - A página de cada pousada liga para a página da cidade ("Ver pousadas em …").
 
+## Guia da cidade (capa e passeios)
+
+`features/destinos/guias.ts` guarda, por cidade, a foto de capa, uma frase e os
+passeios com foto (Unsplash, local conferido; créditos em `docs/creditos-imagens.md`).
+Ordem da capa: foto do destino em /admin → Destinos, depois a capa do guia.
+Hoje: Tiradentes (MG). Cada cidade nova com pousada ganha o seu guia.
+
 ## Próximo passo possível
 
 Texto editorial por cidade (o que fazer, quando ir), escrito pela equipe no /admin.

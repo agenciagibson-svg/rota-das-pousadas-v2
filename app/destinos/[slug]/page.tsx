@@ -22,6 +22,7 @@ import {
   destinationJsonLd,
   destinationTitle,
 } from '@/features/destinos'
+import { cityGuide, guideCredits } from '@/features/destinos/guias'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,7 @@ export async function generateMetadata({
   const { slug } = await params
   const d = await getCityDestination(slug)
   if (!d) return { title: 'Destino não encontrado', robots: { index: false } }
-  const photo = cityPhoto(d, await getDestinations()) ?? d.image
+  const photo = cityPhoto(d, await getDestinations()) ?? cityGuide(d.slug)?.hero.src ?? d.image
   const title = destinationTitle(d)
   const description = destinationDescription(d)
   const path = `/destinos/${d.slug}`
@@ -61,7 +62,10 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
   const faq = destinationFaq(d)
   const [all, curated] = await Promise.all([getCityDestinations(), getDestinations()])
   const others = all.filter((o) => o.slug !== d.slug).slice(0, 8)
-  const photo = cityPhoto(d, curated)
+  const guide = cityGuide(d.slug)
+  // Foto do /admin → Destinos tem prioridade; depois a capa do guia da cidade.
+  const photo = cityPhoto(d, curated) ?? guide?.hero.src ?? null
+  const photoAlt = guide?.hero.alt ?? `${d.city}, ${d.state}`
   const count = d.pousadas.length
 
   return (
@@ -83,7 +87,7 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
             <div className="relative aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9]">
               <Image
                 src={photo}
-                alt={`${d.city}, ${d.state}`}
+                alt={photoAlt}
                 fill
                 priority
                 sizes="(max-width: 1280px) 100vw, 1280px"
@@ -92,6 +96,11 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
               <div className="from-breu/85 via-breu/30 absolute inset-0 bg-gradient-to-t to-transparent" />
               <div className="text-primary-foreground absolute inset-x-0 bottom-0 p-6 sm:p-10">
                 <h1 className="text-display-l text-balance">{destinationTitle(d)}</h1>
+                {guide && (
+                  <p className="text-primary-foreground/90 mt-3 max-w-2xl text-lg text-pretty">
+                    {guide.tagline}
+                  </p>
+                )}
               </div>
             </div>
           </header>
@@ -128,7 +137,45 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
 
-        <section aria-labelledby="lista-pousadas" className="mt-12">
+        {guide && (
+          <section aria-labelledby="passeios" className="mt-14">
+            <h2 id="passeios" className="text-h2 text-foreground">
+              O que fazer em {d.city}
+            </h2>
+            <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {guide.highlights.map((h) => (
+                <li key={h.title}>
+                  <article className="group bg-card h-full overflow-hidden rounded-3xl">
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      <Image
+                        src={h.photo.src}
+                        alt={h.photo.alt}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-(--motion-reveal) group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-h3 text-foreground">{h.title}</h3>
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{h.text}</p>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+            {guide.alsoWorth.length > 0 && (
+              <p className="text-muted-foreground mt-5 text-base">
+                <span className="text-foreground font-semibold">Também vale: </span>
+                {guide.alsoWorth.join(' · ')}
+              </p>
+            )}
+            <p className="text-muted-foreground/70 mt-3 text-xs">
+              Fotos: {guideCredits(guide).join(', ')} (Unsplash).
+            </p>
+          </section>
+        )}
+
+        <section aria-labelledby="lista-pousadas" className="mt-14">
           <h2 id="lista-pousadas" className="text-h2 text-foreground">
             {count === 1 ? `A pousada em ${d.city}` : `As pousadas em ${d.city}`}
           </h2>

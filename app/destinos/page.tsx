@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { getCityDestinations, getDestinations } from '@/server/queries'
 import { cityPhoto } from '@/features/destinos'
+import { cityGuide } from '@/features/destinos/guias'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,7 +69,11 @@ export default async function DestinosPage() {
                         className="group relative block aspect-[4/3] overflow-hidden rounded-3xl"
                       >
                         <Image
-                          src={cityPhoto(d, curated) ?? (d.image || '/placeholder.svg')}
+                          src={
+                            cityPhoto(d, curated) ??
+                            cityGuide(d.slug)?.hero.src ??
+                            (d.image || '/placeholder.svg')
+                          }
                           alt={`Pousadas em ${d.city}, ${d.state}`}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
