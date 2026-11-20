@@ -42,7 +42,7 @@ export function Destinations({ destinations }: { destinations: Destination[] }) 
           return (
             <Reveal key={d.slug} delay={(i % 4) * 0.06} className={tileLayout(i)}>
               <Link
-                href={`/pousadas?busca=${encodeURIComponent(d.name)}`}
+                href={d.href ?? `/pousadas?busca=${encodeURIComponent(d.name)}`}
                 className="group relative block h-full overflow-hidden rounded-3xl"
               >
                 <Image
@@ -65,16 +65,20 @@ export function Destinations({ destinations }: { destinations: Destination[] }) 
                   <h3 className={cn(featured ? 'text-h1' : 'text-h3')}>{d.name}</h3>
                   {hasPousadas && (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Badge variant="glass" size="sm" className="tabular-nums">
-                        <Star className="fill-ipe text-ipe size-3" />
-                        {d.rating.toFixed(1)}
-                      </Badge>
-                      <span className="text-primary-foreground/90 text-xs font-medium sm:text-sm">
-                        A partir de{' '}
-                        <span className="font-semibold tabular-nums">
-                          {formatPrice(d.priceFrom)}
+                      {d.rating > 0 && (
+                        <Badge variant="glass" size="sm" className="tabular-nums">
+                          <Star className="fill-ipe text-ipe size-3" />
+                          {d.rating.toFixed(1)}
+                        </Badge>
+                      )}
+                      {d.priceFrom > 0 && (
+                        <span className="text-primary-foreground/90 text-xs font-medium sm:text-sm">
+                          A partir de{' '}
+                          <span className="font-semibold tabular-nums">
+                            {formatPrice(d.priceFrom)}
+                          </span>
                         </span>
-                      </span>
+                      )}
                     </div>
                   )}
                 </div>

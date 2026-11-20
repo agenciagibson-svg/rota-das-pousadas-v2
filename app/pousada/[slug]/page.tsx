@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { catalogQuerySchema } from '@/features/pousadas/search'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
@@ -24,6 +25,7 @@ import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
 import { getCityCenter } from '@/lib/geo/city-center'
 import { TrackEvent } from '@/components/analytics/track-event'
+import { destinationPath } from '@/features/destinos'
 
 export const dynamic = 'force-dynamic'
 
@@ -130,6 +132,13 @@ export default async function PousadaPage({
               ))}
             </ul>
           </Reveal>
+          {/* Link interno para a página da cidade (SEO e navegação). */}
+          <Link
+            href={destinationPath(pousada.city, pousada.state)}
+            className="text-foreground hover:text-primary mt-6 inline-flex text-sm font-semibold underline underline-offset-4"
+          >
+            Ver pousadas em {pousada.city}, {pousada.state}
+          </Link>
         </Section>
       </main>
       <SiteFooter withBottomBar />

@@ -41,3 +41,8 @@ export async function listPublicReviews(
 export async function listNearbyPousadas(slug: string, limit = 3): Promise<Pousada[]> {
   return getPousadaRepository().listExcluding(slug, limit)
 }
+
+/** Publicadas e ativas — base das páginas por destino (`/destinos`). */
+export async function listPublishedPousadas(): Promise<Pousada[]> {
+  return getPousadaRepository().listPublished()
+}

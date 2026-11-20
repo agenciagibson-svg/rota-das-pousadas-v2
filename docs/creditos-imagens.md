@@ -17,3 +17,15 @@ Os endereços ficam em `lib/stock-images.ts`.
 | Fazenda Serra Azul     | rSrpSgocsm0, 6nLcKmUQS6k, c-df_bhIwZs, BndHqOy0paQ, uhCgfivFP6o |
 | Ecolodge Rio Negro     | ECIAlz4ek1E, qv5qEo_R0fw, 1a2BHdMDKwc, BGKo-A657_I, sLouSj2E8_Q |
 | Chalés da Serra Gelada | gOTBhOXw4TY, OBpOP9GVH9U, 944lnTBAad8, t8wbTRw1ux8, NxMuc8XaLZU |
+
+## Guias das cidades (`features/destinos/guias.ts`)
+
+Local conferido na página de cada foto.
+
+| Cidade          | Uso                     | Foto (Unsplash) | Autor                  |
+| --------------- | ----------------------- | --------------- | ---------------------- |
+| Tiradentes (MG) | Capa                    | KiS0X-J65jw     | Nathalia Segato        |
+| Tiradentes (MG) | Centro histórico        | GyPorc4BBR0     | Lohane Gonçalves Diogo |
+| Tiradentes (MG) | Matriz de Santo Antônio | 8vXlsJN8Daw     | Lohane Gonçalves Diogo |
+| Tiradentes (MG) | Casarões coloridos      | YmDEa56WL84     | Lohane Gonçalves Diogo |
+| Tiradentes (MG) | Serra de São José       | \_X3Gk83iqsU    | Douglas Mendes         |
