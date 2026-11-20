@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { siteConfig } from '@/lib/seo'
-import { getCityDestinations, getPousadaSlugs } from '@/server/queries'
+import { getCityDestinations, getPousadaSlugs, getStateDestinations } from '@/server/queries'
+import { stateIndexable } from '@/features/destinos'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
@@ -48,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // Páginas por cidade: só existem com pousada publicada, então entram todas.
-  const destinations = await getCityDestinations()
+  const [destinations, states] = await Promise.all([getCityDestinations(), getStateDestinations()])
   const destinationRoutes: MetadataRoute.Sitemap = destinations.length
     ? [
         {
@@ -62,6 +63,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           lastModified: now,
           changeFrequency: 'weekly' as const,
           priority: 0.85,
+        })),
+        ...states.filter(stateIndexable).map((s) => ({
+          url: `${siteConfig.url}/destinos/${s.slug}`,
+          lastModified: now,
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
         })),
       ]
     : []

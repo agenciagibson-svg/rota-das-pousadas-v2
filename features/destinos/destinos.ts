@@ -1,6 +1,7 @@
 import type { Destination, Pousada } from '@/types'
 import { slugify } from '@/lib/slug'
 import { formatPrice } from '@/lib/format'
+import { ufName } from '@/lib/estados'
 
 /**
  * Páginas por destino (/destinos/<cidade-uf>).
@@ -229,4 +230,68 @@ export function withCityPages(curated: Destination[], cities: CityDestination[])
 export function cityPhoto(city: CityDestination, curated: Destination[]): string | null {
   const match = curated.find((d) => citySlug(d.name, d.state) === city.slug)
   return match?.image?.trim() ? match.image : null
+}
+
+// ---------------------------------------------------------------------------
+// Páginas por estado (/destinos/<uf>, ex.: /destinos/mg)
+// ---------------------------------------------------------------------------
+
+export type StateDestination = {
+  /** UF em minúsculas — o slug da página. */
+  slug: string
+  uf: string
+  name: string
+  cities: CityDestination[]
+  pousadas: number
+  priceFrom: number
+}
+
+/** Slug de estado: só as duas letras. Cidade sempre termina em `-uf`. */
+export function isStateSlug(slug: string): boolean {
+  return /^[a-z]{2}$/.test(slug) && ufName(slug) !== null
+}
+
+/** A página do estado só vai para o Google com 2+ cidades; com uma, repetiria a da cidade. */
+export function stateIndexable(s: StateDestination): boolean {
+  return s.cities.length >= 2
+}
+
+export function groupByState(cities: CityDestination[]): StateDestination[] {
+  const byUf = new Map<string, CityDestination[]>()
+  for (const c of cities) {
+    if (!ufName(c.state)) continue
+    byUf.set(c.state, [...(byUf.get(c.state) ?? []), c])
+  }
+  return [...byUf.entries()]
+    .map(([uf, list]) => {
+      const prices = list.map((c) => c.priceFrom).filter((n) => n > 0)
+      return {
+        slug: uf.toLowerCase(),
+        uf,
+        name: ufName(uf)!,
+        cities: list,
+        pousadas: list.reduce((n, c) => n + c.pousadas.length, 0),
+        priceFrom: prices.length ? Math.min(...prices) : 0,
+      }
+    })
+    .sort((a, b) => b.pousadas - a.pousadas || a.name.localeCompare(b.name, 'pt-BR'))
+}
+
+export function stateTitle(s: StateDestination): string {
+  return `Pousadas em ${s.name}`
+}
+
+export function stateDescription(s: StateDestination): string {
+  const price = s.priceFrom > 0 ? ` Diárias a partir de ${formatPrice(s.priceFrom)}.` : ''
+  return `${plural(s.pousadas, 'pousada', 'pousadas')} em ${plural(s.cities.length, 'cidade', 'cidades')} de ${s.name} com reserva direta, sem intermediário.${price}`
+}
+
+export function stateIntro(s: StateDestination): string {
+  const names = s.cities.map((c) => c.city)
+  const parts = [
+    `Na Rota das Pousadas você encontra ${plural(s.pousadas, 'pousada', 'pousadas')} em ${s.name}, em ${listJoin(names.slice(0, 6))}${names.length > 6 ? ' e outras cidades' : ''}.`,
+  ]
+  if (s.priceFrom > 0) parts.push(`As diárias começam em ${formatPrice(s.priceFrom)}.`)
+  parts.push('Escolha a cidade e reserve direto com a pousada.')
+  return parts.join(' ')
 }

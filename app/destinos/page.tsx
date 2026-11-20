@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { getCityDestinations, getDestinations } from '@/server/queries'
 import { cityPhoto } from '@/features/destinos'
 import { cityGuide } from '@/features/destinos/guias'
+import { ufName } from '@/lib/estados'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +58,12 @@ export default async function DestinosPage() {
           states.map((state) => (
             <section key={state} aria-labelledby={`uf-${state}`} className="mt-12">
               <h2 id={`uf-${state}`} className="text-h3 text-foreground">
-                {state}
+                <Link
+                  href={`/destinos/${state.toLowerCase()}`}
+                  className="hover:text-primary underline-offset-4 hover:underline"
+                >
+                  {ufName(state) ?? state}
+                </Link>
               </h2>
               <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {destinations

@@ -13,7 +13,7 @@ import { requireAnyCapability } from '@/lib/auth/require-capability'
 import { cache } from 'react'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
-import { groupByCity } from '@/features/destinos/destinos'
+import { groupByCity, groupByState } from '@/features/destinos/destinos'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
@@ -108,6 +108,11 @@ export const getCityDestinations = cache(async () =>
 )
 export const getCityDestination = cache(
   async (slug: string) => (await getCityDestinations()).find((d) => d.slug === slug) ?? null,
+)
+
+export const getStateDestinations = cache(async () => groupByState(await getCityDestinations()))
+export const getStateDestination = cache(
+  async (slug: string) => (await getStateDestinations()).find((s) => s.slug === slug) ?? null,
 )
 
 export const getDestinations = cache(() => destinations.listDestinations())
