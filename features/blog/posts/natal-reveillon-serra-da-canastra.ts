@@ -11,8 +11,8 @@ export const natalReveillonCanastra: BlogPost = {
     { slug: 'sao-roque-de-minas-mg', name: 'São Roque de Minas' },
     { slug: 'delfinopolis-mg', name: 'Delfinópolis' },
   ],
-  publishedAt: '2026-11-21',
-  status: 'rascunho',
+  publishedAt: '2026-11-20',
+  status: 'publicado',
   cover: commons({
     file: 'Serra_da_canastra_casca_d_anta_hdr_by_ssabbath-d8whskv.jpg',
     hash: '3/3f',
