@@ -45,6 +45,12 @@ const nav = [
     section: 'Explorar',
   },
   {
+    label: 'Feriados',
+    href: '/feriados',
+    icon: CalendarDays,
+    section: 'Explorar',
+  },
+  {
     label: 'Concierge',
     href: '/concierge',
     icon: Wand2,
