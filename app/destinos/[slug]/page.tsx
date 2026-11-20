@@ -91,7 +91,7 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
                 fill
                 priority
                 sizes="(max-width: 1280px) 100vw, 1280px"
-                className="object-cover object-[center_40%]"
+                className="object-cover object-[center_55%]"
               />
               <div className="from-breu/85 via-breu/30 absolute inset-0 bg-gradient-to-t to-transparent" />
               <div className="text-primary-foreground absolute inset-x-0 bottom-0 p-6 sm:p-10">
