@@ -51,3 +51,34 @@ describe('relevo dos mapas', () => {
     expect(raw.dragRotate.disable).toHaveBeenCalled()
   })
 })
+
+describe('satélite', () => {
+  it('entra por baixo dos nomes só quando ligado e some ao desligar', async () => {
+    const { setSatellite, satelliteTiles } = await import('./satellite')
+    const layout: Record<string, string> = {}
+    const layers: { id: string; before?: string }[] = []
+    const sources = new Map<string, { tiles: string[] }>()
+    const map = {
+      isStyleLoaded: () => true,
+      getSource: (id: string) => sources.get(id),
+      addSource: (id: string, s: { tiles: string[] }) => sources.set(id, s),
+      getLayer: (id: string) => layers.find((l) => l.id === id),
+      addLayer: (l: { id: string }, before?: string) => layers.push({ id: l.id, before }),
+      getStyle: () => ({
+        layers: [
+          { id: 'estradas', type: 'line' },
+          { id: 'nomes', type: 'symbol' },
+        ],
+      }),
+      setLayoutProperty: (id: string, _p: string, v: string) => (layout[id] = v),
+    } as unknown as MapLibreMap
+    setSatellite(map, false, 'chave')
+    expect(sources.size).toBe(0)
+    setSatellite(map, true, 'chave')
+    expect(sources.get('satelite')?.tiles).toEqual([satelliteTiles('chave')])
+    expect(layers).toEqual([{ id: 'satelite-foto', before: 'nomes' }])
+    expect(layout['satelite-foto']).toBe('visible')
+    setSatellite(map, false, 'chave')
+    expect(layout['satelite-foto']).toBe('none')
+  })
+})

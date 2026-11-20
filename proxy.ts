@@ -29,6 +29,8 @@ const MAP_TILES_ORIGIN = 'https://tiles.openfreemap.org'
  * Constante repetida em `components/map/terrain.ts`.
  */
 const MAP_TERRAIN_ORIGIN = 'https://elevation-tiles-prod.s3.amazonaws.com'
+/** Foto de satélite (Esri World Imagery) — `components/map/satellite.ts`. */
+const MAP_SATELLITE_ORIGIN = 'https://ibasemaps-api.arcgis.com'
 
 const CONNECT_SRC = [
   "'self'",
@@ -37,6 +39,7 @@ const CONNECT_SRC = [
   'https://vitals.vercel-insights.com',
   MAP_TILES_ORIGIN,
   MAP_TERRAIN_ORIGIN,
+  MAP_SATELLITE_ORIGIN,
 ]
 
 /**

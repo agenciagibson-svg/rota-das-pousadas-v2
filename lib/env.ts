@@ -14,6 +14,13 @@ export const publicEnv = {
   /** Vazio até Gibson criar o site no Cloudflare Turnstile — nesse caso o widget não renderiza. */
   turnstileSiteKey: cleanEnv(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''),
   /**
+   * Chave (API key) da ArcGIS Location Platform para a foto de satélite dos
+   * mapas dos guias. Vazia = o botão "Satélite" não aparece. A chave vai para
+   * o navegador: no painel da Esri ela fica restrita ao domínio do site e só
+   * com o privilégio de mapas base (docs/features/blog-interativo.md).
+   */
+  arcgisApiKey: cleanEnv(process.env.NEXT_PUBLIC_ARCGIS_API_KEY ?? ''),
+  /**
    * Google Analytics 4 (`G-XXXXXXX`). Vazio = nada do Google é carregado e o
    * aviso de cookies não aparece. Com valor, o GA4 só carrega depois que o
    * visitante aceita (components/analytics/google-analytics.tsx).

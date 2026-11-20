@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BedDouble, Map as MapIcon, Mountain } from 'lucide-react'
+import { BedDouble, Map as MapIcon, Mountain, Satellite } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MapSurface } from '@/components/map/map-surface'
 import { AREA_ZOOM, resultsCamera } from '@/components/map/map-config'
 import { ResultCard, type MapResult } from '@/components/map/result-card'
 import { ResultMarker } from '@/components/map/result-marker'
+import { setSatellite } from '@/components/map/satellite'
 import { addHillshade, setTerrain3D } from '@/components/map/terrain'
+import { publicEnv } from '@/lib/env'
 import { useMap } from '@/components/map/use-map'
 import { durationMs } from '@/lib/design-tokens'
 import { toLngLat } from '@/lib/geo/coordinates'
@@ -34,11 +36,20 @@ export function GuideMap({ places, stays }: { places: BlogPlace[]; stays: MapRes
   })
   const [selection, setSelection] = useState<Selection>(null)
   const [is3D, setIs3D] = useState(false)
+  const [isSatellite, setIsSatellite] = useState(false)
+  const satelliteKey = publicEnv.arcgisApiKey
 
   // Sombreado do relevo desde o início (leve); o 3D só liga no botão.
   useEffect(() => {
     if (state.status === 'ready') addHillshade(state.map)
   }, [state])
+
+  function toggleSatellite() {
+    if (state.status !== 'ready' || !satelliteKey) return
+    const next = !isSatellite
+    setSatellite(state.map, next, satelliteKey)
+    setIsSatellite(next)
+  }
 
   function toggle3D() {
     if (state.status !== 'ready') return
@@ -97,21 +108,40 @@ export function GuideMap({ places, stays }: { places: BlogPlace[]; stays: MapRes
           />
         ))}
         {state.status === 'ready' && (
-          <Button
-            type="button"
-            size="pill-sm"
-            variant="outline"
-            aria-pressed={is3D}
-            onClick={toggle3D}
-            className="shadow-floating absolute top-3 left-3"
-          >
-            {is3D ? (
-              <MapIcon className="size-4" aria-hidden />
-            ) : (
-              <Mountain className="size-4" aria-hidden />
+          <div className="absolute top-3 left-3 flex gap-2">
+            <Button
+              type="button"
+              size="pill-sm"
+              variant="outline"
+              aria-pressed={is3D}
+              onClick={toggle3D}
+              className="shadow-floating"
+            >
+              {is3D ? (
+                <MapIcon className="size-4" aria-hidden />
+              ) : (
+                <Mountain className="size-4" aria-hidden />
+              )}
+              {is3D ? 'Ver em 2D' : 'Ver em 3D'}
+            </Button>
+            {satelliteKey && (
+              <Button
+                type="button"
+                size="pill-sm"
+                variant="outline"
+                aria-pressed={isSatellite}
+                onClick={toggleSatellite}
+                className="shadow-floating"
+              >
+                {isSatellite ? (
+                  <MapIcon className="size-4" aria-hidden />
+                ) : (
+                  <Satellite className="size-4" aria-hidden />
+                )}
+                {isSatellite ? 'Mapa' : 'Satélite'}
+              </Button>
             )}
-            {is3D ? 'Ver em 2D' : 'Ver em 3D'}
-          </Button>
+          </div>
         )}
         {place && <PlaceCard place={place} onClose={() => setSelection(null)} />}
         {stay && <ResultCard result={stay} onClose={() => setSelection(null)} />}

@@ -27,3 +27,15 @@ Três blocos no fim de cada guia (`app/blog/[slug]/page.tsx`):
      dicas de exemplo e o envio só simula.
 
 Novo guia: inclua `places` com os pontos do texto (veja `places.ts`).
+
+## Relevo, 3D e satélite
+
+- Relevo: `components/map/terrain.ts` (Terrain Tiles da AWS, sem chave). Sombreado
+  sempre ligado; "Ver em 3D" inclina o mapa e liga o terreno.
+- Satélite: `components/map/satellite.ts` (Esri World Imagery, ArcGIS Location
+  Platform: licença comercial, 2 milhões de tiles grátis por mês, cobrança por
+  uso desligada por padrão). Só baixa quando a pessoa toca em "Satélite".
+  - Variável `NEXT_PUBLIC_ARCGIS_API_KEY` na Vercel. Vazia = sem botão.
+  - A chave vai para o navegador: no painel da Esri, deixe só o privilégio de
+    mapas base e restrinja aos domínios do site. A chave tem validade
+    (até 1 ano): renove antes de vencer, senão o satélite para de carregar.
