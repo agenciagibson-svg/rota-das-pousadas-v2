@@ -14,7 +14,7 @@ export const TERRAIN_TILES =
 const SOURCE = 'relevo'
 const HILLSHADE_LAYER = 'relevo-sombra'
 /** Quanto as serras "sobem" no 3D (1 = altura real; um pouco mais lê melhor na tela). */
-export const TERRAIN_EXAGGERATION = 1.4
+export const TERRAIN_EXAGGERATION = 1.8
 export const PITCH_3D = 60
 
 function whenStyleReady(map: MapLibreMap, run: () => void) {
@@ -44,7 +44,7 @@ export function addHillshade(map: MapLibreMap): void {
         id: HILLSHADE_LAYER,
         type: 'hillshade',
         source: SOURCE,
-        paint: { 'hillshade-exaggeration': 0.35 },
+        paint: { 'hillshade-exaggeration': 0.3 },
       },
       firstSymbol,
     )

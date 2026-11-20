@@ -24,7 +24,8 @@ type Selection = { kind: 'place'; index: number } | { kind: 'stay'; slug: string
  */
 export function GuideMap({ places, stays }: { places: BlogPlace[]; stays: MapResult[] }) {
   const { containerRef, state } = useMap({
-    style: 'positron',
+    // Liberty: mata, rios e parques coloridos — combina com guia de natureza.
+    style: 'liberty',
     center: toLngLat(places[0]?.point ?? stays[0]!.point),
     zoom: AREA_ZOOM,
     cooperativeGestures: true,
@@ -51,8 +52,13 @@ export function GuideMap({ places, stays }: { places: BlogPlace[]; stays: MapRes
     const camera = resultsCamera([...places.map((p) => p.point), ...stays.map((s) => s.point)])
     if (!camera) return
     if (camera.kind === 'bounds') {
+      // No computador as etiquetas mostram o nome: folga maior dos lados
+      // para nenhuma ficar cortada na borda.
+      const wide = state.map.getContainer().clientWidth >= 640
       state.map.fitBounds(camera.bounds, {
-        padding: camera.padding,
+        padding: wide
+          ? { top: 72, bottom: 64, left: 150, right: 150 }
+          : { top: 64, bottom: 48, left: 40, right: 40 },
         maxZoom: camera.maxZoom,
         animate: false,
       })
