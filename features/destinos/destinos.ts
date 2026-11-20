@@ -2,6 +2,7 @@ import type { Destination, Pousada } from '@/types'
 import { slugify } from '@/lib/slug'
 import { formatPrice } from '@/lib/format'
 import { ufName } from '@/lib/estados'
+import { PET_TYPE, hasStayType } from '@/features/pousadas/amenities'
 
 /**
  * Páginas por destino (/destinos/<cidade-uf>).
@@ -150,15 +151,6 @@ export function destinationIntro(d: CityDestination): string {
   return parts.join(' ')
 }
 
-const PET_HINTS = ['pet', 'cachorro', 'animais', 'animal']
-
-function acceptsPets(p: Pousada): boolean {
-  return p.tags.some((t) => {
-    const key = slugify(t)
-    return PET_HINTS.some((hint) => key.split('-').includes(hint))
-  })
-}
-
 /** Perguntas frequentes — cada resposta vem dos dados, nunca de suposição. */
 export function destinationFaq(d: CityDestination): FaqItem[] {
   const names = d.pousadas.map((p) => p.name)
@@ -180,7 +172,7 @@ export function destinationFaq(d: CityDestination): FaqItem[] {
           : `A diária sai a partir de ${formatPrice(d.priceFrom)}. O valor final aparece antes de você confirmar a reserva.`,
     })
   }
-  const pets = d.pousadas.filter(acceptsPets).map((p) => p.name)
+  const pets = d.pousadas.filter((p) => hasStayType(p, PET_TYPE)).map((p) => p.name)
   if (pets.length) {
     faq.push({
       question: `Tem pousada em ${d.city} que aceita pet?`,

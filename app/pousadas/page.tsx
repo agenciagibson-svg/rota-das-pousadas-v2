@@ -8,7 +8,8 @@ import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { cn } from '@/lib/utils'
-import { getPousadas } from '@/server/queries'
+import { getPousadas, getStayTypePages } from '@/server/queries'
+import { stayTypeIndexable } from '@/features/pousadas/amenities'
 import { PaginationLinks } from '@/components/ui/pagination'
 import { formatISODate } from '@/lib/format'
 import { catalogQuerySchema, singleParam } from '@/features/pousadas/search'
@@ -47,9 +48,14 @@ export default async function PousadasPage({
     guests: hospedes,
     page: pagina,
   })
-  const result = parsed.success
-    ? await getPousadas(parsed.data)
-    : { items: [], total: 0, page: 1, pageSize: 24, totalPages: 1 }
+  const [result, typePages] = await Promise.all([
+    parsed.success
+      ? getPousadas(parsed.data)
+      : Promise.resolve({ items: [], total: 0, page: 1, pageSize: 24, totalPages: 1 }),
+    getStayTypePages(),
+  ])
+  // Atalhos para as páginas por tipo que já têm pousadas suficientes.
+  const typeLinks = typePages.filter(stayTypeIndexable)
   function pageHref(page: number) {
     const params = new URLSearchParams({ pagina: String(page) })
     for (const [key, value] of Object.entries({
@@ -161,6 +167,23 @@ export default async function PousadasPage({
             {oferta ? <input type="hidden" name="oferta" value={oferta} /> : null}
           </form>
         </div>
+
+        {typeLinks.length > 0 && (
+          <nav aria-label="Tipos de estadia" className="mt-6">
+            <ul className="flex flex-wrap gap-2">
+              {typeLinks.map((t) => (
+                <li key={t.type.slug}>
+                  <Link
+                    href={`/pousadas/${t.type.slug}`}
+                    className={buttonVariants({ variant: 'outline', size: 'pill-sm' })}
+                  >
+                    {t.type.title.replace(/^Pousadas /, '')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         {surpresa === '1' ? (
           <div className="bg-breu text-neblina mt-8 flex flex-col gap-4 rounded-3xl p-6 md:flex-row md:items-center md:justify-between">

@@ -26,6 +26,7 @@ import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
 import { getCityCenter } from '@/lib/geo/city-center'
 import { TrackEvent } from '@/components/analytics/track-event'
 import { destinationPath } from '@/features/destinos'
+import { pousadaFaq, pousadaFaqJsonLd } from '@/features/pousadas/faq'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,9 +86,12 @@ export default async function PousadaPage({
     pousada.coordinates ? Promise.resolve(null) : getCityCenter(pousada.city, pousada.state),
   ])
 
+  const faq = pousadaFaq(pousada)
+
   return (
     <div className="bg-background min-h-screen">
       <JsonLd data={pousadaJsonLd(pousada)} />
+      <JsonLd data={pousadaFaqJsonLd(faq)} />
       <TrackEvent
         name="view_item"
         params={{ pousada_id: pousada.id, pousada_nome: pousada.name, cidade: pousada.city }}
@@ -111,6 +115,25 @@ export default async function PousadaPage({
           bookingOrigin={bioOriginFromParam(initialBooking.origem)}
           featuredCoupon={featuredCoupon}
         />
+
+        {/* Perguntas frequentes: só o que a pousada cadastrou (features/pousadas/faq.ts). */}
+        <Section className="pt-4 pb-8">
+          <div className="max-w-3xl">
+            <h2 className="text-h2 text-foreground">Perguntas frequentes</h2>
+            <div className="divide-border border-border mt-6 divide-y border-y">
+              {faq.map((item) => (
+                <details key={item.question} className="py-4">
+                  <summary className="text-foreground cursor-pointer list-none text-base font-semibold">
+                    {item.question}
+                  </summary>
+                  <p className="text-muted-foreground mt-2 text-base leading-relaxed">
+                    {item.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </Section>
 
         {/* Outras pousadas, nos mesmos cards comparáveis da home. */}
         <Section className="pt-8 pb-24 lg:pb-28">

@@ -113,14 +113,9 @@ export function pousadaMetadata(pousada: Pousada): Metadata {
       url: absoluteUrl(path),
       title,
       description,
-      images: [{ url: pousada.image, width: 1200, height: 630, alt: pousada.name }],
+      // Imagem: app/pousada/[slug]/opengraph-image.tsx (foto, nome, cidade e preço).
     },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [pousada.image],
-    },
+    twitter: { card: 'summary_large_image', title, description },
   }
 }
 
