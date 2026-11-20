@@ -92,7 +92,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description:
       pousada.description.slice(0, 160) ||
       `Consulte disponibilidade e reserve direto na ${pousada.name}.`,
-    alternates: { canonical: `${publicEnv.siteUrl}/${pousada.slug}` },
+    // Página da bio fora do Google (20/11/2026): repete a página da pousada.
+    // O Google mostra /pousada/<slug>; o link da bio continua funcionando.
+    robots: { index: false, follow: true },
+    alternates: { canonical: `${publicEnv.siteUrl}/pousada/${pousada.slug}` },
     openGraph: {
       title: `${pousada.name} — reservas`,
       description: `Consulte disponibilidade e reserve direto com a ${pousada.name}.`,

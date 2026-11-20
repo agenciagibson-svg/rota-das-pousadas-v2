@@ -41,6 +41,20 @@ const CONNECT_SRC = [
 const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 
 /**
+ * Google Analytics 4 (20/11/2026): o `gtag.js` vem do Tag Manager e os envios
+ * vão para os domínios do Analytics. Liberado só quando há um ID de medição
+ * configurado; o script em si só é baixado depois que o visitante aceita os
+ * cookies (components/analytics/google-analytics.tsx).
+ */
+const GA_SCRIPT_ORIGIN = 'https://www.googletagmanager.com'
+const GA_CONNECT = [
+  'https://*.google-analytics.com',
+  'https://*.analytics.google.com',
+  'https://www.googletagmanager.com',
+]
+const GA_ENABLED = Boolean(publicEnv.gaMeasurementId)
+
+/**
  * CSP estrita em TODO o site desde 21/09/2026 — `script-src 'self'
  * 'nonce-…'`, sem `unsafe-inline`. Script inline injetado sem o nonce não
  * executa: é a contenção real de XSS.
@@ -84,10 +98,10 @@ function contentSecurityPolicy(nonce: string): string {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
-    `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN}`,
+    `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN}${GA_ENABLED ? ` ${GA_SCRIPT_ORIGIN}` : ''}`,
     `frame-src ${TURNSTILE_ORIGIN}`,
     "worker-src 'self'",
-    `connect-src ${CONNECT_SRC.join(' ')}`,
+    `connect-src ${[...CONNECT_SRC, ...(GA_ENABLED ? GA_CONNECT : [])].join(' ')}`,
     'upgrade-insecure-requests',
   ].join('; ')
 }

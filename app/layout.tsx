@@ -4,10 +4,11 @@ import { Figtree, Funnel_Display } from 'next/font/google'
 import { connection } from 'next/server'
 import './globals.css'
 import { baseMetadata, organizationJsonLd } from '@/lib/seo'
-import { isSupabaseConfigured } from '@/lib/env'
+import { isSupabaseConfigured, publicEnv } from '@/lib/env'
 import { MotionProvider } from '@/components/motion-provider'
 import { SameHashScroll } from '@/components/layout/same-hash-scroll'
 import { JsonLd } from '@/components/seo/json-ld'
+import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 
 // Marca (out/2026, docs/Marca.md): Funnel Display nos títulos, Figtree no
 // texto e na interface. As duas sem serifa, variáveis, Google Fonts (OFL).
@@ -56,6 +57,7 @@ export default async function RootLayout({
         <MotionProvider>{children}</MotionProvider>
         <SameHashScroll />
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        {publicEnv.gaMeasurementId && <GoogleAnalytics measurementId={publicEnv.gaMeasurementId} />}
       </body>
     </html>
   )

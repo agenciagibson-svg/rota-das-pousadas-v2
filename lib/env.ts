@@ -13,6 +13,12 @@ export const publicEnv = {
   supabaseAnonKey: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''),
   /** Vazio até Gibson criar o site no Cloudflare Turnstile — nesse caso o widget não renderiza. */
   turnstileSiteKey: cleanEnv(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''),
+  /**
+   * Google Analytics 4 (`G-XXXXXXX`). Vazio = nada do Google é carregado e o
+   * aviso de cookies não aparece. Com valor, o GA4 só carrega depois que o
+   * visitante aceita (components/analytics/google-analytics.tsx).
+   */
+  gaMeasurementId: cleanEnv(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? ''),
 } as const
 
 /** True quando as credenciais públicas do Supabase estão presentes. */

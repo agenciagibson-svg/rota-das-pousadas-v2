@@ -23,6 +23,7 @@ import {
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
 import { getCityCenter } from '@/lib/geo/city-center'
+import { TrackEvent } from '@/components/analytics/track-event'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +86,10 @@ export default async function PousadaPage({
   return (
     <div className="bg-background min-h-screen">
       <JsonLd data={pousadaJsonLd(pousada)} />
+      <TrackEvent
+        name="view_item"
+        params={{ pousada_id: pousada.id, pousada_nome: pousada.name, cidade: pousada.city }}
+      />
       <SiteHeader forceSolid />
       <main id="conteudo" tabIndex={-1}>
         <PousadaDetail
