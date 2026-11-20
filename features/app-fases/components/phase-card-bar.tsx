@@ -58,7 +58,7 @@ export function PhaseCardBar() {
   return (
     <aside
       aria-label="Sua viagem"
-      className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-40 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[380px]"
+      className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-40 sm:inset-x-auto sm:top-24 sm:right-6 sm:bottom-auto sm:w-[360px] lg:top-28"
     >
       <div className="bg-breu text-neblina shadow-floating flex items-center gap-3 rounded-[28px] p-2.5 pl-3">
         <span className="bg-ipe text-breu grid size-11 shrink-0 place-items-center rounded-full">
