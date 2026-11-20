@@ -2,6 +2,7 @@ import type { BlogBlock, BlogPost } from './types'
 import { serraDaCanastraSaoRoque } from './posts/serra-da-canastra-sao-roque-de-minas'
 import { delfinopolisCachoeiras } from './posts/delfinopolis-cachoeiras'
 import { natalReveillonCanastra } from './posts/natal-reveillon-serra-da-canastra'
+import { pirenopolisOQueFazer } from './posts/pirenopolis-o-que-fazer'
 
 /**
  * Textos do blog. Cada texto é um arquivo em `posts/`. Novo texto entra como
@@ -12,6 +13,7 @@ export const ALL_POSTS: BlogPost[] = [
   serraDaCanastraSaoRoque,
   delfinopolisCachoeiras,
   natalReveillonCanastra,
+  pirenopolisOQueFazer,
 ]
 
 /** Versão de teste da Vercel (ou local): mostra os rascunhos. */
