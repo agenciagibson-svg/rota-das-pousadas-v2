@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { Star } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
@@ -33,6 +34,9 @@ import {
 } from '@/features/destinos'
 import { StatePage } from '@/features/destinos/components/state-page'
 import { ufName } from '@/lib/estados'
+import { isoDateInTimeZone } from '@/lib/dates'
+import { upcomingLongWeekends } from '@/features/feriados/feriados'
+import { LongWeekendList } from '@/features/feriados/components/long-weekend-list'
 import { cityGuide, guideCredits } from '@/features/destinos/guias'
 
 export const dynamic = 'force-dynamic'
@@ -59,7 +63,6 @@ export async function generateMetadata({
   }
   const d = await getCityDestination(slug)
   if (!d) return { title: 'Destino não encontrado', robots: { index: false } }
-  const photo = cityPhoto(d, await getDestinations()) ?? cityGuide(d.slug)?.hero.src ?? d.image
   const title = destinationTitle(d)
   const description = destinationDescription(d)
   const path = `/destinos/${d.slug}`
@@ -72,7 +75,6 @@ export async function generateMetadata({
       url: absoluteUrl(path),
       title,
       description,
-      ...(photo ? { images: [{ url: photo, alt: title }] } : {}),
     },
     twitter: { card: 'summary_large_image', title, description },
   }
@@ -227,6 +229,26 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
           </ul>
         </section>
 
+        <section aria-labelledby="feriados" className="mt-16">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h2 id="feriados" className="text-h2 text-foreground">
+              Próximos feriados para ir a {d.city}
+            </h2>
+            <Link
+              href="/feriados"
+              className="text-foreground text-sm font-semibold underline underline-offset-4"
+            >
+              Todos os feriados
+            </Link>
+          </div>
+          <div className="mt-6">
+            <LongWeekendList
+              weekends={upcomingLongWeekends(isoDateInTimeZone(new Date()), 3)}
+              city={d.city}
+            />
+          </div>
+        </section>
+
         <section aria-labelledby="perguntas" className="mt-16 max-w-3xl">
           <h2 id="perguntas" className="text-h2 text-foreground">
             Perguntas sobre pousadas em {d.city}
@@ -234,8 +256,12 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
           <div className="divide-border border-border mt-6 divide-y border-y">
             {faq.map((item) => (
               <details key={item.question} className="group py-4">
-                <summary className="text-foreground cursor-pointer list-none text-base font-semibold marker:hidden">
+                <summary className="text-foreground flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold [&::-webkit-details-marker]:hidden">
                   {item.question}
+                  <ChevronDown
+                    className="text-muted-foreground size-5 shrink-0 transition-transform group-open:rotate-180"
+                    aria-hidden
+                  />
                 </summary>
                 <p className="text-muted-foreground mt-2 text-base leading-relaxed">
                   {item.answer}

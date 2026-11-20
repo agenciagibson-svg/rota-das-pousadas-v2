@@ -56,6 +56,19 @@ export function Hero({ featured }: { featured?: Pousada }) {
     [season]: 0,
   }))
   const [paused, setPaused] = useState(false)
+  // A próxima foto só começa a baixar depois que a página carregou: no
+  // celular ela disputava banda com a foto e o título da primeira tela.
+  const [preloadNext, setPreloadNext] = useState(false)
+  useEffect(() => {
+    const start = () => setPreloadNext(true)
+    if (document.readyState === 'complete') {
+      const t = window.setTimeout(start, 1500)
+      return () => window.clearTimeout(t)
+    }
+    const onLoad = () => window.setTimeout(start, 1500)
+    window.addEventListener('load', onLoad, { once: true })
+    return () => window.removeEventListener('load', onLoad)
+  }, [])
   const [hovering, setHovering] = useState(false)
   // Estação escolhida na mão fica parada um tempo antes de voltar a girar.
   const [held, setHeld] = useState(false)
@@ -158,9 +171,11 @@ export function Hero({ featured }: { featured?: Pousada }) {
         </motion.div>
       </AnimatePresence>
       {/* Pré-carrega a próxima foto para a troca não piscar o fundo escuro. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-30 opacity-0">
-        <Image src={upcomingPhoto.src} alt="" fill sizes="100vw" className="object-cover" />
-      </div>
+      {preloadNext && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-30 opacity-0">
+          <Image src={upcomingPhoto.src} alt="" fill sizes="100vw" className="object-cover" />
+        </div>
+      )}
       {/* Sombra só onde há texto: topo (cabeçalho) e base (título e busca). */}
       <div className="from-breu/55 via-breu/5 to-breu/85 absolute inset-0 -z-10 bg-gradient-to-b" />
       <div className="from-breu/50 absolute inset-0 -z-10 hidden bg-gradient-to-r to-transparent to-60% lg:block" />
@@ -203,7 +218,9 @@ export function Hero({ featured }: { featured?: Pousada }) {
           )}
         </div>
 
-        <AnimatePresence mode="wait">
+        {/* initial={false}: o título já vem visível do servidor. Com opacidade 0
+            até o JavaScript carregar, o Google media o LCP ~2 s mais lento. */}
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={season}
             initial={{ opacity: 0, y: 16 }}

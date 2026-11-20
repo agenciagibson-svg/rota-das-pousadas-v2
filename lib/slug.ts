@@ -46,6 +46,8 @@ export const RESERVED_SLUGS: readonly string[] = [
   'destinos',
   'experiencias',
   'favoritos',
+  // Próximos feriadões para viajar.
+  'feriados',
   'login',
   'redefinir-senha',
   'logout',

@@ -1,6 +1,12 @@
 import type { MetadataRoute } from 'next'
 import { siteConfig } from '@/lib/seo'
-import { getCityDestinations, getPousadaSlugs, getStateDestinations } from '@/server/queries'
+import {
+  getCityDestinations,
+  getPousadaSlugs,
+  getStateDestinations,
+  getStayTypePages,
+} from '@/server/queries'
+import { stayTypeIndexable } from '@/features/pousadas/amenities'
 import { stateIndexable } from '@/features/destinos'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -13,6 +19,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${siteConfig.url}/feriados`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
     {
       url: `${siteConfig.url}/anunciar`,
@@ -49,7 +61,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // Páginas por cidade: só existem com pousada publicada, então entram todas.
-  const [destinations, states] = await Promise.all([getCityDestinations(), getStateDestinations()])
+  const [destinations, states, typePages] = await Promise.all([
+    getCityDestinations(),
+    getStateDestinations(),
+    getStayTypePages(),
+  ])
+  // Tipos de estadia (pet, piscina…): só com 2+ pousadas.
+  const typeRoutes: MetadataRoute.Sitemap = typePages.filter(stayTypeIndexable).map((t) => ({
+    url: `${siteConfig.url}/pousadas/${t.type.slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }))
   const destinationRoutes: MetadataRoute.Sitemap = destinations.length
     ? [
         {
@@ -73,5 +96,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]
     : []
 
-  return [...staticRoutes, ...destinationRoutes, ...pousadaRoutes]
+  return [...staticRoutes, ...destinationRoutes, ...typeRoutes, ...pousadaRoutes]
 }

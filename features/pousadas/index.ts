@@ -8,10 +8,5 @@
  */
 export { PousadaDetail } from '@/components/pousada/pousada-detail'
 export { FeaturedPousadas } from '@/components/landing/featured-pousadas'
-export {
-  getPousada,
-  getPousadas,
-  getPousadaSlugs,
-  getNearbyPousadas,
-} from '@/server/queries'
+export { getPousada, getPousadas, getPousadaSlugs, getNearbyPousadas } from '@/server/queries'
 export type { Pousada, Room, Review } from '@/types'

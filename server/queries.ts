@@ -13,7 +13,8 @@ import { requireAnyCapability } from '@/lib/auth/require-capability'
 import { cache } from 'react'
 import * as pousadas from '@/services/pousadas.service'
 import * as destinations from '@/services/destinations.service'
-import { groupByCity, groupByState } from '@/features/destinos/destinos'
+import { citySlug, groupByCity, groupByState } from '@/features/destinos/destinos'
+import { buildStayTypePages } from '@/features/pousadas/amenities'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
@@ -103,8 +104,14 @@ export const getPublicReviews = cache((pousadaId?: string, limit?: number) =>
 )
 
 /** Destinos montados a partir das cidades das pousadas publicadas. */
-export const getCityDestinations = cache(async () =>
-  groupByCity(await pousadas.listPublishedPousadas()),
+/** Publicadas e ativas (base de destinos e tipos de estadia). */
+export const getPublishedPousadas = cache(() => pousadas.listPublishedPousadas())
+export const getCityDestinations = cache(async () => groupByCity(await getPublishedPousadas()))
+export const getStayTypePages = cache(async () =>
+  buildStayTypePages(await getPublishedPousadas(), citySlug),
+)
+export const getStayTypePage = cache(
+  async (slug: string) => (await getStayTypePages()).find((p) => p.type.slug === slug) ?? null,
 )
 export const getCityDestination = cache(
   async (slug: string) => (await getCityDestinations()).find((d) => d.slug === slug) ?? null,

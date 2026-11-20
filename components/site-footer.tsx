@@ -31,7 +31,7 @@ export function SiteFooter({ withBottomBar = false }: { withBottomBar?: boolean 
           aria-label="Acessos"
           className="border-linen/10 mt-16 flex flex-col gap-3 border-t pt-8 sm:flex-row sm:items-center"
         >
-          <p className="text-linen/55 text-sm sm:mr-2">Acesse sua área</p>
+          <p className="text-linen/70 text-sm sm:mr-2">Acesse sua área</p>
           <Link
             href="/minhas-reservas"
             className="border-linen/20 text-linen hover:bg-linen/10 inline-flex h-12 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors"
@@ -50,17 +50,17 @@ export function SiteFooter({ withBottomBar = false }: { withBottomBar?: boolean 
           </Link>
         </nav>
 
-        <div className="border-linen/10 text-linen/50 mt-8 flex flex-col gap-4 border-t pt-8 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-linen/10 text-linen/70 mt-8 flex flex-col gap-4 border-t pt-8 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p>&copy; {new Date().getFullYear()} Rota das Pousadas. Feito no Brasil.</p>
-            {companyFooterLine() && <p className="text-linen/40 text-xs">{companyFooterLine()}</p>}
-            <p className="text-linen/40 text-xs">
+            {companyFooterLine() && <p className="text-linen/65 text-xs">{companyFooterLine()}</p>}
+            <p className="text-linen/65 text-xs">
               Desenvolvido por{' '}
               <a
                 href="https://www.studioimpacto.com.br/"
                 target="_blank"
                 rel="noopener"
-                className="text-linen/60 hover:text-linen underline-offset-4 hover:underline"
+                className="text-linen/80 hover:text-linen underline underline-offset-4"
               >
                 Studio Impacto
               </a>

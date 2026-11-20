@@ -23,7 +23,7 @@ export function FooterExploreCard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-linen text-sm font-semibold">Explorar</h2>
-          <p className="text-linen/55 mt-1 text-xs leading-relaxed">Bussola de rotas interativa</p>
+          <p className="text-linen/70 mt-1 text-xs leading-relaxed">Bussola de rotas interativa</p>
         </div>
         <button
           type="button"
@@ -100,7 +100,7 @@ export function FooterExploreCard() {
               className={`flex h-11 items-center justify-center rounded-xl border transition ${
                 selected
                   ? 'border-linen/35 bg-linen text-stone-deep'
-                  : 'border-linen/10 text-linen/55 hover:border-linen/25 hover:text-linen'
+                  : 'border-linen/10 text-linen/70 hover:border-linen/25 hover:text-linen'
               }`}
             >
               <Icon className="size-4" />

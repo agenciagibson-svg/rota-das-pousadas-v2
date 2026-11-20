@@ -16,7 +16,7 @@ export function FooterCompanyCard() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-linen text-sm font-semibold">Rota das Pousadas</h2>
-          <p className="text-linen/55 mt-1 text-xs leading-relaxed">Mapa da marca</p>
+          <p className="text-linen/70 mt-1 text-xs leading-relaxed">Mapa da marca</p>
         </div>
         <span className="border-linen/15 text-linen/60 rounded-full border px-3 py-1 text-xs font-semibold">
           Brasil
@@ -39,7 +39,7 @@ export function FooterCompanyCard() {
                 className={`relative z-10 flex size-7 items-center justify-center rounded-full border transition ${
                   selected
                     ? 'border-gold bg-gold text-stone-deep'
-                    : 'border-linen/20 bg-stone-deep text-linen/45 hover:text-linen'
+                    : 'border-linen/20 bg-stone-deep text-linen/65 hover:text-linen'
                 }`}
               >
                 <span className="size-1.5 rounded-full bg-current" />
