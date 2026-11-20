@@ -75,10 +75,14 @@ export async function ogCard({
       <div
         style={{
           position: 'absolute',
-          inset: 0,
+          top: 0,
+          left: 0,
+          width: 1200,
+          height: 630,
           display: 'flex',
+          // Escuro na metade de baixo, onde fica o texto: legível em qualquer foto.
           backgroundImage:
-            'linear-gradient(to top, rgba(15,23,22,0.92) 0%, rgba(15,23,22,0.55) 45%, rgba(15,23,22,0.15) 100%)',
+            'linear-gradient(to top, rgba(15,23,22,0.97) 0%, rgba(15,23,22,0.9) 38%, rgba(15,23,22,0.45) 62%, rgba(15,23,22,0.05) 100%)',
         }}
       />
       <div
@@ -115,6 +119,7 @@ export async function ogCard({
               fontWeight: 700,
               lineHeight: 1.05,
               letterSpacing: -1.5,
+              textShadow: '0 2px 12px rgba(0,0,0,0.6)',
             }}
           >
             {title}
