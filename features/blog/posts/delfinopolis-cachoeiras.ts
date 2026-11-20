@@ -9,7 +9,7 @@ export const delfinopolisCachoeiras: BlogPost = {
   place: 'Serra da Canastra',
   cities: [{ slug: 'delfinopolis-mg', name: 'Delfinópolis' }],
   publishedAt: '2026-11-20',
-  status: 'rascunho',
+  status: 'publicado',
   cover: commons({
     file: 'Delfinópolis-14_(54065731441).jpg',
     hash: '5/56',
