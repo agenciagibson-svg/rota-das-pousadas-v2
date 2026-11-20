@@ -197,3 +197,29 @@ describe('guias das cidades', () => {
     }
   })
 })
+
+describe('páginas por estado', () => {
+  it('agrupa cidades por UF e só indexa com 2+ cidades', async () => {
+    const { groupByState, stateIndexable, isStateSlug, stateTitle, stateIntro } =
+      await import('./destinos')
+    const states = groupByState(
+      groupByCity([
+        pousada({ slug: 'a', city: 'Tiradentes', state: 'MG', pricePerNight: 400 }),
+        pousada({ slug: 'b', city: 'Monte Verde', state: 'MG', pricePerNight: 350 }),
+        pousada({ slug: 'c', city: 'Bonito', state: 'MS' }),
+        pousada({ slug: 'd', city: 'Lugar', state: 'XX' }),
+      ]),
+    )
+    expect(states.map((s) => [s.slug, s.cities.length, s.pousadas])).toEqual([
+      ['mg', 2, 2],
+      ['ms', 1, 1],
+    ])
+    expect(stateTitle(states[0]!)).toBe('Pousadas em Minas Gerais')
+    expect(stateIntro(states[0]!)).toContain('R$ 350')
+    expect(stateIndexable(states[0]!)).toBe(true)
+    expect(stateIndexable(states[1]!)).toBe(false)
+    expect(isStateSlug('mg')).toBe(true)
+    expect(isStateSlug('xx')).toBe(false)
+    expect(isStateSlug('tiradentes-mg')).toBe(false)
+  })
+})

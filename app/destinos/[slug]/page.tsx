@@ -13,7 +13,12 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { absoluteUrl } from '@/lib/seo'
 import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { getCityDestination, getCityDestinations, getDestinations } from '@/server/queries'
+import {
+  getCityDestination,
+  getCityDestinations,
+  getDestinations,
+  getStateDestination,
+} from '@/server/queries'
 import {
   cityPhoto,
   destinationDescription,
@@ -21,7 +26,13 @@ import {
   destinationIntro,
   destinationJsonLd,
   destinationTitle,
+  isStateSlug,
+  stateDescription,
+  stateIndexable,
+  stateTitle,
 } from '@/features/destinos'
+import { StatePage } from '@/features/destinos/components/state-page'
+import { ufName } from '@/lib/estados'
 import { cityGuide, guideCredits } from '@/features/destinos/guias'
 
 export const dynamic = 'force-dynamic'
@@ -32,6 +43,20 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
+  if (isStateSlug(slug)) {
+    const st = await getStateDestination(slug)
+    if (!st) return { title: 'Destino não encontrado', robots: { index: false } }
+    const title = stateTitle(st)
+    const description = stateDescription(st)
+    return {
+      title,
+      description,
+      alternates: { canonical: `/destinos/${st.slug}` },
+      openGraph: { type: 'website', url: absoluteUrl(`/destinos/${st.slug}`), title, description },
+      // Com uma cidade só, a página do estado repetiria a da cidade.
+      ...(stateIndexable(st) ? {} : { robots: { index: false, follow: true } }),
+    }
+  }
   const d = await getCityDestination(slug)
   if (!d) return { title: 'Destino não encontrado', robots: { index: false } }
   const photo = cityPhoto(d, await getDestinations()) ?? cityGuide(d.slug)?.hero.src ?? d.image
@@ -55,6 +80,7 @@ export async function generateMetadata({
 
 export default async function DestinoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  if (isStateSlug(slug)) return <EstadoPage slug={slug} />
   const d = await getCityDestination(slug)
   // Sem pousada publicada na cidade, não há página: nada de página vazia no Google.
   if (!d) notFound()
@@ -66,17 +92,22 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
   // Foto do /admin → Destinos tem prioridade; depois a capa do guia da cidade.
   const photo = cityPhoto(d, curated) ?? guide?.hero.src ?? null
   const photoAlt = guide?.hero.alt ?? `${d.city}, ${d.state}`
+  const state = await getStateDestination(d.state.toLowerCase())
+  const stateHref = state && stateIndexable(state) ? `/destinos/${state.slug}` : undefined
   const count = d.pousadas.length
 
   return (
     <div className="bg-background min-h-screen">
-      <JsonLd data={destinationJsonLd(d, faq)} />
+      <JsonLd data={destinationJsonLd(d, faq, stateHref)} />
       <SiteHeader forceSolid />
       <main id="conteudo" tabIndex={-1} className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
         <Breadcrumb
           items={[
             { label: 'Início', href: '/' },
             { label: 'Destinos', href: '/destinos' },
+            ...(ufName(d.state)
+              ? [{ label: ufName(d.state)!, href: `/destinos/${d.state.toLowerCase()}` }]
+              : []),
             { label: `${d.city}, ${d.state}` },
           ]}
         />
@@ -239,6 +270,25 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
             Ver todas as pousadas
           </Link>
         </div>
+      </main>
+      <SiteFooter />
+    </div>
+  )
+}
+
+async function EstadoPage({ slug }: { slug: string }) {
+  const [state, curated] = await Promise.all([getStateDestination(slug), getDestinations()])
+  if (!state) notFound()
+  const photoOf = (citySlug: string) => {
+    const city = state.cities.find((c) => c.slug === citySlug)
+    if (!city) return ''
+    return cityPhoto(city, curated) ?? cityGuide(city.slug)?.hero.src ?? city.image
+  }
+  return (
+    <div className="bg-background min-h-screen">
+      <SiteHeader forceSolid />
+      <main id="conteudo" tabIndex={-1} className="mx-auto max-w-7xl px-5 pt-32 pb-20 lg:px-8">
+        <StatePage state={state} cityPhoto={photoOf} />
       </main>
       <SiteFooter />
     </div>

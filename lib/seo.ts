@@ -124,21 +124,68 @@ export function pousadaMetadata(pousada: Pousada): Metadata {
   }
 }
 
-/** schema.org LodgingBusiness structured data for a pousada. */
+/** Só dígitos, com DDI do Brasil — formato que o Google lê em `telephone`. */
+function schemaPhone(raw?: string): string | undefined {
+  const digits = (raw ?? '').replace(/\D/g, '')
+  if (digits.length < 10) return undefined
+  return digits.startsWith('55') && digits.length >= 12 ? `+${digits}` : `+55${digits}`
+}
+
+/** "14:00" → "14:00:00" (schema.org Time); qualquer outra coisa fica de fora. */
+function schemaTime(raw?: string): string | undefined {
+  const m = (raw ?? '').trim().match(/^(\d{1,2})[:h](\d{2})?$/)
+  if (!m) return undefined
+  const h = Number(m[1])
+  const min = Number(m[2] ?? '0')
+  if (h > 23 || min > 59) return undefined
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`
+}
+
+/**
+ * schema.org LodgingBusiness da pousada. Cada campo só entra quando a pousada
+ * preencheu de verdade: o Google trata dado vazio ou inventado como erro.
+ */
 export function pousadaJsonLd(pousada: Pousada) {
+  const url = absoluteUrl(`/pousada/${pousada.slug}`)
+  const images = [pousada.image, ...(pousada.gallery ?? [])]
+    .filter(Boolean)
+    .slice(0, 8)
+    // Fotos do storage já vêm com https://; só caminho local ganha o domínio.
+    .map((src) => (/^https?:\/\//.test(src) ? src : absoluteUrl(src)))
+  const telephone = schemaPhone(pousada.contactPhone) ?? schemaPhone(pousada.whatsapp)
+  const checkinTime = schemaTime(pousada.checkinTime)
+  const checkoutTime = schemaTime(pousada.checkoutTime)
+  const point = pousada.coordinates
+  const instagram = (pousada.instagram ?? '')
+    .trim()
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+    .replace(/^@/, '')
+    .replace(/\/+$/, '')
   return {
     '@context': 'https://schema.org',
     '@type': 'LodgingBusiness',
+    '@id': `${url}#pousada`,
     name: pousada.name,
     description: pousada.description,
-    image: absoluteUrl(pousada.image),
-    url: absoluteUrl(`/pousada/${pousada.slug}`),
+    image: images.length > 1 ? images : images[0],
+    url,
     address: {
       '@type': 'PostalAddress',
+      ...(pousada.address?.trim() ? { streetAddress: pousada.address.trim() } : {}),
       addressLocality: pousada.city,
       addressRegion: pousada.state,
+      ...(pousada.cep?.trim() ? { postalCode: pousada.cep.trim() } : {}),
       addressCountry: 'BR',
     },
+    ...(point
+      ? {
+          geo: { '@type': 'GeoCoordinates', latitude: point.lat, longitude: point.lng },
+          hasMap: `https://www.google.com/maps/search/?api=1&query=${point.lat},${point.lng}`,
+        }
+      : {}),
+    ...(telephone ? { telephone } : {}),
+    ...(checkinTime ? { checkinTime } : {}),
+    ...(checkoutTime ? { checkoutTime } : {}),
     // Sem avaliação real, nada de nota: o Google trata nota zerada como dado inválido.
     ...(pousada.reviews > 0
       ? {
@@ -150,8 +197,34 @@ export function pousadaJsonLd(pousada: Pousada) {
           },
         }
       : {}),
-    priceRange: `R$ ${pousada.pricePerNight}`,
-    amenityFeature: pousada.tags.map((t) => ({ '@type': 'LocationFeatureSpecification', name: t })),
+    ...(pousada.pricePerNight > 0
+      ? {
+          priceRange: `A partir de R$ ${pousada.pricePerNight}`,
+          makesOffer: {
+            '@type': 'Offer',
+            name: 'Diária',
+            priceSpecification: {
+              '@type': 'UnitPriceSpecification',
+              price: pousada.pricePerNight,
+              priceCurrency: 'BRL',
+              unitText: 'noite',
+            },
+            url,
+          },
+        }
+      : {}),
+    currenciesAccepted: 'BRL',
+    paymentAccepted: 'Pix, cartão de crédito',
+    amenityFeature: pousada.tags.map((t) => ({
+      '@type': 'LocationFeatureSpecification',
+      name: t,
+      value: true,
+    })),
+    ...(instagram ? { sameAs: [`https://www.instagram.com/${instagram}/`] } : {}),
+    containedInPlace: {
+      '@type': 'City',
+      name: `${pousada.city}, ${pousada.state}`,
+    },
   }
 }
 

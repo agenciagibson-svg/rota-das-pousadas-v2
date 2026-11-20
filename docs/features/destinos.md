@@ -14,6 +14,13 @@ frequentes. Objetivo: aparecer no Google para "pousada em <cidade>".
   destino curado bate com uma cidade que tem pousada, o card leva para a página da
   cidade e mostra contagem, preço e nota reais (`withCityPages`).
 
+## Páginas por estado
+
+`/destinos/<uf>` (ex.: `/destinos/mg`, mesma rota dinâmica — slug de 2 letras é estado):
+cidades com foto e pousadas mais avaliadas. Só vai para o Google (sitemap e `index`)
+com 2+ cidades; com uma só fica `noindex`, para não repetir a página da cidade.
+A trilha da cidade passa pelo estado.
+
 ## Texto e dados estruturados
 
 - Título: "Pousadas em <Cidade>, <UF>". Descrição, abertura e perguntas saem só
