@@ -24,7 +24,12 @@ export default async function AdminPousadaAcessosPage({
 
   if (!allowed) {
     return (
-      <AdminShell active="pousadas" title="Acessos institucionais" subtitle="Restrito" displayName={displayName}>
+      <AdminShell
+        active="pousadas"
+        title="Acessos institucionais"
+        subtitle="Restrito"
+        displayName={displayName}
+      >
         <Card className="p-6">
           <EmptyState
             icon={ShieldOff}

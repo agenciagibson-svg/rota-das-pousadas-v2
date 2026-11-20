@@ -104,6 +104,8 @@ try {
     'contato-0105.sql',
     // 0106: origem das reservas; usa o master de priorities.sql.
     'origem-0106.sql',
+    // 0107: guia de boas-vindas; usa master e comercial de priorities.sql.
+    'guia-0107.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

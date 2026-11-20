@@ -21,6 +21,7 @@ import {
 } from '../types'
 import { updateQuoteStatusAction } from '../actions'
 import { formatBRL } from '@/lib/format'
+import { LinksGuide } from '@/features/origem/components/links-guide'
 
 const PERIODS = [
   { days: 7, label: '7 dias' },
@@ -256,6 +257,7 @@ export function LinkReportView({
           </div>
         </Card>
       )}
+      {trackedLinks && <LinksGuide />}
 
       {/* Destaques primeiro: é a leitura, não o número, que muda a semana. */}
       <div className="mt-5 flex flex-col gap-2.5">
