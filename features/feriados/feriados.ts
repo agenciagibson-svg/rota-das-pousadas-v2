@@ -129,14 +129,13 @@ export function longWeekend(h: Holiday): LongWeekend {
 }
 
 /**
- * Próximos feriadões a partir de `today` (inclusive enquanto a folga não
- * acabou), em ordem. Ignora os que não dão viagem: só o feriado numa quarta.
+ * Próximos feriadões cujo check-in sugerido ainda não passou, em ordem. Ignora os que não dão viagem: só o feriado numa quarta.
  */
 export function upcomingLongWeekends(today: string, limit = 8): LongWeekend[] {
   const year = Number(today.slice(0, 4))
   return [...holidaysOf(year), ...holidaysOf(year + 1)]
     .map(longWeekend)
-    .filter((w) => w.offEnd >= today && w.nights >= 2)
+    .filter((w) => w.checkin >= today && w.nights >= 2)
     .slice(0, limit)
 }
 

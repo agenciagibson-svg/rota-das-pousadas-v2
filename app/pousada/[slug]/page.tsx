@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { catalogQuerySchema } from '@/features/pousadas/search'
 import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
@@ -122,9 +123,13 @@ export default async function PousadaPage({
             <h2 className="text-h2 text-foreground">Perguntas frequentes</h2>
             <div className="divide-border border-border mt-6 divide-y border-y">
               {faq.map((item) => (
-                <details key={item.question} className="py-4">
-                  <summary className="text-foreground cursor-pointer list-none text-base font-semibold">
+                <details key={item.question} className="group py-4">
+                  <summary className="text-foreground flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold [&::-webkit-details-marker]:hidden">
                     {item.question}
+                    <ChevronDown
+                      className="text-muted-foreground size-5 shrink-0 transition-transform group-open:rotate-180"
+                      aria-hidden
+                    />
                   </summary>
                   <p className="text-muted-foreground mt-2 text-base leading-relaxed">
                     {item.answer}

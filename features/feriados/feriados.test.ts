@@ -51,12 +51,13 @@ describe('feriados', () => {
   })
 
   it('próximos feriadões pulam os de quarta e os que já passaram', () => {
-    const list = upcomingLongWeekends('2026-11-21', 3)
-    // 20/11/2026 (sexta) já passou no dia 23; ainda conta até o domingo 22.
-    expect(list[0]!.slug).toBe('consciencia-negra')
+    // Em 19/11 ainda dá para chegar na véspera da Consciência Negra (sexta, 20).
+    expect(upcomingLongWeekends('2026-11-19', 1)[0]!.slug).toBe('consciencia-negra')
+    // No próprio dia 20, a sugestão (chegar dia 19) já passou.
+    const list = upcomingLongWeekends('2026-11-20', 3)
     expect(list.every((w) => w.nights >= 2)).toBe(true)
     // Natal 2026 é sexta.
-    expect(list[1]).toMatchObject({ slug: 'natal', checkin: '2026-12-24', checkout: '2026-12-27' })
+    expect(list[0]).toMatchObject({ slug: 'natal', checkin: '2026-12-24', checkout: '2026-12-27' })
   })
 
   it('formata datas e monta a busca', () => {
