@@ -51,12 +51,10 @@ export function StayHome(ctx: StayCtx) {
           <p className="truncate text-[14.5px] font-bold">{pousada.name}</p>
         </div>
         <ThemeQuickToggle />
-        {/* A loja não some durante a estadia: dá para reservar a próxima viagem daqui. */}
+        {/* A loja não some durante a estadia: dá para reservar a próxima viagem daqui.
+            (A recepção continua na barra de baixo.) */}
         <RoundButton label="Explorar pousadas" href="/">
           <Compass className="size-[18px]" />
-        </RoundButton>
-        <RoundButton label="Falar com a recepção" onClick={() => ctx.go('recepcao')}>
-          <MessageCircle className="size-[18px]" />
         </RoundButton>
       </div>
 
