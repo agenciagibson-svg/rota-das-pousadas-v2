@@ -8,11 +8,12 @@ import { stayThemeBootScript, THEME_COLOR } from '@/features/estadia/theme'
 export const metadata: Metadata = {
   title: 'Minha estadia',
   description: 'Peça, veja sua conta e fale com a pousada durante a estadia.',
-  // Manifesto próprio: "Adicionar à Tela de Início" abre direto no app da estadia.
-  manifest: '/estadia/manifest.webmanifest',
+  // Mesmo manifesto do site: um app só na tela inicial, que abre em /app e
+  // decide a fase (loja, viagem marcada, estadia, pós-estadia).
+  manifest: '/site.webmanifest',
   appleWebApp: {
     capable: true,
-    title: 'Minha estadia',
+    title: 'Rota das Pousadas',
     statusBarStyle: 'default',
     startupImage: splashStartupImages(),
   },

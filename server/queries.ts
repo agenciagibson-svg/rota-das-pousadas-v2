@@ -18,6 +18,7 @@ import * as destinations from '@/services/destinations.service'
 import { citySlug, groupByCity, groupByState } from '@/features/destinos/destinos'
 import { buildStayTypePages } from '@/features/pousadas/amenities'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
+import { getMyAppState as appState } from '@/features/app-fases/services/app-phase.service'
 import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
 import {
@@ -131,6 +132,9 @@ export const getBlogTips = cache((postSlug: string) => tipsForPost(postSlug))
 export const getDestinations = cache(() => destinations.listDestinations())
 export const getDestination = cache((slug: string) => destinations.getDestinationBySlug(slug))
 export const getExperiences = cache(() => destinations.listExperiences())
+
+/** Fase do app único (loja, viagem marcada, estadia, pós-estadia) do usuário logado. */
+export const getMyAppState = cache(() => appState())
 
 /** Usuário autenticado atual (sessão + profile + papéis), memoizado por request. */
 export const getCurrentUser = cache(() => currentUser())

@@ -1,6 +1,18 @@
 'use client'
 
-import { Clock, Home, KeyRound, MapPin, MessageCircle, Plus, ShoppingBag, Wifi } from 'lucide-react'
+import Link from 'next/link'
+import {
+  Clock,
+  Compass,
+  Home,
+  KeyRound,
+  MapPin,
+  MessageCircle,
+  Plus,
+  ShoppingBag,
+  Star,
+  Wifi,
+} from 'lucide-react'
 import { agendaState } from '../info'
 import { daysBetween, dayMonth, hourLabel, shortDate } from '../dates'
 import type { StayCtx } from './stay-context'
@@ -26,6 +38,7 @@ export function StayHome(ctx: StayCtx) {
   const highlights = products.slice(0, 8)
   const states = now ? agendaState(info.dailyAgenda, now) : info.dailyAgenda.map(() => 'next')
   const isCheckoutDay = stay.today === booking.checkout
+  const ended = booking.status === 'checked_out' || booking.checkout < stay.today
 
   return (
     <>
@@ -38,6 +51,10 @@ export function StayHome(ctx: StayCtx) {
           <p className="truncate text-[14.5px] font-bold">{pousada.name}</p>
         </div>
         <ThemeQuickToggle />
+        {/* A loja não some durante a estadia: dá para reservar a próxima viagem daqui. */}
+        <RoundButton label="Explorar pousadas" href="/">
+          <Compass className="size-[18px]" />
+        </RoundButton>
         <RoundButton label="Falar com a recepção" onClick={() => ctx.go('recepcao')}>
           <MessageCircle className="size-[18px]" />
         </RoundButton>
@@ -75,6 +92,39 @@ export function StayHome(ctx: StayCtx) {
           <KeyRound className="text-breu size-6" />
         </span>
       </button>
+
+      {ended && (
+        <div className="bg-card mt-3 rounded-[24px] p-4">
+          <p className="text-[14.5px] font-bold">Sua estadia terminou</p>
+          <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
+            Obrigado por ficar na {pousada.name}. Quando quiser voltar, ou conhecer outra pousada da
+            Rota, é por aqui.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {stay.canReview && !stay.reviewed && (
+              <button
+                type="button"
+                onClick={() => ctx.go('recepcao')}
+                className="bg-app-strong text-neblina inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold"
+              >
+                <Star className="size-4" /> Avaliar a estadia
+              </button>
+            )}
+            <Link
+              href={`/pousada/${pousada.slug}`}
+              className="bg-ipe text-breu inline-flex min-h-11 items-center rounded-full px-4 text-[13px] font-semibold"
+            >
+              Voltar para a {pousada.name}
+            </Link>
+            <Link
+              href="/"
+              className="border-border text-app-ink inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold"
+            >
+              <Compass className="size-4" /> Outras pousadas
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 grid grid-cols-4 gap-2">
         <QuickTile

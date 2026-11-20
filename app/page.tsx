@@ -9,6 +9,7 @@ import { Faq } from '@/components/landing/faq'
 import { Editorial } from '@/components/landing/editorial'
 import { getCityDestinations, getDestinations, getExperiences, getPousadas } from '@/server/queries'
 import { withCityPages } from '@/features/destinos'
+import { PhaseCardBar } from '@/features/app-fases/components/phase-card-bar'
 
 /**
  * Renderização por requisição, explícita. Com o Supabase configurado a página
@@ -48,6 +49,8 @@ export default async function Page() {
         <Editorial />
       </main>
       <SiteFooter />
+      {/* App único: atalho de volta para a estadia ou viagem marcada. */}
+      <PhaseCardBar />
     </div>
   )
 }

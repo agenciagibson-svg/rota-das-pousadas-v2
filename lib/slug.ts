@@ -33,6 +33,8 @@ export function uniqueSlug(input: string): string {
 export const RESERVED_SLUGS: readonly string[] = [
   'admin',
   'anunciar',
+  // Porta de entrada do app instalado (fases loja → estadia).
+  'app',
   'api',
   'auth',
   'cadastro',
