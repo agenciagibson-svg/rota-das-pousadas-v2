@@ -12,7 +12,16 @@ import { publicEnv } from '@/lib/env'
 import { QuoteCard } from '@/features/bio/components/quote-card'
 import { BioPriceCalendar } from '@/features/bio/components/bio-price-calendar'
 import { clampMonth, indexCalendarDays, isMonth, monthOf } from '@/features/reservas'
-import { getPriceCalendar, getPublicFeaturedCoupon } from '@/server/queries'
+import {
+  getPousada,
+  getPriceCalendar,
+  getPublicFeaturedCoupon,
+  getPublicReviews,
+} from '@/server/queries'
+import { BioHero } from '@/features/bio/components/bio-hero'
+import { BioTrust } from '@/features/bio/components/bio-trust'
+import { BioHighlights } from '@/features/bio/components/bio-highlights'
+import { BioStickyCta } from '@/features/bio/components/bio-sticky-cta'
 import { DirectBookingPerk } from '@/features/cupons/components/direct-booking-perk'
 import { isoDateInTimeZone } from '@/lib/dates'
 import {
@@ -25,9 +34,11 @@ import { formatBRL } from '@/lib/format'
 /**
  * Página da bio — o link que a pousada põe no Instagram.
  *
- * MODELO A ("calendário primeiro"): nome, uma linha, e o seletor de datas
- * imediatamente. Quem clica no link da bio quase sempre já conhece a pousada e
- * só quer saber se tem vaga; foto e vídeo já vivem no próprio Instagram.
+ * MODELO A+ (20/11/2026): fotos em carrossel com nome e nota por cima (a
+ * continuação da foto que a pessoa viu no Instagram), três garantias, e logo
+ * depois o seletor de datas e o calendário com preço. Abaixo, destaques e
+ * avaliações. Uma barra fixa com o preço leva às datas. Substitui o modelo A
+ * ("calendário primeiro", sem foto), que perdia confiança perto dos concorrentes.
  *
  * SEM JAVASCRIPT NO CAMINHO PRINCIPAL: o seletor de datas é um `form method
  *="get"` e os resultados vêm renderizados do servidor. Esse link abre quase
@@ -150,13 +161,17 @@ export default async function BioPage({ params, searchParams }: PageProps) {
     isMonth(query.mes) ? query.mes : monthOf(checkin ?? today),
     today,
   )
-  const [rooms, calendarDays, coupon] = await Promise.all([
+  const [rooms, calendarDays, coupon, details] = await Promise.all([
     listBookableRooms(slug, checkin, checkout, guests),
     // Calendário é extra: se falhar, a página segue com o formulário de datas.
     getPriceCalendar(slug, calendarMonth, guests).catch(() => []),
     // Cupom divulgado (0100): sem cupom valendo hoje, nada aparece.
     getPublicFeaturedCoupon(pousada.slug),
+    // Fotos, nota e etiquetas da página completa. Extra: falhou, segue sem.
+    getPousada(slug).catch(() => null),
   ])
+  const reviews = await getPublicReviews(details?.id ?? pousada.id, 3).catch(() => [])
+  const photos = [...new Set([pousada.image, ...(details?.gallery ?? [])].filter(Boolean))]
   const couponParam = coupon ? `&cupom=${encodeURIComponent(coupon.code)}` : ''
 
   await recordLinkEvent({ pousadaId: pousada.id, event: 'view' })
@@ -177,18 +192,32 @@ export default async function BioPage({ params, searchParams }: PageProps) {
     <main
       id="conteudo"
       tabIndex={-1}
-      className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8"
+      className={cn(
+        'mx-auto flex min-h-screen max-w-md flex-col gap-5 px-5 py-8',
+        !hasDates && 'pb-28',
+      )}
     >
-      <BioHeader name={pousada.name} city={pousada.city} state={pousada.state} />
+      <BioHero
+        name={pousada.name}
+        city={pousada.city}
+        state={pousada.state}
+        photos={photos}
+        rating={details?.rating ?? 0}
+        reviews={details?.reviews ?? 0}
+      />
+
+      <BioTrust />
 
       {coupon && <DirectBookingPerk coupon={coupon} />}
 
       {/* Seletor de datas — form GET, sem JavaScript. */}
       <form
+        id="datas"
         action={`/${pousada.slug}`}
         method="get"
-        className="bg-card shadow-card grid grid-cols-2 gap-3 rounded-3xl p-4"
+        className="bg-card shadow-card grid scroll-mt-6 grid-cols-2 gap-3 rounded-3xl p-4"
       >
+        <h2 className="text-h3 text-foreground col-span-2">Quando você vem?</h2>
         <label className="flex min-w-0 flex-col gap-1.5">
           <span className={labelClass}>Entrada</span>
           <input
@@ -320,6 +349,8 @@ export default async function BioPage({ params, searchParams }: PageProps) {
         </Card>
       )}
 
+      <BioHighlights slug={pousada.slug} tags={details?.tags ?? []} reviews={reviews} />
+
       <QuoteCard
         pousadaId={pousada.id}
         whatsapp={pousada.whatsapp || null}
@@ -328,6 +359,7 @@ export default async function BioPage({ params, searchParams }: PageProps) {
 
       <ContactLinks pousada={pousada} />
       <Footer />
+      {!hasDates && <BioStickyCta priceFrom={pousada.pricePerNight} />}
     </main>
   )
 }
