@@ -20,6 +20,7 @@ import {
 import { submitMyPrecheckin } from './services/precheckin.service'
 import { revokeMyBookingShare, shareMyBooking } from './services/booking-share.service'
 import { precheckinSchema, precheckinPath } from './precheckin'
+import { recordOriginForNewBooking } from '@/features/origem/services/origin.service'
 
 /** A reserva do hóspede também muda o que a pousada vê no painel. */
 function revalidatePanelBookings() {
@@ -33,6 +34,8 @@ function revalidatePanelBookings() {
  */
 export const createBookingAction = createAction(createBookingSchema, async (input) => {
   const { id, code } = await createBooking(input)
+  // 0106: de onde veio a visita que virou esta reserva (nunca derruba a reserva).
+  await recordOriginForNewBooking(id)
   revalidatePath('/minhas-reservas')
   revalidatePanelBookings()
   return { code, redirectTo: `/pousada/${input.pousadaSlug}/reservar/${id}/pagamento` }

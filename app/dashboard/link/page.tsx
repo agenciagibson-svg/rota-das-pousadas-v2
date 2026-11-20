@@ -9,6 +9,7 @@ import {
 } from '@/server/queries'
 import { publicEnv } from '@/lib/env'
 import { LinkReportView } from '@/features/bio/components/link-report-view'
+import { marketingLinks } from '@/features/origem/origin'
 
 /** Só as janelas oferecidas na tela — qualquer outra coisa vira 30 dias. */
 function parseDays(raw: string | undefined): 7 | 30 | 90 {
@@ -41,6 +42,7 @@ export default async function DashboardLinkPage({
       displayName={displayName}
       pousadaName={pousada?.name ?? 'Sua pousada'}
       bioUrl={`${publicEnv.siteUrl}/${pousada?.slug ?? ''}`}
+      trackedLinks={pousada?.slug ? marketingLinks(publicEnv.siteUrl, pousada.slug) : undefined}
       report={report}
       quotes={quotes}
       canManage={canManage}

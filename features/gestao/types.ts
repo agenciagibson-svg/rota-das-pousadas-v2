@@ -1,5 +1,6 @@
 import type { GeoPoint } from '@/types'
 import type { BookingOrigin, BookingStatus } from '@/features/reservas/types'
+import type { Channel } from '@/features/origem/origin'
 
 /** Reserva na visão do proprietário. */
 export type OwnerReservation = {
@@ -13,6 +14,11 @@ export type OwnerReservation = {
    * pagamento confirmado (Pix aprovado, cartão pago ou confirmação manual).
    */
   contactReleased: boolean
+  /**
+   * 0106: canal da visita que gerou a reserva feita pelo site (Instagram,
+   * perfil do Google…). `null` = sem registro (reserva de balcão, antiga…).
+   */
+  channel: Channel | null
   /** Telefone/WhatsApp da reserva ou da ficha do hóspede. */
   guestPhone?: string | null
   roomName: string

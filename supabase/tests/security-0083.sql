@@ -23,9 +23,11 @@ select test_assert(not exists (
   select 1 from pg_proc p
   where p.pronamespace = 'public'::regnamespace
     and p.prosrc like '%auth_is_platform_admin()%'
-    -- leitura para a equipe da Rota (2, mais 2 da 0084) + set_booking_status, que só cita o helper num comentário
+    -- leitura para a equipe da Rota (2, mais 2 da 0084, mais o resumo por canal da 0106)
+    -- + set_booking_status, que só cita o helper num comentário
     and p.proname not in ('get_link_report', 'list_platform_hosts', 'set_booking_status',
-                          'get_pousada_private_settings', 'list_pousada_reviews')
+                          'get_pousada_private_settings', 'list_pousada_reviews',
+                          'list_platform_booking_channels')
 ), 'nenhuma RPC de escrita aceita "qualquer papel de plataforma"');
 select test_assert(not exists (
   select 1 from pg_policies

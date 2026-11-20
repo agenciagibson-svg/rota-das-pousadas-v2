@@ -216,6 +216,13 @@ const sections: LegalSection[] = [
           rastreamento.
         </p>
         <p>
+          Guardamos também, por 30 dias, um cookie do próprio site com a{' '}
+          <strong>origem da visita</strong>: o link pelo qual você chegou (por exemplo, o Instagram
+          ou o perfil de uma pousada no Google) e o site de onde veio. Ele não tem seu nome, e-mail
+          nem outro dado pessoal, não é compartilhado com terceiros e serve só para a reserva
+          registrar de onde veio.
+        </p>
+        <p>
           Com o seu aceite no aviso que aparece no site, usamos também os{' '}
           <strong>cookies do Google Analytics</strong>, para saber por onde as pessoas chegam
           (busca, Instagram, link de uma pousada) e em que ponto da reserva desistem. Não enviamos

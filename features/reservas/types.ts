@@ -1,3 +1,4 @@
+import type { Channel } from '@/features/origem/origin'
 /**
  * [Ciclo 4] Vocabulário recriado do zero (0032_bookings_evolution.sql) — a
  * tabela não tinha nenhuma linha real no momento da migração, então não há
@@ -144,6 +145,10 @@ export type BookingDetail = {
    * pagamento confirmado. `false` = contato oculto (os dois vêm `null`).
    */
   contactReleased: boolean
+  /** 0106: canal da visita que gerou a reserva feita pelo site; `null` = sem registro. */
+  channel: Channel | null
+  /** Campanha do link (utm_campaign), quando houver. */
+  channelCampaign: string | null
   travelerUserId: string | null
   checkin: string
   checkout: string

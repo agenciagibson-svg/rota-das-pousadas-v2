@@ -9,6 +9,7 @@ import { MotionProvider } from '@/components/motion-provider'
 import { SameHashScroll } from '@/components/layout/same-hash-scroll'
 import { JsonLd } from '@/components/seo/json-ld'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
+import { OriginCapture } from '@/components/analytics/origin-capture'
 
 // Marca (out/2026, docs/Marca.md): Funnel Display nos títulos, Figtree no
 // texto e na interface. As duas sem serifa, variáveis, Google Fonts (OFL).
@@ -56,6 +57,7 @@ export default async function RootLayout({
         <JsonLd data={organizationJsonLd()} />
         <MotionProvider>{children}</MotionProvider>
         <SameHashScroll />
+        <OriginCapture />
         {process.env.NODE_ENV === 'production' && <Analytics />}
         {publicEnv.gaMeasurementId && <GoogleAnalytics measurementId={publicEnv.gaMeasurementId} />}
       </body>

@@ -31,6 +31,7 @@ import { PrecheckinBadge } from './precheckin-badge'
 import { ContactHiddenNote } from './contact-hidden-note'
 import { CopyPrecheckinLink } from './copy-precheckin-link'
 import type { BookingPayments } from '@/features/pagamentos/services/booking-payment.service'
+import { channelLabel } from '@/features/origem/origin'
 
 const fmtDate = formatISODate
 const fmtDateTime = formatDateTime
@@ -95,6 +96,12 @@ export function BookingDetailView({
                 size="md"
               />
               <span className="text-muted-foreground text-sm">{ORIGIN_LABEL[booking.origin]}</span>
+              {booking.channel && (
+                <span className="text-muted-foreground text-sm">
+                  Origem da visita: {channelLabel(booking.channel)}
+                  {booking.channelCampaign ? ` (${booking.channelCampaign})` : ''}
+                </span>
+              )}
               {booking.externalCode && (
                 <span className="text-muted-foreground text-xs">
                   Código externo: {booking.externalCode}

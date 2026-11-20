@@ -16,6 +16,7 @@ const base: OwnerReservation = {
   guestName: 'Hóspede Sintético',
   guestEmail: 'hospede@exemplo.test',
   contactReleased: true,
+  channel: null,
   guestPhone: '(35) 99999-0000',
   roomName: 'Chalé',
   checkin: '2099-05-10',
