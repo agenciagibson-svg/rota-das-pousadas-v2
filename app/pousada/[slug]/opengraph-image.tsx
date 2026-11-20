@@ -13,7 +13,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   if (!p) return ogCard({ title: 'Rota das Pousadas', subtitle: 'Pousadas com reserva direta' })
   const badges = [
     p.pricePerNight > 0 ? `Diária a partir de ${formatPrice(p.pricePerNight)}` : '',
-    p.reviews > 0 ? `★ ${p.rating.toFixed(1)}` : '',
+    // Sem fonte com o símbolo de estrela no gerador: texto simples.
+    p.reviews > 0 ? `Nota ${p.rating.toFixed(1).replace('.', ',')}` : '',
   ].filter(Boolean)
   return ogCard({
     photo: p.image,
