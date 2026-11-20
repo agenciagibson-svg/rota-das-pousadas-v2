@@ -23,6 +23,12 @@ import { isSupabaseConfigured, publicEnv } from '@/lib/env'
  * próprio app, servido de `/_next/static/`.
  */
 const MAP_TILES_ORIGIN = 'https://tiles.openfreemap.org'
+/**
+ * Relevo dos mapas dos guias (sombreado e "Ver em 3D"): tiles de altitude
+ * abertos da AWS (Terrain Tiles / Mapzen), baixados pelo worker do MapLibre.
+ * Constante repetida em `components/map/terrain.ts`.
+ */
+const MAP_TERRAIN_ORIGIN = 'https://elevation-tiles-prod.s3.amazonaws.com'
 
 const CONNECT_SRC = [
   "'self'",
@@ -30,6 +36,7 @@ const CONNECT_SRC = [
   'https://*.supabase.in',
   'https://vitals.vercel-insights.com',
   MAP_TILES_ORIGIN,
+  MAP_TERRAIN_ORIGIN,
 ]
 
 /**
