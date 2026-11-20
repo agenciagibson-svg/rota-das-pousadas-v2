@@ -20,6 +20,23 @@ export type BlogBlock =
   | { type: 'tip'; text: string }
   | { type: 'facts'; items: { label: string; value: string }[] }
 
+/** Tipo do ponto no mapa do guia (define o ícone). */
+export type BlogPlaceKind = 'cidade' | 'cachoeira' | 'mirante' | 'igreja' | 'parque'
+
+/**
+ * Ponto do mapa do guia. Coordenadas conferidas no OpenStreetMap (Nominatim);
+ * quando o lugar é uma área (vila, complexo de cachoeiras), o ponto é
+ * aproximado — o cartão do mapa diz isso.
+ */
+export type BlogPlace = {
+  name: string
+  kind: BlogPlaceKind
+  point: { lat: number; lng: number }
+  /** Uma linha sobre o lugar, mostrada no cartão do mapa. */
+  note?: string
+  approximate?: boolean
+}
+
 export type BlogPost = {
   slug: string
   title: string
@@ -37,4 +54,27 @@ export type BlogPost = {
   status: 'rascunho' | 'publicado'
   blocks: BlogBlock[]
   faq?: { question: string; answer: string }[]
+  /** Pontos do mapa do guia (sem pontos, o guia não mostra mapa). */
+  places?: BlogPlace[]
+}
+
+/** Dica de leitor aprovada, como aparece no guia. */
+export type BlogTip = {
+  id: string
+  authorName: string
+  authorCity: string | null
+  body: string
+  /** URL assinada da foto (vale 1 dia), quando há foto. */
+  photoUrl: string | null
+  createdAt: string
+}
+
+export type BlogTipStatus = 'pendente' | 'aprovada' | 'recusada'
+
+/** Dica na fila de moderação do painel. */
+export type BlogTipForReview = BlogTip & {
+  postSlug: string
+  status: BlogTipStatus
+  /** A dica pediu foto mas o envio da foto não chegou. */
+  photoMissing: boolean
 }

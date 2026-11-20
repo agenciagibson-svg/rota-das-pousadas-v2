@@ -442,7 +442,8 @@ select test_assert(not exists (
     and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
     and p.proname not in (
       'record_link_event',  -- contador de visita da página da bio (teto por minuto)
-      'get_demo_pousada'    -- abre o link de demonstração (0101): só conta aberturas, uma por minuto
+      'get_demo_pousada',   -- abre o link de demonstração (0101): só conta aberturas, uma por minuto
+      'submit_blog_tip'     -- dica de leitor no blog (0108): entra pendente, com teto por guia e na fila
     )
 ), 'função de escrita aberta a anon');
 

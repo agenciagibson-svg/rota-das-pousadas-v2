@@ -1,5 +1,6 @@
 import type { BlogPost } from '../types'
 import { commons } from '../photos'
+import { PLACES } from '../places'
 
 export const delfinopolisCachoeiras: BlogPost = {
   slug: 'delfinopolis-o-que-fazer-cachoeiras-serra-da-canastra',
@@ -144,4 +145,5 @@ export const delfinopolisCachoeiras: BlogPost = {
         'A maioria fica em propriedades particulares e cobra uma taxa de visitação. Leve dinheiro ou confirme se aceitam Pix.',
     },
   ],
+  places: [PLACES.delfinopolis, PLACES.cachoeiraDaPaz],
 }

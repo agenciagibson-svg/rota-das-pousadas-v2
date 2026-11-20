@@ -347,6 +347,48 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_tips: {
+        Row: {
+          id: string
+          post_slug: string
+          author_name: string
+          author_city: string | null
+          body: string
+          photo_path: string | null
+          status: string
+          consent_at: string
+          created_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+        }
+        Insert: {
+          id?: string
+          post_slug: string
+          author_name: string
+          author_city?: string | null
+          body: string
+          photo_path?: string | null
+          status?: string
+          consent_at: string
+          created_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Update: {
+          id?: string
+          post_slug?: string
+          author_name?: string
+          author_city?: string | null
+          body?: string
+          photo_path?: string | null
+          status?: string
+          consent_at?: string
+          created_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+        }
+        Relationships: []
+      }
       pousada_welcome_guide_sends: {
         Row: {
           id: string
@@ -4018,6 +4060,21 @@ export type Database = {
       publish_contract_version: {
         Args: { p_code: string }
         Returns: string
+      }
+      submit_blog_tip: {
+        Args: {
+          p_post_slug: string
+          p_author_name: string
+          p_author_city: string
+          p_body: string
+          p_with_photo: boolean
+          p_consent: boolean
+        }
+        Returns: Json
+      }
+      moderate_blog_tip: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
       }
       get_demo_pousada: {
         Args: { p_token: string }

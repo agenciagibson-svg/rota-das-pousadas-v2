@@ -1,5 +1,6 @@
 import type { BlogPost } from '../types'
 import { commons } from '../photos'
+import { PLACES } from '../places'
 
 export const pirenopolisOQueFazer: BlogPost = {
   slug: 'pirenopolis-o-que-fazer-cachoeiras-centro-historico',
@@ -157,5 +158,12 @@ export const pirenopolisOQueFazer: BlogPost = {
       answer:
         'Na Festa do Divino, que acontece na época de Pentecostes, entre maio e junho. A cidade lota nesse período, então reserve com bastante antecedência.',
     },
+  ],
+  places: [
+    PLACES.matrizPirenopolis,
+    PLACES.bonsucesso,
+    PLACES.abade,
+    PLACES.vagafogo,
+    PLACES.picoPireneus,
   ],
 }

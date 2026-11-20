@@ -1,47 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Button } from '@/components/ui/button'
 import { BRAZIL_CENTER, toLngLat } from '@/lib/geo/coordinates'
-import { formatPrice } from '@/lib/format'
 import { COUNTRY_ZOOM, resultsCamera } from './map-config'
 import { MapSurface } from './map-surface'
 import { ResultCard, type MapResult } from './result-card'
-import { useMap, type MapState } from './use-map'
-import { useMarkerElement } from './use-marker'
+import { ResultMarker } from './result-marker'
+import { useMap } from './use-map'
 
 export type { MapResult }
-
-function ResultMarker({
-  state,
-  result,
-  selected,
-  onSelect,
-}: {
-  state: MapState
-  result: MapResult
-  selected: boolean
-  onSelect: () => void
-}) {
-  const element = useMarkerElement(state, result.point, { anchor: 'center' })
-  if (!element) return null
-  const price = result.price > 0 ? formatPrice(result.price) : null
-  return createPortal(
-    <Button
-      type="button"
-      size="pill-sm"
-      variant={selected ? 'accent' : 'default'}
-      aria-pressed={selected}
-      aria-label={`${result.name}${price ? `, a partir de ${price} a diária` : ''}`}
-      className="shadow-floating tabular-nums"
-      onClick={onSelect}
-    >
-      {price ?? result.name}
-    </Button>,
-    element,
-  )
-}
 
 /**
  * Mapa da busca `/pousadas`: uma etiqueta por pousada do resultado (com o

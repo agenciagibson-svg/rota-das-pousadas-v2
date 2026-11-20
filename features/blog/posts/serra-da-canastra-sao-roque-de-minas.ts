@@ -1,5 +1,6 @@
 import type { BlogPost } from '../types'
 import { commons } from '../photos'
+import { PLACES } from '../places'
 
 export const serraDaCanastraSaoRoque: BlogPost = {
   slug: 'serra-da-canastra-o-que-fazer-em-sao-roque-de-minas',
@@ -123,4 +124,5 @@ export const serraDaCanastraSaoRoque: BlogPost = {
         'Para a parte alta, a estrada do parque é de terra e ruim em vários trechos. Muita gente faz esse dia com passeio 4×4 e guia local, e usa carro comum no resto.',
     },
   ],
+  places: [PLACES.saoRoque, PLACES.nascenteSaoFrancisco, PLACES.cascaDAnta, PLACES.vargemBonita],
 }
