@@ -8,6 +8,7 @@ import {
   destinationPath,
   groupByCity,
   withCityPages,
+  cityPhoto,
 } from './destinos'
 import type { Destination } from '@/types'
 
@@ -158,5 +159,25 @@ describe('withCityPages', () => {
   it('cidade sem avaliação zera a nota curada', () => {
     const cities = groupByCity([pousada({ city: 'Bonito', state: 'MS' })])
     expect(withCityPages([curated('Bonito', 'MS')], cities)[0]!.rating).toBe(0)
+  })
+})
+
+describe('cityPhoto', () => {
+  it('usa a foto do destino cadastrado com o mesmo nome e UF', () => {
+    const [city] = groupByCity([pousada({ city: 'Tiradentes', state: 'MG' })])
+    const d = (name: string, state: string, image: string) =>
+      ({
+        slug: 'x',
+        name,
+        state,
+        image,
+        pousadas: 0,
+        rating: 0,
+        priceFrom: 0,
+        season: [],
+      }) as Destination
+    expect(cityPhoto(city!, [d('Tiradentes', 'MG', '/t.jpg')])).toBe('/t.jpg')
+    expect(cityPhoto(city!, [d('Tiradentes', 'SP', '/t.jpg')])).toBeNull()
+    expect(cityPhoto(city!, [d('Tiradentes', 'MG', ' ')])).toBeNull()
   })
 })

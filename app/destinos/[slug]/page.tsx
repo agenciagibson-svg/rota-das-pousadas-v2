@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Star } from 'lucide-react'
@@ -12,8 +13,9 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { absoluteUrl } from '@/lib/seo'
 import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { getCityDestination, getCityDestinations } from '@/server/queries'
+import { getCityDestination, getCityDestinations, getDestinations } from '@/server/queries'
 import {
+  cityPhoto,
   destinationDescription,
   destinationFaq,
   destinationIntro,
@@ -31,6 +33,7 @@ export async function generateMetadata({
   const { slug } = await params
   const d = await getCityDestination(slug)
   if (!d) return { title: 'Destino não encontrado', robots: { index: false } }
+  const photo = cityPhoto(d, await getDestinations()) ?? d.image
   const title = destinationTitle(d)
   const description = destinationDescription(d)
   const path = `/destinos/${d.slug}`
@@ -43,7 +46,7 @@ export async function generateMetadata({
       url: absoluteUrl(path),
       title,
       description,
-      ...(d.image ? { images: [{ url: d.image, alt: title }] } : {}),
+      ...(photo ? { images: [{ url: photo, alt: title }] } : {}),
     },
     twitter: { card: 'summary_large_image', title, description },
   }
@@ -56,7 +59,9 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
   if (!d) notFound()
 
   const faq = destinationFaq(d)
-  const others = (await getCityDestinations()).filter((o) => o.slug !== d.slug).slice(0, 8)
+  const [all, curated] = await Promise.all([getCityDestinations(), getDestinations()])
+  const others = all.filter((o) => o.slug !== d.slug).slice(0, 8)
+  const photo = cityPhoto(d, curated)
   const count = d.pousadas.length
 
   return (
@@ -72,9 +77,32 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
           ]}
         />
 
-        <header className="mt-6 max-w-3xl">
-          <h1 className="text-display-l text-foreground text-balance">{destinationTitle(d)}</h1>
-          <p className="text-muted-foreground mt-4 text-lg leading-relaxed text-pretty">
+        {photo ? (
+          // Capa com a foto da cidade (cadastrada em /admin → Destinos).
+          <header className="relative mt-6 overflow-hidden rounded-3xl">
+            <div className="relative aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9]">
+              <Image
+                src={photo}
+                alt={`${d.city}, ${d.state}`}
+                fill
+                priority
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                className="object-cover object-[center_40%]"
+              />
+              <div className="from-breu/85 via-breu/30 absolute inset-0 bg-gradient-to-t to-transparent" />
+              <div className="text-primary-foreground absolute inset-x-0 bottom-0 p-6 sm:p-10">
+                <h1 className="text-display-l text-balance">{destinationTitle(d)}</h1>
+              </div>
+            </div>
+          </header>
+        ) : (
+          <h1 className="text-display-l text-foreground mt-6 max-w-3xl text-balance">
+            {destinationTitle(d)}
+          </h1>
+        )}
+
+        <div className="mt-6 max-w-3xl">
+          <p className="text-muted-foreground text-lg leading-relaxed text-pretty">
             {destinationIntro(d)}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -98,7 +126,7 @@ export default async function DestinoPage({ params }: { params: Promise<{ slug: 
               </Badge>
             )}
           </div>
-        </header>
+        </div>
 
         <section aria-labelledby="lista-pousadas" className="mt-12">
           <h2 id="lista-pousadas" className="text-h2 text-foreground">

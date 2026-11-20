@@ -8,7 +8,8 @@ import { buttonVariants } from '@/components/ui/button'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { getCityDestinations } from '@/server/queries'
+import { getCityDestinations, getDestinations } from '@/server/queries'
+import { cityPhoto } from '@/features/destinos'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DestinosPage() {
-  const destinations = await getCityDestinations()
+  const [destinations, curated] = await Promise.all([getCityDestinations(), getDestinations()])
   const states = [...new Set(destinations.map((d) => d.state))].sort((a, b) =>
     a.localeCompare(b, 'pt-BR'),
   )
@@ -67,7 +68,7 @@ export default async function DestinosPage() {
                         className="group relative block aspect-[4/3] overflow-hidden rounded-3xl"
                       >
                         <Image
-                          src={d.image || '/placeholder.svg'}
+                          src={cityPhoto(d, curated) ?? (d.image || '/placeholder.svg')}
                           alt={`Pousadas em ${d.city}, ${d.state}`}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

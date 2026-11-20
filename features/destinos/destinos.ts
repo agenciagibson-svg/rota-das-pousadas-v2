@@ -220,3 +220,13 @@ export function withCityPages(curated: Destination[], cities: CityDestination[])
     }
   })
 }
+
+/**
+ * Foto da cidade: vem do destino cadastrado no /admin → Destinos com o mesmo
+ * nome e UF. Sem cadastro, a página não usa foto de pousada como se fosse a
+ * cidade — fica sem foto de capa.
+ */
+export function cityPhoto(city: CityDestination, curated: Destination[]): string | null {
+  const match = curated.find((d) => citySlug(d.name, d.state) === city.slug)
+  return match?.image?.trim() ? match.image : null
+}
