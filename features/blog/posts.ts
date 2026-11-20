@@ -1,12 +1,13 @@
 import type { BlogBlock, BlogPost } from './types'
 import { serraDaCanastraSaoRoque } from './posts/serra-da-canastra-sao-roque-de-minas'
+import { delfinopolisCachoeiras } from './posts/delfinopolis-cachoeiras'
 
 /**
  * Textos do blog. Cada texto é um arquivo em `posts/`. Novo texto entra como
  * `rascunho`: aparece só na versão de teste da Vercel, para aprovação; depois
  * de aprovado vira `publicado` e vai para o site, o sitemap e o Google.
  */
-export const ALL_POSTS: BlogPost[] = [serraDaCanastraSaoRoque]
+export const ALL_POSTS: BlogPost[] = [serraDaCanastraSaoRoque, delfinopolisCachoeiras]
 
 /** Versão de teste da Vercel (ou local): mostra os rascunhos. */
 export function showDrafts(env = process.env.VERCEL_ENV): boolean {
