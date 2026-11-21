@@ -5,6 +5,7 @@ import {
   AlertCircle,
   CalendarDays,
   CheckCircle2,
+  Gift,
   Heart,
   LayoutDashboard,
   ShieldCheck,
@@ -48,6 +49,7 @@ export default async function ContaPage({
   const shortcuts = [
     { label: 'Minhas reservas', href: '/minhas-reservas', icon: CalendarDays },
     { label: 'Favoritos', href: '/favoritos', icon: Heart },
+    { label: 'Ofertas das pousadas', href: '/conta/ofertas', icon: Gift },
     ...(hasPousada
       ? [{ label: 'Painel da pousada', href: '/dashboard', icon: LayoutDashboard }]
       : []),

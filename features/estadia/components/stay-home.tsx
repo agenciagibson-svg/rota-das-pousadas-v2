@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatBRL } from '@/lib/format'
+import { OfferConsentToggle } from '@/features/ofertas/components/offer-consent-toggle'
 import {
   Clock,
   Compass,
@@ -137,6 +138,13 @@ export function StayHome(ctx: StayCtx) {
               Ficou <strong>{formatBRL(stay.consumption.balance)}</strong> em aberto na conta da
               pousada. Toque para ver.
             </button>
+          )}
+          {ctx.offerConsent !== null && (
+            <OfferConsentToggle
+              pousadaId={pousada.id}
+              initial={ctx.offerConsent}
+              className="border-border mt-3 border-t pt-3"
+            />
           )}
           <div className="mt-3 flex flex-wrap gap-2">
             {stay.canReview && !stay.reviewed && (

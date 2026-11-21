@@ -1,5 +1,6 @@
 import { civilNow, DEFAULT_TIMEZONE, isoNightsBetween } from '@/lib/dates'
 import { reviewPagePath } from '@/features/estadia/review'
+import { offerHref } from '@/features/ofertas/rules'
 
 /**
  * Fases do app único da Rota (spec `claude/app-unico-loja-estadia-2026-11-20.md`).
@@ -161,12 +162,12 @@ export function phaseEntryPath(phase: AppPhase): string {
 
 /** Cartão da fase na loja (home): o atalho de volta para a viagem ou a estadia. */
 export type PhaseCard = {
-  kind: 'estadia' | 'escolher' | 'viagem' | 'pos' | 'pendente'
+  kind: 'estadia' | 'escolher' | 'viagem' | 'pos' | 'pendente' | 'oferta'
   eyebrow: string
   title: string
   cta: string
   href: string
-  /** Só o pós-estadia pode ser dispensado (some até a próxima estadia). */
+  /** Pós-estadia e oferta podem ser dispensados (cada um some de vez). */
   dismissKey?: string
 }
 
@@ -219,5 +220,29 @@ export function phaseCard(state: AppState): PhaseCard | null {
         href: `/pousada/${p.pousadaSlug}/reservar/${p.id}/pagamento`,
       }
     }
+  }
+}
+
+/** Na loja sem nada da fase: a oferta valendo que vence primeiro (0111). */
+export function offerCard(
+  offers: {
+    deliveryId: string
+    pousadaName: string
+    pousadaSlug: string
+    code: string
+    percent: number
+    validUntil: string
+  }[],
+): PhaseCard | null {
+  const o = offers[0]
+  if (!o) return null
+  const [, m, d] = o.validUntil.split('-')
+  return {
+    kind: 'oferta',
+    eyebrow: `Oferta para você · ${o.percent}% até ${d}/${m}`,
+    title: o.pousadaName,
+    cta: 'Ver datas com desconto',
+    href: offerHref(o.pousadaSlug, o.code),
+    dismissKey: `rp_oferta_${o.deliveryId}`,
   }
 }

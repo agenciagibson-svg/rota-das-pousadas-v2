@@ -105,6 +105,8 @@ export function PousadaBooking({
         guests: String(q.guests),
       })
       if (bookingOrigin) params.set('origem', bookingOrigin)
+      // Cupom do link (oferta) não se perde ao trocar as datas.
+      if (couponCode) params.set('cupom', couponCode)
       return `/pousada/${slug}?${params.toString()}`
     },
   })

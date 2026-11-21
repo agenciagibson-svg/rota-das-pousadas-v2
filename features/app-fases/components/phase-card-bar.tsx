@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { ArrowRight, CalendarCheck, CreditCard, KeyRound, Star, X } from 'lucide-react'
+import { ArrowRight, CalendarCheck, CreditCard, Gift, KeyRound, Star, X } from 'lucide-react'
 import type { PhaseCard } from '../phase'
 
 const ICON = {
@@ -11,6 +11,7 @@ const ICON = {
   viagem: CalendarCheck,
   pos: Star,
   pendente: CreditCard,
+  oferta: Gift,
 } as const
 
 function isDismissed(key: string | undefined): boolean {

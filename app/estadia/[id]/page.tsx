@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { isSupabaseConfigured } from '@/lib/env'
-import { getCurrentUser } from '@/server/queries'
+import { getCurrentUser, getMyOfferConsents } from '@/server/queries'
 import { getStay } from '@/features/estadia/services/stay.service'
 import { GuestStayApp } from '@/features/estadia/components/guest-stay-app'
 
@@ -64,5 +64,14 @@ export default async function EstadiaPage({ params }: { params: Promise<{ id: st
     )
   }
 
-  return <GuestStayApp stay={data.stay} orders={data.orders} />
+  // 0111: depois do check-out, o hóspede pode autorizar ofertas desta pousada.
+  let offerConsent: boolean | null = null
+  if (data.stay.booking.status === 'checked_out') {
+    const consents = await getMyOfferConsents().catch(() => null)
+    offerConsent = consents
+      ? (consents.find((c) => c.pousadaId === data.stay.pousada.id)?.granted ?? false)
+      : null
+  }
+
+  return <GuestStayApp stay={data.stay} orders={data.orders} offerConsent={offerConsent} />
 }

@@ -19,6 +19,13 @@ import { citySlug, groupByCity, groupByState } from '@/features/destinos/destino
 import { buildStayTypePages } from '@/features/pousadas/amenities'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { getMyAppState as appState } from '@/features/app-fases/services/app-phase.service'
+import {
+  getOfferAudience,
+  getOfferReport,
+  listMyActiveOffers,
+  listMyOfferConsents,
+  markOfferOpened,
+} from '@/features/ofertas/services/offers.service'
 import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
 import {
@@ -133,6 +140,17 @@ export const getBlogTips = cache((postSlug: string) => tipsForPost(postSlug))
 export const getDestinations = cache(() => destinations.listDestinations())
 export const getDestination = cache((slug: string) => destinations.getDestinationBySlug(slug))
 export const getExperiences = cache(() => destinations.listExperiences())
+
+/** Ofertas valendo para o usuário logado (0111). */
+export const getMyActiveOffers = cache(() => listMyActiveOffers())
+export const recordOfferOpened = (code: string) => markOfferOpened(code)
+/** Painel: público e relatório das ofertas (0111), só dono e gestor. */
+export const getOwnerOffers = cache(async () => {
+  const [audience, report] = await Promise.all([getOfferAudience(), getOfferReport()])
+  return { audience, report }
+})
+/** Autorizações de oferta do usuário logado (0111). */
+export const getMyOfferConsents = cache(() => listMyOfferConsents())
 
 /** Fase do app único (loja, viagem marcada, estadia, pós-estadia) do usuário logado. */
 export const getMyAppState = cache(() => appState())

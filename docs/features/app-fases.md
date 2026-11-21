@@ -63,8 +63,27 @@ manifesto do site. O service worker continua com escopo `/estadia`.
 - Painel: Configurações → App do hóspede → "Cara do app" (upload no bucket
   `pousadas`, pasta `<pousada>/app`, com prévia).
 
+## Ofertas para ex-hóspedes (etapa 4, migration 0111)
+
+- Autorização (`offer_consents`, RPC `set_offer_consent`): por pousada, padrão
+  desligado, só quem já fez check-out lá liga; desligar vale sempre. No app da
+  estadia (cartão de fim de estadia) e em `/conta/ofertas` (link do e-mail).
+- Oferta manual (Marketing → Ofertas para ex-hóspedes, `send_pousada_offer`):
+  5–50%, 7–90 dias, período de estadia e recado opcionais. Um cupom
+  `VOLTAxxxxxx` por pessoa (`pousada_coupons.guest_user_id`, uso único);
+  `coupon_evaluate` responde "inválido" para qualquer outra conta. Esses
+  cupons não aparecem na lista de cupons.
+- Limites (`offer_recipient_allowed`): 1 por mês de cada pousada e 3 por mês
+  no total por pessoa; quem tem reserva ativa na pousada não recebe.
+- E-mail pela Rota (`lib/email/offer-email.ts`), só das 8h às 21h (Brasília):
+  na hora, se o envio for nesse horário; senão pela rodada `/api/cron/ofertas`
+  (13h UTC). Marcado só depois de sair; até 3 tentativas.
+- Abertura (`?cupom=` na página da pousada, logado) e reserva feita com o
+  cupom (gatilho em `booking_coupon_redemptions`) entram no relatório do painel.
+- Loja: o cartão da fase mostra a oferta valendo quando não há nada da fase.
+
 ## Ainda não (próximas etapas)
 
 - Pós-estadia não sabe se o hóspede já avaliou (o `booking_id` da avaliação não
   é legível pelo hóspede desde a 0084); some quando ele dispensa ou em 7 dias.
-- Ofertas para ex-hóspedes e loja de apps.
+- Ofertas automáticas (6 meses, feriado, 1 ano) e loja de apps.

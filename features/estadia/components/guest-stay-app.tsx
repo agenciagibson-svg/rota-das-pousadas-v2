@@ -51,7 +51,16 @@ async function copyToClipboard(text: string) {
   }
 }
 
-export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestOrder[] }) {
+export function GuestStayApp({
+  stay,
+  orders,
+  offerConsent = null,
+}: {
+  stay: GuestStay
+  orders: GuestOrder[]
+  /** 0111: autorizou ofertas desta pousada? `null` = não se aplica (estadia não fechou). */
+  offerConsent?: boolean | null
+}) {
   const router = useRouter()
   const { booking, pousada } = stay
   const [tab, setTab] = useState<StayTab>('inicio')
@@ -235,6 +244,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const ctx: StayCtx = {
     stay,
     orders,
+    offerConsent,
     products,
     services,
     cart,

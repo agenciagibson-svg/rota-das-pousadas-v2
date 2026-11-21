@@ -7,6 +7,8 @@ export type StayTab = 'inicio' | 'estadia' | 'pedir' | 'conta' | 'recepcao'
 export type StayCtx = {
   stay: GuestStay
   orders: GuestOrder[]
+  /** 0111: autorizou ofertas desta pousada? `null` = não se aplica. */
+  offerConsent: boolean | null
   /** Itens vendáveis (sem os serviços, que ficam em "Pedidos rápidos"). */
   products: StayMenuItem[]
   services: StayMenuItem[]
