@@ -433,6 +433,8 @@ export type Database = {
           checked_in_at: string | null
           checked_in_by: string | null
           checked_out_at: string | null
+          checked_out_auto: boolean
+          checkout_open_note: string | null
           checked_out_by: string | null
           checkin: string
           checkin_reminder_sent_at: string | null
@@ -492,6 +494,8 @@ export type Database = {
           checked_in_at?: string | null
           checked_in_by?: string | null
           checked_out_at?: string | null
+          checked_out_auto?: boolean
+          checkout_open_note?: string | null
           checked_out_by?: string | null
           checkin: string
           checkin_reminder_sent_at?: string | null
@@ -551,6 +555,8 @@ export type Database = {
           checked_in_at?: string | null
           checked_in_by?: string | null
           checked_out_at?: string | null
+          checked_out_auto?: boolean
+          checkout_open_note?: string | null
           checked_out_by?: string | null
           checkin?: string
           checkin_reminder_sent_at?: string | null
@@ -2911,6 +2917,9 @@ export type Database = {
       }
       pousada_guest_settings: {
         Row: {
+          app_accent: string
+          app_cover_url: string
+          app_logo_url: string
           breakfast_info: string
           daily_agenda: Json
           emergency: Json
@@ -2926,6 +2935,9 @@ export type Database = {
           wifi_password: string
         }
         Insert: {
+          app_accent?: string
+          app_cover_url?: string
+          app_logo_url?: string
           breakfast_info?: string
           daily_agenda?: Json
           emergency?: Json
@@ -2941,6 +2953,9 @@ export type Database = {
           wifi_password?: string
         }
         Update: {
+          app_accent?: string
+          app_cover_url?: string
+          app_logo_url?: string
           breakfast_info?: string
           daily_agenda?: Json
           emergency?: Json
@@ -3100,6 +3115,119 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auto_offers: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      run_auto_offers: {
+        Args: {
+          p_holiday_name?: string | null
+          p_holiday_from?: string | null
+          p_holiday_until?: string | null
+        }
+        Returns: Json
+      }
+      save_auto_offers: {
+        Args: {
+          p_pousada_id: string
+          p_seis_meses_on: boolean
+          p_seis_meses_percent: number
+          p_aniversario_on: boolean
+          p_aniversario_percent: number
+          p_feriado_on: boolean
+          p_feriado_percent: number
+        }
+        Returns: undefined
+      }
+      count_offer_audience: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      get_pousada_offer_report: {
+        Args: { p_pousada_id: string }
+        Returns: {
+          offer_id: string
+          kind: string
+          percent: number
+          valid_days: number
+          stay_from: string | null
+          stay_until: string | null
+          message: string
+          created_at: string
+          recipients: number
+          emailed: number
+          opened: number
+          booked: number
+          revenue: number
+        }[]
+      }
+      list_offer_emails_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          delivery_id: string
+          email: string
+          guest_name: string
+          pousada_name: string
+          pousada_slug: string
+          code: string
+          percent: number
+          valid_until: string
+          stay_from: string | null
+          stay_until: string | null
+          message: string
+        }[]
+      }
+      mark_offer_email: {
+        Args: { p_delivery_id: string; p_sent: boolean }
+        Returns: undefined
+      }
+      mark_offer_opened: {
+        Args: { p_code: string }
+        Returns: undefined
+      }
+      my_active_offers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          delivery_id: string
+          pousada_name: string
+          pousada_slug: string
+          code: string
+          percent: number
+          valid_until: string
+          stay_from: string | null
+          stay_until: string | null
+          message: string
+        }[]
+      }
+      my_offer_consents: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          pousada_id: string
+          pousada_name: string
+          pousada_slug: string
+          granted: boolean
+          updated_at: string
+        }[]
+      }
+      send_pousada_offer: {
+        Args: {
+          p_pousada_id: string
+          p_percent: number
+          p_valid_days?: number
+          p_stay_from?: string | null
+          p_stay_until?: string | null
+          p_message?: string
+        }
+        Returns: Json
+      }
+      set_offer_consent: {
+        Args: { p_pousada_id: string; p_granted: boolean }
+        Returns: Json
+      }
+      close_overdue_stays: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       auth_has_pousada_role: {
         Args: { target_pousada: string; roles: string[] }
         Returns: boolean

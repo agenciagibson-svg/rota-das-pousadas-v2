@@ -180,6 +180,11 @@ export type BookingDetail = {
   paymentDueAt: string | null
   /** 0088: quando o hóspede enviou o pré-check-in. `null` = ficha pendente. */
   precheckinCompletedAt: string | null
+  /** 0109: quando e como a estadia fechou (pelo sistema, 4h depois do check-out). */
+  checkedOutAt?: string | null
+  checkedOutAuto?: boolean
+  /** 0109: fechada com consumo em aberto — motivo da equipe ou aviso do sistema. */
+  checkoutOpenNote?: string | null
   version: number
   createdAt: string
   updatedAt: string

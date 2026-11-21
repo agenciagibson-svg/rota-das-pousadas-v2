@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   sendReviewRequests: vi.fn(),
   sendReviewReminders: vi.fn(),
   sendMonthlyReports: vi.fn(),
+  closeOverdueStaysDaily: vi.fn(),
   reportError: vi.fn(),
 }))
 vi.mock('@/features/dashboard/services/monthly-report.service', () => ({
@@ -30,6 +31,9 @@ vi.mock('@/features/reservas/services/checkin-reminders.service', () => ({
 vi.mock('@/features/pagamentos/services/pix.service', () => ({
   notifyPaymentReviews: mocks.notifyPaymentReviews,
 }))
+vi.mock('@/features/app-fases/services/auto-close.service', () => ({
+  closeOverdueStaysDaily: mocks.closeOverdueStaysDaily,
+}))
 vi.mock('@/lib/observability/report-error', () => ({ reportError: mocks.reportError }))
 
 const SECRET = 'segredo-do-cron-de-teste'
@@ -49,6 +53,7 @@ function expectNothingRan() {
   expect(mocks.sendReviewRequests).not.toHaveBeenCalled()
   expect(mocks.sendReviewReminders).not.toHaveBeenCalled()
   expect(mocks.sendMonthlyReports).not.toHaveBeenCalled()
+  expect(mocks.closeOverdueStaysDaily).not.toHaveBeenCalled()
 }
 
 async function silenced<T>(run: () => Promise<T>): Promise<T> {
@@ -71,6 +76,7 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
     mocks.sendReviewRequests.mockResolvedValue({ sent: 4, failed: 0 })
     mocks.sendReviewReminders.mockResolvedValue({ sent: 1, failed: 1 })
     mocks.sendMonthlyReports.mockResolvedValue({ skipped: true })
+    mocks.closeOverdueStaysDaily.mockResolvedValue({ closed: 2 })
     mocks.reportError.mockResolvedValue(undefined)
   })
   afterEach(() => {
@@ -107,6 +113,7 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
+      closedStays: { closed: 2 },
       bookings: { expired: 2 },
       quoteRequests: { purged: 1 },
       checkinReminders: { sent: 3 },
@@ -166,6 +173,34 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
     expect(order).toEqual(['expiracao', 'avisos'])
   })
 
+  it('fecha as estadias esquecidas antes de pedir avaliação', async () => {
+    const order: string[] = []
+    mocks.closeOverdueStaysDaily.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      order.push('fechamento')
+      return { closed: 1 }
+    })
+    mocks.sendReviewRequests.mockImplementation(async () => {
+      order.push('avaliacoes')
+      return { sent: 1, failed: 0 }
+    })
+
+    await GET(request(`Bearer ${SECRET}`))
+
+    expect(order).toEqual(['fechamento', 'avaliacoes'])
+  })
+
+  it('o fechamento falhando não impede as outras tarefas', async () => {
+    mocks.closeOverdueStaysDaily.mockRejectedValue(new Error(TECHNICAL))
+
+    const response = await silenced(() => GET(request(`Bearer ${SECRET}`)))
+
+    expect(response.status).toBe(500)
+    expect(mocks.sendReviewRequests).toHaveBeenCalledTimes(1)
+    expect(await response.json()).toMatchObject({ closedStays: { error: 'falhou' } })
+    expect(mocks.reportError).toHaveBeenCalledWith(expect.any(Error), { where: 'cron:fechamento' })
+  })
+
   describe('uma tarefa falhando', () => {
     beforeEach(() => {
       mocks.purgeStaleQuoteRequests.mockRejectedValue(new Error(TECHNICAL))
@@ -186,6 +221,7 @@ describe('cron de expiração (rodada diária de manutenção)', () => {
       expect(mocks.sendReviewRequests).toHaveBeenCalledTimes(1)
       expect(mocks.sendReviewReminders).toHaveBeenCalledTimes(1)
       expect(await response.json()).toEqual({
+        closedStays: { closed: 2 },
         bookings: { expired: 2 },
         quoteRequests: { error: 'falhou' },
         checkinReminders: { sent: 3 },

@@ -8,10 +8,12 @@ import {
   sendReviewRequests,
 } from '@/features/estadia/services/review-requests.service'
 import { sendMonthlyReports } from '@/features/dashboard/services/monthly-report.service'
+import { closeOverdueStaysDaily } from '@/features/app-fases/services/auto-close.service'
 import { reportError } from '@/lib/observability/report-error'
 
 /**
- * Rodada diária de manutenção: expira pré-reserva vencida, purga pedido de
+ * Rodada diária de manutenção: fecha a estadia que a pousada esqueceu de
+ * fechar (0109), expira pré-reserva vencida, purga pedido de
  * orçamento não convertido com mais de 180 dias (0059, LGPD) e envia lembrete
  * de check-in por e-mail pras reservas confirmadas de daqui a 2 dias (0060) e
  * pede avaliação a quem saiu há 1-3 dias, com um lembrete único 3 dias depois
@@ -43,6 +45,9 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Primeiro fecha as estadias esquecidas (0109): quem saiu entra no pedido
+    // de avaliação desta mesma rodada.
+    const [closedStays] = await Promise.allSettled([closeOverdueStaysDaily()])
     // allSettled: uma tarefa que falha não esconde as outras que rodaram.
     const [
       bookings,
@@ -70,6 +75,7 @@ export async function GET(request: Request) {
       return { error: 'falhou' }
     }
     const settled = [
+      closedStays,
       bookings,
       quoteRequests,
       checkinReminders,
@@ -79,6 +85,7 @@ export async function GET(request: Request) {
     ]
     const failed = settled.some((r) => r.status === 'rejected')
     const body = {
+      closedStays: out(closedStays, 'fechamento'),
       bookings: out(bookings, 'expiracao'),
       quoteRequests: out(quoteRequests, 'orcamentos'),
       checkinReminders: out(checkinReminders, 'lembretes'),

@@ -23,6 +23,8 @@ import {
 import { ShareButton } from './share-button'
 import { DemoBookingCard } from './demo-booking-card'
 import { DirectBookingPerk } from '@/features/cupons/components/direct-booking-perk'
+import { OfferPerk } from '@/features/ofertas/components/offer-perk'
+import type { ActiveOffer } from '@/repositories/offers.repository'
 import type { FeaturedCoupon } from '@/features/cupons/types'
 
 export type { BookableRoomInfo, PublicRoomInfo }
@@ -44,6 +46,8 @@ export function PousadaDetail({
   isLoggedIn,
   bookingOrigin,
   featuredCoupon,
+  offer = null,
+  couponCode,
   demo = false,
   areaCenter = null,
 }: {
@@ -61,6 +65,10 @@ export function PousadaDetail({
   bookingOrigin?: 'link_bio'
   /** Cupom divulgado pela pousada (0100), já filtrado: só vem se vale hoje. */
   featuredCoupon?: FeaturedCoupon | null
+  /** Oferta recebida por ex-hóspede (0111), já conferida para quem está logado. */
+  offer?: ActiveOffer | null
+  /** Cupom que veio no link (`?cupom=`); vence o cupom divulgado. */
+  couponCode?: string
   /**
    * Link de demonstração (0101): pousada que ainda não é cliente. Sem
    * favoritar, compartilhar nem reservar — o card de reserva explica ao dono
@@ -206,8 +214,12 @@ export function PousadaDetail({
                   />
                 ) : (
                   <>
-                    {featuredCoupon && (
-                      <DirectBookingPerk coupon={featuredCoupon} className="mb-4" />
+                    {offer ? (
+                      <OfferPerk offer={offer} className="mb-4" />
+                    ) : (
+                      featuredCoupon && (
+                        <DirectBookingPerk coupon={featuredCoupon} className="mb-4" />
+                      )
                     )}
                     <PousadaBooking
                       slug={pousada.slug}
@@ -215,7 +227,7 @@ export function PousadaDetail({
                       room={room}
                       initialBooking={initialBooking}
                       bookingOrigin={bookingOrigin}
-                      couponCode={featuredCoupon?.code}
+                      couponCode={couponCode ?? featuredCoupon?.code}
                     />
                   </>
                 )}

@@ -18,6 +18,15 @@ import * as destinations from '@/services/destinations.service'
 import { citySlug, groupByCity, groupByState } from '@/features/destinos/destinos'
 import { buildStayTypePages } from '@/features/pousadas/amenities'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
+import { getMyAppState as appState } from '@/features/app-fases/services/app-phase.service'
+import {
+  getAutoOffers,
+  getOfferAudience,
+  getOfferReport,
+  listMyActiveOffers,
+  listMyOfferConsents,
+  markOfferOpened,
+} from '@/features/ofertas/services/offers.service'
 import { getMyProfile as myProfile } from '@/features/auth/services/profile.service'
 import { reconcileBookingPayments } from '@/features/pagamentos/services/webhook.service'
 import {
@@ -81,6 +90,7 @@ import {
 } from '@/features/bio/services/bio.service'
 import {
   bookingCanPayOnlineRpc,
+  closeOverdueStays,
   getBookingDetailById,
   getBookingFnrhData,
 } from '@/repositories/bookings.repository'
@@ -131,6 +141,25 @@ export const getBlogTips = cache((postSlug: string) => tipsForPost(postSlug))
 export const getDestinations = cache(() => destinations.listDestinations())
 export const getDestination = cache((slug: string) => destinations.getDestinationBySlug(slug))
 export const getExperiences = cache(() => destinations.listExperiences())
+
+/** Ofertas valendo para o usuário logado (0111). */
+export const getMyActiveOffers = cache(() => listMyActiveOffers())
+export const recordOfferOpened = (code: string) => markOfferOpened(code)
+/** Painel: público e relatório das ofertas (0111), só dono e gestor. */
+export const getOwnerOffers = cache(async () => {
+  const [audience, report, auto] = await Promise.all([
+    getOfferAudience(),
+    getOfferReport(),
+    // Sem a 0112, o painel mostra as ofertas manuais sem as automáticas.
+    getAutoOffers().catch(() => null),
+  ])
+  return { audience, report, auto }
+})
+/** Autorizações de oferta do usuário logado (0111). */
+export const getMyOfferConsents = cache(() => listMyOfferConsents())
+
+/** Fase do app único (loja, viagem marcada, estadia, pós-estadia) do usuário logado. */
+export const getMyAppState = cache(() => appState())
 
 /** Usuário autenticado atual (sessão + profile + papéis), memoizado por request. */
 export const getCurrentUser = cache(() => currentUser())
@@ -314,6 +343,8 @@ export const canManageGuests = cache(async () => {
  */
 export const getOwnerReservationDetail = cache(async (bookingId: string) => {
   const { pousadaId, role } = await requireAnyCapability(['booking:manage', 'payment:register'])
+  // Estadia esquecida aberta fecha antes de mostrar (0109).
+  await closeOverdueStays()
   const booking = await getBookingDetailById(bookingId, pousadaId)
   return booking ? { ...booking, canManageBooking: can(role, 'booking:manage') } : null
 })

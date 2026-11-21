@@ -1,7 +1,5 @@
 {
-  "regions": [
-    "pdx1"
-  ],
+  "regions": ["pdx1"],
   "crons": [
     {
       "path": "/api/cron/canais",
@@ -10,6 +8,10 @@
     {
       "path": "/api/cron/expiracao",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/ofertas",
+      "schedule": "0 13 * * *"
     }
   ]
 }

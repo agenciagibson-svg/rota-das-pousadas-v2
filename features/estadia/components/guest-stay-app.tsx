@@ -1,5 +1,6 @@
 'use client'
 
+import { accentHex } from '@/features/app-fases/brand'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -50,7 +51,16 @@ async function copyToClipboard(text: string) {
   }
 }
 
-export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestOrder[] }) {
+export function GuestStayApp({
+  stay,
+  orders,
+  offerConsent = null,
+}: {
+  stay: GuestStay
+  orders: GuestOrder[]
+  /** 0111: autorizou ofertas desta pousada? `null` = não se aplica (estadia não fechou). */
+  offerConsent?: boolean | null
+}) {
   const router = useRouter()
   const { booking, pousada } = stay
   const [tab, setTab] = useState<StayTab>('inicio')
@@ -234,6 +244,7 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const ctx: StayCtx = {
     stay,
     orders,
+    offerConsent,
     products,
     services,
     cart,
@@ -263,8 +274,14 @@ export function GuestStayApp({ stay, orders }: { stay: GuestStay; orders: GuestO
   const detailRoom = detail ? detail.maxQuantity - (cart[detail.id] ?? 0) : 0
   const detailCanAdd = !!detail && detail.available && !orderBlockedReason && detailRoom > 0
 
+  // 0110: cor da pousada no lugar do Ipê (a paleta inteira é legível com texto escuro).
+  const accent = accentHex(stay.brand.accent)
+
   return (
-    <div className={cx('text-app-ink min-h-dvh', APP_BG)}>
+    <div
+      className={cx('text-app-ink min-h-dvh', APP_BG)}
+      style={accent ? ({ '--ipe': accent } as React.CSSProperties) : undefined}
+    >
       <main
         id="conteudo"
         tabIndex={-1}

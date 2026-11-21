@@ -66,6 +66,16 @@ export function OwnerReservationsTable({
                     precheckinDone={reservation.precheckinDone}
                     todayISO={today}
                   />
+                  {reservation.checkedOutAuto && (
+                    <Badge variant="secondary" size="sm">
+                      Fechada pelo sistema
+                    </Badge>
+                  )}
+                  {reservation.checkoutOpenNote && (
+                    <Badge variant="goldSoft" size="sm">
+                      Consumo em aberto
+                    </Badge>
+                  )}
                   {reservation.needsAttention && (
                     <Badge variant="destructiveSoft" size="sm">
                       <AlertTriangle className="mr-1 size-3" />

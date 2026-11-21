@@ -1,4 +1,5 @@
 import 'server-only'
+import { isAppAccent } from '@/features/app-fases/brand'
 import {
   readList,
   type AgendaItem,
@@ -276,7 +277,7 @@ export async function getGuestSettings(pousadaId: string): Promise<GuestSettings
   const { data, error } = await supabase
     .from('pousada_guest_settings')
     .select(
-      'wifi_name, wifi_password, guest_info, orders_enabled, orders_hours, breakfast_info, parking_info, facilities, daily_agenda, local_tips, emergency',
+      'wifi_name, wifi_password, guest_info, orders_enabled, orders_hours, breakfast_info, parking_info, facilities, daily_agenda, local_tips, emergency, app_logo_url, app_cover_url, app_accent',
     )
     .eq('pousada_id', pousadaId)
     .maybeSingle()
@@ -293,6 +294,9 @@ export async function getGuestSettings(pousadaId: string): Promise<GuestSettings
     dailyAgenda: readList<AgendaItem>(data?.daily_agenda, ['time', 'title', 'note']),
     localTips: readList<LocalTip>(data?.local_tips, ['name', 'kind', 'distance']),
     emergency: readList<EmergencyContact>(data?.emergency, ['label', 'phone']),
+    appLogoUrl: data?.app_logo_url ?? '',
+    appCoverUrl: data?.app_cover_url ?? '',
+    appAccent: isAppAccent(data?.app_accent) ? data.app_accent : '',
   }
 }
 
@@ -311,6 +315,9 @@ export async function saveGuestSettings(pousadaId: string, s: GuestSettings): Pr
     daily_agenda: s.dailyAgenda,
     local_tips: s.localTips,
     emergency: s.emergency,
+    app_logo_url: s.appLogoUrl,
+    app_cover_url: s.appCoverUrl,
+    app_accent: s.appAccent,
     updated_at: new Date().toISOString(),
   })
   if (error) throw new Error(error.message)

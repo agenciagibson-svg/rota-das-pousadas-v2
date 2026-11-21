@@ -17,6 +17,8 @@ export type ImageUploadProps = {
   max?: number
   /** Pasta dentro do bucket (ex.: id da pousada — a policy só deixa o dono subir na dele). */
   folder?: string
+  /** Marca a primeira foto como "Capa" (lista de fotos da pousada). Padrão: sim. */
+  coverBadge?: boolean
 }
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
@@ -35,6 +37,7 @@ export function ImageUpload({
   bucket = 'pousadas',
   max = 12,
   folder,
+  coverBadge = true,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -124,7 +127,7 @@ export function ImageUpload({
                 Tornar capa
               </button>
             )}
-            {index === 0 && (
+            {index === 0 && coverBadge && (
               <span className="bg-foreground/70 text-background absolute bottom-1 left-1 rounded-full px-2 py-0.5 text-[10px] font-semibold">
                 Capa
               </span>

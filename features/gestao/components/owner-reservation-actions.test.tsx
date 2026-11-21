@@ -10,6 +10,7 @@ vi.mock('../actions', () => ({
 vi.mock('@/components/dashboard/role-context', () => ({ useDashboardRole: () => 'proprietario' }))
 
 import { OwnerReservationActions } from './owner-reservation-actions'
+import { updateReservationStatusAction } from '../actions'
 
 function openCheckout(props: { balanceDue?: number; consumptionDue?: number }) {
   render(
@@ -46,5 +47,37 @@ describe('confirmação do check-out', () => {
   it('diária em aberto continua avisando', () => {
     openCheckout({ balanceDue: 100 })
     expect(screen.getByText(/da diária/)).toBeTruthy()
+  })
+  it('consumo em aberto: só fecha com motivo, que vai junto para o sistema', () => {
+    vi.mocked(updateReservationStatusAction).mockResolvedValue({
+      ok: true,
+      data: { bookingId: 'b-1', status: 'checked_out' },
+    })
+    openCheckout({ balanceDue: 0, consumptionDue: 18 })
+    const close = screen.getByRole('button', { name: /Fechar com pendência/ })
+    expect((close as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.change(screen.getByPlaceholderText(/Pix amanhã/), {
+      target: { value: 'Paga por Pix amanhã' },
+    })
+    expect((close as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(close)
+    expect(updateReservationStatusAction).toHaveBeenCalledWith({
+      bookingId: 'b-1',
+      status: 'checked_out',
+      reason: 'Paga por Pix amanhã',
+    })
+  })
+
+  it('sem consumo em aberto: check-out direto, sem motivo', () => {
+    vi.mocked(updateReservationStatusAction).mockResolvedValue({
+      ok: true,
+      data: { bookingId: 'b-1', status: 'checked_out' },
+    })
+    openCheckout({ balanceDue: 0, consumptionDue: 0 })
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar check-out/ }))
+    expect(updateReservationStatusAction).toHaveBeenLastCalledWith({
+      bookingId: 'b-1',
+      status: 'checked_out',
+    })
   })
 })

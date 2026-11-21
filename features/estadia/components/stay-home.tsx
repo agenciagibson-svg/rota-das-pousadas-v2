@@ -1,6 +1,21 @@
 'use client'
 
-import { Clock, Home, KeyRound, MapPin, MessageCircle, Plus, ShoppingBag, Wifi } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { formatBRL } from '@/lib/format'
+import { OfferConsentToggle } from '@/features/ofertas/components/offer-consent-toggle'
+import {
+  Clock,
+  Compass,
+  Home,
+  KeyRound,
+  MapPin,
+  MessageCircle,
+  Plus,
+  ShoppingBag,
+  Star,
+  Wifi,
+} from 'lucide-react'
 import { agendaState } from '../info'
 import { daysBetween, dayMonth, hourLabel, shortDate } from '../dates'
 import type { StayCtx } from './stay-context'
@@ -26,20 +41,35 @@ export function StayHome(ctx: StayCtx) {
   const highlights = products.slice(0, 8)
   const states = now ? agendaState(info.dailyAgenda, now) : info.dailyAgenda.map(() => 'next')
   const isCheckoutDay = stay.today === booking.checkout
+  const ended = booking.status === 'checked_out' || booking.checkout < stay.today
 
   return (
     <>
       <div className="flex items-center gap-2.5">
-        <span className="bg-app-strong text-neblina grid size-11 shrink-0 place-items-center rounded-full">
-          <Home className="size-[18px]" />
-        </span>
+        {stay.brand.logoUrl ? (
+          <span className="relative size-11 shrink-0 overflow-hidden rounded-full bg-white">
+            <Image
+              src={stay.brand.logoUrl}
+              alt={`Logo da ${pousada.name}`}
+              fill
+              sizes="44px"
+              className="object-contain p-1"
+            />
+          </span>
+        ) : (
+          <span className="bg-app-strong text-neblina grid size-11 shrink-0 place-items-center rounded-full">
+            <Home className="size-[18px]" />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="text-muted-foreground text-[11.5px]">Sua estadia em</p>
           <p className="truncate text-[14.5px] font-bold">{pousada.name}</p>
         </div>
         <ThemeQuickToggle />
-        <RoundButton label="Falar com a recepção" onClick={() => ctx.go('recepcao')}>
-          <MessageCircle className="size-[18px]" />
+        {/* A loja não some durante a estadia: dá para reservar a próxima viagem daqui.
+            (A recepção continua na barra de baixo.) */}
+        <RoundButton label="Explorar pousadas" href="/">
+          <Compass className="size-[18px]" />
         </RoundButton>
       </div>
 
@@ -54,9 +84,25 @@ export function StayHome(ctx: StayCtx) {
       <button
         type="button"
         onClick={() => ctx.go('estadia')}
-        className="bg-app-strong text-neblina mt-3 grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-[28px] p-[18px] text-left"
+        className="bg-app-strong text-neblina relative mt-3 grid w-full grid-cols-[1fr_auto] items-center gap-3 overflow-hidden rounded-[28px] p-[18px] text-left"
       >
-        <div className="min-w-0">
+        {stay.brand.coverUrl && (
+          <>
+            <Image
+              src={stay.brand.coverUrl}
+              alt=""
+              fill
+              sizes="(max-width: 512px) 100vw, 512px"
+              className="object-cover"
+              priority
+            />
+            <span
+              aria-hidden
+              className="from-breu/95 via-breu/75 to-breu/35 absolute inset-0 bg-gradient-to-r"
+            />
+          </>
+        )}
+        <div className="relative min-w-0">
           <p className="text-liquen truncate text-[11.5px]">{booking.roomName}</p>
           <p className="font-display mt-0.5 text-[17px] font-medium">
             {dayMonth(booking.checkin)} → {dayMonth(booking.checkout)}
@@ -71,10 +117,60 @@ export function StayHome(ctx: StayCtx) {
             </Pill>
           </div>
         </div>
-        <span className="bg-ipe grid size-[62px] place-items-center rounded-full">
+        <span className="bg-ipe relative grid size-[62px] place-items-center rounded-full">
           <KeyRound className="text-breu size-6" />
         </span>
       </button>
+
+      {ended && (
+        <div className="bg-card mt-3 rounded-[24px] p-4">
+          <p className="text-[14.5px] font-bold">Sua estadia terminou</p>
+          <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
+            Obrigado pela estadia! Quando quiser voltar, ou conhecer outra pousada da Rota, é por
+            aqui.
+          </p>
+          {stay.consumption.balance > 0.009 && (
+            <button
+              type="button"
+              onClick={() => ctx.go('conta')}
+              className="border-ipe/60 bg-ipe/15 mt-3 w-full rounded-2xl border p-3 text-left text-[13px] leading-snug"
+            >
+              Ficou <strong>{formatBRL(stay.consumption.balance)}</strong> em aberto na conta da
+              pousada. Toque para ver.
+            </button>
+          )}
+          {ctx.offerConsent !== null && (
+            <OfferConsentToggle
+              pousadaId={pousada.id}
+              initial={ctx.offerConsent}
+              className="border-border mt-3 border-t pt-3"
+            />
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {stay.canReview && !stay.reviewed && (
+              <button
+                type="button"
+                onClick={() => ctx.go('recepcao')}
+                className="bg-app-strong text-neblina inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold"
+              >
+                <Star className="size-4" /> Avaliar a estadia
+              </button>
+            )}
+            <Link
+              href={`/pousada/${pousada.slug}`}
+              className="bg-ipe text-breu inline-flex min-h-11 items-center rounded-full px-4 text-[13px] font-semibold"
+            >
+              Reservar de novo
+            </Link>
+            <Link
+              href="/"
+              className="border-border text-app-ink inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold"
+            >
+              <Compass className="size-4" /> Outras pousadas
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 grid grid-cols-4 gap-2">
         <QuickTile

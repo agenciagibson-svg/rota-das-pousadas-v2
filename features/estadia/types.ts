@@ -1,4 +1,6 @@
 import type { InventoryCategory } from '@/features/estoque/labels'
+import { isAppAccent, type AppAccent } from '@/features/app-fases/brand'
+import { isStoredImageUrl } from '@/lib/validation/image-url'
 import {
   readList,
   type AgendaItem,
@@ -71,6 +73,8 @@ export type GuestStay = {
   reviewed: boolean
   consumption: { delivered: number; open: number; paid: number; balance: number }
   menu: StayMenuItem[]
+  /** 0110: cara da pousada no app (logo, capa e cor). `null` = padrão da Rota. */
+  brand: { logoUrl: string | null; coverUrl: string | null; accent: AppAccent | null }
 }
 
 /** Converte o JSON da RPC `get_guest_stay` (números podem vir como string). */
@@ -148,5 +152,15 @@ export function parseGuestStay(raw: unknown): GuestStay {
       available: !!m.available,
       maxQuantity: Math.max(0, Math.min(20, n(m.maxQuantity))),
     })),
+    brand: {
+      logoUrl: imageOrNull(r.brand?.logoUrl),
+      // Sem a 0110 (ou sem capa própria), a foto principal da pousada.
+      coverUrl: imageOrNull(r.brand?.coverUrl) ?? imageOrNull(r.pousada.image),
+      accent: isAppAccent(r.brand?.accent) && r.brand.accent !== 'ipe' ? r.brand.accent : null,
+    },
   }
+}
+
+function imageOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value !== '' && isStoredImageUrl(value, false) ? value : null
 }

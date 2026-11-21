@@ -3,30 +3,27 @@ import { redirect } from 'next/navigation'
 import { CalendarDays, ChevronRight } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 import { isSupabaseConfigured } from '@/lib/env'
-import { getCurrentUser } from '@/server/queries'
+import { getCurrentUser, getMyAppState } from '@/server/queries'
 import { listMyStays } from '@/features/estadia/services/stay.service'
 import { formatISODate } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Porta de entrada do app (QR do quarto e ícone da tela inicial): leva direto
- * para a estadia em curso; com mais de uma, deixa escolher.
+ * Entrada do app da estadia (QR do quarto): leva direto para a estadia em curso
+ * ou a viagem marcada (fases em features/app-fases); com mais de uma, deixa escolher.
  */
 export default async function EstadiaIndexPage() {
   const user = await getCurrentUser()
   // Modo demonstração (preview sem Supabase): abre a estadia de exemplo sem login.
   if (!user && isSupabaseConfigured()) redirect('/login?next=/estadia')
 
-  const stays = await listMyStays()
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(
-    new Date(),
-  )
-  const current = stays.filter(
-    (s) => s.checkin <= today && s.checkout >= today && s.status !== 'checked_out',
-  )
-  if (current.length === 1) redirect(`/estadia/${current[0]!.id}`)
-  if (current.length === 0 && stays.length === 1) redirect(`/estadia/${stays[0]!.id}`)
+  const [{ phase }, all] = await Promise.all([getMyAppState(), listMyStays()])
+  // Mesma regra da porta de entrada do app (/app): estadia ou viagem marcada abre direto.
+  if (phase.kind === 'estadia' || phase.kind === 'viagem') redirect(`/estadia/${phase.booking.id}`)
+  // Duas estadias em curso: só elas na lista; senão, todas as recentes.
+  const inCourse = phase.kind === 'escolher' ? new Set(phase.bookings.map((b) => b.id)) : null
+  const stays = inCourse ? all.filter((s) => inCourse.has(s.id)) : all
 
   return (
     <main id="conteudo" tabIndex={-1} className="bg-background min-h-dvh">

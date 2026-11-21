@@ -1,0 +1,122 @@
+-- =============================================================================
+-- 0110 — Cara da pousada no app da estadia
+--
+-- App único (spec claude/app-unico-loja-estadia-2026-11-20.md, etapa 3): na
+-- fase de estadia o app mostra o logo, a capa e a cor da pousada. Tudo
+-- opcional — sem logo, o ícone padrão; sem capa, a foto principal da pousada;
+-- sem cor, a cor da Rota (Ipê).
+--
+--   (A) pousada_guest_settings ganha app_logo_url, app_cover_url e app_accent.
+--       A cor é uma chave de uma paleta fixa (features/app-fases/brand.ts),
+--       toda ela legível com texto escuro — o contraste não depende do dono.
+--       As URLs são fotos do bucket `pousadas` (o painel só aceita essas).
+--   (B) get_guest_stay devolve `brand` { logoUrl, coverUrl, accent }.
+--
+-- Aditiva e idempotente. Rollback em supabase/rollback/0110_rollback.sql.
+-- =============================================================================
+
+alter table pousada_guest_settings
+  add column if not exists app_logo_url text not null default ''
+    check (char_length(app_logo_url) <= 500),
+  add column if not exists app_cover_url text not null default ''
+    check (char_length(app_cover_url) <= 500),
+  add column if not exists app_accent text not null default ''
+    check (app_accent in ('', 'ipe', 'pitanga', 'pessego', 'areia', 'capim', 'menta', 'ceu', 'lavanda'));
+
+comment on column pousada_guest_settings.app_accent is
+  '0110: cor do app na estadia — chave da paleta em features/app-fases/brand.ts (vazio = Ipê).';
+
+-- =============================================================================
+-- (B) get_guest_stay — 0079 + `brand`.
+-- =============================================================================
+create or replace function get_guest_stay(p_booking_id uuid)
+returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  v_b bookings%rowtype;
+  v_p pousadas%rowtype;
+  v_s pousada_guest_settings%rowtype;
+  v_today date;
+  v_room text;
+  v_can_order boolean;
+  v_reviewed boolean;
+  v_menu jsonb;
+  v_guest text;
+  v_amen jsonb;
+begin
+  if auth.uid() is null then raise exception 'Faça login.'; end if;
+  select * into v_b from bookings where id = p_booking_id;
+  if v_b.id is null or v_b.guest_id is distinct from auth.uid() then
+    raise exception 'Reserva não encontrada.';
+  end if;
+  select * into v_p from pousadas where id = v_b.pousada_id;
+  select * into v_s from pousada_guest_settings where pousada_id = v_b.pousada_id;
+  select name into v_room from rooms where id = v_b.room_id;
+  v_today := pousada_today(v_b.pousada_id);
+  v_can_order := v_b.status in ('confirmed', 'checked_in')
+                 and v_today between v_b.checkin and v_b.checkout
+                 and coalesce(v_s.orders_enabled, true);
+  v_reviewed := exists (select 1 from reviews r where r.booking_id = v_b.id);
+  select split_part(trim(coalesce(pr.full_name, '')), ' ', 1) into v_guest
+    from profiles pr where pr.id = v_b.guest_id;
+  select coalesce(jsonb_agg(a.name order by a.name), '[]'::jsonb) into v_amen
+    from room_amenities ra join amenities a on a.id = ra.amenity_id
+   where ra.room_id = v_b.room_id;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'id', i.id, 'name', i.name, 'category', i.category, 'unit', i.unit,
+           'price', i.sale_price, 'description', i.description, 'photoUrl', i.photo_url,
+           'available', (not i.track_stock) or i.quantity > 0,
+           'maxQuantity', case when i.track_stock then least(20, floor(i.quantity)::int) else 20 end
+         ) order by i.sort_order, i.category, i.name), '[]'::jsonb)
+    into v_menu
+    from inventory_items i
+   where i.pousada_id = v_b.pousada_id and i.active and i.show_in_app and i.sale_price is not null;
+
+  return jsonb_build_object(
+    'booking', jsonb_build_object(
+      'id', v_b.id, 'code', v_b.code, 'status', v_b.status,
+      'checkin', v_b.checkin, 'checkout', v_b.checkout,
+      'adults', v_b.adults, 'children', v_b.children, 'roomName', coalesce(v_room, 'Acomodação'),
+      'total', v_b.total, 'balanceDue', v_b.balance_due,
+      'guestName', coalesce(v_guest, ''), 'roomAmenities', v_amen
+    ),
+    'pousada', jsonb_build_object(
+      'id', v_p.id, 'name', v_p.name, 'slug', v_p.slug, 'image', v_p.image,
+      'address', v_p.address, 'city', v_p.city, 'state', v_p.state, 'cep', v_p.cep,
+      'whatsapp', v_p.whatsapp, 'phone', v_p.contact_phone,
+      'checkinTime', v_p.checkin_time, 'checkoutTime', v_p.checkout_time,
+      'houseRules', v_p.house_rules, 'cancellationPolicy', v_p.cancellation_policy,
+      'timezone', coalesce(nullif(v_p.timezone, ''), 'America/Sao_Paulo')
+    ),
+    'info', jsonb_build_object(
+      'wifiName', coalesce(v_s.wifi_name, ''),
+      -- Senha do Wi-Fi só a partir do check-in.
+      'wifiPassword', case when v_b.status in ('confirmed', 'checked_in') and v_today >= v_b.checkin
+                           then coalesce(v_s.wifi_password, '') else '' end,
+      'guestInfo', coalesce(v_s.guest_info, ''),
+      'ordersHours', coalesce(v_s.orders_hours, ''),
+      'breakfastInfo', coalesce(v_s.breakfast_info, ''),
+      'parkingInfo', coalesce(v_s.parking_info, ''),
+      'facilities', coalesce(v_s.facilities, '[]'::jsonb),
+      'dailyAgenda', coalesce(v_s.daily_agenda, '[]'::jsonb),
+      'localTips', coalesce(v_s.local_tips, '[]'::jsonb),
+      'emergency', coalesce(v_s.emergency, '[]'::jsonb)
+    ),
+    'today', v_today,
+    'canOrder', v_can_order,
+    'ordersEnabled', coalesce(v_s.orders_enabled, true),
+    'canReview', auth_can_review_booking(v_b.id, v_b.pousada_id) and not v_reviewed,
+    'reviewed', v_reviewed,
+    'consumption', booking_consumption_summary(v_b.id),
+    'menu', v_menu,
+    -- [0110] Cara da pousada no app.
+    'brand', jsonb_build_object(
+      'logoUrl', coalesce(v_s.app_logo_url, ''),
+      'coverUrl', coalesce(nullif(v_s.app_cover_url, ''), v_p.image, ''),
+      'accent', coalesce(v_s.app_accent, '')
+    )
+  );
+end;
+$$;
+

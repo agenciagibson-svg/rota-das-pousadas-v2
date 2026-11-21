@@ -40,6 +40,10 @@ export type OwnerReservation = {
   proofPending?: boolean
   /** 0088: hóspede já enviou o pré-check-in (`bookings.precheckin_completed_at`). */
   precheckinDone: boolean
+  /** 0109: estadia fechada pelo sistema (a pousada não fez o check-out). */
+  checkedOutAuto?: boolean
+  /** 0109: fechada com consumo em aberto (motivo ou aviso do sistema). */
+  checkoutOpenNote?: string | null
 }
 
 /** Pousada gerida pelo usuário atual. */

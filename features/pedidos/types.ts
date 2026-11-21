@@ -1,3 +1,4 @@
+import type { AppAccent } from '@/features/app-fases/brand'
 import type { AgendaItem, EmergencyContact, Facility, LocalTip } from '@/features/estadia/info'
 
 export type OrderStatus = 'novo' | 'preparando' | 'entregue' | 'cancelado'
@@ -60,6 +61,11 @@ export type GuestSettings = {
   dailyAgenda: AgendaItem[]
   localTips: LocalTip[]
   emergency: EmergencyContact[]
+  /** 0110: cara da pousada no app — foto do bucket `pousadas` ou vazio. */
+  appLogoUrl: string
+  appCoverUrl: string
+  /** Chave da paleta (features/app-fases/brand.ts); vazio = Ipê. */
+  appAccent: AppAccent | ''
 }
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {

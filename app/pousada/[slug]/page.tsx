@@ -21,6 +21,8 @@ import {
   getBookableRoom,
   getPublicRooms,
   getPublicFeaturedCoupon,
+  getMyActiveOffers,
+  recordOfferOpened,
 } from '@/server/queries'
 import { pousadaMetadata, pousadaJsonLd } from '@/lib/seo'
 import { bioOriginFromParam, nightsBetween } from '@/features/reservas'
@@ -28,6 +30,7 @@ import { getCityCenter } from '@/lib/geo/city-center'
 import { TrackEvent } from '@/components/analytics/track-event'
 import { destinationPath } from '@/features/destinos'
 import { pousadaFaq, pousadaFaqJsonLd } from '@/features/pousadas/faq'
+import { couponFromQuery } from '@/features/ofertas/rules'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,7 +55,13 @@ export default async function PousadaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ checkin?: string; checkout?: string; guests?: string; origem?: string }>
+  searchParams: Promise<{
+    checkin?: string
+    checkout?: string
+    guests?: string
+    origem?: string
+    cupom?: string
+  }>
 }) {
   const { slug } = await params
   const initialBooking = await searchParams
@@ -78,14 +87,21 @@ export default async function PousadaPage({
       : 0
   if (!pousada) notFound()
 
-  const [nearby, reviews, featuredCoupon, areaCenter] = await Promise.all([
+  // Oferta para ex-hóspede (0111): o link do e-mail traz `?cupom=`. Só a pessoa
+  // que recebeu vê a faixa; o código segue para a reserva de qualquer jeito
+  // (lá o banco confere de quem é).
+  const urlCoupon = couponFromQuery(initialBooking.cupom)
+  const [nearby, reviews, featuredCoupon, areaCenter, offers] = await Promise.all([
     getNearbyPousadas(slug, 3),
     getPublicReviews(pousada.id),
     // Cupom divulgado (0100): sem cupom valendo hoje, nada aparece.
     getPublicFeaturedCoupon(slug),
     // Sem ponto marcado: mapa da região da cidade (cache de 30 dias por cidade).
     pousada.coordinates ? Promise.resolve(null) : getCityCenter(pousada.city, pousada.state),
+    urlCoupon && currentUser ? getMyActiveOffers() : Promise.resolve([]),
   ])
+  const offer = offers.find((o) => o.code === urlCoupon && o.pousadaSlug === slug) ?? null
+  if (offer) await recordOfferOpened(offer.code)
 
   const faq = pousadaFaq(pousada)
 
@@ -115,6 +131,8 @@ export default async function PousadaPage({
           areaCenter={areaCenter}
           bookingOrigin={bioOriginFromParam(initialBooking.origem)}
           featuredCoupon={featuredCoupon}
+          offer={offer}
+          couponCode={urlCoupon ?? undefined}
         />
 
         {/* Perguntas frequentes: só o que a pousada cadastrou (features/pousadas/faq.ts). */}

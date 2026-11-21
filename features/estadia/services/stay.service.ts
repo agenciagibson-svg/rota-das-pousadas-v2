@@ -2,7 +2,7 @@ import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { listMyBookingRows } from '@/repositories/bookings.repository'
+import { closeOverdueStays, listMyBookingRows } from '@/repositories/bookings.repository'
 import { insertReview, type InsertReviewResult } from '@/repositories/reviews.repository'
 import { reviewAvailability, type ReviewAvailability } from '../review'
 import {
@@ -58,6 +58,8 @@ export async function getStay(
   bookingId: string,
 ): Promise<{ stay: GuestStay; orders: GuestOrder[] } | null> {
   if (!isSupabaseConfigured()) return bookingId === DEMO_STAY_ID ? demoStay() : null
+  // Passou 4h do check-out e a pousada não fechou: fecha antes de abrir (0109).
+  await closeOverdueStays()
   try {
     const [raw, orders] = await Promise.all([
       getGuestStayRpc(bookingId),
@@ -80,6 +82,8 @@ export async function placeOrder(
   if (!isSupabaseConfigured()) {
     return { orderId: `demo-${Date.now()}`, total: 0 }
   }
+  // Estadia que já devia ter fechado não recebe pedido novo.
+  await closeOverdueStays()
   return placeGuestOrderRpc(bookingId, items, note)
 }
 

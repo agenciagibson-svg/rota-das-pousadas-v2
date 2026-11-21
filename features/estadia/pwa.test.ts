@@ -40,6 +40,20 @@ describe('manifesto do app', () => {
       expect(fs.existsSync(path.join(process.cwd(), 'app', name)), `app/${name}`).toBe(false)
     }
     const { metadata } = await import('@/app/estadia/layout')
-    expect(metadata.manifest).toBe('/estadia/manifest.webmanifest')
+    expect(metadata.manifest).toBe('/site.webmanifest')
+  })
+
+  it('um app só: site e estadia abrem em /app, com escopo no site inteiro', async () => {
+    const { GET: site } = await import('@/app/site.webmanifest/route')
+    const { GET: legacy } = await import('@/app/estadia/manifest.webmanifest/route')
+    const a = await site().json()
+    const b = await legacy().json()
+    for (const m of [a, b]) {
+      expect(m.start_url).toBe('/app')
+      expect(m.scope).toBe('/')
+    }
+    // O id do app antigo continua, para o navegador atualizar quem já instalou.
+    expect(a.id).toBe('/')
+    expect(b.id).toBe('/estadia')
   })
 })
