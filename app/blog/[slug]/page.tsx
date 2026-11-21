@@ -15,6 +15,7 @@ import { ReaderTips } from '@/features/blog/components/reader-tips'
 import { WhereToStay } from '@/features/blog/components/where-to-stay'
 import { PostBody } from '@/features/blog/components/post-body'
 import { findPost, formatPostDate, readingMinutes, visiblePosts } from '@/features/blog/posts'
+import { getHiddenPostSlugs } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const post = findPost(slug)
+  const hidden = await getHiddenPostSlugs()
+  const post = findPost(slug, undefined, hidden)
   if (!post) return { title: 'Texto não encontrado', robots: { index: false } }
   const path = `/blog/${post.slug}`
   return {
@@ -46,14 +48,15 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = findPost(slug)
+  const hidden = await getHiddenPostSlugs()
+  const post = findPost(slug, undefined, hidden)
   if (!post) notFound()
 
   const cities = await getCityDestinations()
   const stays = post.cities
     .flatMap((c) => cities.find((d) => d.slug === c.slug)?.pousadas ?? [])
     .slice(0, 6)
-  const others = visiblePosts()
+  const others = visiblePosts(undefined, hidden)
     .filter((p) => p.slug !== post.slug)
     .slice(0, 3)
   const mainCity = post.cities[0]

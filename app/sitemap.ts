@@ -8,6 +8,7 @@ import {
 } from '@/server/queries'
 import { stayTypeIndexable } from '@/features/pousadas/amenities'
 import { visiblePosts } from '@/features/blog/posts'
+import { listHiddenPostSlugs } from '@/repositories/blog-hidden-posts.repository'
 import { stateIndexable } from '@/features/destinos'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -97,8 +98,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ]
     : []
 
-  // Blog: só textos publicados (rascunho nunca entra).
-  const posts = visiblePosts(false)
+  // Blog: só textos publicados (rascunho nunca entra) e que não foram tirados do ar (0113).
+  const posts = visiblePosts(false, await listHiddenPostSlugs())
   const blogRoutes: MetadataRoute.Sitemap = posts.length
     ? [
         {

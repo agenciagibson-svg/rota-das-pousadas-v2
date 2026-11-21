@@ -10,6 +10,7 @@ import {
   moderateTip,
   submitTip,
 } from '@/repositories/blog-tips.repository'
+import { listHiddenPostSlugs } from '@/repositories/blog-hidden-posts.repository'
 import { findPost } from '../posts'
 import type { TipInput } from '../schemas'
 import type { BlogTip, BlogTipForReview } from '../types'
@@ -28,7 +29,8 @@ export async function tipsForPost(postSlug: string): Promise<BlogTip[]> {
  * guia e teto da fila na RPC; upload da foto só no caminho que a RPC reservou.
  */
 export async function submitBlogTip(input: TipInput): Promise<{ photoSaved: boolean }> {
-  if (!findPost(input.postSlug)) throw new Error('Guia não encontrado.')
+  const hidden = await listHiddenPostSlugs()
+  if (!findPost(input.postSlug, undefined, hidden)) throw new Error('Guia não encontrado.')
   const h = await headers()
   const remoteIp = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || null
   if (!(await verifyTurnstileToken(input.turnstileToken, remoteIp))) {

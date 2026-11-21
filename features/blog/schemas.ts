@@ -53,3 +53,13 @@ export const moderateTipSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(['aprovada', 'recusada']),
 })
+
+/** Painel: tirar um guia do ar ou voltar (0113). */
+export const guideVisibilitySchema = z.object({
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+    .max(120),
+  hidden: z.boolean(),
+  reason: z.string().trim().max(200).default(''),
+})

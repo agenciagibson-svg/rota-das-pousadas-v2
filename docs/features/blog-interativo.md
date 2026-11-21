@@ -39,3 +39,13 @@ Novo guia: inclua `places` com os pontos do texto (veja `places.ts`).
   - A chave vai para o navegador: no painel da Esri, deixe só o privilégio de
     mapas base e restrinja aos domínios do site. A chave tem validade
     (até 1 ano): renove antes de vencer, senão o satélite para de carregar.
+
+## Guias no painel (0113)
+
+`/admin/blog` tem duas abas: **Guias** (todos os guias com a situação — no ar,
+rascunho ou fora do ar —, dicas recebidas, abrir no site, tirar do ar e voltar)
+e **Dicas dos leitores** (moderação, 0108). Tirar do ar grava o slug em
+`blog_hidden_posts` (RPC `set_blog_post_hidden`, suporte/marketing/master,
+auditada) e o guia some da lista, da página (404), do sitemap, da imagem de
+compartilhamento e do envio de dicas. O texto dos guias continua no código
+(`features/blog/posts`).
