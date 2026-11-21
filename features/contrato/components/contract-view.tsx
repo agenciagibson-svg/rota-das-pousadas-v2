@@ -9,7 +9,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PrintButton } from '@/features/reservas/components/print-button'
-import { PLATFORM_COMMISSION_LABEL } from '@/lib/platform-commission'
+import { FOUNDER_COMMISSION_LABEL, PLATFORM_COMMISSION_LABEL } from '@/lib/platform-commission'
 import { contractStatus, launchCondition } from '../contract'
 import type { AcceptedContract, ContractState } from '../types'
 import { ContractAcceptForm } from './contract-accept-form'
@@ -46,7 +46,7 @@ function LaunchCard({ state, now }: { state: ContractState; now: Date }) {
             }), nas condições do contrato.`
           : `O período sem comissão terminou em ${DATE.format(new Date(launch.exemptUntil))}.`}
         {launch.rateLockedUntil &&
-          ` Comissão de ${PLATFORM_COMMISSION_LABEL} garantida até ${DATE.format(new Date(launch.rateLockedUntil))}.`}
+          ` Depois, comissão de ${FOUNDER_COMMISSION_LABEL} até ${DATE.format(new Date(launch.rateLockedUntil))}; a partir daí, ${PLATFORM_COMMISSION_LABEL}.`}
       </p>
     </Card>
   )

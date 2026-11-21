@@ -118,6 +118,8 @@ try {
     'ofertas-auto-0112.sql',
     // 0113: guias fora do ar; usa master, marketing e comercial de priorities.sql.
     'guias-0113.sql',
+    // 0114: fundadoras a 3%; usa a Pousada Comissão K de comissao-0104.sql.
+    'fundadoras-0114.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

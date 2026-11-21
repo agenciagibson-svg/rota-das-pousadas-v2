@@ -39,15 +39,19 @@ insert into memberships(user_id, pousada_id, role, status) values
  ('00000000-0000-0000-0000-000000010302', '10000000-0000-0000-0000-000000010301', 'admin_pousada', 'active');
 
 -- ---------------------------------------------------------------------------
--- Sem versão publicada: nada muda. Publicar funciona e ninguém vira fundadora.
+-- Sem versão publicada: publicar funciona sem aceite e (0114) já marca a
+-- fundadora — a condição de lançamento não espera o contrato.
 -- ---------------------------------------------------------------------------
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
 update pousadas set status = 'publicada' where id = '10000000-0000-0000-0000-000000010302';
 reset role;
-select test_assert((select first_published_at is not null and founder_rank is null and commission_exempt_until is null
+-- (Testes anteriores publicam pousadas, que também viram fundadoras: a posição
+-- é relativa.)
+select test_assert((select first_published_at is not null and founder_rank is not null
+                           and commission_exempt_until between now() + interval '59 days' and now() + interval '61 days'
                     from pousadas where id = '10000000-0000-0000-0000-000000010302'),
-  'sem contrato vigente: publica sem aceite e sem marcar fundadora');
+  'sem contrato vigente: publica sem aceite e já é fundadora (0114)');
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000010301', false);
@@ -255,28 +259,29 @@ select test_assert((select rendered_body like '%Hospedagem Exemplo Ltda%' from p
                     where pousada_id = '10000000-0000-0000-0000-000000010301'), 'texto aceito fica congelado');
 
 -- ---------------------------------------------------------------------------
--- Publicação depois do aceite: vira a fundadora nº 1
+-- Publicação depois do aceite: vira a próxima fundadora
 -- ---------------------------------------------------------------------------
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000009', false);
 update pousadas set status = 'publicada' where id = '10000000-0000-0000-0000-000000010301';
 reset role;
 select set_config('request.jwt.claim.sub', '', false);
-select test_assert((select founder_rank = 1
+select test_assert((select founder_rank = (select founder_rank + 1 from pousadas
+                                                  where id = '10000000-0000-0000-0000-000000010302')
                            and commission_exempt_until between now() + interval '59 days' and now() + interval '61 days'
-                           and commission_rate_locked_until between now() + interval '11 months' and now() + interval '13 months'
+                           and commission_rate_locked_until between now() + interval '13 months' and now() + interval '15 months'
                            and first_published_at is not null
                     from pousadas where id = '10000000-0000-0000-0000-000000010301'),
-  'primeira publicação com aceite: fundadora nº 1, 60 dias de isenção e 12 meses de percentual garantido');
+  'primeira publicação com aceite: próxima fundadora, 60 dias de isenção e 3% nos 12 meses seguintes');
 select test_assert(exists(select 1 from audit_log where action = 'pousada.founder_assigned'
                           and target_id = '10000000-0000-0000-0000-000000010301'), 'fundadora auditada');
 
 -- Suspender e reativar não reinicia a contagem.
-do $$ declare v_until timestamptz; begin
-  select commission_exempt_until into v_until from pousadas where id = '10000000-0000-0000-0000-000000010301';
+do $$ declare v_until timestamptz; v_rank smallint; begin
+  select commission_exempt_until, founder_rank into v_until, v_rank from pousadas where id = '10000000-0000-0000-0000-000000010301';
   update pousadas set status = 'suspensa' where id = '10000000-0000-0000-0000-000000010301';
   update pousadas set status = 'publicada' where id = '10000000-0000-0000-0000-000000010301';
-  perform test_assert((select founder_rank = 1 and commission_exempt_until = v_until
+  perform test_assert((select founder_rank = v_rank and commission_exempt_until = v_until
                        from pousadas where id = '10000000-0000-0000-0000-000000010301'),
     'reativar não muda a posição nem as datas');
 end $$;
@@ -326,13 +331,13 @@ select test_assert((select accepted_by is null and accepted_by_name = 'Dona Clar
 
 -- ---------------------------------------------------------------------------
 -- Preparo do teste de concorrência (scripts/test-database.mjs): 29 fundadoras
--- já marcadas e duas pousadas com aceite, prontas para publicar ao mesmo tempo.
+-- já marcadas (as de cima e as daqui, até a 29ª) e duas pousadas com aceite, prontas para publicar ao mesmo tempo.
 -- Só uma pode ficar com a 30ª posição.
 -- ---------------------------------------------------------------------------
 insert into pousadas(id, slug, name, city, state, status, tenant_status, price_per_night, first_published_at, founder_rank)
 select ('10000000-0000-0000-0000-0000001039' || lpad(g::text, 2, '0'))::uuid, 'fundadora-' || g, 'Fundadora ' || g,
        'Gonçalves', 'MG', 'suspensa', 'active', 300, now(), g
-from generate_series(2, 29) g;
+from generate_series((select max(founder_rank) + 1 from pousadas), 29) g;
 
 insert into pousadas(id, slug, name, city, state, status, tenant_status, price_per_night) values
  ('10000000-0000-0000-0000-0000001030f1', 'corrida-fundadora-1', 'Corrida Fundadora 1', 'Gonçalves', 'MG', 'em_analise', 'onboarding', 300),
