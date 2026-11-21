@@ -187,7 +187,7 @@ export function OwnerSettingsView({
                   <Smartphone className="text-primary size-4" />
                   App do hóspede
                 </div>
-                <GuestSettingsForm initial={guestSettings} />
+                <GuestSettingsForm initial={guestSettings} pousadaId={settings?.id} />
               </Card>
             )}
             {pix && (

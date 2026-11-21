@@ -1,3 +1,5 @@
+import { isAppAccent, type AppAccent } from '@/features/app-fases/brand'
+import { isUploadedPhotoUrl } from '@/lib/validation/image-url'
 import { z } from 'zod'
 import {
   parseAgenda,
@@ -65,6 +67,13 @@ function listField<T>(
     })
 }
 
+const appPhoto = z
+  .string()
+  .trim()
+  .max(500)
+  .default('')
+  .refine((v) => v === '' || isUploadedPhotoUrl(v), 'Envie a imagem pelo botão do painel.')
+
 export const guestSettingsSchema = z.object({
   wifiName: z.string().trim().max(80, 'Nome muito longo.'),
   wifiPassword: z.string().trim().max(80, 'Senha muito longa.'),
@@ -77,6 +86,14 @@ export const guestSettingsSchema = z.object({
   dailyAgenda: listField(parseAgenda),
   localTips: listField(parseLocalTips),
   emergency: listField(parseEmergency),
+  // 0110: cara da pousada no app. Só foto enviada pelo painel (bucket `pousadas`).
+  appLogoUrl: appPhoto,
+  appCoverUrl: appPhoto,
+  appAccent: z
+    .string()
+    .default('')
+    .refine((v) => v === '' || isAppAccent(v), 'Escolha uma das cores.')
+    .transform((v) => v as AppAccent | ''),
 })
 
 // App do hóspede

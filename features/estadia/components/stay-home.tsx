@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { formatBRL } from '@/lib/format'
 import {
@@ -44,9 +45,21 @@ export function StayHome(ctx: StayCtx) {
   return (
     <>
       <div className="flex items-center gap-2.5">
-        <span className="bg-app-strong text-neblina grid size-11 shrink-0 place-items-center rounded-full">
-          <Home className="size-[18px]" />
-        </span>
+        {stay.brand.logoUrl ? (
+          <span className="relative size-11 shrink-0 overflow-hidden rounded-full bg-white">
+            <Image
+              src={stay.brand.logoUrl}
+              alt={`Logo da ${pousada.name}`}
+              fill
+              sizes="44px"
+              className="object-contain p-1"
+            />
+          </span>
+        ) : (
+          <span className="bg-app-strong text-neblina grid size-11 shrink-0 place-items-center rounded-full">
+            <Home className="size-[18px]" />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="text-muted-foreground text-[11.5px]">Sua estadia em</p>
           <p className="truncate text-[14.5px] font-bold">{pousada.name}</p>
@@ -70,9 +83,25 @@ export function StayHome(ctx: StayCtx) {
       <button
         type="button"
         onClick={() => ctx.go('estadia')}
-        className="bg-app-strong text-neblina mt-3 grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-[28px] p-[18px] text-left"
+        className="bg-app-strong text-neblina relative mt-3 grid w-full grid-cols-[1fr_auto] items-center gap-3 overflow-hidden rounded-[28px] p-[18px] text-left"
       >
-        <div className="min-w-0">
+        {stay.brand.coverUrl && (
+          <>
+            <Image
+              src={stay.brand.coverUrl}
+              alt=""
+              fill
+              sizes="(max-width: 512px) 100vw, 512px"
+              className="object-cover"
+              priority
+            />
+            <span
+              aria-hidden
+              className="from-breu/95 via-breu/75 to-breu/35 absolute inset-0 bg-gradient-to-r"
+            />
+          </>
+        )}
+        <div className="relative min-w-0">
           <p className="text-liquen truncate text-[11.5px]">{booking.roomName}</p>
           <p className="font-display mt-0.5 text-[17px] font-medium">
             {dayMonth(booking.checkin)} → {dayMonth(booking.checkout)}
@@ -87,7 +116,7 @@ export function StayHome(ctx: StayCtx) {
             </Pill>
           </div>
         </div>
-        <span className="bg-ipe grid size-[62px] place-items-center rounded-full">
+        <span className="bg-ipe relative grid size-[62px] place-items-center rounded-full">
           <KeyRound className="text-breu size-6" />
         </span>
       </button>

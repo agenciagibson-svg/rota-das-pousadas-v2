@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { keepValuesOnSubmit } from '@/lib/forms'
 import { saveGuestSettingsAction } from '../actions'
+import { AppBrandFields } from './app-brand-fields'
 import type { GuestSettings } from '../types'
 import {
   formatAgenda,
@@ -47,9 +48,21 @@ function ListField({
 }
 
 /** Informações do app do hóspede: Wi-Fi, recados e pedidos ligados/desligados. */
-export function GuestSettingsForm({ initial }: { initial: GuestSettings }) {
+export function GuestSettingsForm({
+  initial,
+  pousadaId,
+}: {
+  initial: GuestSettings
+  /** Pasta das imagens no Storage (a policy da 0076 só deixa subir na própria pousada). */
+  pousadaId?: string
+}) {
   const router = useRouter()
   const [ordersEnabled, setOrdersEnabled] = useState(initial.ordersEnabled)
+  const [brand, setBrand] = useState({
+    appLogoUrl: initial.appLogoUrl,
+    appCoverUrl: initial.appCoverUrl,
+    appAccent: initial.appAccent,
+  })
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -71,6 +84,7 @@ export function GuestSettingsForm({ initial }: { initial: GuestSettings }) {
         dailyAgenda: String(formData.get('dailyAgenda') ?? ''),
         localTips: String(formData.get('localTips') ?? ''),
         emergency: String(formData.get('emergency') ?? ''),
+        ...brand,
       })
       if (!res.ok) {
         setError(res.fieldErrors ? (Object.values(res.fieldErrors)[0] ?? res.error) : res.error)
@@ -87,6 +101,7 @@ export function GuestSettingsForm({ initial }: { initial: GuestSettings }) {
 
   return (
     <form onSubmit={keepValuesOnSubmit(submit)} className="mt-3 space-y-3" noValidate>
+      <AppBrandFields value={brand} onChange={setBrand} pousadaId={pousadaId} />
       <label className="flex items-start gap-2 text-sm">
         <input
           type="checkbox"

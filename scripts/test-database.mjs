@@ -110,6 +110,8 @@ try {
     'dicas-0108.sql',
     // 0109: fechamento automático da estadia; usa a recepção de security-0083.sql.
     'fechamento-0109.sql',
+    // 0110: cara da pousada no app; usa as reservas de fechamento-0109.sql.
+    'cara-0110.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

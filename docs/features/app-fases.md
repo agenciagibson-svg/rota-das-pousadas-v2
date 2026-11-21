@@ -51,8 +51,20 @@ manifesto do site. O service worker continua com escopo `/estadia`.
 - Painel: selos "Fechada pelo sistema" e "Consumo em aberto"; no detalhe, o
   motivo. App do hóspede: aviso do valor em aberto no cartão de fim de estadia.
 
+## Cara da pousada (etapa 3, migration 0110)
+
+- `pousada_guest_settings.app_logo_url`, `app_cover_url`, `app_accent`. A cor
+  é uma chave da paleta fixa em `features/app-fases/brand.ts` (todas com
+  contraste AA com o texto escuro — testado); o check do banco usa as mesmas
+  chaves (testado contra o SQL).
+- `get_guest_stay` devolve `brand`; sem capa própria, a foto da pousada. O
+  app troca `--ipe` pela cor da pousada, põe o logo no topo e a capa no
+  cartão da estadia.
+- Painel: Configurações → App do hóspede → "Cara do app" (upload no bucket
+  `pousadas`, pasta `<pousada>/app`, com prévia).
+
 ## Ainda não (próximas etapas)
 
 - Pós-estadia não sabe se o hóspede já avaliou (o `booking_id` da avaliação não
   é legível pelo hóspede desde a 0084); some quando ele dispensa ou em 7 dias.
-- Cara da pousada (logo, capa, cor), ofertas e loja de apps.
+- Ofertas para ex-hóspedes e loja de apps.

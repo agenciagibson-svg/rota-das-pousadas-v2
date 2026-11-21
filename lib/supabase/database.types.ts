@@ -2917,6 +2917,9 @@ export type Database = {
       }
       pousada_guest_settings: {
         Row: {
+          app_accent: string
+          app_cover_url: string
+          app_logo_url: string
           breakfast_info: string
           daily_agenda: Json
           emergency: Json
@@ -2932,6 +2935,9 @@ export type Database = {
           wifi_password: string
         }
         Insert: {
+          app_accent?: string
+          app_cover_url?: string
+          app_logo_url?: string
           breakfast_info?: string
           daily_agenda?: Json
           emergency?: Json
@@ -2947,6 +2953,9 @@ export type Database = {
           wifi_password?: string
         }
         Update: {
+          app_accent?: string
+          app_cover_url?: string
+          app_logo_url?: string
           breakfast_info?: string
           daily_agenda?: Json
           emergency?: Json
