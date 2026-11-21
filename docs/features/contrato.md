@@ -75,12 +75,18 @@ já está no ar.
 
 ## Fundadoras (condição de lançamento)
 
-Na primeira publicação com contrato vigente, as 30 primeiras recebem:
+Na primeira publicação, com ou sem contrato vigente (0114; a 0103 exigia
+contrato), as 30 primeiras recebem:
 
 - `founder_rank` (1 a 30), decidido com trava para não passar de 30 em
   publicações simultâneas;
 - `commission_exempt_until` = publicação + 60 dias;
-- `commission_rate_locked_until` = publicação + 12 meses.
+- `commission_rate_locked_until` = publicação + 60 dias + 12 meses (0114).
+
+Comissão das fundadoras (0114): isenta nos 60 dias (regra da 0104); **3%**
+(`founder_commission_rate()`) para reserva criada até
+`commission_rate_locked_until`; depois, 6%. O extrato mostra o percentual de
+hoje (`pousada_commission_rate_now`).
 
 As colunas não têm SELECT pela API e o dono não consegue alterá-las (guarda
 0065). O painel mostra as datas pelo `get_pousada_contract_state`. A regra das

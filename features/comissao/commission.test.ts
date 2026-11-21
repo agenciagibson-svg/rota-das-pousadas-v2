@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { PLATFORM_COMMISSION_RATE } from '@/lib/platform-commission'
+import { FOUNDER_COMMISSION_RATE, PLATFORM_COMMISSION_RATE } from '@/lib/platform-commission'
 import {
   findMonth,
   monthLabel,
@@ -75,5 +75,16 @@ describe('percentual único', () => {
       )
     expect(match).not.toBeNull()
     expect(Number(match?.[1])).toBe(PLATFORM_COMMISSION_RATE)
+  })
+  it('o percentual das fundadoras (0114) é o mesmo dos textos', () => {
+    const sql = readFileSync(
+      join(process.cwd(), 'supabase/migrations/0114_fundadoras_3_por_cento.sql'),
+      'utf8',
+    )
+    const match =
+      /create or replace function founder_commission_rate\(\)[\s\S]*?select ([0-9.]+)::numeric/.exec(
+        sql,
+      )
+    expect(Number(match?.[1])).toBe(FOUNDER_COMMISSION_RATE)
   })
 })

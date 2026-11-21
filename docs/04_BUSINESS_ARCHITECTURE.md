@@ -704,9 +704,10 @@ flowchart LR
   entra.
 - **Contrato:** a pousada aceita o contrato dentro do painel antes da primeira
   publicação (migration 0103, `docs/features/contrato.md`).
-- **Condição de lançamento:** as 30 primeiras pousadas publicadas têm 60 dias
-  sem comissão, contados da publicação, para reservas criadas no período e com
-  check-in até 90 dias depois do fim dele, e os 6% garantidos por 12 meses.
+- **Condição de lançamento (0114, 21/11/2026):** as 30 primeiras pousadas
+  publicadas têm 60 dias sem comissão (reservas criadas no período, com
+  check-in até 90 dias depois do fim dele), depois **3% por 12 meses** e,
+  a partir daí, 6%.
 - **Sem custódia:** esta decisão **não** autoriza a Rota a receber o valor da
   hospedagem para repassar depois. Um modelo assim muda a exposição regulatória
   e exige nova revisão desta seção.
