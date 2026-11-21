@@ -46,3 +46,13 @@ export const offerConsentSchema = z.object({
   pousadaId: z.string().uuid(),
   granted: z.boolean(),
 })
+
+const autoOffer = z.object({
+  on: z.boolean(),
+  percent: z.coerce.number().int().min(OFFER_PERCENT_MIN).max(OFFER_PERCENT_MAX),
+})
+export const autoOffersSchema = z.object({
+  seisMeses: autoOffer,
+  aniversario: autoOffer,
+  feriado: autoOffer,
+})

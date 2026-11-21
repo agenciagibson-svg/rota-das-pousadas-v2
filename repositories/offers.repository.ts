@@ -180,3 +180,53 @@ export async function markOfferEmailRpc(deliveryId: string, sent: boolean): Prom
   })
   if (error) throw new Error(error.message)
 }
+
+// Ofertas automáticas (0112)
+export type AutoOffers = {
+  seisMeses: { on: boolean; percent: number }
+  aniversario: { on: boolean; percent: number }
+  feriado: { on: boolean; percent: number }
+}
+
+export async function getAutoOffersRpc(pousadaId: string): Promise<AutoOffers> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('get_auto_offers', { p_pousada_id: pousadaId })
+  if (error) throw new Error(error.message)
+  const r = (data ?? {}) as Partial<Record<keyof AutoOffers, { on?: boolean; percent?: number }>>
+  const read = (k: keyof AutoOffers, percent: number) => ({
+    on: r[k]?.on === true,
+    percent: Number(r[k]?.percent) || percent,
+  })
+  return {
+    seisMeses: read('seisMeses', 10),
+    aniversario: read('aniversario', 15),
+    feriado: read('feriado', 10),
+  }
+}
+
+export async function saveAutoOffersRpc(pousadaId: string, a: AutoOffers): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.rpc('save_auto_offers', {
+    p_pousada_id: pousadaId,
+    p_seis_meses_on: a.seisMeses.on,
+    p_seis_meses_percent: a.seisMeses.percent,
+    p_aniversario_on: a.aniversario.on,
+    p_aniversario_percent: a.aniversario.percent,
+    p_feriado_on: a.feriado.on,
+    p_feriado_percent: a.feriado.percent,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function runAutoOffersRpc(
+  holiday: { name: string; from: string; until: string } | null,
+): Promise<{ offers: number; people: number }> {
+  const { data, error } = await createSupabaseServiceRoleClient().rpc('run_auto_offers', {
+    p_holiday_name: holiday?.name ?? null,
+    p_holiday_from: holiday?.from ?? null,
+    p_holiday_until: holiday?.until ?? null,
+  })
+  if (error) throw new Error(error.message)
+  const r = (data ?? {}) as { offers?: number; people?: number }
+  return { offers: Number(r.offers) || 0, people: Number(r.people) || 0 }
+}

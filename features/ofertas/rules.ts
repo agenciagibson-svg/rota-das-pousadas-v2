@@ -46,3 +46,21 @@ export const OFFER_KIND_LABEL: Record<OfferKind, string> = {
   feriado: 'Feriado chegando',
   aniversario: '1 ano da estadia',
 }
+
+/** Feriadão das ofertas automáticas: o próximo que começa entre 7 e 45 dias. */
+export const HOLIDAY_OFFER_MIN_DAYS = 7
+export const HOLIDAY_OFFER_MAX_DAYS = 45
+
+export function holidayForOffers(
+  weekends: { name: string; checkin: string; checkout: string }[],
+  today: string,
+): { name: string; from: string; until: string } | null {
+  const day = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
+  for (const w of weekends) {
+    const ahead = Math.round((day(w.checkin) - day(today)) / 86_400_000)
+    if (ahead >= HOLIDAY_OFFER_MIN_DAYS && ahead <= HOLIDAY_OFFER_MAX_DAYS) {
+      return { name: w.name, from: w.checkin, until: w.checkout }
+    }
+  }
+  return null
+}

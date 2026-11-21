@@ -1,11 +1,12 @@
 import { timingSafeEqual } from 'node:crypto'
-import { sendDueOfferEmails } from '@/features/ofertas/services/offers.service'
+import { runAutoOffers, sendDueOfferEmails } from '@/features/ofertas/services/offers.service'
 import { reportError } from '@/lib/observability/report-error'
 
 /**
  * Rodada diária das ofertas para ex-hóspedes (0111), às 13h UTC (10h de
- * Brasília, dentro da janela das 8h às 21h): manda os e-mails que ficaram na
- * fila (oferta enviada à noite, ou falha de SMTP). Cron próprio porque a
+ * Brasília, dentro da janela das 8h às 21h): cria as ofertas automáticas do
+ * dia (0112) e manda os e-mails da fila (automáticas, oferta enviada à noite
+ * ou falha de SMTP). Cron próprio porque a
  * rodada de manutenção roda de madrugada, fora do horário de propaganda.
  *
  * Disparada pelo Vercel Cron (ver `vercel.json`) com
@@ -27,8 +28,14 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Não autorizado.' }, { status: 401 })
   }
   try {
+    // Primeiro as automáticas de hoje (0112); falha nelas não segura a fila.
+    const auto = await runAutoOffers().catch(async (error) => {
+      console.error('[cron] ofertas automáticas falharam', String(error))
+      await reportError(error, { where: 'cron:ofertas-automaticas' })
+      return { error: 'falhou' as const }
+    })
     const emails = await sendDueOfferEmails()
-    return Response.json({ emails })
+    return Response.json({ auto, emails }, { status: 'error' in auto ? 500 : 200 })
   } catch (error) {
     console.error('[cron] ofertas falhou', String(error))
     await reportError(error, { where: 'cron:ofertas' })

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { couponFromQuery, inOfferSendWindow, offerHref } from './rules'
+import { couponFromQuery, holidayForOffers, inOfferSendWindow, offerHref } from './rules'
+import { autoOffersSchema } from './schemas'
+import { upcomingLongWeekends } from '@/features/feriados/feriados'
 import { sendOfferSchema } from './schemas'
 import { offerEmail } from '@/lib/email/offer-email'
 import { offerCard } from '@/features/app-fases/phase'
@@ -91,5 +93,46 @@ describe('cartão da oferta na loja', () => {
       href: '/pousada/pousada-ipe?cupom=VOLTAABC123',
       dismissKey: 'rp_oferta_d-1',
     })
+  })
+})
+
+describe('feriadão das ofertas automáticas', () => {
+  const w = (name: string, checkin: string, checkout: string) => ({ name, checkin, checkout })
+
+  it('o primeiro que começa entre 7 e 45 dias', () => {
+    const list = [
+      w('Perto', '2026-12-13', '2026-12-15'),
+      w('Natal', '2026-12-24', '2026-12-27'),
+      w('Longe', '2027-03-01', '2027-03-03'),
+    ]
+    expect(holidayForOffers(list, '2026-12-10')).toEqual({
+      name: 'Natal',
+      from: '2026-12-24',
+      until: '2026-12-27',
+    })
+  })
+
+  it('nenhum na janela: nada', () => {
+    expect(holidayForOffers([w('Longe', '2027-03-01', '2027-03-03')], '2026-12-10')).toBeNull()
+  })
+
+  it('com o calendário real sempre há no máximo um', () => {
+    const today = '2027-03-10'
+    const h = holidayForOffers(upcomingLongWeekends(today, 6), today)
+    if (h) expect(h.until > h.from).toBe(true)
+  })
+})
+
+describe('configuração das automáticas', () => {
+  it('liga e escolhe o desconto dentro do limite', () => {
+    const ok = {
+      seisMeses: { on: true, percent: 10 },
+      aniversario: { on: false, percent: 15 },
+      feriado: { on: true, percent: 50 },
+    }
+    expect(autoOffersSchema.safeParse(ok).success).toBe(true)
+    expect(autoOffersSchema.safeParse({ ...ok, feriado: { on: true, percent: 70 } }).success).toBe(
+      false,
+    )
   })
 })

@@ -20,6 +20,7 @@ import { buildStayTypePages } from '@/features/pousadas/amenities'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { getMyAppState as appState } from '@/features/app-fases/services/app-phase.service'
 import {
+  getAutoOffers,
   getOfferAudience,
   getOfferReport,
   listMyActiveOffers,
@@ -146,8 +147,13 @@ export const getMyActiveOffers = cache(() => listMyActiveOffers())
 export const recordOfferOpened = (code: string) => markOfferOpened(code)
 /** Painel: público e relatório das ofertas (0111), só dono e gestor. */
 export const getOwnerOffers = cache(async () => {
-  const [audience, report] = await Promise.all([getOfferAudience(), getOfferReport()])
-  return { audience, report }
+  const [audience, report, auto] = await Promise.all([
+    getOfferAudience(),
+    getOfferReport(),
+    // Sem a 0112, o painel mostra as ofertas manuais sem as automáticas.
+    getAutoOffers().catch(() => null),
+  ])
+  return { audience, report, auto }
 })
 /** Autorizações de oferta do usuário logado (0111). */
 export const getMyOfferConsents = cache(() => listMyOfferConsents())

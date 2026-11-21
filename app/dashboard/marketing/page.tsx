@@ -13,6 +13,7 @@ import {
 import { OwnerMarketingView } from '@/features/gestao/components/owner-marketing-view'
 import { CouponsPanel } from '@/features/cupons/components/coupons-panel'
 import { OffersPanel } from '@/features/ofertas/components/offers-panel'
+import { AutoOffersForm } from '@/features/ofertas/components/auto-offers-form'
 import { DEFAULT_TIMEZONE, isoDateInTimeZone } from '@/lib/dates'
 
 export default async function DashboardMarketingPage() {
@@ -53,7 +54,11 @@ export default async function DashboardMarketingPage() {
             todayISO={isoDateInTimeZone(new Date(), pousada?.timezone ?? DEFAULT_TIMEZONE)}
           />
         )}
-        {offers && <OffersPanel audience={offers.audience} report={offers.report} />}
+        {offers && (
+          <OffersPanel audience={offers.audience} report={offers.report}>
+            {offers.auto && <AutoOffersForm initial={offers.auto} />}
+          </OffersPanel>
+        )}
       </div>
     </OwnerMarketingView>
   )

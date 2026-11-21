@@ -82,8 +82,19 @@ manifesto do site. O service worker continua com escopo `/estadia`.
   cupom (gatilho em `booking_coupon_redemptions`) entram no relatório do painel.
 - Loja: o cartão da fase mostra a oferta valendo quando não há nada da fase.
 
+## Ofertas automáticas (etapa 5, migration 0112)
+
+- `pousada_auto_offers` (Marketing → Ofertas automáticas): 6 meses e 1 ano
+  depois do check-out (janela de 7 dias, sem repetir em 120 dias) e feriadão
+  entre 7 e 45 dias à frente (cupom para estadias no feriadão, uma vez por
+  feriadão). Tudo pela `create_offer_for_audience` da 0111: mesmos limites.
+- `run_auto_offers` roda na rodada `/api/cron/ofertas` (10h), antes dos
+  e-mails; o feriadão vem de `features/feriados` (`holidayForOffers`). Só
+  pousada publicada.
+- O relatório da 0111 mostra o tipo de cada oferta (manual ou automática).
+
 ## Ainda não (próximas etapas)
 
 - Pós-estadia não sabe se o hóspede já avaliou (o `booking_id` da avaliação não
   é legível pelo hóspede desde a 0084); some quando ele dispensa ou em 7 dias.
-- Ofertas automáticas (6 meses, feriado, 1 ano) e loja de apps.
+- Loja de apps (Capacitor, notificações nativas, Entrar com a Apple).

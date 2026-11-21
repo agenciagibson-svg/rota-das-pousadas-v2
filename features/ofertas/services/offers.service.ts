@@ -6,6 +6,10 @@ import { sendEmail } from '@/lib/email/mailer'
 import { offerEmail } from '@/lib/email/offer-email'
 import {
   countOfferAudienceRpc,
+  getAutoOffersRpc,
+  runAutoOffersRpc,
+  saveAutoOffersRpc,
+  type AutoOffers,
   getOfferReportRpc,
   listMyActiveOffersRpc,
   listMyOfferConsentsRpc,
@@ -18,7 +22,9 @@ import {
   type OfferConsent,
   type OfferReportRow,
 } from '@/repositories/offers.repository'
-import { inOfferSendWindow } from '../rules'
+import { holidayForOffers, inOfferSendWindow } from '../rules'
+import { upcomingLongWeekends } from '@/features/feriados/feriados'
+import { isoDateInTimeZone } from '@/lib/dates'
 import type { SendOfferData } from '../schemas'
 
 /** Teto de e-mails de oferta por rodada (o SMTP limita envio). */
@@ -133,4 +139,28 @@ export async function sendDueOfferEmails(
     else failed++
   }
   return { sent, failed }
+}
+
+// ---------------------------------------------------------------------------
+// Ofertas automáticas (0112)
+// ---------------------------------------------------------------------------
+export async function getAutoOffers(): Promise<AutoOffers> {
+  const { pousadaId } = await requireCapability('coupon:manage')
+  return getAutoOffersRpc(pousadaId)
+}
+
+export async function saveAutoOffers(input: AutoOffers): Promise<void> {
+  const { pousadaId } = await requireCapability('coupon:manage')
+  await saveAutoOffersRpc(pousadaId, input)
+}
+
+/**
+ * Rodada diária: cria as ofertas automáticas de hoje (6 meses, 1 ano e o
+ * feriadão que começa entre 7 e 45 dias). Os e-mails saem logo depois, pela
+ * mesma rodada.
+ */
+export async function runAutoOffers(now: Date = new Date()) {
+  const today = isoDateInTimeZone(now)
+  const holiday = holidayForOffers(upcomingLongWeekends(today, 6), today)
+  return runAutoOffersRpc(holiday)
 }

@@ -3115,6 +3115,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auto_offers: {
+        Args: { p_pousada_id: string }
+        Returns: Json
+      }
+      run_auto_offers: {
+        Args: {
+          p_holiday_name?: string | null
+          p_holiday_from?: string | null
+          p_holiday_until?: string | null
+        }
+        Returns: Json
+      }
+      save_auto_offers: {
+        Args: {
+          p_pousada_id: string
+          p_seis_meses_on: boolean
+          p_seis_meses_percent: number
+          p_aniversario_on: boolean
+          p_aniversario_percent: number
+          p_feriado_on: boolean
+          p_feriado_percent: number
+        }
+        Returns: undefined
+      }
       count_offer_audience: {
         Args: { p_pousada_id: string }
         Returns: Json
