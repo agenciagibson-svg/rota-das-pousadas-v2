@@ -19,6 +19,7 @@ import { citySlug, groupByCity, groupByState } from '@/features/destinos/destino
 import { buildStayTypePages } from '@/features/pousadas/amenities'
 import { getCurrentUser as currentUser } from '@/features/auth/services/auth.service'
 import { getMyAppState as appState } from '@/features/app-fases/services/app-phase.service'
+import { hiddenPostSlugs } from '@/features/blog/services/guides.service'
 import {
   getAutoOffers,
   getOfferAudience,
@@ -157,6 +158,9 @@ export const getOwnerOffers = cache(async () => {
 })
 /** Autorizações de oferta do usuário logado (0111). */
 export const getMyOfferConsents = cache(() => listMyOfferConsents())
+
+/** Guias do blog tirados do ar pelo painel (0113). */
+export const getHiddenPostSlugs = cache(() => hiddenPostSlugs())
 
 /** Fase do app único (loja, viagem marcada, estadia, pós-estadia) do usuário logado. */
 export const getMyAppState = cache(() => appState())

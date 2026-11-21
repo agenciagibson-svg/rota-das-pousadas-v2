@@ -116,6 +116,8 @@ try {
     'ofertas-0111.sql',
     // 0112: ofertas automáticas; usa a pousada B de priorities.sql.
     'ofertas-auto-0112.sql',
+    // 0113: guias fora do ar; usa master, marketing e comercial de priorities.sql.
+    'guias-0113.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)

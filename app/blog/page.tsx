@@ -6,11 +6,12 @@ import { SiteFooter } from '@/components/site-footer'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { Card } from '@/components/ui/card'
 import { formatPostDate, readingMinutes, visiblePosts } from '@/features/blog/posts'
+import { getHiddenPostSlugs } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const published = visiblePosts(false)
+  const published = visiblePosts(false, await getHiddenPostSlugs())
   return {
     title: 'Blog: guias de viagem para quem ama pousadas',
     description:
@@ -21,8 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function BlogPage() {
-  const posts = visiblePosts()
+export default async function BlogPage() {
+  const posts = visiblePosts(undefined, await getHiddenPostSlugs())
   const [first, ...rest] = posts
 
   return (

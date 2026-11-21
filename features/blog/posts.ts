@@ -21,19 +21,38 @@ export function showDrafts(env = process.env.VERCEL_ENV): boolean {
   return env !== 'production'
 }
 
-export function visiblePosts(includeDrafts = showDrafts()): BlogPost[] {
-  return ALL_POSTS.filter((p) => includeDrafts || p.status === 'publicado').sort((a, b) =>
-    b.publishedAt.localeCompare(a.publishedAt),
+/**
+ * `hidden`: guias tirados do ar pelo painel (0113). Somem da lista, da página,
+ * do sitemap e das dicas — inclusive na versão de teste.
+ */
+export function visiblePosts(
+  includeDrafts = showDrafts(),
+  hidden: ReadonlySet<string> = NO_HIDDEN,
+): BlogPost[] {
+  return ALL_POSTS.filter(
+    (p) => (includeDrafts || p.status === 'publicado') && !hidden.has(p.slug),
+  ).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+}
+
+export function findPost(
+  slug: string,
+  includeDrafts = showDrafts(),
+  hidden: ReadonlySet<string> = NO_HIDDEN,
+): BlogPost | null {
+  return visiblePosts(includeDrafts, hidden).find((p) => p.slug === slug) ?? null
+}
+
+export function postsForCity(
+  citySlug: string,
+  includeDrafts = showDrafts(),
+  hidden: ReadonlySet<string> = NO_HIDDEN,
+): BlogPost[] {
+  return visiblePosts(includeDrafts, hidden).filter((p) =>
+    p.cities.some((c) => c.slug === citySlug),
   )
 }
 
-export function findPost(slug: string, includeDrafts = showDrafts()): BlogPost | null {
-  return visiblePosts(includeDrafts).find((p) => p.slug === slug) ?? null
-}
-
-export function postsForCity(citySlug: string, includeDrafts = showDrafts()): BlogPost[] {
-  return visiblePosts(includeDrafts).filter((p) => p.cities.some((c) => c.slug === citySlug))
-}
+const NO_HIDDEN: ReadonlySet<string> = new Set()
 
 function blockText(b: BlogBlock): string {
   switch (b.type) {

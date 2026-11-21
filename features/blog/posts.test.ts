@@ -61,3 +61,20 @@ describe('blog', () => {
     )
   })
 })
+
+describe('guia tirado do ar pelo painel (0113)', () => {
+  const slug = ALL_POSTS.find((p) => p.status === 'publicado')!.slug
+  const hidden = new Set([slug])
+
+  it('some da lista, da busca pelo endereço e das cidades', () => {
+    expect(visiblePosts(false).some((p) => p.slug === slug)).toBe(true)
+    expect(visiblePosts(false, hidden).some((p) => p.slug === slug)).toBe(false)
+    expect(findPost(slug, false, hidden)).toBeNull()
+    const city = ALL_POSTS.find((p) => p.slug === slug)!.cities[0]!.slug
+    expect(postsForCity(city, true, hidden).some((p) => p.slug === slug)).toBe(false)
+  })
+
+  it('some também na versão de teste', () => {
+    expect(visiblePosts(true, hidden).some((p) => p.slug === slug)).toBe(false)
+  })
+})

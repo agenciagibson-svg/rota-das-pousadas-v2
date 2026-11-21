@@ -8,6 +8,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_hidden_posts: {
+        Row: { slug: string; reason: string; hidden_by: string | null; hidden_at: string }
+        Insert: { slug: string; reason?: string; hidden_by?: string | null; hidden_at?: string }
+        Update: { slug?: string; reason?: string; hidden_by?: string | null; hidden_at?: string }
+        Relationships: []
+      }
       accommodation_categories: {
         Row: {
           base_price_suggestion: number | null
@@ -3115,6 +3121,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      list_blog_hidden_posts: {
+        Args: Record<PropertyKey, never>
+        Returns: { slug: string; reason: string; hidden_at: string }[]
+      }
+      set_blog_post_hidden: {
+        Args: { p_slug: string; p_hidden: boolean; p_reason?: string }
+        Returns: undefined
+      }
       get_auto_offers: {
         Args: { p_pousada_id: string }
         Returns: Json
