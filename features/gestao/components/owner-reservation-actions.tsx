@@ -120,6 +120,9 @@ export function OwnerReservationActions({
   const [reasonTarget, setReasonTarget] = useState<ActionItem | null>(null)
   const [reason, setReason] = useState('')
   const [confirmCheckout, setConfirmCheckout] = useState(false)
+  const [checkoutNote, setCheckoutNote] = useState('')
+  // 0109: com consumo em aberto, o check-out só sai com motivo (fica na reserva).
+  const openConsumption = (consumptionDue ?? 0) > 0.009
   const actions = getActions(currentStatus, checkin)
   // Ações que encerram ou desfazem a reserva ficam numa linha separada da ação
   // principal: no celular, um toque errado em "Cancelar" ao lado de "Check-in"
@@ -231,13 +234,21 @@ export function OwnerReservationActions({
             </Button>
             <Button
               size="touch"
+              disabled={openConsumption && checkoutNote.trim().length < 3}
               onClick={() => {
                 setConfirmCheckout(false)
-                run(updateReservationStatusAction({ bookingId, status: 'checked_out' }))
+                run(
+                  updateReservationStatusAction({
+                    bookingId,
+                    status: 'checked_out',
+                    ...(openConsumption ? { reason: checkoutNote.trim() } : {}),
+                  }),
+                )
+                setCheckoutNote('')
               }}
             >
               <LogOut className="size-4" />
-              Confirmar check-out
+              {openConsumption ? 'Fechar com pendência' : 'Confirmar check-out'}
             </Button>
           </>
         }
@@ -256,6 +267,21 @@ export function OwnerReservationActions({
               </p>
             )}
             <p>Registre o pagamento antes de encerrar, se o hóspede já pagou.</p>
+            {openConsumption && (
+              <label className="block pt-2">
+                <span className="text-foreground text-xs font-semibold">
+                  Para fechar com o consumo em aberto, diga o motivo
+                </span>
+                <textarea
+                  value={checkoutNote}
+                  onChange={(e) => setCheckoutNote(e.target.value)}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="Ex.: hóspede vai pagar por Pix amanhã"
+                  className="border-input bg-card text-foreground focus:border-ring focus:ring-ring/20 mt-1 w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm transition outline-none focus:ring-3"
+                />
+              </label>
+            )}
           </div>
         ) : consumptionDue === undefined ? (
           <p className="text-muted-foreground text-sm">

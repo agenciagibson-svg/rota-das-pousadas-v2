@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { formatBRL } from '@/lib/format'
 import {
   Clock,
   Compass,
@@ -95,9 +96,19 @@ export function StayHome(ctx: StayCtx) {
         <div className="bg-card mt-3 rounded-[24px] p-4">
           <p className="text-[14.5px] font-bold">Sua estadia terminou</p>
           <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-            Obrigado por ficar na {pousada.name}. Quando quiser voltar, ou conhecer outra pousada da
-            Rota, é por aqui.
+            Obrigado pela estadia! Quando quiser voltar, ou conhecer outra pousada da Rota, é por
+            aqui.
           </p>
+          {stay.consumption.balance > 0.009 && (
+            <button
+              type="button"
+              onClick={() => ctx.go('conta')}
+              className="border-ipe/60 bg-ipe/15 mt-3 w-full rounded-2xl border p-3 text-left text-[13px] leading-snug"
+            >
+              Ficou <strong>{formatBRL(stay.consumption.balance)}</strong> em aberto na conta da
+              pousada. Toque para ver.
+            </button>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             {stay.canReview && !stay.reviewed && (
               <button
@@ -112,7 +123,7 @@ export function StayHome(ctx: StayCtx) {
               href={`/pousada/${pousada.slug}`}
               className="bg-ipe text-breu inline-flex min-h-11 items-center rounded-full px-4 text-[13px] font-semibold"
             >
-              Voltar para a {pousada.name}
+              Reservar de novo
             </Link>
             <Link
               href="/"

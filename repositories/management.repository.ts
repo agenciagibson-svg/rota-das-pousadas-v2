@@ -214,7 +214,7 @@ export async function listReservationsByPousada(
   let query = supabase
     .from('bookings')
     .select(
-      'id, code, guest_name, responsible_guest_id, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at, precheckin_completed_at',
+      'id, code, guest_name, responsible_guest_id, room_id, checkin, checkout, guests, subtotal, fee, total, balance_due, status, origin, payment_due_at, created_at, precheckin_completed_at, checked_out_auto, checkout_open_note',
     )
     .eq('pousada_id', pousadaId)
     .order('checkin', { ascending: true })
@@ -276,6 +276,8 @@ export async function listReservationsByPousada(
       createdAt: r.created_at,
       needsAttention: r.status === 'pending' && !!r.payment_due_at && r.payment_due_at < now,
       precheckinDone: r.precheckin_completed_at !== null,
+      checkedOutAuto: r.checked_out_auto,
+      checkoutOpenNote: r.checkout_open_note,
     }
   })
 }

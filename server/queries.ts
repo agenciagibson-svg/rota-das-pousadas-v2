@@ -82,6 +82,7 @@ import {
 } from '@/features/bio/services/bio.service'
 import {
   bookingCanPayOnlineRpc,
+  closeOverdueStays,
   getBookingDetailById,
   getBookingFnrhData,
 } from '@/repositories/bookings.repository'
@@ -318,6 +319,8 @@ export const canManageGuests = cache(async () => {
  */
 export const getOwnerReservationDetail = cache(async (bookingId: string) => {
   const { pousadaId, role } = await requireAnyCapability(['booking:manage', 'payment:register'])
+  // Estadia esquecida aberta fecha antes de mostrar (0109).
+  await closeOverdueStays()
   const booking = await getBookingDetailById(bookingId, pousadaId)
   return booking ? { ...booking, canManageBooking: can(role, 'booking:manage') } : null
 })

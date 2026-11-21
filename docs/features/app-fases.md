@@ -36,10 +36,23 @@ Um app só na tela inicial: `/site.webmanifest` (id `/`) e o legado
 "Minha estadia") abrem em `/app` com escopo `/`. O layout de `/estadia` usa o
 manifesto do site. O service worker continua com escopo `/estadia`.
 
+## Fechamento automático (etapa 2, migration 0109)
+
+- `close_overdue_stays()`: `checked_in` que passou de `booking_auto_close_at`
+  (horário de check-out + 4h, fuso da pousada) vira `checked_out` com
+  `checked_out_auto = true` e auditoria `booking.checked_out_auto`. Com consumo
+  em aberto, fecha e anota em `checkout_open_note`. Passa pela comissão (0104)
+  e pelo pedido de avaliação (0089) como um check-out comum.
+- Chamada: rodada diária (`/api/cron/expiracao`, antes das avaliações), ao abrir
+  Reservas e o detalhe da reserva no painel, o app da estadia, um pedido novo e
+  `/app`. Confirmada sem check-in nunca é fechada pelo sistema.
+- `set_booking_status`: check-out com consumo em aberto (entregue não pago +
+  pedidos em preparo) exige motivo, que fica em `checkout_open_note`.
+- Painel: selos "Fechada pelo sistema" e "Consumo em aberto"; no detalhe, o
+  motivo. App do hóspede: aviso do valor em aberto no cartão de fim de estadia.
+
 ## Ainda não (próximas etapas)
 
-- Fechamento automático **no banco** (pedidos e conta ainda seguem o status da
-  reserva; hoje o corte de 4h vale só para a fase do app).
 - Pós-estadia não sabe se o hóspede já avaliou (o `booking_id` da avaliação não
   é legível pelo hóspede desde a 0084); some quando ele dispensa ou em 7 dias.
 - Cara da pousada (logo, capa, cor), ofertas e loja de apps.

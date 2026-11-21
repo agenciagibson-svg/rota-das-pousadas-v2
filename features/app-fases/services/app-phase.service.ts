@@ -2,7 +2,7 @@ import 'server-only'
 import { getCurrentUser } from '@/features/auth/services/auth.service'
 import { isSupabaseConfigured } from '@/lib/env'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { listMyBookingRows } from '@/repositories/bookings.repository'
+import { closeOverdueStays, listMyBookingRows } from '@/repositories/bookings.repository'
 import { demoMyStays } from '@/features/estadia/demo'
 import { resolveAppState, type AppState, type PhaseBooking } from '../phase'
 
@@ -36,6 +36,7 @@ export async function getMyAppState(now: Date = new Date()): Promise<AppState> {
   const user = await getCurrentUser()
   if (!user) return EMPTY
 
+  await closeOverdueStays()
   const rows = await listMyBookingRows()
   if (rows.length === 0) return EMPTY
   const supabase = await createSupabaseServerClient()

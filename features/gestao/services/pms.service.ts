@@ -16,7 +16,7 @@ import {
   updatePousadaSettings,
   updateReservationStatusByPousada,
 } from '@/repositories/management.repository'
-import { expirePendingBookingRpc } from '@/repositories/bookings.repository'
+import { closeOverdueStays, expirePendingBookingRpc } from '@/repositories/bookings.repository'
 import {
   listReviewsByPousada,
   updateReviewResponseByPousada,
@@ -110,6 +110,8 @@ export async function listOwnerReservations(
 ): Promise<OwnerReservation[]> {
   const pousada = await resolveOwnerPousada()
   if (!pousada) return []
+  // Estadia esquecida aberta fecha antes de listar (0109).
+  await closeOverdueStays()
   const [reservations, withProof] = await Promise.all([
     listReservationsByPousada(pousada.id, filters),
     listBookingIdsWithOpenProof(pousada.id),

@@ -433,6 +433,8 @@ export type Database = {
           checked_in_at: string | null
           checked_in_by: string | null
           checked_out_at: string | null
+          checked_out_auto: boolean
+          checkout_open_note: string | null
           checked_out_by: string | null
           checkin: string
           checkin_reminder_sent_at: string | null
@@ -492,6 +494,8 @@ export type Database = {
           checked_in_at?: string | null
           checked_in_by?: string | null
           checked_out_at?: string | null
+          checked_out_auto?: boolean
+          checkout_open_note?: string | null
           checked_out_by?: string | null
           checkin: string
           checkin_reminder_sent_at?: string | null
@@ -551,6 +555,8 @@ export type Database = {
           checked_in_at?: string | null
           checked_in_by?: string | null
           checked_out_at?: string | null
+          checked_out_auto?: boolean
+          checkout_open_note?: string | null
           checked_out_by?: string | null
           checkin?: string
           checkin_reminder_sent_at?: string | null
@@ -3100,6 +3106,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      close_overdue_stays: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       auth_has_pousada_role: {
         Args: { target_pousada: string; roles: string[] }
         Returns: boolean

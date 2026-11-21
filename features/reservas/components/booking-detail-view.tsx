@@ -130,6 +130,19 @@ export function BookingDetailView({
               Motivo do cancelamento: {booking.cancellationReason}
             </p>
           )}
+          {booking.status === 'checked_out' && booking.checkedOutAuto && (
+            <p className="text-muted-foreground mt-3 text-sm">
+              Fechada pelo sistema
+              {booking.checkedOutAt ? ` em ${fmtDateTime(booking.checkedOutAt)}` : ''}: o check-out
+              não foi registrado até 4 horas depois do horário de saída.
+            </p>
+          )}
+          {booking.status === 'checked_out' && booking.checkoutOpenNote && (
+            <p className="border-ipe/50 bg-ipe/15 text-foreground mt-3 rounded-xl border p-3 text-sm">
+              <strong>Fechada com consumo em aberto.</strong> {booking.checkoutOpenNote}. Registre o
+              pagamento na conta de consumo quando receber.
+            </p>
+          )}
           {booking.status === 'no_show' && booking.noShowReason && (
             <p className="text-muted-foreground mt-3 text-sm">
               Motivo do no-show: {booking.noShowReason}

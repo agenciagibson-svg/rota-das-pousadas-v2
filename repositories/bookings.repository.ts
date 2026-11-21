@@ -161,6 +161,29 @@ export async function setBookingStatusRpc(
 }
 
 /**
+ * Fecha as estadias que passaram 4h do horário de check-out (0109). Idempotente
+ * e barato; chamado ao abrir o painel e o app da estadia. Nunca derruba quem
+ * chama: sem a migration (ou sem rede) só não fecha agora — a rodada diária fecha.
+ */
+export async function closeOverdueStays(): Promise<number> {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data, error } = await supabase.rpc('close_overdue_stays')
+    if (error) return 0
+    return data ?? 0
+  } catch {
+    return 0
+  }
+}
+
+/** Mesma coisa pela rodada diária (cron, sem sessão). */
+export async function closeOverdueStaysAsService(): Promise<number> {
+  const { data, error } = await createSupabaseServiceRoleClient().rpc('close_overdue_stays')
+  if (error) throw new Error(error.message)
+  return data ?? 0
+}
+
+/**
  * A pousada da reserva tem conta Mercado Pago conectada? Responde só para o
  * dono da reserva (0083) — qualquer outro usuário recebe `false`.
  */
@@ -380,7 +403,7 @@ export async function getBookingDetailById(
   const { data, error } = await supabase
     .from('bookings')
     .select(
-      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, precheckin_completed_at, version, created_at, updated_at',
+      'id, code, pousada_id, room_id, responsible_guest_id, guest_id, guest_name, checkin, checkout, adults, children, infants, pets, status, origin, external_channel_name, external_code, subtotal, fee, discount, surcharge, services_amount, total, amount_received, balance_due, currency, expected_arrival_time, special_requests, internal_notes, cancellation_reason, cancelled_at, no_show_reason, no_show_at, payment_due_at, precheckin_completed_at, checked_out_at, checked_out_auto, checkout_open_note, version, created_at, updated_at',
     )
     .eq('id', bookingId)
     .eq('pousada_id', pousadaId)
@@ -457,6 +480,9 @@ export async function getBookingDetailById(
     noShowAt: data.no_show_at,
     paymentDueAt: data.payment_due_at,
     precheckinCompletedAt: data.precheckin_completed_at,
+    checkedOutAt: data.checked_out_at,
+    checkedOutAuto: data.checked_out_auto,
+    checkoutOpenNote: data.checkout_open_note,
     version: data.version,
     createdAt: data.created_at,
     updatedAt: data.updated_at,

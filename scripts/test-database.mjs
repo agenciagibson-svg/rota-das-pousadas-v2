@@ -108,6 +108,8 @@ try {
     'guia-0107.sql',
     // 0108: dicas dos leitores; usa master, marketing e comercial de priorities.sql.
     'dicas-0108.sql',
+    // 0109: fechamento automático da estadia; usa a recepção de security-0083.sql.
+    'fechamento-0109.sql',
   ]) {
     sql(readFileSync(`${root}/supabase/tests/${file}`, 'utf8'))
     console.log(`${file}: OK`)
